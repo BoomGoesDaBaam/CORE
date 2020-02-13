@@ -19,18 +19,19 @@
 *	along with The Chili DirectX Framework.  If not, see <http://www.gnu.org/licenses/>.  *
 ******************************************************************************************/
 #pragma once
+#include "ChiliWin.h"
 #include <d3d11.h>
 #include <wrl.h>
 #include "ChiliException.h"
 #include "Colors.h"
-
+#include "Surface.h"
 class Graphics
 {
 public:
 	class Exception : public ChiliException
 	{
 	public:
-		Exception( HRESULT hr,const std::wstring& note,const wchar_t* file,unsigned int line );
+		Exception(HRESULT hr, const std::wstring& note, const wchar_t* file, unsigned int line);
 		std::wstring GetErrorName() const;
 		std::wstring GetErrorDescription() const;
 		virtual std::wstring GetFullMessage() const override;
@@ -42,20 +43,23 @@ private:
 	// vertex format for the framebuffer fullscreen textured quad
 	struct FSQVertex
 	{
-		float x,y,z;		// position
-		float u,v;			// texcoords
+		float x, y, z;		// position
+		float u, v;			// texcoords
 	};
 public:
-	Graphics( class HWNDKey& key );
-	Graphics( const Graphics& ) = delete;
-	Graphics& operator=( const Graphics& ) = delete;
+	Graphics(class HWNDKey& key);
+	Graphics(const Graphics&) = delete;
+	Graphics& operator=(const Graphics&) = delete;
 	void EndFrame();
 	void BeginFrame();
-	void PutPixel( int x,int y,int r,int g,int b )
+	void PutPixel(int x, int y, int r, int g, int b)
 	{
-		PutPixel( x,y,{ unsigned char( r ),unsigned char( g ),unsigned char( b ) } );
+		PutPixel(x, y, { unsigned char(r),unsigned char(g),unsigned char(b) });
 	}
-	void PutPixel( int x,int y,Color c );
+	void PutPixel(int x, int y, Color c);
+	bool PixelInFrame(Vei2 check) { return GetScreenRect<int>().Contains(check); }
+	void DrawSurface(const RectI& rect, const Surface& s, Color c = NULL);
+	void DrawSurface(const RectI& rect, const RectI& clip, const Surface& s, Color c = NULL);
 	~Graphics();
 private:
 	Microsoft::WRL::ComPtr<IDXGISwapChain>				pSwapChain;
@@ -70,8 +74,14 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>			pInputLayout;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState>			pSamplerState;
 	D3D11_MAPPED_SUBRESOURCE							mappedSysBufferTexture;
-	Color*                                              pSysBuffer = nullptr;
+	Color* pSysBuffer = nullptr;
 public:
 	static constexpr int ScreenWidth = 800;
 	static constexpr int ScreenHeight = 600;
+	static Vei2 GetMidOfScreen() { return Vei2(ScreenWidth / 2, ScreenHeight / 2); };
+	template<typename T>
+	const static Rect_<T> GetScreenRect() { return Rect_<T>(Vec2_<T>(0, 0), ScreenWidth, ScreenHeight); };
+	template<typename T>
+	const static Vec2_<T> GetScreenVec2() { return Vec2_<T>(ScreenWidth, ScreenHeight); };
+
 };
