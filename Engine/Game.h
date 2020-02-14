@@ -23,7 +23,8 @@
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "Graphics.h"
-
+#include "Font.h"
+#include "SpriteEffect.h"
 class Game
 {
 public:
@@ -42,5 +43,7 @@ private:
 	Graphics gfx;
 	/********************************/
 	/*  User Variables              */
+	Font f = { "Spritesheet.bmp",9,11,9,13,'!','~',gfx };
+	Surface s = { "Spritesheet.bmp" };
 	/********************************/
 };

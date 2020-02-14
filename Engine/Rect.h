@@ -29,7 +29,16 @@ public:
 		bottom((T)src.bottom),
 		right((T)src.right)
 	{}
-
+	template<typename T>
+	bool operator==(const Rect_<T>& rhs)
+	{
+		return left == rhs.left && right == rhs.right && top == rhs.top && bottom == rhs.bottom;
+	}
+	template<typename T>
+	bool operator!=(const Rect_<T>& rhs)
+	{ 
+		return !(*this == rhs);
+	}
 	bool IsOverlappingWith(const Rect_& other) const
 	{
 		return right > other.left&& left < other.right

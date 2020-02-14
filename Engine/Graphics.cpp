@@ -315,31 +315,6 @@ void Graphics::PutPixel(int x, int y, Color c)
 	assert(y < int(Graphics::ScreenHeight));
 	pSysBuffer[Graphics::ScreenWidth * y + x] = c;
 }
-void Graphics::DrawSurface(const RectI& pos, const Surface& s, Color c)
-{
-	DrawSurface(pos, Graphics::GetScreenRect<int>(), s, c);
-}
-void Graphics::DrawSurface(const RectI& pos, const RectI& clip, const Surface& s, Color c)
-{
-	RectF drawPos = RectF(pos);
-	if (drawPos.left < ScreenWidth && drawPos.right > 0 && drawPos.top < ScreenHeight && drawPos.bottom > 0)
-	{
-		for (int y = 0; y < drawPos.GetHeight(); y++)
-		{
-			for (int x = 0; x < drawPos.GetWidth(); x++)
-			{
-				assert(PixelInFrame({ x,y }));
-				//assert(((drawPos.GetWidth() / s.GetWidth()) * x) <= s.GetWidth());
-				//assert(((drawPos.GetHeight() / s.GetHeight()) * y) <= s.GetHeight());
-				if (PixelInFrame(Vei2(drawPos.left + x, drawPos.top + y)))
-				{
-					PutPixel(drawPos.left + x, drawPos.top + y, s.GetPixel(((float)x / drawPos.GetWidth()) * s.GetWidth(), ((float)y / drawPos.GetHeight()) * s.GetHeight()));
-				}
-				//PutPixel(drawPos.left+x, drawPos.top + y, s.GetPixel(((float)drawPos.GetWidth() / s.GetWidth())*x,((float)drawPos.GetHeight() / s.GetHeight())*y));
-			}
-		}
-	}
-}
 
 //////////////////////////////////////////////////
 //           Graphics Exception

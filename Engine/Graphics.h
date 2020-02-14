@@ -25,6 +25,8 @@
 #include "ChiliException.h"
 #include "Colors.h"
 #include "Surface.h"
+#include <cassert>
+#include <cmath>
 class Graphics
 {
 public:
@@ -58,8 +60,125 @@ public:
 	}
 	void PutPixel(int x, int y, Color c);
 	bool PixelInFrame(Vei2 check) { return GetScreenRect<int>().Contains(check); }
-	void DrawSurface(const RectI& rect, const Surface& s, Color c = NULL);
-	void DrawSurface(const RectI& rect, const RectI& clip, const Surface& s, Color c = NULL);
+	template<typename E>
+	void DrawSurface(Vei2 pos, const Surface& s, Color c, E effect)
+	{
+		DrawSurface(pos, Graphics::GetScreenRect<int>(), s, c,effect);
+	}
+	template<typename E>
+	void DrawSurface(Vei2 pos, RectI sourceR, RectI clip, const Surface& s, Color c, E effect)
+	{
+		if (sourceR == RectI(Vei2(0, 0), 0, 0))
+		{
+			sourceR = s.GetRect();
+		}
+
+		if (sourceR.GetWidth() + pos.x > ScreenWidth)
+		{
+			sourceR.right -= sourceR.GetWidth() + pos.x - ScreenWidth;
+		}
+		if (sourceR.GetHeight() + pos.y > ScreenHeight)
+		{
+			sourceR.bottom -= sourceR.GetHeight() + pos.y - ScreenHeight;
+		}
+
+		if (pos.x < 0)
+		{
+			sourceR.left += std::abs(pos.x);
+			pos.x += std::abs(pos.x);
+		}
+		if (pos.y < 0)
+		{
+			sourceR.top += std::abs(pos.y);
+			pos.y += std::abs(pos.y);
+		}
+			for (int y = sourceR.top; y < sourceR.bottom; y++)
+			{
+				for (int x = sourceR.left; x < sourceR.right; x++)
+				{
+					int xOnFrame = x + pos.x - sourceR.left;
+					int yOnFrame = y + pos.y - sourceR.top;
+					assert(PixelInFrame({ xOnFrame,yOnFrame }));
+						//Color c = s.GetPixel(((float)x / drawPos.GetWidth()) * s.GetWidth(), ((float)y / drawPos.GetHeight()) * s.GetHeight());
+						Color c = s.GetPixel(x, y);
+						effect(xOnFrame, yOnFrame, c, *this);
+					//}
+				}
+			}
+	}
+	/*
+		if (sourceR == RectI(Vei2(0, 0), 0, 0))
+		{
+			sourceR = s.GetRect();
+		}
+
+		RectI drawPos = pos;
+		RectI drawPC = drawPos;
+		Vec2 ratio = { (float)pos.GetWidth() / sourceR.GetWidth(),(float)pos.GetHeight() / sourceR.GetHeight() };
+
+		RectF RemChanges = { 0,0,0,0 };
+		*/
+	
+	template<typename E>
+	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, Color c = Colors::Magenta)
+	{
+		if (pos.left < clip.left)
+		{
+			int delta = (int)clip.left - pos.left;
+			float shorter = (float)delta / pos.GetWidth();
+			sourceR.left += (int)(shorter * sourceR.GetWidth());
+			pos.left = clip.left;
+			if (pos.GetWidth() <= 0 || pos.GetHeight() <= 0 || sourceR.GetWidth() <= 0 || sourceR.GetHeight() <= 0) {
+				return;
+			}
+		}
+		if (pos.right > clip.right)
+		{
+			int delta = pos.right - clip.right;
+			float shorter = (float)delta / pos.GetWidth();
+			sourceR.right -= std::round(shorter * sourceR.GetWidth());
+			pos.right = clip.right;
+			if (pos.GetWidth() <= 0 || pos.GetHeight() <= 0 || sourceR.GetWidth() <= 0 || sourceR.GetHeight() <= 0) {
+				return;
+			}
+		}
+		if (pos.top < clip.top)
+		{
+			int delta = clip.top - pos.top;
+			float shorter = (float)delta / pos.GetHeight();
+			sourceR.top += (int)(shorter * sourceR.GetHeight());
+			pos.top = clip.top;
+			if (pos.GetWidth() <= 0 || pos.GetHeight() <= 0 || sourceR.GetWidth() <= 0 || sourceR.GetHeight() <= 0) {
+				return;
+			}
+		}
+		if (pos.bottom > clip.bottom)
+		{
+			int delta = pos.bottom - clip.bottom;
+			float shorter = (float)delta / pos.GetHeight();
+			sourceR.bottom -= (int)(shorter * sourceR.GetHeight());
+			pos.bottom = (int)clip.bottom;
+			if (pos.GetWidth() <= 0 || pos.GetHeight() <= 0 || sourceR.GetWidth() <= 0 || sourceR.GetHeight() <= 0) {
+				return;
+			}
+		}
+		if (pos.GetWidth() > 0 && pos.GetHeight() > 0 && sourceR.GetWidth() > 0 && sourceR.GetHeight() > 0){
+			for (int y = pos.top; y < pos.bottom; y++)
+			{
+				for (int x = pos.left; x < pos.right; x++)
+				{
+					int a = sourceR.GetWidth();
+					assert(PixelInFrame({ x,y }));
+					int xPixel = sourceR.left + std::round( ((float)(x - pos.left)/ pos.GetWidth()) * sourceR.GetWidth() );
+					int yPixel = sourceR.top  + std::round( ((float)(y - pos.top) / pos.GetHeight()) * sourceR.GetHeight() );
+
+					Color col = s.GetPixel(xPixel, yPixel);
+					effect(x, y, col, *this);
+				}
+			}
+		}
+	}
+	
 	~Graphics();
 private:
 	Microsoft::WRL::ComPtr<IDXGISwapChain>				pSwapChain;
