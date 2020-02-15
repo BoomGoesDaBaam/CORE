@@ -25,6 +25,7 @@
 #include "Graphics.h"
 #include "Font.h"
 #include "SpriteEffect.h"
+#include "GraphicObjects.h"
 class Game
 {
 public:
@@ -45,5 +46,6 @@ private:
 	/*  User Variables              */
 	Font f = { "Spritesheet.bmp",9,11,9,13,'!','~',gfx };
 	Surface s = { "Spritesheet.bmp" };
+	GraphicObjects go;
 	/********************************/
 };

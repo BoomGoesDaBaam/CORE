@@ -316,6 +316,19 @@ void Graphics::PutPixel(int x, int y, Color c)
 	pSysBuffer[Graphics::ScreenWidth * y + x] = c;
 }
 
+void Graphics::DrawCircle(int x, int y, float radius, Color c)
+{
+	for (int yCheck = -radius; yCheck < (int)radius; yCheck++)
+	{
+		for (int xCheck = -radius; xCheck < (int)radius; xCheck++)
+		{
+			if (sqrt(yCheck * yCheck + xCheck * xCheck) <= radius && PixelInFrame(Vei2(xCheck + x, yCheck + y)))
+			{
+				PutPixel(xCheck + x, yCheck + y, c);
+			}
+		}
+	}
+}
 //////////////////////////////////////////////////
 //           Graphics Exception
 Graphics::Exception::Exception(HRESULT hr, const std::wstring& note, const wchar_t* file, unsigned int line)

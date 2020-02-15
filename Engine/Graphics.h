@@ -60,10 +60,12 @@ public:
 	}
 	void PutPixel(int x, int y, Color c);
 	bool PixelInFrame(Vei2 check) { return GetScreenRect<int>().Contains(check); }
+	void DrawCircle(int x, int y, float radius, Color c);
+
 	template<typename E>
 	void DrawSurface(Vei2 pos, const Surface& s, Color c, E effect)
 	{
-		DrawSurface(pos, Graphics::GetScreenRect<int>(), s, c,effect);
+		DrawSurface(pos, Graphics::GetScreenRect<int>(), s, c, effect);
 	}
 	template<typename E>
 	void DrawSurface(Vei2 pos, RectI sourceR, RectI clip, const Surface& s, Color c, E effect)
@@ -92,32 +94,20 @@ public:
 			sourceR.top += std::abs(pos.y);
 			pos.y += std::abs(pos.y);
 		}
-			for (int y = sourceR.top; y < sourceR.bottom; y++)
-			{
-				for (int x = sourceR.left; x < sourceR.right; x++)
-				{
-					int xOnFrame = x + pos.x - sourceR.left;
-					int yOnFrame = y + pos.y - sourceR.top;
-					assert(PixelInFrame({ xOnFrame,yOnFrame }));
-						//Color c = s.GetPixel(((float)x / drawPos.GetWidth()) * s.GetWidth(), ((float)y / drawPos.GetHeight()) * s.GetHeight());
-						Color c = s.GetPixel(x, y);
-						effect(xOnFrame, yOnFrame, c, *this);
-					//}
-				}
-			}
-	}
-	/*
-		if (sourceR == RectI(Vei2(0, 0), 0, 0))
+		for (int y = sourceR.top; y < sourceR.bottom; y++)
 		{
-			sourceR = s.GetRect();
+			for (int x = sourceR.left; x < sourceR.right; x++)
+			{
+				int xOnFrame = x + pos.x - sourceR.left;
+				int yOnFrame = y + pos.y - sourceR.top;
+				assert(PixelInFrame({ xOnFrame,yOnFrame }));
+				//Color c = s.GetPixel(((float)x / drawPos.GetWidth()) * s.GetWidth(), ((float)y / drawPos.GetHeight()) * s.GetHeight());
+				Color c = s.GetPixel(x, y);
+				effect(xOnFrame, yOnFrame, c, *this);
+				//}
+			}
 		}
-
-		RectI drawPos = pos;
-		RectI drawPC = drawPos;
-		Vec2 ratio = { (float)pos.GetWidth() / sourceR.GetWidth(),(float)pos.GetHeight() / sourceR.GetHeight() };
-
-		RectF RemChanges = { 0,0,0,0 };
-		*/
+	}
 	template<typename E>
 	void DrawSurface(Vei2 pos, const Surface& s, E effect, Color c = NULL, bool pretty = pretty)
 	{
@@ -189,14 +179,14 @@ public:
 				return;
 			}
 		}
-		if (pos.GetWidth() > 0 && pos.GetHeight() > 0 && sourceR.GetWidth() > 0 && sourceR.GetHeight() > 0){
+		if (pos.GetWidth() > 0 && pos.GetHeight() > 0 && sourceR.GetWidth() > 0 && sourceR.GetHeight() > 0) {
 			for (int y = pos.top; y < pos.bottom; y++)
 			{
 				for (int x = pos.left; x < pos.right; x++)
 				{
 					assert(PixelInFrame({ x,y }));
-					
-					int xPixel = sourceR.left + std::round(((float)(x - pos.left) / pos.GetWidth()) * sourceR.GetWidth()) ;
+
+					int xPixel = sourceR.left + std::round(((float)(x - pos.left) / pos.GetWidth()) * sourceR.GetWidth());
 					int yPixel = sourceR.top + std::round(((float)(y - pos.top) / pos.GetHeight()) * sourceR.GetHeight());
 					Color col = s.GetPixel(xPixel, yPixel);
 					if (c == NULL)
@@ -214,27 +204,27 @@ public:
 	template<typename E>
 	void DrawSurfacePretty(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, Color c = NULL)
 	{
-			for (int y = pos.top; y < pos.bottom; y++)
+		for (int y = pos.top; y < pos.bottom; y++)
+		{
+			for (int x = pos.left; x < pos.right; x++)
 			{
-				for (int x = pos.left; x < pos.right; x++)
+				if (PixelInFrame({ x,y }) && clip.top <= y && clip.bottom >= y && clip.left <= x && clip.right >= x)
 				{
-					if (PixelInFrame({ x,y }) && clip.top <= y && clip.bottom >= y && clip.left <= x && clip.right >= x)
+					int xPixel = sourceR.left + std::round(((float)(x - pos.left) / pos.GetWidth()) * sourceR.GetWidth());
+					int yPixel = sourceR.top + std::round(((float)(y - pos.top) / pos.GetHeight()) * sourceR.GetHeight());
+					Color col = s.GetPixel(xPixel, yPixel);
+					if (c == NULL)
 					{
-						int xPixel = sourceR.left + std::round(((float)(x - pos.left) / pos.GetWidth()) * sourceR.GetWidth());
-						int yPixel = sourceR.top + std::round(((float)(y - pos.top) / pos.GetHeight()) * sourceR.GetHeight());
-						Color col = s.GetPixel(xPixel, yPixel);
-						if (c == NULL)
-						{
-							effect(x, y, col, col, *this);
-						}
-						else
-						{
-							effect(x, y, col, c, *this);
-						}
+						effect(x, y, col, col, *this);
+					}
+					else
+					{
+						effect(x, y, col, c, *this);
 					}
 				}
 			}
-		
+		}
+
 	}
 	~Graphics();
 private:
