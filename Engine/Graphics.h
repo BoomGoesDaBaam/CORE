@@ -118,10 +118,37 @@ public:
 
 		RectF RemChanges = { 0,0,0,0 };
 		*/
-	
 	template<typename E>
-	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, Color c = Colors::Magenta)
+	void DrawSurface(Vei2 pos, const Surface& s, E effect, Color c = NULL, bool pretty = pretty)
 	{
+		DrawSurface(RectI(pos, s.GetWidth(), s.GetHeight()), s.GetRect(), GetScreenRect<int>(), s, effect, c, pretty);
+	}
+	template<typename E>
+	void DrawSurface(RectI pos, const Surface& s, E effect, Color c = NULL, bool pretty = pretty)
+	{
+		DrawSurface(pos, s.GetRect(), GetScreenRect<int>(), s, effect, c, pretty)
+	}
+	template<typename E>
+	void DrawSurface(RectI pos, RectI sourceR, const Surface& s, E effect, Color c = NULL, bool pretty = pretty)
+	{
+		DrawSurface(pos, sourceR, GetScreenRect<int>(), s, effect, c, pretty)
+	}
+	template<typename E>
+	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, Color c = NULL, bool pretty = pretty)
+	{
+		if (pretty)
+		{
+			DrawSurfacePretty(pos, sourceR, clip, s, effect, c);
+		}
+		else
+		{
+			DrawSurfaceQuick(pos, sourceR, clip, s, effect, c);
+		}
+	}
+	template<typename E>
+	void DrawSurfaceQuick(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, Color c = NULL)
+	{
+		RectI sourceRcopy = sourceR;
 		if (pos.left < clip.left)
 		{
 			int delta = (int)clip.left - pos.left;
@@ -167,18 +194,48 @@ public:
 			{
 				for (int x = pos.left; x < pos.right; x++)
 				{
-					int a = sourceR.GetWidth();
 					assert(PixelInFrame({ x,y }));
-					int xPixel = sourceR.left + std::round( ((float)(x - pos.left)/ pos.GetWidth()) * sourceR.GetWidth() );
-					int yPixel = sourceR.top  + std::round( ((float)(y - pos.top) / pos.GetHeight()) * sourceR.GetHeight() );
-
+					
+					int xPixel = sourceR.left + std::round(((float)(x - pos.left) / pos.GetWidth()) * sourceR.GetWidth()) ;
+					int yPixel = sourceR.top + std::round(((float)(y - pos.top) / pos.GetHeight()) * sourceR.GetHeight());
 					Color col = s.GetPixel(xPixel, yPixel);
-					effect(x, y, col, *this);
+					if (c == NULL)
+					{
+						effect(x, y, col, col, *this);
+					}
+					else
+					{
+						effect(x, y, col, c, *this);
+					}
 				}
 			}
 		}
 	}
-	
+	template<typename E>
+	void DrawSurfacePretty(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, Color c = NULL)
+	{
+			for (int y = pos.top; y < pos.bottom; y++)
+			{
+				for (int x = pos.left; x < pos.right; x++)
+				{
+					if (PixelInFrame({ x,y }) && clip.top <= y && clip.bottom >= y && clip.left <= x && clip.right >= x)
+					{
+						int xPixel = sourceR.left + std::round(((float)(x - pos.left) / pos.GetWidth()) * sourceR.GetWidth());
+						int yPixel = sourceR.top + std::round(((float)(y - pos.top) / pos.GetHeight()) * sourceR.GetHeight());
+						Color col = s.GetPixel(xPixel, yPixel);
+						if (c == NULL)
+						{
+							effect(x, y, col, col, *this);
+						}
+						else
+						{
+							effect(x, y, col, c, *this);
+						}
+					}
+				}
+			}
+		
+	}
 	~Graphics();
 private:
 	Microsoft::WRL::ComPtr<IDXGISwapChain>				pSwapChain;
@@ -197,6 +254,7 @@ private:
 public:
 	static constexpr int ScreenWidth = 800;
 	static constexpr int ScreenHeight = 600;
+	static constexpr bool pretty = true;
 	static Vei2 GetMidOfScreen() { return Vei2(ScreenWidth / 2, ScreenHeight / 2); };
 	template<typename T>
 	const static Rect_<T> GetScreenRect() { return Rect_<T>(Vec2_<T>(0, 0), ScreenWidth, ScreenHeight); };

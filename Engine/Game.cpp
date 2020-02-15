@@ -43,6 +43,6 @@ void Game::UpdateModel()
 void Game::ComposeFrame()
 {
 	//char c = ' ';
-	gfx.DrawSurface(RectI(Vei2(wnd.mouse.GetPosX()-20,wnd.mouse.GetPosY()-20),100,100),RectI(Vei2(1*9,2*13),2*9,2*13),RectI(Vei2(50,50),500,500), s, SpriteEffect::Nothing(), Colors::Blue);
-	//f.DrawText("DOES WHAT!", 300, 300);
+	gfx.DrawSurfaceQuick(RectI(Vei2(wnd.mouse.GetPosX()-20,wnd.mouse.GetPosY()-20),100,100),RectI(Vei2(1*9,2*13),2*9,2*13),RectI(Vei2(50,50),500,500), s, SpriteEffect::ChromaColor(Colors::Magenta),Colors::Blue);
+	f.DrawText("GUESS WHAT!", wnd.mouse.GetPosX(), wnd.mouse.GetPosY());
 }

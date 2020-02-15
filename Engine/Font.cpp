@@ -25,8 +25,8 @@ const RectI& Font::GetRectOfChar(char c)
 }
 void Font::DrawText(std::string text, int x, int y)
 {
-	int xM = x;
-	int yM = y;
+	int xM = 0;
+	int yM = 0;
 	for (int i = 0; i < text.length(); i++)
 	{
 		if (text[i] >= first && text[i] <= last)

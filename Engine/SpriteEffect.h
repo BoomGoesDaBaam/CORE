@@ -28,4 +28,21 @@ namespace SpriteEffect
 			gfx.PutPixel(x, y, c);
 		}
 	};
+	class ChromaColor
+	{
+	public:
+		ChromaColor(Color chroma)
+			:
+			chroma(chroma)
+		{}
+		void operator()(int x, int y, Color testForChroma, Color c, Graphics& gfx)
+		{
+			if (testForChroma != chroma)
+			{
+				gfx.PutPixel(x, y, c);
+			}
+		}
+	private:
+		Color chroma;
+	};
 };
