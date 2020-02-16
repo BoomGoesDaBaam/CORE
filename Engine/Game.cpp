@@ -27,7 +27,9 @@ Game::Game( MainWindow& wnd )
 	gfx( wnd ),
 	go(gfx)
 {
-	go.Add(&GraphicObjects::Particle(500, 500, 200, Vec2(1, 1), Vec2(2, 2)));
+	//go.Add(&GraphicObjects::Particle(500, 500, 200, Vec2(1, 1), Vec2(2, 2)));
+	std::pair<int, int> p;
+	p.first = 5;
 }
 
 void Game::Go()
@@ -41,11 +43,13 @@ void Game::Go()
 void Game::UpdateModel()
 {
 	go.Update(0.1f);
+	go.AddShot((Vec2)wnd.mouse.GetPos(), Vec2(50, 0), Vec2(0, 30));
+
 }
 
 void Game::ComposeFrame()
 {
 	go.Draw();
-	gfx.DrawSurfaceQuick(RectI(Vei2(wnd.mouse.GetPosX()-20,wnd.mouse.GetPosY()-20),100,100),RectI(Vei2(1*9,2*13),2*9,2*13),RectI(Vei2(50,50),500,500), s, SpriteEffect::ChromaColor(Colors::Magenta),Colors::Blue);
-	f.DrawText("GUESS WHAT!", wnd.mouse.GetPosX(), wnd.mouse.GetPosY());
+	//gfx.DrawSurfaceQuick(RectI(Vei2(wnd.mouse.GetPosX()-20,wnd.mouse.GetPosY()-20),100,100),RectI(Vei2(1*9,2*13),2*9,2*13),RectI(Vei2(50,50),500,500), s, SpriteEffect::ChromaColor(Colors::Magenta),Colors::Blue);
+//	f.DrawText("GUESS WHAT!", wnd.mouse.GetPosX(), wnd.mouse.GetPosY());
 }

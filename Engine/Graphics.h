@@ -61,7 +61,8 @@ public:
 	void PutPixel(int x, int y, Color c);
 	bool PixelInFrame(Vei2 check) { return GetScreenRect<int>().Contains(check); }
 	void DrawCircle(int x, int y, float radius, Color c);
-
+	void DrawCircle(int x, int y, float outerRadius,float innerRadius, Color innerC, Color outerC);
+	void DrawLine(Vec2 p1, Vec2 p0, Color c, int thickness = 1);
 	template<typename E>
 	void DrawSurface(Vei2 pos, const Surface& s, Color c, E effect)
 	{

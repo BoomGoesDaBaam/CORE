@@ -329,6 +329,88 @@ void Graphics::DrawCircle(int x, int y, float radius, Color c)
 		}
 	}
 }
+void Graphics::DrawCircle(int x, int y, float outerRadius, float innerRadius, Color innerC, Color outerC)
+{
+	for (int yCheck = -outerRadius; yCheck < (int)outerRadius; yCheck++)
+	{
+		for (int xCheck = -outerRadius; xCheck < (int)outerRadius; xCheck++)
+		{
+			if (sqrt(yCheck * yCheck + xCheck * xCheck) <= outerRadius && sqrt(yCheck * yCheck + xCheck * xCheck) > innerRadius && PixelInFrame(Vei2(xCheck + x, yCheck + y)))
+			{
+				PutPixel(xCheck + x, yCheck + y, outerC);
+			}
+			else if (sqrt(yCheck * yCheck + xCheck * xCheck) < innerRadius && PixelInFrame(Vei2(xCheck + x, yCheck + y)))
+			{
+				PutPixel(xCheck + x, yCheck + y, innerC);
+			}
+		}
+	}
+}
+void Graphics::DrawLine(Vec2 p0, Vec2 p1, Color c, int thickness)
+{
+	float m = 0.0f;
+	if (p1.x != p0.x)
+	{
+		m = (p1.y - p0.y) / (p1.x - p0.x);
+	}
+	if (thickness > 1)
+	{
+		for (int i = -thickness / 2; i < thickness / 2; i++)
+		{
+			if (std::abs(m) <= 1.0f)
+			{
+				DrawLine(Vec2(p1.x, p1.y + i), Vec2(p0.x, p0.y + i), c);
+			}
+			else
+			{
+				DrawLine(Vec2(p1.x + i, p1.y), Vec2(p0.x + i, p0.y), c);
+			}
+		}
+	}
+	if (p1.x != p0.x && std::abs(m) <= 1.0f)
+	{
+		if (p0.x > p1.x)
+		{
+			std::swap(p0, p1);
+		}
+
+		const float b = p0.y - m * p0.x;
+
+		for (int x = (int)p0.x; x < (int)p1.x; x++)
+		{
+			const float y = m * (float)x + b;
+
+			const int yi = (int)y;
+			if (x >= 0 && x < ScreenWidth && yi >= 0 && yi < ScreenHeight)
+			{
+				PutPixel(x, yi, c);
+			}
+		}
+	}
+	else
+	{
+		if (p0.y > p1.y)
+		{
+			std::swap(p0, p1);
+		}
+
+		const float w = (p1.x - p0.x) / (p1.y - p0.y);
+		const float p = p0.x - w * p0.y;
+
+		for (int y = (int)p0.y; y < (int)p1.y; y++)
+		{
+			const float x = w * (float)y + p;
+
+			const int xi = (int)x;
+			if (xi >= 0 && xi < ScreenWidth && y >= 0 && y < ScreenHeight)
+			{
+				PutPixel(xi, y, c);
+			}
+		}
+	}
+}
+
+//
 //////////////////////////////////////////////////
 //           Graphics Exception
 Graphics::Exception::Exception(HRESULT hr, const std::wstring& note, const wchar_t* file, unsigned int line)

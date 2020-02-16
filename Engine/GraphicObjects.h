@@ -3,6 +3,7 @@
 #include <vector>
 #include "Graphics.h"
 #include <memory>
+#include "RandyRandom.h"
 class GraphicObjects
 {
 public:
@@ -10,41 +11,31 @@ public:
 	{
 	protected:
 		bool killMe = false;
+		Vec2 pos=Vec2(0.0f, 0.0f);
+		Vec2 vel = Vec2(0.0f, 0.0f);
+		Vec2 gravity= Vec2(0.0f, 0.0f);
+		Color primC = Colors::Yellow, secC = Colors::Red;
 	public:
 		Object() = default;
-		virtual void Update(float dt) {};
+		Object(Vec2 pos, Vec2 vel, Vec2 gravity);
+		virtual void Update(float dt);
 		virtual void Draw(Graphics& gfx) {};
 		bool ChoosenToDie() { return killMe; }
 	};
+
 	class Particle : public Object
 	{
-		float x, y;
-		Vec2 vel;
-		Vec2 gravity;
 		float radius;
 	public:
-		Particle(float x, float y, float radius, Vec2 vel, Vec2 gravity) :x(x), y(y), radius(radius), vel(vel), gravity(gravity) {}
-		void Update(float dt) override
-		{
-			x += dt * vel.x; y += dt * vel.y;
-			vel.x += dt * gravity.x;
-			vel.y += dt * gravity.y;
-			if (!(Graphics::GetScreenRect<int>().Contains(Vei2(x, y))))
-			{
-				killMe = true;
-			}
-		}
+		Particle(Vec2 pos, float radius, Vec2 vel, Vec2 gravity): Object(pos, vel, gravity), radius(radius) {}
 		void Draw(Graphics& gfx)override {
-			gfx.DrawCircle(x, y, radius, Colors::Red);
-		}
-		void SendHelp()
-		{
-			x += 2;
+			gfx.DrawCircle(pos.x, pos.y, radius, radius-(radius/3), primC, secC);
 		}
 	};
+	/*
 	class TileFrame : public Object
 	{
-		int x, y, nRows, nColums;
+		int  nRows, nColums;
 	public:
 		TileFrame(int x, int y, int nRows, int nColums) :x(x), y(y), nRows(nRows), nColums(nColums)
 		{
@@ -55,9 +46,20 @@ public:
 
 		}
 	};
+	*/
+	class Shot : public Object
+	{
+		float width,length;
+	public:
+		Shot(Vec2 pos, Vec2 vel, Vec2 gravity,float length, float width): Object(pos, vel, gravity), length(length), width(width){}
+		void Draw(Graphics& gfx)override {
+			gfx.DrawLine(pos, pos + vel*length* 0.05f, primC, width);
+		}
+	};
 private:
 	std::vector<std::unique_ptr<Object>> objects;
 	Graphics& gfx;
+	RandyRandom rr;
 public:
 	GraphicObjects(Graphics& gfx) :gfx(gfx) {}
 	void Update(float dt);
@@ -66,5 +68,21 @@ public:
 	{
 		objects.push_back(std::make_unique<Particle>(*object));
 	}
-	typedef GraphicObjects GrapObj;
+	void Add(Shot* object)
+	{
+		objects.push_back(std::make_unique<Shot>(*object));
+	}
+
+	//Particle Blueprints
+	void AddVolvano(Vec2 pos, int size, int spreadSpeed) //   size / spreadSpeed | 10 = smal 100 = HUGE    
+	{
+		Add(&GraphicObjects::Particle(pos,rr.Calc(size/3)+1, Vec2(rr.Calc(spreadSpeed) - (spreadSpeed / 2), rr.Calc(spreadSpeed) - (spreadSpeed / 2)), Vec2(0, 3)));
+	}
+	void AddShot(Vec2 pos, Vec2 vel, Vec2 gravity) //   size / spreadSpeed | 10 = smal 100 = HUGE    
+	{
+		Add(&GraphicObjects::Shot(pos, vel, gravity, 20, 3));
+	}
+
+	typedef GraphicObjects GRAPH_OBJ;
+	typedef GraphicObjects::Particle PARTICLE;
 };

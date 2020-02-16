@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cmath>
-
+#include <iostream>
 template<typename T>
 class Vec2_
 {
@@ -12,12 +12,22 @@ public:
 		x(x_in),
 		y(y_in)
 	{}
+	//Conversions
 	template<typename S>
 	explicit Vec2_(const Vec2_<S>& src)
 		:
 		x((T)src.x),
 		y((T)src.y)
 	{}
+	
+	template<typename S>
+	explicit Vec2_(const std::pair<S,S>& src)
+		:
+		x((T)src.first),
+		y((T)src.second)
+	{}
+	
+	//Operator
 	Vec2_ operator+(const Vec2_& rhs) const
 	{
 		return Vec2_(x + rhs.x, y + rhs.y);
@@ -57,7 +67,6 @@ public:
 	{
 		return *this = *this / rhs;
 	}
-
 	T GetLength() const
 	{
 		return (T)std::sqrt(GetLengthSq());
