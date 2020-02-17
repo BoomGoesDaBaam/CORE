@@ -28,8 +28,7 @@ Game::Game( MainWindow& wnd )
 	go(gfx)
 {
 	//go.Add(&GraphicObjects::Particle(500, 500, 200, Vec2(1, 1), Vec2(2, 2)));
-	std::pair<int, int> p;
-	p.first = 5;
+	
 }
 
 void Game::Go()
@@ -43,8 +42,8 @@ void Game::Go()
 void Game::UpdateModel()
 {
 	go.Update(0.1f);
-	go.AddShot((Vec2)wnd.mouse.GetPos(), Vec2(50, 0), Vec2(0, 30));
-
+	go.AddVolvano((Vec2)wnd.mouse.GetPos(), 50*rr.GetFaktor(), 50);
+//	go.AddShot((Vec2)wnd.mouse.GetPos(),Vec2(500,50),50.0f);
 }
 
 void Game::ComposeFrame()

@@ -14,15 +14,6 @@ Font::Font(std::string filename, int nRaws, int nColums, int charWidth, int char
 		}
 	}
 }
-
-const RectI& Font::GetRectOfChar(char c)
-{
-	if (c >= first && c <= last)
-	{
-		return cRects[c - first];
-	}
-	return RectI({ -1,-1 }, -1, -1);
-}
 void Font::DrawText(std::string text, int x, int y)
 {
 	int xM = 0;

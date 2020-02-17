@@ -16,10 +16,10 @@ public:
 	float GetNormalDist()//Returns number between 0.0f and 1.0f.  0f is more favoured to appear
 	{
 		std::normal_distribution<double> distribution(0.0, 0.5);
-		float shot = distribution(generator);
+		float shot = (float)distribution(generator);
 		while (shot<0.0f)
 		{
-			shot = distribution(generator);
+			shot = (float)distribution(generator);
 		}
 		return shot;
 	}
