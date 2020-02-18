@@ -4,9 +4,22 @@
 #include "Graphics.h"
 #include <memory>
 #include "RandyRandom.h"
+#include "Matrix.h"
+#include "SpriteEffect.h"
 class GraphicObjects
 {
-	std::vector<Surface> tileFramePics;
+	class Pictures
+	{
+	public:
+		std::vector<Surface> tileFramePics;
+		std::vector<Vei2> tfSize;
+		Pictures()
+		{
+			tileFramePics.push_back(Surface("Textures/6.bmp"));
+			tfSize.push_back(Vei2(30,30));
+
+		}
+	};
 public:
 	class Object
 	{
@@ -40,12 +53,25 @@ public:
 	
 	class TileFrame : public Object
 	{
-		int  nRows, nColums;
+		Matrix<int> matrix;
+		
+		int style = 0;
+		const Pictures& pic;
 	public:
-		TileFrame(int x, int y, int nRows, int nColums, int style = 0): Object(Vec2(x, y), Vec2(0.0f, 0.0f), Vec2(0.0f, 0.0f)), nRows(nRows), nColums(nColums) {}
+		TileFrame(Vec2 pos, Matrix<int> size,const Pictures& pic, int style = 0) : Object(pos, Vec2(0.0f, 0.0f), Vec2(0.0f, 0.0f)), matrix(size), style(style),pic(pic) {}
 		void Draw(Graphics& gfx)override
 		{
-
+			Matrix<int> sur = Matrix<int>(3, 3, 0);
+			for (int y = 0; y < matrix.GetRaws(); y++)
+			{
+				for (int x = 0; x < matrix.GetColums(); x++)
+				{
+					if (y == 0 && x == 0 && matrix[x][y])
+					{
+						gfx.DrawSurfacePretty(RectI((Vei2)pos, pic.tfSize[style].x, pic.tfSize[style].y), RectI(Vei2(0, 0), pic.tfSize[style].x, pic.tfSize[style].y),Graphics::GetScreenRect<int>(), pic.tileFramePics[style], SpriteEffect::Chroma(Colors::Magenta));
+					}
+				}
+			}
 		}
 	};
 	
@@ -62,11 +88,12 @@ private:
 	std::vector<std::unique_ptr<Object>> objects;
 	Graphics& gfx;
 	RandyRandom rr;
+	Pictures pic;
 public:
 	GraphicObjects(Graphics& gfx);
 	void Update(float dt);
 	void Draw();
-	void Add(Object* object)
+	void Add(Object* object)					//WHEN U ADD A NEW OBJECT U NEED TO ADD IT HERE ASS WELL
 	{
 		if (Particle* v = dynamic_cast<Particle*>(object))
 		{
@@ -76,12 +103,17 @@ public:
 		{
 			objects.push_back(std::make_unique<Shot>(*v));
 		}
+		if (TileFrame* v = dynamic_cast<TileFrame*>(object))
+		{
+			objects.push_back(std::make_unique<TileFrame>(*v));
+		}
 	}
 
 	//Particle Blueprints			
-	void AddVolvano(Vec2 p0, int size, int spreadSpeed);
+	void AddVolcano(Vec2 p0, int size, int spreadSpeed);
 	void AddSpark(Vec2 p0, int size, int spreadSpeed);
 	void AddShot(Vec2 p0, Vec2 pGoal, float speed);
+	//void AddTileframe(Vec2 pos, Matrix<bool> size, int style);
 
 	typedef GraphicObjects GRAPH_OBJ;
 	typedef GraphicObjects::Particle PARTICLE;

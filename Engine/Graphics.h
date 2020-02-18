@@ -110,19 +110,19 @@ public:
 		}
 	}
 	template<typename E>
-	void DrawSurface(Vei2 pos, const Surface& s, E effect, Color c = NULL, bool pretty = pretty)
+	void DrawSurface(Vei2 pos, const Surface& s, E effect)
 	{
-		DrawSurface(RectI(pos, s.GetWidth(), s.GetHeight()), s.GetRect(), GetScreenRect<int>(), s, effect, c, pretty);
+		DrawSurface(RectI(pos, s.GetWidth(), s.GetHeight()), s.GetRect(), GetScreenRect<int>(), s, effect, NULL, pretty);
 	}
 	template<typename E>
-	void DrawSurface(RectI pos, const Surface& s, E effect, Color c = NULL, bool pretty = pretty)
+	void DrawSurface(RectI pos, const Surface& s, E effect)
 	{
-		DrawSurface(pos, s.GetRect(), GetScreenRect<int>(), s, effect, c, pretty)
+		DrawSurface(pos, s.GetRect(), GetScreenRect<int>(), s, effect, NULL, pretty);
 	}
 	template<typename E>
-	void DrawSurface(RectI pos, RectI sourceR, const Surface& s, E effect, Color c = NULL, bool pretty = pretty)
+	void DrawSurface(RectI pos, RectI sourceR, const Surface& s, E effect)
 	{
-		DrawSurface(pos, sourceR, GetScreenRect<int>(), s, effect, c, pretty)
+		DrawSurface(pos, sourceR, GetScreenRect<int>(), s, effect, NULL, pretty);
 	}
 	template<typename E>
 	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, Color c = NULL, bool pretty = pretty)
@@ -211,16 +211,16 @@ public:
 			{
 				if (PixelInFrame({ x,y }) && clip.top <= y && clip.bottom >= y && clip.left <= x && clip.right >= x)
 				{
-					int xPixel = sourceR.left + std::round(((float)(x - pos.left) / pos.GetWidth()) * sourceR.GetWidth());
-					int yPixel = sourceR.top + std::round(((float)(y - pos.top) / pos.GetHeight()) * sourceR.GetHeight());
-					Color col = s.GetPixel(xPixel, yPixel);
+					int xPixel = sourceR.left + (int)std::round(((float)(x - pos.left) / pos.GetWidth()) * sourceR.GetWidth());
+					int yPixel = sourceR.top + (int)std::round(((float)(y - pos.top) / pos.GetHeight()) * sourceR.GetHeight());
+					Color sourceP = s.GetPixel(xPixel, yPixel);
 					if (c == NULL)
 					{
-						effect(x, y, col, col, *this);
+						effect(x, y, sourceP, *this);
 					}
 					else
 					{
-						effect(x, y, col, c, *this);
+						effect(x, y, c, *this);
 					}
 				}
 			}

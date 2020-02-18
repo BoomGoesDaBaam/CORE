@@ -318,9 +318,9 @@ void Graphics::PutPixel(int x, int y, Color c)
 
 void Graphics::DrawCircle(int x, int y, float radius, Color c)
 {
-	for (int yCheck = -radius; yCheck < (int)radius; yCheck++)
+	for (int yCheck = -(int)radius; yCheck < (int)radius; yCheck++)
 	{
-		for (int xCheck = -radius; xCheck < (int)radius; xCheck++)
+		for (int xCheck = -(int)radius; xCheck < (int)radius; xCheck++)
 		{
 			if (sqrt(yCheck * yCheck + xCheck * xCheck) <= radius && PixelInFrame(Vei2(xCheck + x, yCheck + y)))
 			{

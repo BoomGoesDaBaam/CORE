@@ -9,11 +9,11 @@ namespace SpriteEffect
 			:
 			chroma(c) 
 		{}
-		void operator()(int x, int y, Color c, Graphics& gfx)
+		void operator()(int x, int y, Color sourceP, Graphics& gfx)
 		{
-			if (c != chroma)
+			if (sourceP != chroma)
 			{
-				gfx.PutPixel(x, y, Colors::Red);
+				gfx.PutPixel(x, y, sourceP);
 			}
 		}
 	private:
@@ -23,26 +23,28 @@ namespace SpriteEffect
 	{
 	public:
 		Nothing() {}
-		void operator()(int x, int y, Color c, Graphics& gfx)
+		void operator()(int x, int y, Color sourceP, Graphics& gfx)
 		{
-			gfx.PutPixel(x, y, c);
+			gfx.PutPixel(x, y, sourceP);
 		}
 	};
-	class ChromaColor
+	class ChromaColor // Chroma + Color
 	{
 	public:
-		ChromaColor(Color chroma)
+		ChromaColor(Color chroma,Color c)
 			:
-			chroma(chroma)
+			chroma(chroma),
+			c(c)
 		{}
-		void operator()(int x, int y, Color testForChroma, Color c, Graphics& gfx)
+		void operator()(int x, int y, Color sourceP, Graphics& gfx)
 		{
-			if (testForChroma != chroma)
+			if (sourceP != chroma)
 			{
 				gfx.PutPixel(x, y, c);
 			}
 		}
 	private:
 		Color chroma;
+		Color c;
 	};
 };

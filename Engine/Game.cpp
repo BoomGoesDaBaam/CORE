@@ -26,9 +26,10 @@ Game::Game( MainWindow& wnd )
 	wnd( wnd ),
 	gfx( wnd ),
 	go(gfx)
+	, mat2(mat.Get3x3Surrounded(1, 1, 0))
 {
-	//go.Add(&GraphicObjects::Particle(500, 500, 200, Vec2(1, 1), Vec2(2, 2)));
-	
+	//mat.SetValueOfALL(true);
+	//go.AddTileframe(Vec2(50.0f, 50.0f), mat, 0);
 }
 
 void Game::Go()
@@ -42,8 +43,26 @@ void Game::Go()
 void Game::UpdateModel()
 {
 	go.Update(0.1f);
-	go.AddVolvano((Vec2)wnd.mouse.GetPos(), 50*rr.GetFaktor(), 50);
+	
+//	go.AddVolcano((Vec2)wnd.mouse.GetPos(), 50*rr.GetFaktor(), 50);
 //	go.AddShot((Vec2)wnd.mouse.GetPos(),Vec2(500,50),50.0f);
+
+	Vei2 mP = (Vei2)wnd.mouse.GetPos();
+
+	for (int y = 0; y < mat2.GetRaws(); y++)
+	{
+		for (int x = 0; x < mat2.GetColums(); x++)
+		{
+			if (mat2[x][y] == 1)
+			{
+				go.AddVolcano(Vec2((float)mP.x + x * 50, (float)mP.y + y * 50), 20, 10);
+			}
+			else
+			{
+				go.AddVolcano(Vec2((float)mP.x + x * 50, (float)mP.y + y * 50), 1, 10);
+			}
+		}
+	}
 }
 
 void Game::ComposeFrame()

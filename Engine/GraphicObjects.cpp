@@ -3,7 +3,6 @@
 
 GraphicObjects::GraphicObjects(Graphics& gfx):gfx(gfx)
 {
-	tileFramePics.push_back(Surface("Textures/6.bmp"));
 }
 
 void GraphicObjects::Update(float dt)
@@ -48,7 +47,7 @@ GraphicObjects::Object::Object(Vec2 pos, Vec2 vel, Vec2 gravity): pos(pos), vel(
 
 
 //######################## BLUEPRINTS
-void GraphicObjects::AddVolvano(Vec2 p0, int size, int spreadSpeed)
+void GraphicObjects::AddVolcano(Vec2 p0, int size, int spreadSpeed)
 {
 	Add(&GraphicObjects::Particle(p0, (float)rr.Calc(size / 3) + 1, Vec2((float)rr.Calc(spreadSpeed) - (spreadSpeed / 2), (float)rr.Calc(spreadSpeed) - (spreadSpeed / 2)), Vec2(0, 3)));
 }
@@ -73,3 +72,9 @@ void GraphicObjects::AddShot(Vec2 p0, Vec2 pGoal, float speed)
 	//float m = where*((pGoal.y - p0.y)/(pGoal.x - p0.x));
 	Add(&GraphicObjects::Shot(p0, Vec2((float)where, m).GetNormalized() * speed, Vec2(0.0f, 0.0f), 20, 3));
 }
+/*
+void GraphicObjects::AddTileframe(Vec2 pos, Matrix<bool> size, int style)
+{
+	Add(&GraphicObjects::TileFrame(pos, size, pic, style));
+}
+*/
