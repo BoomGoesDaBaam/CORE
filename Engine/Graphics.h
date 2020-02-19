@@ -125,19 +125,19 @@ public:
 		DrawSurface(pos, sourceR, GetScreenRect<int>(), s, effect, NULL, pretty);
 	}
 	template<typename E>
-	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, Color c = NULL, bool pretty = pretty)
+	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, bool pretty = pretty)
 	{
 		if (pretty)
 		{
-			DrawSurfacePretty(pos, sourceR, clip, s, effect, c);
+			DrawSurfacePretty(pos, sourceR, clip, s, effect);
 		}
 		else
 		{
-			DrawSurfaceQuick(pos, sourceR, clip, s, effect, c);
+			DrawSurfaceQuick(pos, sourceR, clip, s, effect);
 		}
 	}
 	template<typename E>
-	void DrawSurfaceQuick(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, Color c = NULL)
+	void DrawSurfaceQuick(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect)
 	{
 		RectI sourceRcopy = sourceR;
 		if (pos.left < clip.left)
@@ -190,20 +190,13 @@ public:
 					int xPixel = sourceR.left + std::round(((float)(x - pos.left) / pos.GetWidth()) * sourceR.GetWidth());
 					int yPixel = sourceR.top + std::round(((float)(y - pos.top) / pos.GetHeight()) * sourceR.GetHeight());
 					Color col = s.GetPixel(xPixel, yPixel);
-					if (c == NULL)
-					{
-						effect(x, y, col, col, *this);
-					}
-					else
-					{
-						effect(x, y, col, c, *this);
-					}
+					effect(x, y, col, *this);
 				}
 			}
 		}
 	}
 	template<typename E>
-	void DrawSurfacePretty(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, Color c = NULL)
+	void DrawSurfacePretty(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect)
 	{
 		for (int y = pos.top; y < pos.bottom; y++)
 		{
@@ -214,14 +207,7 @@ public:
 					int xPixel = sourceR.left + (int)std::round(((float)(x - pos.left) / pos.GetWidth()) * sourceR.GetWidth());
 					int yPixel = sourceR.top + (int)std::round(((float)(y - pos.top) / pos.GetHeight()) * sourceR.GetHeight());
 					Color sourceP = s.GetPixel(xPixel, yPixel);
-					if (c == NULL)
-					{
-						effect(x, y, sourceP, *this);
-					}
-					else
-					{
-						effect(x, y, c, *this);
-					}
+					effect(x, y, sourceP, *this);
 				}
 			}
 		}
@@ -241,8 +227,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>			pInputLayout;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState>			pSamplerState;
 	D3D11_MAPPED_SUBRESOURCE							mappedSysBufferTexture;
+	public:
 	Color* pSysBuffer = nullptr;
-public:
 	static constexpr int ScreenWidth = 800;
 	static constexpr int ScreenHeight = 600;
 	static constexpr bool pretty = true;

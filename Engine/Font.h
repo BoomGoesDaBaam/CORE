@@ -10,5 +10,5 @@ class Font
 	Graphics& gfx;
 public:
 	Font(std::string filename, int nRaws, int nColoms, int charWidth, int charHeight, char first, char last,Graphics& gfx);
-	void DrawText(std::string text, int x, int y);
+	void DrawText(std::string text, int x, int y, Color c);
 };

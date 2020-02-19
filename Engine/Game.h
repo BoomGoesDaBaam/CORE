@@ -50,7 +50,7 @@ private:
 	GraphicObjects go;
 	RandyRandom rr;
 	//Tim t;
-	Matrix<int> mat=Matrix<int>(2, 2, 1);
+	Matrix<int> mat=Matrix<int>(6, 6, 1);
 	Matrix<int> mat2;
 	/********************************/
 };

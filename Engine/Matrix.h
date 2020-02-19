@@ -27,7 +27,7 @@ class Matrix
 		}
 		void SetValue(int i, T value)
 		{
-			raw[i] = T;
+			colum[i] = value;
 		}
 	};
 	std::vector<Cloum> colums;
@@ -60,17 +60,17 @@ public:
 			colums[i].SetValueOfALL(value);
 		}
 	}
-	void SetValueOfRaw(int raw, T Value)
+	void SetValueOfRaw(int raw, T value)
 	{
-		assert(raw >= 0 && raw < nRaws)
+		assert(raw >= 0 && raw < nRaws);
 		for (int i = 0; i < nColums; i++)
 		{
 			colums[i].SetValue(raw, value);
 		}
 	}
-	void SetValueOfColum(int colum, T Value)
+	void SetValueOfColum(int colum, T value)
 	{
-		assert(colum >= 0 && colum < nColums)
+		assert(colum >= 0 && colum < nColums);
 		for (int i = 0; i < nRaws; i++)
 		{
 			colums[colum].SetValue(i, value);

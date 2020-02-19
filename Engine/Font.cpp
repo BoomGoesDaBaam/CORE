@@ -14,7 +14,7 @@ Font::Font(std::string filename, int nRaws, int nColums, int charWidth, int char
 		}
 	}
 }
-void Font::DrawText(std::string text, int x, int y)
+void Font::DrawText(std::string text, int x, int y,Color c)
 {
 	int xM = 0;
 	int yM = 0;
@@ -22,7 +22,7 @@ void Font::DrawText(std::string text, int x, int y)
 	{
 		if (text[i] >= first && text[i] <= last)
 		{
-			gfx.DrawSurface(Vei2(x+xM,y),cRects[text[i] - first],Graphics::GetScreenRect<int>(),s, Colors::Red,SpriteEffect::Chroma(Colors::Magenta));
+			gfx.DrawSurface(RectI(Vei2(x+xM,y), charWidth, charHeight),cRects[text[i] - first],Graphics::GetScreenRect<int>(),s, SpriteEffect::ChromaColor(Colors::Magenta,c));
 			xM += charWidth;
 		}
 		if(text[i] == ' ')

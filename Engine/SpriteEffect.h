@@ -2,12 +2,21 @@
 #include "Graphics.h"
 namespace SpriteEffect
 {
+	class Nothing
+	{
+	public:
+		Nothing() {}
+		void operator()(int x, int y, Color sourceP, Graphics& gfx)
+		{
+			gfx.PutPixel(x, y, sourceP);
+		}
+	};
 	class Chroma
 	{
 	public:
-		Chroma(Color c)
+		Chroma(Color chroma)
 			:
-			chroma(c) 
+			chroma(chroma)
 		{}
 		void operator()(int x, int y, Color sourceP, Graphics& gfx)
 		{
@@ -18,15 +27,6 @@ namespace SpriteEffect
 		}
 	private:
 		Color chroma;
-	};
-	class Nothing
-	{
-	public:
-		Nothing() {}
-		void operator()(int x, int y, Color sourceP, Graphics& gfx)
-		{
-			gfx.PutPixel(x, y, sourceP);
-		}
 	};
 	class ChromaColor // Chroma + Color
 	{

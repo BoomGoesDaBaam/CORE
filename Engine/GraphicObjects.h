@@ -31,17 +31,21 @@ public:
 		Color primC = Colors::Yellow, secC = Colors::Red;
 	public:
 		Object() = default;
-		Object(Vec2 pos, Vec2 vel, Vec2 gravity);
+		Object(Vec2 pos, Vec2 vel, Vec2 gravity, Vec2_<Color> colors);
 		virtual void Update(float dt);
 		virtual void Draw(Graphics& gfx) {};
 		bool ChoosenToDie() { return killMe; }
+		void SetPrimaryColor(Color c) { primC = c; }
+		void SetSecondaryColor(Color c) { secC = c; }
+		void SetColor(Vec2_<Color> colors) {primC = colors.x;secC = colors.y;}
+		Color GetColor() { return primC; }
 	};
 
 	class Particle : public Object
 	{
 		float radius;
 	public:
-		Particle(Vec2 pos, float radius, Vec2 vel, Vec2 gravity) : Object(pos, vel, gravity), radius(radius) {}
+		Particle(Vec2 pos, float radius, Vec2 vel, Vec2 gravity, Vec2_<Color> colors) : Object(pos, vel, gravity, colors), radius(radius) {}
 		void Draw(Graphics& gfx)override {
 			gfx.DrawCircle((int)pos.x, (int)pos.y, radius, radius - (radius / 3), primC, secC);
 		}
@@ -58,7 +62,7 @@ public:
 		int style = 0;
 		const Pictures& pic;
 	public:
-		TileFrame(Vec2 pos, Matrix<int> size,const Pictures& pic, int style = 0) : Object(pos, Vec2(0.0f, 0.0f), Vec2(0.0f, 0.0f)), matrix(size), style(style),pic(pic) {}
+		TileFrame(Vec2 pos, Matrix<int> size,const Pictures& pic, Vec2_<Color> colors, int style = 0) : Object(pos, Vec2(0.0f, 0.0f), Vec2(0.0f, 0.0f),colors), matrix(size), style(style),pic(pic) {}
 		void Draw(Graphics& gfx)override
 		{
 			Matrix<int> sur = Matrix<int>(3, 3, 0);
@@ -77,9 +81,9 @@ public:
 	
 	class Shot : public Object
 	{
-		float width, length;
+		float width=3, length;
 	public:
-		Shot(Vec2 pos, Vec2 vel, Vec2 gravity, float length, float width) : Object(pos, vel, gravity), length(length), width(width) {}
+		Shot(Vec2 pos, Vec2 vel, Vec2 gravity, float length, float, Vec2_<Color> colors) : Object(pos, vel, gravity, colors), length(length) {}
 		void Draw(Graphics& gfx)override {
 			gfx.DrawLine(pos, pos + vel * length * 0.05f, primC, (int)width);
 		}
@@ -110,9 +114,9 @@ public:
 	}
 
 	//Particle Blueprints			
-	void AddVolcano(Vec2 p0, int size, int spreadSpeed);
-	void AddSpark(Vec2 p0, int size, int spreadSpeed);
-	void AddShot(Vec2 p0, Vec2 pGoal, float speed);
+	void AddVolcano(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
+	void AddSpark(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
+	void AddShot(Vec2 p0, Vec2 pGoal, float speed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
 	//void AddTileframe(Vec2 pos, Matrix<bool> size, int style);
 
 	typedef GraphicObjects GRAPH_OBJ;
