@@ -331,9 +331,9 @@ void Graphics::DrawCircle(int x, int y, float radius, Color c)
 }
 void Graphics::DrawCircle(int x, int y, float outerRadius, float innerRadius, Color innerC, Color outerC)
 {
-	for (int yCheck = -outerRadius; yCheck < (int)outerRadius; yCheck++)
+	for (int yCheck = -(int)outerRadius; yCheck < (int)outerRadius; yCheck++)
 	{
-		for (int xCheck = -outerRadius; xCheck < (int)outerRadius; xCheck++)
+		for (int xCheck = -(int)outerRadius; xCheck < (int)outerRadius; xCheck++)
 		{
 			if (sqrt(yCheck * yCheck + xCheck * xCheck) <= outerRadius && sqrt(yCheck * yCheck + xCheck * xCheck) > innerRadius && PixelInFrame(Vei2(xCheck + x, yCheck + y)))
 			{

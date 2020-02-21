@@ -8,10 +8,6 @@
 #include "SpriteEffect.h"
 class GraphicObjects
 {
-	class ParticleConfigs
-	{
-
-	};
 	class Pictures
 	{
 	public:
@@ -20,89 +16,93 @@ class GraphicObjects
 		Pictures()
 		{
 			tileFramePics.push_back(Surface("Textures/6.bmp"));
-			tfSize.push_back(Vei2(30,30));
+			tfSize.push_back(Vei2(30, 30));
 
 		}
 	};
 public:
+	struct PartConf	//Particle Configs
+	{
+		PartConf() = default;
+		
+		float radius=5;
+		float angleVel = 0;
+		float length = 20;
+		bool killMe = false;
+		int style = 0;
+		int width=3;
+		Vec2_<Color> colors = { Colors::Yellow, Colors::Red };
+		Vec2 pos = Vec2(0.0f, 0.0f);
+		Vec2 vel = Vec2(0.0f, 0.0f);
+		Vec2 gravity = Vec2(0.0f, 2.0f);
+		Matrix<int> matrix = Matrix<int>(1,1,1);
+		const Pictures* pics=nullptr;
+		std::vector<Vec2> body;
+	};
 	class Object
 	{
 	protected:
-		bool killMe = false;
-		Vec2 pos = Vec2(0.0f, 0.0f);
-		Vec2 vel = Vec2(0.0f, 0.0f);
-		Vec2 gravity = Vec2(0.0f, 0.0f);
-		Color primC = Colors::Yellow, secC = Colors::Red;
+		PartConf configs;
 	public:
 		Object() = default;
-		Object(Vec2 pos, Vec2 vel, Vec2 gravity, Vec2_<Color> colors);
+		Object(PartConf& configs);
 		virtual void Update(float dt);
 		virtual void Draw(Graphics& gfx) {};
-		bool ChoosenToDie() { return killMe; }
-		void SetPrimaryColor(Color c) { primC = c; }
-		void SetSecondaryColor(Color c) { secC = c; }
-		void SetColor(Vec2_<Color> colors) {primC = colors.x;secC = colors.y;}
-		Color GetColor() { return primC; }
+		bool ChoosenToDie() { return configs.killMe; }
+		void SetConfigs(PartConf configs) { this->configs = configs; }
+		Color GetColor() { return configs.colors.x; }
 	};
 
 	class Particle : public Object
 	{
-		float radius;
 	public:
-		Particle(Vec2 pos, float radius, Vec2 vel, Vec2 gravity, Vec2_<Color> colors) : Object(pos, vel, gravity, colors), radius(radius) {}
+		Particle(PartConf& configs) : Object(configs) {}
+		Particle() = default;
 		void Draw(Graphics& gfx)override {
-			gfx.DrawCircle((int)pos.x, (int)pos.y, radius, radius - (radius / 3), primC, secC);
-		}
-		void RealNice()
-		{
-			radius += 0.1f;
+			gfx.DrawCircle((int)configs.pos.x, (int)configs.pos.y, configs.radius, configs.radius - (configs.radius / 3), configs.colors.x, configs.colors.y);
 		}
 	};
 	class Polynom : public Object
 	{
-		std::vector<Vec2> body;
-
 	public:
-		Polynom(Vec2 pos, std::vector<Vec2> body, Vec2 vel, Vec2 gravity, Vec2_<Color> colors) : Object(pos, vel, gravity, colors), body(body){}
+		Polynom(PartConf& configs) : Object(configs){}
+		Polynom() = default;
 		void Draw(Graphics& gfx)override {
-			for (int i = 0; i < body.size()-1; i++)
+			for (int i = 0; i < configs.body.size()-1; i++)
 			{
-				gfx.DrawLine(body[i] + pos, body[i+1] + pos, primC,1);
+				gfx.DrawLine(configs.body[i] + configs.pos, configs.body[i+1] + configs.pos, configs.colors.x,1);
 			}
-			gfx.DrawLine(body[body.size()-1] + pos, body[0] + pos, primC, 3);
+			gfx.DrawLine(configs.body[configs.body.size()-1] + configs.pos, configs.body[0] + configs.pos, configs.colors.x, 3);
 		}
 	};
 	class TileFrame : public Object
 	{
-		Matrix<int> matrix;
-		
-		int style = 0;
-		const Pictures& pic;
+
 	public:
-		TileFrame(Vec2 pos, Matrix<int> size,const Pictures& pic, Vec2_<Color> colors, int style = 0) : Object(pos, Vec2(0.0f, 0.0f), Vec2(0.0f, 0.0f),colors), matrix(size), style(style),pic(pic) {}
+		TileFrame(PartConf& configs) : Object(configs) {}
+		TileFrame() = default;
 		void Draw(Graphics& gfx)override
 		{
 			Matrix<int> sur = Matrix<int>(3, 3, 0);
-			for (int y = 0; y < matrix.GetRaws(); y++)
+			for (int y = 0; y < configs.matrix.GetRaws(); y++)
 			{
-				for (int x = 0; x < matrix.GetColums(); x++)
+				for (int x = 0; x < configs.matrix.GetColums(); x++)
 				{
-					if (y == 0 && x == 0 && matrix[x][y])
+					if (y == 0 && x == 0 && configs.matrix[x][y])
 					{
-						gfx.DrawSurface(RectI((Vei2)pos, pic.tfSize[style].x, pic.tfSize[style].y), RectI(Vei2(0, 0), pic.tfSize[style].x, pic.tfSize[style].y),Graphics::GetScreenRect<int>(), pic.tileFramePics[style], SpriteEffect::Chroma(Colors::Magenta));
+						//gfx.DrawSurface(RectI((Vei2)configs.pos, configs.pics->tfSize[configs.style].x, configs.pics->tfSize[configs.style].y), RectI(Vei2(0, 0), configs.pics->tfSize[configs.style].x, configs.pics->tfSize[configs.style].y),Graphics::GetScreenRect<int>(), configs.pics->tileFramePics[configs.style], SpriteEffect::Chroma(Colors::Magenta));
 					}
 				}
 			}
 		}
 	};
-	
 	class Shot : public Object
 	{
-		float width=3, length;
 	public:
-		Shot(Vec2 pos, Vec2 vel, Vec2 gravity, float length, float, Vec2_<Color> colors) : Object(pos, vel, gravity, colors), length(length) {}
+		Shot(PartConf& configs) : Object(configs){}
+		Shot() = default;
 		void Draw(Graphics& gfx)override {
-			gfx.DrawLine(pos, pos + vel * length * 0.05f, primC, (int)width);
+			gfx.DrawLine(configs.pos, configs.pos + configs.vel * configs.length * 0.05f, configs.colors.x, (int)configs.width);
 		}
 	};
 private:
@@ -135,11 +135,21 @@ public:
 	}
 
 	//Particle Blueprints			
-	void AddVolcano(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
-	void AddSpark(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
-	void AddShot(Vec2 p0, Vec2 pGoal, float speed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
+	//void AddVolcano(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
+	//void AddSpark(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
+	//void AddShot(Vec2 p0, Vec2 pGoal, float speed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
 	//void AddTileframe(Vec2 pos, Matrix<bool> size, int style);
-
-	typedef GraphicObjects GRAPH_OBJ;
-	typedef GraphicObjects::Particle PARTICLE;
+	void AddVoc(Object* obj, PartConf configs, int size, int spreadSpeed);
 };
+typedef GraphicObjects GRAPH_OBJ;
+typedef GraphicObjects::PartConf PARTCONF;
+typedef GraphicObjects::Particle PARTICLE;
+typedef GraphicObjects::Shot SHOT;
+typedef GraphicObjects::TileFrame TILEFRAME;
+
+/*
+static class PartBlueprints
+{
+	static GraphicObjects::PartConf Volcano = GraphicObjects::PartConf(;
+}
+*/

@@ -49,7 +49,10 @@ void Game::UpdateModel()
 
 	Vec2 mP = (Vec2)wnd.mouse.GetPos();
 	std::vector<Vec2> v = { {-20,-20},{20,-20},{20,20},{-20,20} };
-	go.Add(&GraphicObjects::Polynom(mP, v, Vec2(0, 0), Vec2(0, 2), Vec2_<Color>(Colors::Red, Colors::Blue)));
+	//go.Add(&GraphicObjects::Polynom(mP, v, Vec2(0, 0), Vec2(0, 2), Vec2_<Color>(Colors::Red, Colors::Blue)));
+	PARTCONF p = PARTCONF();
+	p.pos = (Vec2)wnd.mouse.GetPos();
+	go.AddVoc(&SHOT(), p, 10, 20);
 }
 
 void Game::ComposeFrame()

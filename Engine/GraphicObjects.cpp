@@ -33,19 +33,26 @@ void GraphicObjects::Draw()
 //OBJECTS
 void GraphicObjects::Object::Update(float dt)
 {
-	pos += vel*dt;
-	vel += gravity*dt;
-	if (!(Graphics::GetScreenRect<int>().Contains((Vei2)pos)))
+	configs.pos += configs.vel*dt;
+	configs.vel += configs.gravity*dt;
+	if (!(Graphics::GetScreenRect<int>().Contains((Vei2)configs.pos)))
 	{
-		killMe = true;
+		configs.killMe = true;
 	}
 }
-GraphicObjects::Object::Object(Vec2 pos, Vec2 vel, Vec2 gravity, Vec2_<Color> colors) : pos(pos), vel(vel), gravity(gravity) { SetColor(colors); }
-//GraphicObjects::Object(float x, float y, float radius, Vec2 vel, Vec2 gravity) :x(x), y(y), radius(radius), vel(vel), gravity(gravity) {}
-//OBJECTS
+GraphicObjects::Object::Object(PartConf& configs) : configs(configs){}
+
+void GraphicObjects::AddVoc(Object* obj, PartConf configs, int size, int spreadSpeed)	//Function changes 
+{
+	configs.radius = (float)rr.Calc(size) + 1;
+	configs.length = (float)rr.Calc(size) + 1;
+	configs.vel=Vec2((float)rr.Calc(spreadSpeed) - (spreadSpeed / 2), (float)rr.Calc(spreadSpeed) - (spreadSpeed / 2));
+	obj->SetConfigs(configs);
+	Add(obj);
+}
 
 
-
+/*
 //######################## BLUEPRINTS
 void GraphicObjects::AddVolcano(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors)
 {
@@ -71,10 +78,5 @@ void GraphicObjects::AddShot(Vec2 p0, Vec2 pGoal, float speed, Vec2_<Color> colo
 	}
 	//float m = where*((pGoal.y - p0.y)/(pGoal.x - p0.x));
 	Add(&GraphicObjects::Shot(p0, Vec2((float)where, m).GetNormalized() * speed, Vec2(0.0f, 0.0f), 20, 3, colors));
-}
-/*
-void GraphicObjects::AddTileframe(Vec2 pos, Matrix<bool> size, int style)
-{
-	Add(&GraphicObjects::TileFrame(pos, size, pic, style));
 }
 */
