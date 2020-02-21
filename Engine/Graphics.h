@@ -27,6 +27,7 @@
 #include "Surface.h"
 #include <cassert>
 #include <cmath>
+#include "GigaMath.h"
 class Graphics
 {
 public:
@@ -63,140 +64,11 @@ public:
 	void DrawCircle(int x, int y, float radius, Color c);
 	void DrawCircle(int x, int y, float outerRadius,float innerRadius, Color innerC, Color outerC);
 	void DrawLine(Vec2 p1, Vec2 p0, Color c, int thickness = 1);
+	void DrawRect(Vec2 pos, Vec2 size, Color c, float radiant = 0);
+	
+	/*
 	template<typename E>
-	void DrawSurface(Vei2 pos, const Surface& s, Color c, E effect)
-	{
-		DrawSurface(pos, Graphics::GetScreenRect<int>(), s, c, effect);
-	}
-	template<typename E>
-	void DrawSurface(Vei2 pos, RectI sourceR, RectI clip, const Surface& s, Color c, E effect)
-	{
-		if (sourceR == RectI(Vei2(0, 0), 0, 0))
-		{
-			sourceR = s.GetRect();
-		}
-
-		if (sourceR.GetWidth() + pos.x > ScreenWidth)
-		{
-			sourceR.right -= sourceR.GetWidth() + pos.x - ScreenWidth;
-		}
-		if (sourceR.GetHeight() + pos.y > ScreenHeight)
-		{
-			sourceR.bottom -= sourceR.GetHeight() + pos.y - ScreenHeight;
-		}
-
-		if (pos.x < 0)
-		{
-			sourceR.left += std::abs(pos.x);
-			pos.x += std::abs(pos.x);
-		}
-		if (pos.y < 0)
-		{
-			sourceR.top += std::abs(pos.y);
-			pos.y += std::abs(pos.y);
-		}
-		for (int y = sourceR.top; y < sourceR.bottom; y++)
-		{
-			for (int x = sourceR.left; x < sourceR.right; x++)
-			{
-				int xOnFrame = x + pos.x - sourceR.left;
-				int yOnFrame = y + pos.y - sourceR.top;
-				assert(PixelInFrame({ xOnFrame,yOnFrame }));
-				//Color c = s.GetPixel(((float)x / drawPos.GetWidth()) * s.GetWidth(), ((float)y / drawPos.GetHeight()) * s.GetHeight());
-				Color c = s.GetPixel(x, y);
-				effect(xOnFrame, yOnFrame, c, *this);
-				//}
-			}
-		}
-	}
-	template<typename E>
-	void DrawSurface(Vei2 pos, const Surface& s, E effect)
-	{
-		DrawSurface(RectI(pos, s.GetWidth(), s.GetHeight()), s.GetRect(), GetScreenRect<int>(), s, effect, NULL, pretty);
-	}
-	template<typename E>
-	void DrawSurface(RectI pos, const Surface& s, E effect)
-	{
-		DrawSurface(pos, s.GetRect(), GetScreenRect<int>(), s, effect, NULL, pretty);
-	}
-	template<typename E>
-	void DrawSurface(RectI pos, RectI sourceR, const Surface& s, E effect)
-	{
-		DrawSurface(pos, sourceR, GetScreenRect<int>(), s, effect, NULL, pretty);
-	}
-	template<typename E>
-	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, bool pretty = pretty)
-	{
-		if (pretty)
-		{
-			DrawSurfacePretty(pos, sourceR, clip, s, effect);
-		}
-		else
-		{
-			DrawSurfaceQuick(pos, sourceR, clip, s, effect);
-		}
-	}
-	template<typename E>
-	void DrawSurfaceQuick(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect)
-	{
-		RectI sourceRcopy = sourceR;
-		if (pos.left < clip.left)
-		{
-			int delta = (int)clip.left - pos.left;
-			float shorter = (float)delta / pos.GetWidth();
-			sourceR.left += (int)(shorter * sourceR.GetWidth());
-			pos.left = clip.left;
-			if (pos.GetWidth() <= 0 || pos.GetHeight() <= 0 || sourceR.GetWidth() <= 0 || sourceR.GetHeight() <= 0) {
-				return;
-			}
-		}
-		if (pos.right > clip.right)
-		{
-			int delta = pos.right - clip.right;
-			float shorter = (float)delta / pos.GetWidth();
-			sourceR.right -= std::round(shorter * sourceR.GetWidth());
-			pos.right = clip.right;
-			if (pos.GetWidth() <= 0 || pos.GetHeight() <= 0 || sourceR.GetWidth() <= 0 || sourceR.GetHeight() <= 0) {
-				return;
-			}
-		}
-		if (pos.top < clip.top)
-		{
-			int delta = clip.top - pos.top;
-			float shorter = (float)delta / pos.GetHeight();
-			sourceR.top += (int)(shorter * sourceR.GetHeight());
-			pos.top = clip.top;
-			if (pos.GetWidth() <= 0 || pos.GetHeight() <= 0 || sourceR.GetWidth() <= 0 || sourceR.GetHeight() <= 0) {
-				return;
-			}
-		}
-		if (pos.bottom > clip.bottom)
-		{
-			int delta = pos.bottom - clip.bottom;
-			float shorter = (float)delta / pos.GetHeight();
-			sourceR.bottom -= (int)(shorter * sourceR.GetHeight());
-			pos.bottom = (int)clip.bottom;
-			if (pos.GetWidth() <= 0 || pos.GetHeight() <= 0 || sourceR.GetWidth() <= 0 || sourceR.GetHeight() <= 0) {
-				return;
-			}
-		}
-		if (pos.GetWidth() > 0 && pos.GetHeight() > 0 && sourceR.GetWidth() > 0 && sourceR.GetHeight() > 0) {
-			for (int y = pos.top; y < pos.bottom; y++)
-			{
-				for (int x = pos.left; x < pos.right; x++)
-				{
-					assert(PixelInFrame({ x,y }));
-
-					int xPixel = sourceR.left + std::round(((float)(x - pos.left) / pos.GetWidth()) * sourceR.GetWidth());
-					int yPixel = sourceR.top + std::round(((float)(y - pos.top) / pos.GetHeight()) * sourceR.GetHeight());
-					Color col = s.GetPixel(xPixel, yPixel);
-					effect(x, y, col, *this);
-				}
-			}
-		}
-	}
-	template<typename E>
-	void DrawSurfacePretty(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect)
+	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect)
 	{
 		for (int y = pos.top; y < pos.bottom; y++)
 		{
@@ -204,14 +76,59 @@ public:
 			{
 				if (PixelInFrame({ x,y }) && clip.top <= y && clip.bottom >= y && clip.left <= x && clip.right >= x)
 				{
-					int xPixel = sourceR.left + (int)std::round(((float)(x - pos.left) / pos.GetWidth()) * sourceR.GetWidth());
-					int yPixel = sourceR.top + (int)std::round(((float)(y - pos.top) / pos.GetHeight()) * sourceR.GetHeight());
-					Color sourceP = s.GetPixel(xPixel, yPixel);
+					int sPixelX = sourceR.left + ((float)(x - pos.left) / pos.GetWidth())  * sourceR.GetWidth();
+					int sPixelY = sourceR.top  + ((float)(y - pos.top)  / pos.GetHeight()) * sourceR.GetHeight();
+					Color sourceP = s.GetPixel(sPixelX, sPixelY);
 					effect(x, y, sourceP, *this);
 				}
 			}
 		}
 
+	}
+	*/
+	template<typename E>
+	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, int n90rot=0)
+	{
+		for (int y = 0; y < pos.GetHeight(); y++)
+		{
+			for (int x = 0; x < pos.GetWidth(); x++)
+			{
+				if (PixelInFrame({ x + pos.left, y + pos.top }) && clip.top <= y && clip.bottom >= y && clip.left <= x && clip.right >= x)
+				{
+					int sPixelX=0;
+					int sPixelY=0;
+					sPixelX = sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth();
+					sPixelY = sourceR.top + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight();
+					Color sourceP = s.GetPixel(sPixelX, sPixelY);
+					effect(x + pos.left, y + pos.top, sourceP, *this);
+
+					/*
+					if (n90rot == 0)
+					{
+						sPixelX = sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth();
+						sPixelY = sourceR.top + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight();
+					}
+					if (n90rot == 1)
+					{ 
+						sPixelX = sourceR.left + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight();
+						sPixelY = sourceR.top - 1 - ((float)(x) / pos.GetWidth()) * sourceR.GetWidth();
+					} 
+					if (n90rot == 2)
+					{
+						sPixelX = sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth();
+						sPixelY = std::ceil(sourceR.bottom - 1 - ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
+					}
+					if (n90rot == 3)
+					{
+						sPixelX = sourceR.top + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight();
+						sPixelY = sourceR.bottom - ((float)(x) / pos.GetWidth()) * sourceR.GetWidth();
+					}
+					Color sourceP = s.GetPixel(sPixelX, sPixelY);
+					effect(x + pos.left, y + pos.top, sourceP, *this);
+					*/
+				}
+			}
+		}
 	}
 	~Graphics();
 private:
@@ -227,11 +144,11 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11InputLayout>			pInputLayout;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState>			pSamplerState;
 	D3D11_MAPPED_SUBRESOURCE							mappedSysBufferTexture;
-	public:
 	Color* pSysBuffer = nullptr;
+
+public:
 	static constexpr int ScreenWidth = 800;
 	static constexpr int ScreenHeight = 600;
-	static constexpr bool pretty = true;
 	static Vei2 GetMidOfScreen() { return Vei2(ScreenWidth / 2, ScreenHeight / 2); };
 	template<typename T>
 	const static Rect_<T> GetScreenRect() { return Rect_<T>(Vec2_<T>(0, 0), ScreenWidth, ScreenHeight); };

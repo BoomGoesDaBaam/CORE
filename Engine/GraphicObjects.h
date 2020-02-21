@@ -8,6 +8,10 @@
 #include "SpriteEffect.h"
 class GraphicObjects
 {
+	class ParticleConfigs
+	{
+
+	};
 	class Pictures
 	{
 	public:
@@ -54,7 +58,20 @@ public:
 			radius += 0.1f;
 		}
 	};
-	
+	class Polynom : public Object
+	{
+		std::vector<Vec2> body;
+
+	public:
+		Polynom(Vec2 pos, std::vector<Vec2> body, Vec2 vel, Vec2 gravity, Vec2_<Color> colors) : Object(pos, vel, gravity, colors), body(body){}
+		void Draw(Graphics& gfx)override {
+			for (int i = 0; i < body.size()-1; i++)
+			{
+				gfx.DrawLine(body[i] + pos, body[i+1] + pos, primC,1);
+			}
+			gfx.DrawLine(body[body.size()-1] + pos, body[0] + pos, primC, 3);
+		}
+	};
 	class TileFrame : public Object
 	{
 		Matrix<int> matrix;
@@ -72,7 +89,7 @@ public:
 				{
 					if (y == 0 && x == 0 && matrix[x][y])
 					{
-						gfx.DrawSurfacePretty(RectI((Vei2)pos, pic.tfSize[style].x, pic.tfSize[style].y), RectI(Vei2(0, 0), pic.tfSize[style].x, pic.tfSize[style].y),Graphics::GetScreenRect<int>(), pic.tileFramePics[style], SpriteEffect::Chroma(Colors::Magenta));
+						gfx.DrawSurface(RectI((Vei2)pos, pic.tfSize[style].x, pic.tfSize[style].y), RectI(Vei2(0, 0), pic.tfSize[style].x, pic.tfSize[style].y),Graphics::GetScreenRect<int>(), pic.tileFramePics[style], SpriteEffect::Chroma(Colors::Magenta));
 					}
 				}
 			}
@@ -110,6 +127,10 @@ public:
 		if (TileFrame* v = dynamic_cast<TileFrame*>(object))
 		{
 			objects.push_back(std::make_unique<TileFrame>(*v));
+		}
+		if (Polynom* v = dynamic_cast<Polynom*>(object))
+		{
+			objects.push_back(std::make_unique<Polynom>(*v));
 		}
 	}
 

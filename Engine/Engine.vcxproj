@@ -142,6 +142,7 @@
     <ClInclude Include="DXErr.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="GigaMath.h" />
     <ClInclude Include="GraphicObjects.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Keyboard.h" />

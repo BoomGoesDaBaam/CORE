@@ -46,7 +46,7 @@ private:
 	/********************************/
 	/*  User Variables              */
 	Font f = { "Spritesheet.bmp",9,11,9,13,'!','~',gfx };
-	Surface s = { "Spritesheet.bmp" };
+	Surface s = { "Textures/3.bmp" };
 	GraphicObjects go;
 	RandyRandom rr;
 	//Tim t;

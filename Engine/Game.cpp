@@ -47,29 +47,14 @@ void Game::UpdateModel()
 //	go.AddVolcano((Vec2)wnd.mouse.GetPos(), 50*rr.GetFaktor(), 50);
 //	go.AddShot((Vec2)wnd.mouse.GetPos(),Vec2(500,50),50.0f);
 
-	Vei2 mP = (Vei2)wnd.mouse.GetPos();
-	mat.SetValueOfColum(2, 0);
-	mat.SetValueOfRaw(2, 0);
-	for (int y = 0; y < mat.GetRaws(); y++)
-	{
-		for (int x = 0; x < mat.GetColums(); x++)
-		{
-			if (mat[x][y] == 1)
-			{
-				go.AddVolcano(Vec2((float)mP.x + x * 50, (float)mP.y + y * 50), 2, 10,Vec2_<Color>(Colors::Blue,Colors::Cyan));
-			}
-			else
-			{
-				go.AddVolcano(Vec2((float)mP.x + x * 50, (float)mP.y + y * 50), 1, 10);
-			}
-		}
-	}
+	Vec2 mP = (Vec2)wnd.mouse.GetPos();
+	std::vector<Vec2> v = { {-20,-20},{20,-20},{20,20},{-20,20} };
+	go.Add(&GraphicObjects::Polynom(mP, v, Vec2(0, 0), Vec2(0, 2), Vec2_<Color>(Colors::Red, Colors::Blue)));
 }
 
 void Game::ComposeFrame()
 {
 	go.Draw();
-	f.DrawText("Q qqqqqq@@@@@", 50, 50,Colors::Blue);
-	//gfx.DrawSurfaceQuick(RectI(Vei2(wnd.mouse.GetPosX()-20,wnd.mouse.GetPosY()-20),100,100),RectI(Vei2(1*9,2*13),2*9,2*13),RectI(Vei2(50,50),500,500), s, SpriteEffect::ChromaColor(Colors::Magenta),Colors::Blue);
-//	f.DrawText("GUESS WHAT!", wnd.mouse.GetPosX(), wnd.mouse.GetPosY());
+	gfx.DrawRect(Vec2(200, 200), Vec2(100, 100), Colors::Red,1.0f);
+	gfx.DrawSurface(RectI(Vei2(200, 200), 100, 100), s.GetRect(), Graphics::GetScreenRect<int>(), s, SpriteEffect::Nothing(), 1);
 }

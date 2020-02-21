@@ -409,7 +409,22 @@ void Graphics::DrawLine(Vec2 p0, Vec2 p1, Color c, int thickness)
 		}
 	}
 }
+void Graphics::DrawRect(Vec2 pos, Vec2 size, Color c, float radiant)
+{	
+	Vec2 p0 = (Vec2)GigaMath::RotPointToOrigin(-size.x / 2, -size.y / 2, radiant);
+	Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin(size.x / 2, size.y / -2, radiant);
+	Vec2 p2 = (Vec2)GigaMath::RotPointToOrigin(size.x / 2, size.y / 2, radiant);
+	Vec2 p3 = (Vec2)GigaMath::RotPointToOrigin(size.x / -2, size.y / 2, radiant);
 
+	p0 += pos;
+	p1 += pos;
+	p2 += pos;
+	p3 += pos;
+	DrawLine(p0, p1, Colors::Red,3);
+	DrawLine(p1, p2, Colors::Red, 3);
+	DrawLine(p2, p3, Colors::Red, 3);
+	DrawLine(p3, p0, Colors::Red, 3);
+}
 //
 //////////////////////////////////////////////////
 //           Graphics Exception
