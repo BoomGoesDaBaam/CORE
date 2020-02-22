@@ -46,8 +46,9 @@ void GraphicObjects::Object::Update(float dt)
 }
 GraphicObjects::Object::Object(PartConf& configs) : configs(configs){}
 
-void GraphicObjects::AddVoc(Object* obj, PartConf configs, int size, int spreadSpeed)	//Function changes 
+void GraphicObjects::AddVoc(Object* obj,const PartConf* configsTemplate, int size, int spreadSpeed)	//Function changes 
 {
+	PartConf configs= PartConf(*configsTemplate);
 	configs.width = 1;
 	configs.size = (float)rr.Calc(size) + 1;
 	configs.ScaleBody((float)rr.Calc(size) + 1);

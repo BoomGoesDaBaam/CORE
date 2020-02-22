@@ -53,13 +53,13 @@ void Game::UpdateModel()
 	if (t.CheckIfTimePassed(dt))
 	{
 		Vec2 mP = (Vec2)wnd.mouse.GetPos();
-		std::vector<Vec2> v = { {-20,-20},{20,-20},{20,20},{-20,20} };
-		//go.Add(&GraphicObjects::Polynom(mP, v, Vec2(0, 0), Vec2(0, 2), Vec2_<Color>(Colors::Red, Colors::Blue)));
+		std::vector<Vec2> v = { {-2,-2},{2,-2},{2,2},{-2,2},{3,5},{1,-7},{3,-5} };
 		PARTCONF p = PARTCONF();
+		p.body = v;
 		p.pos = (Vec2)wnd.mouse.GetPos();
-		go.AddVoc(&POLYNOM(), p, 10, 20);
-		go.AddVoc(&POLYNOM(), p, 5, 50);
-		go.AddVoc(&POLYNOM(), p, 2, 100);
+		go.AddVoc(&POLYGON(), &p, 8, 10);
+		go.AddVoc(&POLYGON(), &p, 2, 20);
+		go.AddVoc(&POLYGON(), &p, 1, 40);
 	
 	}
 }
@@ -67,7 +67,5 @@ void Game::UpdateModel()
 void Game::ComposeFrame()
 {
 	go.Draw();
-	gfx.DrawRect(Vec2(200, 200), Vec2(100, 100), Colors::Red,1.0f);
-	gfx.DrawSurface(RectI(Vei2(200, 200), 100, 100), s.GetRect(), Graphics::GetScreenRect<int>(), s, SpriteEffect::Nothing(), 1);
 }
 

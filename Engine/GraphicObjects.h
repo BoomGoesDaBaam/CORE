@@ -69,11 +69,11 @@ public:
 			gfx.DrawCircle((int)configs.pos.x, (int)configs.pos.y, configs.size, configs.size - (configs.size / 3), configs.colors.x, configs.colors.y);
 		}
 	};
-	class Polynom : public Object
+	class Polygon : public Object
 	{
 	public:
-		Polynom(PartConf& configs) : Object(configs){}
-		Polynom() = default;
+		Polygon(PartConf& configs) : Object(configs){}
+		Polygon() = default;
 		void Draw(Graphics& gfx)override {
 			for (int i = 0; i < configs.body.size()-1; i++)
 			{
@@ -135,9 +135,9 @@ public:
 		{
 			objects.push_back(std::make_unique<TileFrame>(*v));
 		}
-		if (Polynom* v = dynamic_cast<Polynom*>(object))
+		if (Polygon* v = dynamic_cast<Polygon*>(object))
 		{
-			objects.push_back(std::make_unique<Polynom>(*v));
+			objects.push_back(std::make_unique<Polygon>(*v));
 		}
 	}
 
@@ -146,14 +146,14 @@ public:
 	//void AddSpark(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
 	//void AddShot(Vec2 p0, Vec2 pGoal, float speed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
 	//void AddTileframe(Vec2 pos, Matrix<bool> size, int style);
-	void AddVoc(Object* obj, PartConf configs, int size, int spreadSpeed);
+	void AddVoc(Object* obj, const PartConf* configsTemplate, int size, int spreadSpeed);
 };
 typedef GraphicObjects GRAPH_OBJ;
 typedef GraphicObjects::PartConf PARTCONF;
 typedef GraphicObjects::Particle PARTICLE;
 typedef GraphicObjects::Shot SHOT;
 typedef GraphicObjects::TileFrame TILEFRAME;
-typedef GraphicObjects::Polynom POLYNOM;
+typedef GraphicObjects::Polygon POLYGON;
 /*
 static class PartBlueprints
 {
