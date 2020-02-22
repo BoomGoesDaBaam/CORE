@@ -6,6 +6,7 @@
 #include "RandyRandom.h"
 #include "Matrix.h"
 #include "SpriteEffect.h"
+#include "GigaMath.h"
 class GraphicObjects
 {
 	class Pictures
@@ -17,7 +18,6 @@ class GraphicObjects
 		{
 			tileFramePics.push_back(Surface("Textures/6.bmp"));
 			tfSize.push_back(Vei2(30, 30));
-
 		}
 	};
 public:
@@ -25,9 +25,8 @@ public:
 	{
 		PartConf() = default;
 		
-		float radius=5;
+		float size=5.0f;
 		float angleVel = 0;
-		float length = 20;
 		bool killMe = false;
 		int style = 0;
 		int width=3;
@@ -37,7 +36,15 @@ public:
 		Vec2 gravity = Vec2(0.0f, 2.0f);
 		Matrix<int> matrix = Matrix<int>(1,1,1);
 		const Pictures* pics=nullptr;
-		std::vector<Vec2> body;
+		std::vector<Vec2> body = { {-2.0f,-2.0f},{2.0f,-2.0f},{2.0f,2.0f},{-2.0f,2.0f} };
+
+		void ScaleBody(float size)
+		{
+			for (int i = 0; i < body.size(); i++)
+			{
+				body[i] *= size;
+			}
+		}
 	};
 	class Object
 	{
@@ -59,7 +66,7 @@ public:
 		Particle(PartConf& configs) : Object(configs) {}
 		Particle() = default;
 		void Draw(Graphics& gfx)override {
-			gfx.DrawCircle((int)configs.pos.x, (int)configs.pos.y, configs.radius, configs.radius - (configs.radius / 3), configs.colors.x, configs.colors.y);
+			gfx.DrawCircle((int)configs.pos.x, (int)configs.pos.y, configs.size, configs.size - (configs.size / 3), configs.colors.x, configs.colors.y);
 		}
 	};
 	class Polynom : public Object
@@ -70,9 +77,9 @@ public:
 		void Draw(Graphics& gfx)override {
 			for (int i = 0; i < configs.body.size()-1; i++)
 			{
-				gfx.DrawLine(configs.body[i] + configs.pos, configs.body[i+1] + configs.pos, configs.colors.x,1);
+				gfx.DrawLine(configs.body[i] + configs.pos, configs.body[i+1] + configs.pos,SpriteEffect::Rainbow());
 			}
-			gfx.DrawLine(configs.body[configs.body.size()-1] + configs.pos, configs.body[0] + configs.pos, configs.colors.x, 3);
+			gfx.DrawLine(configs.body[configs.body.size()-1] + configs.pos, configs.body[0] + configs.pos, SpriteEffect::Rainbow());
 		}
 	};
 	class TileFrame : public Object
@@ -102,7 +109,7 @@ public:
 		Shot(PartConf& configs) : Object(configs){}
 		Shot() = default;
 		void Draw(Graphics& gfx)override {
-			gfx.DrawLine(configs.pos, configs.pos + configs.vel * configs.length * 0.05f, configs.colors.x, (int)configs.width);
+			gfx.DrawLine(configs.pos, configs.pos + configs.vel * configs.size * 0.05f, configs.colors.x, (int)configs.width);
 		}
 	};
 private:
@@ -146,7 +153,7 @@ typedef GraphicObjects::PartConf PARTCONF;
 typedef GraphicObjects::Particle PARTICLE;
 typedef GraphicObjects::Shot SHOT;
 typedef GraphicObjects::TileFrame TILEFRAME;
-
+typedef GraphicObjects::Polynom POLYNOM;
 /*
 static class PartBlueprints
 {

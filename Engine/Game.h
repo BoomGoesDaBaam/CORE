@@ -27,6 +27,7 @@
 #include "SpriteEffect.h"
 #include "GraphicObjects.h"
 #include "Matrix.h"
+#include "Tim.h"
 class Game
 {
 public:
@@ -49,7 +50,7 @@ private:
 	Surface s = { "Textures/3.bmp" };
 	GraphicObjects go;
 	RandyRandom rr;
-	//Tim t;
+	Tim t;
 	Matrix<int> mat=Matrix<int>(6, 6, 1);
 	Matrix<int> mat2;
 	/********************************/

@@ -35,6 +35,10 @@ void GraphicObjects::Object::Update(float dt)
 {
 	configs.pos += configs.vel*dt;
 	configs.vel += configs.gravity*dt;
+	for (int i = 0; i < configs.body.size(); i++)
+	{
+		configs.body[i] = (Vec2)GigaMath::RotPointToOrigin(configs.body[i].x, configs.body[i].y, dt * configs.angleVel / 15);
+	}
 	if (!(Graphics::GetScreenRect<int>().Contains((Vei2)configs.pos)))
 	{
 		configs.killMe = true;
@@ -44,9 +48,11 @@ GraphicObjects::Object::Object(PartConf& configs) : configs(configs){}
 
 void GraphicObjects::AddVoc(Object* obj, PartConf configs, int size, int spreadSpeed)	//Function changes 
 {
-	configs.radius = (float)rr.Calc(size) + 1;
-	configs.length = (float)rr.Calc(size) + 1;
+	configs.width = 1;
+	configs.size = (float)rr.Calc(size) + 1;
+	configs.ScaleBody((float)rr.Calc(size) + 1);
 	configs.vel=Vec2((float)rr.Calc(spreadSpeed) - (spreadSpeed / 2), (float)rr.Calc(spreadSpeed) - (spreadSpeed / 2));
+	configs.angleVel = (float)(rr.Calc(200)) / 10 - 10;
 	obj->SetConfigs(configs);
 	Add(obj);
 }

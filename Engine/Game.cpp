@@ -42,17 +42,26 @@ void Game::Go()
 
 void Game::UpdateModel()
 {
-	go.Update(0.1f);
+	for (int i = 0; i < 100; i++)
+	{
+		go.Update(0.001);
+	}
 	
 //	go.AddVolcano((Vec2)wnd.mouse.GetPos(), 50*rr.GetFaktor(), 50);
 //	go.AddShot((Vec2)wnd.mouse.GetPos(),Vec2(500,50),50.0f);
-
-	Vec2 mP = (Vec2)wnd.mouse.GetPos();
-	std::vector<Vec2> v = { {-20,-20},{20,-20},{20,20},{-20,20} };
-	//go.Add(&GraphicObjects::Polynom(mP, v, Vec2(0, 0), Vec2(0, 2), Vec2_<Color>(Colors::Red, Colors::Blue)));
-	PARTCONF p = PARTCONF();
-	p.pos = (Vec2)wnd.mouse.GetPos();
-	go.AddVoc(&SHOT(), p, 10, 20);
+	float dt = 0.05f;
+	if (t.CheckIfTimePassed(dt))
+	{
+		Vec2 mP = (Vec2)wnd.mouse.GetPos();
+		std::vector<Vec2> v = { {-20,-20},{20,-20},{20,20},{-20,20} };
+		//go.Add(&GraphicObjects::Polynom(mP, v, Vec2(0, 0), Vec2(0, 2), Vec2_<Color>(Colors::Red, Colors::Blue)));
+		PARTCONF p = PARTCONF();
+		p.pos = (Vec2)wnd.mouse.GetPos();
+		go.AddVoc(&POLYNOM(), p, 10, 20);
+		go.AddVoc(&POLYNOM(), p, 5, 50);
+		go.AddVoc(&POLYNOM(), p, 2, 100);
+	
+	}
 }
 
 void Game::ComposeFrame()
@@ -61,3 +70,4 @@ void Game::ComposeFrame()
 	gfx.DrawRect(Vec2(200, 200), Vec2(100, 100), Colors::Red,1.0f);
 	gfx.DrawSurface(RectI(Vei2(200, 200), 100, 100), s.GetRect(), Graphics::GetScreenRect<int>(), s, SpriteEffect::Nothing(), 1);
 }
+

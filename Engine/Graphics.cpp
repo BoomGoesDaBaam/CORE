@@ -315,6 +315,24 @@ void Graphics::PutPixel(int x, int y, Color c)
 	assert(y < int(Graphics::ScreenHeight));
 	pSysBuffer[Graphics::ScreenWidth * y + x] = c;
 }
+void Graphics::RainbowPutPixel(int x, int y)
+{
+	assert(x >= 0);
+	assert(x < int(Graphics::ScreenWidth));
+	assert(y >= 0);
+	assert(y < int(Graphics::ScreenHeight));
+
+	float dist0 = (GiMa::GetDist<float>(ScreenWidth/2	, ScreenHeight / 4, x, y) / 500);
+	float dist1 = (GiMa::GetDist<float>(ScreenWidth/4	, ScreenHeight / 4*3, x, y) / 500);
+	float dist2 = (GiMa::GetDist<float>(ScreenWidth/4*3	, ScreenHeight / 4 * 3, x, y) / 500);
+
+	unsigned char r = ((1 - dist0)	* 255);
+	unsigned char g = ((1 - dist1)	* 255);
+	unsigned char b = ((1 - dist2)  * 255);
+
+	Color c = Colors::MakeRGB(r, g, b);
+	pSysBuffer[Graphics::ScreenWidth * y + x] = c;
+}
 
 void Graphics::DrawCircle(int x, int y, float radius, Color c)
 {
@@ -384,6 +402,7 @@ void Graphics::DrawLine(Vec2 p0, Vec2 p1, Color c, int thickness)
 			if (x >= 0 && x < ScreenWidth && yi >= 0 && yi < ScreenHeight)
 			{
 				PutPixel(x, yi, c);
+				//RainbowPutPixel(x, yi);
 			}
 		}
 	}
@@ -405,6 +424,7 @@ void Graphics::DrawLine(Vec2 p0, Vec2 p1, Color c, int thickness)
 			if (xi >= 0 && xi < ScreenWidth && y >= 0 && y < ScreenHeight)
 			{
 				PutPixel(xi, y, c);
+				//RainbowPutPixel(xi, y);
 			}
 		}
 	}

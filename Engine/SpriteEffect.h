@@ -11,6 +11,17 @@ namespace SpriteEffect
 			gfx.PutPixel(x, y, sourceP);
 		}
 	};
+
+	class OneColor
+	{
+		Color c;
+	public:
+		OneColor(Color c):c(c) {}
+		void operator()(int x, int y, Color whatEVER ,Graphics& gfx)
+		{
+			gfx.PutPixel(x, y, c);
+		}
+	};
 	class Chroma
 	{
 	public:
@@ -28,6 +39,7 @@ namespace SpriteEffect
 	private:
 		Color chroma;
 	};
+
 	class ChromaColor // Chroma + Color
 	{
 	public:
@@ -46,5 +58,14 @@ namespace SpriteEffect
 	private:
 		Color chroma;
 		Color c;
+	};
+	class Rainbow
+	{
+	public:
+		Rainbow()=default;
+		void operator()(int x, int y, Color c, Graphics& gfx)
+		{
+			gfx.RainbowPutPixel(x, y);
+		}
 	};
 };
