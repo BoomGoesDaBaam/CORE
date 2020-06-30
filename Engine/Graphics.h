@@ -184,6 +184,12 @@ public:
 		}
 	}
 	template<typename E>
+	void DrawSurface(RectI pos, const Surface& s, E effect, int n90rot = 0)
+	{
+		DrawSurface(pos, s.GetRect(), GetScreenRect<int>(), s, effect, n90rot);
+	}
+	
+	template<typename E>
 	void DrawSurface(RectI pos, RectI sourceR, const Surface& s, E effect, int n90rot = 0)
 	{
 		DrawSurface(pos, sourceR, GetScreenRect<int>(), s, effect, n90rot);

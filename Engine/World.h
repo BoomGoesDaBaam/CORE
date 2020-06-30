@@ -2,9 +2,21 @@
 #include <memory>
 #include "Rect.h"
 #include "Graphics.h"
+#include "TexturesCollection.h"
+#include "SpriteEffect.h"
+#include "RandyRandom.h"
 #pragma once
 class World
 {
+public:
+	class WorldSettings
+	{
+	public:
+		Vei2 wSize = { 50,50 };
+		Vei2 cSize = { 50,50 };
+		int nIslands=150;
+	};
+private:
 	class Cell
 	{
 	public:
@@ -14,38 +26,34 @@ class World
 		}
 		int type = 0;
 	};
-	Vei2 wSize;
-	Vec2 cSize = { 50,50 };
-	Vei2 fCell;
-public:
-	World(Vei2 wSize):wSize(wSize)
-	{
-		fCell = wSize / 2;
-		for (int y = 0; y < wSize.y; y++)
-		{
-			for (int x = 0; x < wSize.y; x++)
-			{
-				cells.push_back(Cell(x%2));
-			}
-		}
-	}
-	
-	RectF GetCellRect(Vei2 cellP)
-	{
-		Vei2 d = fCell - cellP;
 
-		return RectF(Vec2(fCell.x + cSize.x * d.x, fCell.y + cSize.y * d.y), cSize.x, cSize.y);
-	}
-	void Draw(Graphics& gfx)
-	{
-		gfx.DrawCircle(50, 50, 50, Colors::Yellow);
-	}
-
+	//Vars
+	std::shared_ptr<TexturesCollection> tC;
+	RandyRandom rng;
+	//Gamevars
+	Vei2 wSize = { 0,0 };
+	Vei2 cSize = { 0,0 };
+	Vei2 fCell = { 0,0 };
 	std::vector<Cell> cells;
 
 
+	//Private Functions
+	RectF GetCellRect(Vei2 cellP);
+	void LoadSettings(WorldSettings& s);
+	bool IsInWorld(Vei2 pos);
+	int Vec2Number(Vei2 pos);
+	Vei2 Number2Vec(int i);
+	//World Generator
+	void Generate(WorldSettings& s);
+	void GenerateCircle(Vei2 where, int radius);
+public:
+	World(WorldSettings wSettings, std::shared_ptr<TexturesCollection> tC);
+	World(std::shared_ptr<TexturesCollection> tC) :World(WorldSettings(), tC) {}
+	void Draw(Graphics& gfx);
+
+
 	Vei2 GetwSize() { return wSize; }
-	Vec2 GetcSize() { return cSize; }
+	Vei2 GetcSize() { return cSize; }
 	Vei2 GetfCell() { return fCell; }
 };
 

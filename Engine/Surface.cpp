@@ -107,6 +107,19 @@ const Color* Surface::Data() const
 	return pixels.data();
 }
 
+Surface Surface::GetSupSurface(RectI where)
+{
+	Surface sup = { where.GetWidth(),where.GetHeight() };
+	for (int y = 0; y < sup.GetHeight(); y++)
+	{
+		for (int x = 0; x < sup.GetWidth(); x++)
+		{
+			sup.PutPixel(x, y, pixels.at(where.top * width + y * width + x + where.left));
+		}
+	}
+	return sup;
+}
+
 void Surface::PutPixel(int x, int y, Color c)
 {
 	pixels[y * width + x] = c;

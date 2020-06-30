@@ -54,8 +54,9 @@ private:
 	GraphicObjects go;
 	RandyRandom rr;
 	Tim t;
-	
-	World w = Vei2( 30,30 );
 	std::shared_ptr<TexturesCollection> tC = nullptr;
+	World w;
+
+	int fps_c, fps_d;
 	/********************************/
 };

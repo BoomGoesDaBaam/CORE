@@ -15,6 +15,8 @@ public:
 	Surface& operator=(Surface&& rhs);
 	Surface& operator=(const Surface&) = default;
 	Surface() = default;
+
+	Surface GetSupSurface(RectI where);
 	void PutPixel(int x, int y, Color c);
 	Color GetPixel(int x, int y) const;
 	int GetWidth() const;
