@@ -29,15 +29,18 @@ RectF World::GetCellRect(Vei2 cellP)
 	return RectF(Vec2(mos), cSize.x, cSize.y);
 }
 
-void World::Draw(Graphics& gfx)
+void World::Draw(Graphics& gfx,Vec2& c)
 {
 	for (int y = -15; y < 15; y++)
 	{
 		for (int x = -15; x < 15; x++)
 		{
 			int cellType = cells.at(Vec2Number(Vei2(x, y) + fCell)).type;
+			RectI curCellPos = (RectI)GetCellRect(Vei2(x, y) + fCell) + (Vei2)c;
+
 			assert(cellType >= 0 && cellType < tC->s_Fields.size());
-			gfx.DrawSurface((RectI)GetCellRect(Vei2(x, y) + fCell), tC->s_Fields.at(cellType), SpriteEffect::Chroma(Colors::Magenta));
+
+			gfx.DrawSurface(curCellPos, tC->s_Fields.at(cellType), SpriteEffect::Chroma(Colors::Magenta));
 		}
 	}
 }

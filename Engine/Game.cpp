@@ -53,19 +53,22 @@ void Game::UpdateModel()
 	{
 		go.Update(0.001);
 	}
-
-
+	while (!wnd.mouse.IsEmpty())
+	{
+		c += gH.MoveCamera(wnd.mouse.Read());
+	}
+	
 
 }
 
 void Game::ComposeFrame()
 {
 	fps_c++;
-	w.Draw(gfx);
+	w.Draw(gfx,c);
 	go.Draw();
 
 	std::ostringstream oss;
-	oss <<"FPS: "<< fps_d;
+	oss <<"FPS: "<< fps_d<<" c.x:"<<c.x;
 	tC->fonts.at(0).DrawText(oss.str().c_str(), 25, 25, 25, Colors::Red);
 
 }

@@ -49,7 +49,7 @@ private:
 public:
 	World(WorldSettings wSettings, std::shared_ptr<TexturesCollection> tC);
 	World(std::shared_ptr<TexturesCollection> tC) :World(WorldSettings(), tC) {}
-	void Draw(Graphics& gfx);
+	void Draw(Graphics& gfx,Vec2& Camera);
 
 
 	Vei2 GetwSize() { return wSize; }

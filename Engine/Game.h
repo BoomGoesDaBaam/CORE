@@ -30,6 +30,7 @@
 #include "Tim.h"
 #include "World.h"
 #include "TexturesCollection.h"
+#include "GrabHandle.h"
 
 //#include <sstream>
 class Game
@@ -56,6 +57,8 @@ private:
 	Tim t;
 	std::shared_ptr<TexturesCollection> tC = nullptr;
 	World w;
+	GrabHandle gH;
+	Vec2 c = { 0,0 };
 
 	int fps_c, fps_d;
 	/********************************/

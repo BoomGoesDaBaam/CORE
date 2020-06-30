@@ -143,6 +143,7 @@
     <ClInclude Include="Font.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GigaMath.h" />
+    <ClInclude Include="GrabHandle.h" />
     <ClInclude Include="GraphicObjects.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Keyboard.h" />
@@ -164,6 +165,7 @@
     <ClCompile Include="FieldOrganizer.h" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GrabHandle.cpp" />
     <ClCompile Include="GraphicObjects.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Keyboard.cpp" />
