@@ -14,20 +14,21 @@ Font::Font(std::string filename, int nRaws, int nColums, int charWidth, int char
 		}
 	}
 }
-void Font::DrawText(std::string text, int x, int y,Color c)
+void Font::DrawText(std::string text, int x, int y, int size, Color c)
 {
+	float wRatio = size;
 	int xM = 0;
 	int yM = 0;
 	for (int i = 0; i < text.length(); i++)
 	{
 		if (text[i] >= first && text[i] <= last)
 		{
-			gfx.DrawSurface(RectI(Vei2(x+xM,y), charWidth, charHeight),cRects[text[i] - first],Graphics::GetScreenRect<int>(),s, SpriteEffect::ChromaColor(Colors::Magenta,c));
-			xM += charWidth;
+			gfx.DrawSurface(RectI(Vei2(x+xM,y), wRatio, size),cRects[text[i] - first],Graphics::GetScreenRect<int>(),s, SpriteEffect::ChromaColor(Colors::Magenta,c));
+			xM += wRatio;
 		}
 		if(text[i] == ' ')
 		{
-			xM += charWidth;
+			xM += wRatio;
 		}
 	}
 }

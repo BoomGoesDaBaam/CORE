@@ -36,7 +36,7 @@ public:
 		Vec2 gravity = Vec2(0.0f, 2.0f);
 		Matrix<int> matrix = Matrix<int>(1,1,1);
 		const Pictures* pics=nullptr;
-		std::vector<Vec2> body = { {-2.0f,-2.0f},{2.0f,-2.0f},{2.0f,2.0f},{-2.0f,2.0f} };
+		std::vector<Vec2> body = { {-2,-2},{2,-2},{2,2},{-2,2},{3,5},{1,-7},{3,-5} };
 
 		void ScaleBody(float size)
 		{
@@ -142,7 +142,7 @@ public:
 	}
 
 	//Particle Blueprints			
-	//void AddVolcano(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
+	void AddVolcano(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
 	//void AddSpark(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
 	//void AddShot(Vec2 p0, Vec2 pGoal, float speed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
 	//void AddTileframe(Vec2 pos, Matrix<bool> size, int style);

@@ -46,7 +46,7 @@ void GraphicObjects::Object::Update(float dt)
 }
 GraphicObjects::Object::Object(PartConf& configs) : configs(configs){}
 
-void GraphicObjects::AddVoc(Object* obj,const PartConf* configsTemplate, int size, int spreadSpeed)	//Function changes 
+void GraphicObjects::AddVoc(Object* obj,const PartConf* configsTemplate, int size, int spreadSpeed)
 {
 	PartConf configs= PartConf(*configsTemplate);
 	configs.width = 1;
@@ -63,7 +63,13 @@ void GraphicObjects::AddVoc(Object* obj,const PartConf* configsTemplate, int siz
 //######################## BLUEPRINTS
 void GraphicObjects::AddVolcano(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors)
 {
-	Add(&GraphicObjects::Particle(p0, (float)rr.Calc(size / 3) + 1, Vec2((float)rr.Calc(spreadSpeed) - (spreadSpeed / 2), (float)rr.Calc(spreadSpeed) - (spreadSpeed / 2)), Vec2(0, 3), colors));
+	PartConf configs = PartConf();
+	configs.pos = p0;
+	configs.size = size;
+	configs.colors = colors;
+	configs.vel = colors;
+	Add(&GraphicObjects::Particle(PartConf()));
+	//Add(&GraphicObjects::Particle(p0, (float)rr.Calc(size / 3) + 1, Vec2((float)rr.Calc(spreadSpeed) - (spreadSpeed / 2), (float)rr.Calc(spreadSpeed) - (spreadSpeed / 2)), Vec2(0, 3), colors));
 }
 void GraphicObjects::AddSpark(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors)
 {

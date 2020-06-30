@@ -81,7 +81,7 @@
     <ClInclude Include="World.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GameDrawer.h">
+    <ClInclude Include="TexturesCollection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -122,7 +122,7 @@
     <ClCompile Include="World.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GameDrawer.cpp">
+    <ClCompile Include="TexturesCollection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

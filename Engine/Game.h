@@ -29,7 +29,9 @@
 #include "Matrix.h"
 #include "Tim.h"
 #include "World.h"
-#include "GameDrawer.h"
+#include "TexturesCollection.h"
+
+//#include <sstream>
 class Game
 {
 public:
@@ -49,12 +51,11 @@ private:
 	/********************************/
 	/*  User Variables              */
 	Font f = { "Spritesheet.bmp",9,11,9,13,'!','~',gfx };
-	Surface s = { "Textures/orientation.bmp" };
 	GraphicObjects go;
 	RandyRandom rr;
 	Tim t;
 	
 	World w = Vei2( 30,30 );
-	GameDrawer gd;
+	std::shared_ptr<TexturesCollection> tC = nullptr;
 	/********************************/
 };
