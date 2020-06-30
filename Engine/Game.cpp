@@ -25,8 +25,8 @@ Game::Game( MainWindow& wnd )
 	:
 	wnd( wnd ),
 	gfx( wnd ),
-	go(gfx)
-	, mat2(mat.Get3x3Surrounded(1, 2, 0))
+	go(gfx),
+	gd(gfx)
 {
 	//mat.SetValueOfALL(true);
 	//go.AddTileframe(Vec2(50.0f, 50.0f), mat, 0);
@@ -42,30 +42,16 @@ void Game::Go()
 
 void Game::UpdateModel()
 {
-	for (int i = 0; i < 100; i++)
-	{
-		go.Update(0.001);
-	}
 	
-//	go.AddVolcano((Vec2)wnd.mouse.GetPos(), 50*rr.GetFaktor(), 50);
-//	go.AddShot((Vec2)wnd.mouse.GetPos(),Vec2(500,50),50.0f);
-	float dt = 0.05f;
-	if (t.CheckIfTimePassed(dt))
-	{
-		Vec2 mP = (Vec2)wnd.mouse.GetPos();
-		std::vector<Vec2> v = { {-2,-2},{2,-2},{2,2},{-2,2},{3,5},{1,-7},{3,-5} };
-		PARTCONF p = PARTCONF();
-		p.body = v;
-		p.pos = (Vec2)wnd.mouse.GetPos();
-		go.AddVoc(&POLYGON(), &p, 8, 10);
-		go.AddVoc(&POLYGON(), &p, 2, 20);
-		go.AddVoc(&POLYGON(), &p, 1, 40);
-	
-	}
 }
 
 void Game::ComposeFrame()
 {
+	
+	w.Draw(gfx);
+
+	gfx.DrawSurface(RectI(Vei2(200, 200), 50, 50), RectI(Vei2(0, 0), 25, 25), 3.14159265359*3, s, SpriteEffect::Chroma(Colors::Magenta));
+
 	go.Draw();
 }
 

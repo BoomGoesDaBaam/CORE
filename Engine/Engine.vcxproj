@@ -142,6 +142,7 @@
     <ClInclude Include="DXErr.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="GameDrawer.h" />
     <ClInclude Include="GigaMath.h" />
     <ClInclude Include="GraphicObjects.h" />
     <ClInclude Include="Graphics.h" />
@@ -156,12 +157,14 @@
     <ClInclude Include="Surface.h" />
     <ClInclude Include="Tim.h" />
     <ClInclude Include="Vec2.h" />
+    <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DXErr.cpp" />
     <ClCompile Include="FieldOrganizer.h" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GameDrawer.cpp" />
     <ClCompile Include="GraphicObjects.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Keyboard.cpp" />
@@ -169,6 +172,7 @@
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="Surface.cpp" />
+    <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="FramebufferPS.hlsl">

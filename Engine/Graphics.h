@@ -156,6 +156,39 @@ public:
 	}
 	*/
 	template<typename E>
+	void DrawSurface(RectI pos, RectI sourceR, float rad, const Surface& s, E effect)
+	{
+
+		float cosTheta = cos(rad);
+		float sinTheta = sin(rad);
+		RectI clip = GetScreenRect<int>();
+		for (int y = 0; y < pos.GetHeight(); y++)
+		{
+			for (int x = 0; x < pos.GetWidth(); x++)
+			{
+				int rotY = y - pos.GetHeight() / 2;
+				int rotX = x - pos.GetWidth() / 2;
+
+				//if (PixelInFrame({ x + pos.left, y + pos.top }) && clip.top <= y && clip.bottom >= y && clip.left <= x && clip.right >= x)
+				//{
+				int sPixelX = (int)(sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
+				int sPixelY = (int)(sourceR.top + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
+				Color sourceP = s.GetPixel(sPixelX, sPixelY);
+
+				int rotXmove = cosTheta * x - sinTheta * y;
+				int rotYmove = sinTheta * x + cosTheta * y;
+
+				effect(rotX + pos.left + rotXmove, y + pos.top + rotYmove, sourceP, *this);
+				//}
+			}
+		}
+	}
+	template<typename E>
+	void DrawSurface(RectI pos, RectI sourceR, const Surface& s, E effect)
+	{
+		DrawSurface(pos, sourceR, GetScreenRect<int>(), s, effect, 0);
+	}
+	template<typename E>
 	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, int n90rot=0)
 	{
 		for (int y = 0; y < pos.GetHeight(); y++)

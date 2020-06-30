@@ -28,6 +28,8 @@
 #include "GraphicObjects.h"
 #include "Matrix.h"
 #include "Tim.h"
+#include "World.h"
+#include "GameDrawer.h"
 class Game
 {
 public:
@@ -47,11 +49,12 @@ private:
 	/********************************/
 	/*  User Variables              */
 	Font f = { "Spritesheet.bmp",9,11,9,13,'!','~',gfx };
-	Surface s = { "Textures/3.bmp" };
+	Surface s = { "Textures/green.bmp" };
 	GraphicObjects go;
 	RandyRandom rr;
 	Tim t;
-	Matrix<int> mat=Matrix<int>(6, 6, 1);
-	Matrix<int> mat2;
+	
+	World w = Vei2( 30,30 );
+	GameDrawer gd;
 	/********************************/
 };
