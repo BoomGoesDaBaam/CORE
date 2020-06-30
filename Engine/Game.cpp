@@ -47,11 +47,16 @@ void Game::UpdateModel()
 
 void Game::ComposeFrame()
 {
-	
-	w.Draw(gfx);
+	gfx.DrawSurface(RectI(Vei2(50,50), 100, 100), RectI(Vei2(0, 0), 50, 50), s, SpriteEffect::Chroma(Colors::Magenta),t.GetPassedTime());
 
-	gfx.DrawSurface(RectI(Vei2(200, 200), 50, 50), RectI(Vei2(0, 0), 25, 25), 3.14159265359*3, s, SpriteEffect::Chroma(Colors::Magenta));
 
+	for (int y = 0; y < 3; y++)
+	{
+		for (int x = 0; x < 3; x++)
+		{
+			gfx.DrawSurface(RectI(Vei2(200+100*x, 200 + 100 * y), 100, 100), RectI(Vei2(0, 0), 50, 50), s, SpriteEffect::Chroma(Colors::Magenta));
+		}
+	}
 	go.Draw();
 }
 

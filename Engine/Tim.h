@@ -1,8 +1,9 @@
 #pragma once
 #include <chrono>
-struct Tim
+class Tim
 {
 	std::chrono::steady_clock::time_point last;
+public:
 	Tim()
 	{
 		last = std::chrono::steady_clock::now();
@@ -17,5 +18,11 @@ struct Tim
 			return true;
 		}
 		return false;
+	}
+	double GetPassedTime()
+	{
+		auto now = std::chrono::steady_clock::now();
+		std::chrono::duration<double> dur = now - last;
+		return dur.count();
 	}
 };

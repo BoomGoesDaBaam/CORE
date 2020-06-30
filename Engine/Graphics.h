@@ -175,22 +175,23 @@ public:
 				int sPixelY = (int)(sourceR.top + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
 				Color sourceP = s.GetPixel(sPixelX, sPixelY);
 
-				int rotXmove = cosTheta * x - sinTheta * y;
-				int rotYmove = sinTheta * x + cosTheta * y;
+				int rotXmove = cosTheta * rotX - sinTheta * rotY;
+				int rotYmove = sinTheta * rotX + cosTheta * rotY;
 
-				effect(rotX + pos.left + rotXmove, y + pos.top + rotYmove, sourceP, *this);
+				effect(pos.left + rotXmove,pos.top + rotYmove, sourceP, *this);
 				//}
 			}
 		}
 	}
 	template<typename E>
-	void DrawSurface(RectI pos, RectI sourceR, const Surface& s, E effect)
+	void DrawSurface(RectI pos, RectI sourceR, const Surface& s, E effect, int n90rot = 0)
 	{
-		DrawSurface(pos, sourceR, GetScreenRect<int>(), s, effect, 0);
+		DrawSurface(pos, sourceR, GetScreenRect<int>(), s, effect, n90rot);
 	}
 	template<typename E>
 	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, int n90rot=0)
 	{
+		n90rot %= 4;
 		for (int y = 0; y < pos.GetHeight(); y++)
 		{
 			for (int x = 0; x < pos.GetWidth(); x++)
@@ -199,35 +200,29 @@ public:
 				{
 					int sPixelX=0;
 					int sPixelY=0;
-					sPixelX =(int)(sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
-					sPixelY = (int)(sourceR.top + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
-					Color sourceP = s.GetPixel(sPixelX, sPixelY);
-					effect(x + pos.left, y + pos.top, sourceP, *this);
 
-					/*
 					if (n90rot == 0)
 					{
-						sPixelX = sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth();
-						sPixelY = sourceR.top + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight();
+						sPixelX = (int)(sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
+						sPixelY = (int)(sourceR.top + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
 					}
 					if (n90rot == 1)
 					{ 
-						sPixelX = sourceR.left + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight();
-						sPixelY = sourceR.top - 1 - ((float)(x) / pos.GetWidth()) * sourceR.GetWidth();
+						sPixelX = (int)(sourceR.right - 1 - ((float)(y) / pos.GetWidth()) * sourceR.GetWidth());
+						sPixelY = (int)(sourceR.top + ((float)(x) / pos.GetHeight()) * sourceR.GetHeight());
 					} 
 					if (n90rot == 2)
 					{
-						sPixelX = sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth();
-						sPixelY = std::ceil(sourceR.bottom - 1 - ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
+						sPixelX = (int)(sourceR.right - 1 - ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
+						sPixelY = (int)(sourceR.bottom - 1 - ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
 					}
 					if (n90rot == 3)
 					{
-						sPixelX = sourceR.top + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight();
-						sPixelY = sourceR.bottom - ((float)(x) / pos.GetWidth()) * sourceR.GetWidth();
+						sPixelX = (int)(sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
+						sPixelY = (int)(sourceR.bottom - 1 - ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
 					}
 					Color sourceP = s.GetPixel(sPixelX, sPixelY);
 					effect(x + pos.left, y + pos.top, sourceP, *this);
-					*/
 				}
 			}
 		}
