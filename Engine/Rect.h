@@ -79,6 +79,10 @@ public:
 	{
 		return Rect_<T>(left + rhs.x,right + rhs.x ,top + rhs.y,bottom + rhs.y);
 	}
+	Rect_<T> operator-(const Vec2_<T>& rhs) const
+	{
+		return Rect_<T>(left - rhs.x, right - rhs.x, top - rhs.y, bottom - rhs.y);
+	}
 public:
 	T left;
 	T right;

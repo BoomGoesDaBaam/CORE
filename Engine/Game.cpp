@@ -27,7 +27,7 @@ Game::Game(MainWindow& wnd)
 	gfx(wnd),
 	go(gfx),
 	tC(std::make_shared<TexturesCollection>(gfx)),
-	w(World(tC))
+	curW(std::make_unique<World>(World::WorldSettings(),tC,c))
 {
 	//mat.SetValueOfALL(true);
 	//go.AddTileframe(Vec2(50.0f, 50.0f), mat, 0);
@@ -55,21 +55,40 @@ void Game::UpdateModel()
 	}
 	while (!wnd.mouse.IsEmpty())
 	{
-		c += gH.MoveCamera(wnd.mouse.Read());
+		HandleMouseInput(wnd.mouse.Read());
 	}
-	
-
+	while (!wnd.kbd.KeyIsEmpty())
+	{
+		HandleKeyboardInput(wnd.kbd.ReadKey());
+	}
 }
 
 void Game::ComposeFrame()
 {
 	fps_c++;
-	w.Draw(gfx,c);
+	curW->Draw(gfx);
 	go.Draw();
 
-	std::ostringstream oss;
-	oss <<"FPS: "<< fps_d<<" c.x:"<<c.x;
-	tC->fonts.at(0).DrawText(oss.str().c_str(), 25, 25, 25, Colors::Red);
+	std::ostringstream oss1,oss2;
+	oss1 <<"FPS: "<< fps_d<<"   World cords:("<<curW->GetmCell().x<<" | "<<curW->GetmCell().y<<")"<<" Camera:(" << c.x << " | " << c.y << ")" ;
+	oss2 << "Ange:(" << curW->GetfCell().x<<"|"<< curW->GetfCell().y<<")";
+	tC->fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 15, Colors::Red);
+	tC->fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 15, Colors::Red);
+	
+	Vei2 mos = Graphics::GetMidOfScreen();
+
+	gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
+}
+
+void Game::HandleMouseInput(Mouse::Event& e)
+{
+	Vec2 cDelta = gH.MoveCamera(e);
+
+	curW->ApplyCameraChanges(cDelta);
+	curW->HandleMouseEvents(e);
+}
+void Game::HandleKeyboardInput(Keyboard::Event& e)
+{
 
 }
 

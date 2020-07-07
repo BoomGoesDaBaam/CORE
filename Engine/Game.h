@@ -45,6 +45,8 @@ private:
 	void UpdateModel();
 	/********************************/
 	/*  User Functions              */
+	void Game::HandleMouseInput(Mouse::Event& e);
+		void Game::HandleKeyboardInput(Keyboard::Event& e);
 	/********************************/
 private:
 	MainWindow& wnd;
@@ -56,7 +58,7 @@ private:
 	RandyRandom rr;
 	Tim t;
 	std::shared_ptr<TexturesCollection> tC = nullptr;
-	World w;
+	std::unique_ptr<World> curW;
 	GrabHandle gH;
 	Vec2 c = { 0,0 };
 
