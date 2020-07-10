@@ -1,6 +1,6 @@
 #include "World.h"
 
-World::World(WorldSettings wSettings, std::shared_ptr<TexturesCollection> tC, Vec2& camera) :tC(std::move(tC)), c(camera)
+World::World(WorldSettings wSettings, std::shared_ptr<TexturesCollection> tC, Vec2& camera) :tC(std::move(tC)), c(camera),cells(wSettings.wSize,wSettings.defType)
 {
 	LoadSettings(wSettings);
 	mCell = wSize / 2;
@@ -8,26 +8,13 @@ World::World(WorldSettings wSettings, std::shared_ptr<TexturesCollection> tC, Ve
 	mCell.x = 0;
 	Generate(wSettings);
 }
+bool World::IsInWorld(Vei2& v)const
+{
+	return v.x >= 0 && v.x < wSize.x && v.y >= 0 && v.y < wSize.y;
+}
+Vei2 World::PutInWorldX(Vei2& v)const
+{
 
-bool World::IsInWorld(Vei2 v)const
-{
-	return v.x >= 0 && v.y >= 0 && v.y < wSize.y && v.x < wSize.x;
-}
-int World::Vec2Number(Vei2 v)const
-{
-	int x = (wSize.x + v.x) % wSize.x;
-	int y = (wSize.y + v.y) % wSize.y;
-	return y * wSize.x + x;
-}
-Vei2 World::Number2Vec(int pos)const
-{
-	return Vei2(pos / wSize.x, pos % wSize.x);
-}
-Vei2 World::PutInWorld(Vei2 v)const
-{
-	
-	assert(v.y > 0 && v.y < wSize.y);
-	
 	if (v.x < 0)
 	{
 		v.x = -v.x;
@@ -37,6 +24,15 @@ Vei2 World::PutInWorld(Vei2 v)const
 	if (v.x >= wSize.x)
 	{
 		v.x = v.x % wSize.x;
+	}
+
+	if (v.y < 0)
+	{
+		v.y = 0;
+	}
+	if (v.y >= wSize.y)
+	{
+		v.y = wSize.y - 1;
 	}
 	return v;
 }
@@ -63,14 +59,31 @@ Vei2 World::GetCellHit(Vec2 mP)const
 	if (deltaPixel.x < 0)
 		deltaCells.x++;
 
-	return PutInWorld(deltaCells + mCell);
+	return PutInWorldX(deltaCells + mCell);
 }
+void World::Zoom(Vei2 delta)
+{
+	float deltaX = c.x / cSize.x;
+	float deltaY = c.y / cSize.y;
+	if (delta.x + cSize.x > 0)
+	{
+		cSize.x += delta.x;
+		c.x = cSize.x * deltaX;
+	}
+	if (delta.y + cSize.y > 0)
+	{
+		cSize.y += delta.y;
+		c.y += delta.y / 2;
+		c.y = cSize.y * deltaY;
+	}
+}
+
 void World::ApplyCameraChanges(Vec2 cDelta)
 {
 	c.x += -cDelta.x;
 	c.y += cDelta.y;
-
-	if (c.x < 0)
+		
+	if (c.x < 0)						//move Camera
 	{
 		mCell.x--;
 		c.x += GetcSize().x;
@@ -99,10 +112,10 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 	{
 		mCell.x -= wSize.x;
 	}
-	Vec2 mos = (Vec2) Graphics::GetMidOfScreen();
+	Vec2 mos = (Vec2) Graphics::GetMidOfScreen();		//Move mCell
 	if (mCell.y < mos.y / cSize.y)
 	{
-		mCell.y = 4;
+		mCell.y = mos.y / cSize.y;
 		c.y = 0;
 	}
 	if (mCell.y > wSize.y - 4)
@@ -117,20 +130,40 @@ void World::HandleMouseEvents(Mouse::Event& e)
 	{
 		fCell = GetCellHit((Vec2) e.GetPos());
 	}
-}
-void World::Draw(Graphics& gfx)const
-{
-	for (int y = -6; y < 7; y++)
+	if (e.GetType() == Mouse::Event::WheelDown)
 	{
-		for (int x = -5; x < 7; x++)
+		Zoom(Vei2(-25, -25));
+	}
+	if (e.GetType() == Mouse::Event::WheelUp)
+	{
+		Zoom(Vei2(25, 25));
+	}
+	ApplyCameraChanges(Vec2(0, 0));
+}
+void World::Draw(Graphics& gfx) const
+{
+	/*			3x3
+	for (int y = 0; y <= 2; y++)
+	{
+		for (int x = -1; x <= 1; x++)
 		{
-			//Vei2 curCellI=
-			int cellType = cells.at(Vec2Number(Vei2(x, y) + mCell)).type;
+	*/
+	Vei2 mos = Graphics::GetMidOfScreen();
+	
+	for (int y = -3-(mos.y / cSize.y) * 4; y <= 3 + (mos.y / cSize.y) * 4; y++)
+	{
+		for (int x = -3-(mos.x / cSize.x)*4; x <= 3 + (mos.x / cSize.x) * 4; x++)
+		{
+			Vei2 curXY = mCell + Vei2(x,y);
+			const Cell& curCell = cells(PutInWorldX(curXY));
+
+			int cellType = curCell.type;
+
 			RectI curCellPos = (RectI)GetCellRect(Vei2(x, y) + mCell) + Vei2(-c.x,+c.y);
 
 
 			assert(cellType >= 0 && cellType < tC->s_Fields.size());
-			gfx.DrawSurface(curCellPos, tC->s_Fields.at(cellType), SpriteEffect::Chroma(Colors::Magenta));
+			gfx.DrawSurface(curCellPos, tC->s_Fields.at(curCell.type), SpriteEffect::Chroma(Colors::Magenta));
 		}
 	}
 }
@@ -143,22 +176,20 @@ void World::LoadSettings(WorldSettings& s)
 
 void World::Generate(WorldSettings& s)
 {
-	cells.clear();
-	for (int i = 0; i < s.wSize.x*s.wSize.y; i++)		//Alles mit Wasser voll machen
-	{
-		cells.emplace_back(Cell(0));
-	}
+	int j = 0;
+	cells.Init(s.wSize,s.defType);						//Welt erstellen & default value setzen
+
 	for (int i = 0; i < s.nIslands; i++)				//Alles mit Landschaft vollmachen
 	{
-		GenerateCircle(Vei2(rng.Calc(s.wSize.x), rng.Calc(s.wSize.y)), 3, 1);
+		GenerateCircle(Vei2(rng.Calc(s.wSize.x), rng.Calc(s.wSize.y)), 7, 1);
 	}
 	for (int i = 0; i < wSize.y; i++)					//Nord & Suedpol
 	{
-		GenerateCircle(Vei2(i,0), 1, 2);
+		GenerateCircle(Vei2(i,0), rng.Calc(5), 2);
 		//GenerateCircle(Vei2(i,wSize.y-1), 1,2);
 	}
 }
-void World::GenerateCircle(Vei2 where, int radius,int type ,float density)
+void World::GenerateCircle(Vei2 pos, int radius,int type ,float density)
 {
 	assert(density > 0 && density <= 1.0f);
 
@@ -166,19 +197,21 @@ void World::GenerateCircle(Vei2 where, int radius,int type ,float density)
 	{
 		for (int x = -radius; x < radius; x++)
 		{
-			if (sqrt(y * y + x * x) <= radius && IsInWorld(where+Vei2(x,y)))
+			if (sqrt(y * y + x * x) <= radius)
 			{
-				//bool put = true;
-				if (density != 0.0f)
+				Vei2 putPos = PutInWorldX(pos + Vei2(x, y));
+				if (IsInWorld(putPos))
 				{
-					//float dist = sqrt(y * y + x * x);
-					//float normalD = rng.GetNormalDist();
-					//if (rng.GetNormalDist() < density)
-						//put = false;
+					//bool put = true;
+					if (density != 0.0f)
+					{
+						//float dist = sqrt(y * y + x * x);
+						//float normalD = rng.GetNormalDist();
+						//if (rng.GetNormalDist() < density)
+							//put = false;
+					}
+					cells(putPos).type = type;
 				}
-
-				//if(put)
-				cells.at(Vec2Number(Vei2(x, y) + where)).type = type;
 			}
 		}
 	}

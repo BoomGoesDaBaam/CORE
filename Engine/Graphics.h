@@ -256,6 +256,6 @@ public:
 	template<typename T>
 	const static Rect_<T> GetScreenRect() { return Rect_<T>(Vec2_<T>(0, 0), ScreenWidth, ScreenHeight); };
 	template<typename T>
-	const static Vec2_<T> GetScreenVec2() { return Vec2_<T>(ScreenWidth, ScreenHeight); };
+	const static Vec2_<T> GetScreenVec2_() { return Vec2_<T>(ScreenWidth, ScreenHeight); };
 
 };
