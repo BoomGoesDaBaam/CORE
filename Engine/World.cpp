@@ -65,12 +65,12 @@ void World::Zoom(Vei2 delta)
 {
 	float deltaX = c.x / cSize.x;
 	float deltaY = c.y / cSize.y;
-	if (delta.x + cSize.x > 0)
+	if (delta.x + cSize.x > 0 && delta.x + cSize.x <= 600)
 	{
 		cSize.x += delta.x;
 		c.x = cSize.x * deltaX;
 	}
-	if (delta.y + cSize.y > 0)
+	if (delta.y + cSize.y > 0 && delta.y + cSize.y <= 600)
 	{
 		cSize.y += delta.y;
 		c.y += delta.y / 2;
