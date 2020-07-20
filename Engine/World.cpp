@@ -48,7 +48,10 @@ RectF World::GetCellRect(Vei2 cellP)const
 }
 Vei2 World::GetCellHit(Vec2 mP)const
 {
-	Vec2 mos = (Vec2) Graphics::GetMidOfScreen() + c;
+	Vec2 mos = (Vec2) Graphics::GetMidOfScreen();
+	mos.x -= c.x;
+	mos.y += c.y;
+
 	Vei2 deltaPixel = (Vei2) mos - (Vei2) mP;
 	Vei2 deltaCells = { 0,0 };
 
@@ -124,9 +127,11 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 		c.y = cSize.y-0.001f;
 	}
 }
-void World::HandleMouseEvents(Mouse::Event& e)
+void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 {
-	if (e.GetType() == Mouse::Event::LRelease)
+	Vec2 cDelta = gH.MoveCamera(e);
+
+	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLooked())
 	{
 		fCell = GetCellHit((Vec2) e.GetPos());
 	}
@@ -138,7 +143,8 @@ void World::HandleMouseEvents(Mouse::Event& e)
 	{
 		Zoom(Vei2(25, 25));
 	}
-	ApplyCameraChanges(Vec2(0, 0));
+
+	ApplyCameraChanges(cDelta);
 }
 void World::Draw(Graphics& gfx) const
 {
@@ -148,22 +154,34 @@ void World::Draw(Graphics& gfx) const
 		for (int x = -1; x <= 1; x++)
 		{
 	*/
+
 	Vei2 mos = Graphics::GetMidOfScreen();
-	
-	for (int y = -3-(mos.y / cSize.y) * 4; y <= 3 + (mos.y / cSize.y) * 4; y++)
+	for (int layer = 0; layer <= 2; layer++)
 	{
-		for (int x = -3-(mos.x / cSize.x)*4; x <= 3 + (mos.x / cSize.x) * 4; x++)
+		for (int y = -3 - (mos.y / cSize.y) * 4; y <= 3 + (mos.y / cSize.y) * 4; y++)
 		{
-			Vei2 curXY = mCell + Vei2(x,y);
-			const Cell& curCell = cells(PutInWorldX(curXY));
+			for (int x = -3 - (mos.x / cSize.x) * 4; x <= 3 + (mos.x / cSize.x) * 4; x++)
+			{
+				Vei2 curXY = PutInWorldX(mCell + Vei2(x, y) + Vei2(1, -1));
+				const Cell& curCell = cells(curXY);
+				int cellType = curCell.type;
+				RectI curCellPos = (RectI)GetCellRect(Vei2(x, y) + mCell) + Vei2(-c.x, +c.y);
 
-			int cellType = curCell.type;
-
-			RectI curCellPos = (RectI)GetCellRect(Vei2(x, y) + mCell) + Vei2(-c.x,+c.y);
-
-
-			assert(cellType >= 0 && cellType < tC->s_Fields.size());
-			gfx.DrawSurface(curCellPos, tC->s_Fields.at(curCell.type), SpriteEffect::Chroma(Colors::Magenta));
+				switch (layer)
+				{
+				case 0:
+					assert(cellType >= 0 && cellType < tC->s_Fields.size());
+					//gfx.DrawSurface(curCellPos, tC->s_Fields.at(curCell.type), SpriteEffect::Chroma(Colors::Magenta));
+					gfx.DrawSurface(curCellPos, tC->s_Fields.at(cellType).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+					break;
+				case 1:
+					if (curXY == fCell)
+					{
+						gfx.DrawSurface(curCellPos.GetExpanded(cSize.x / 5), tC->s_Frames.at(0), SpriteEffect::Chroma(Colors::Magenta));
+					}
+					break;
+				}
+			}
 		}
 	}
 }

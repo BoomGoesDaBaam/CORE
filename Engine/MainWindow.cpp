@@ -179,7 +179,7 @@ LRESULT MainWindow::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam )
 			{
 				ReleaseCapture();
 				mouse.OnMouseLeave();
-				mouse.OnLeftReleased( x,y );
+				//mouse.OnLeftReleased( x,y );
 				mouse.OnRightReleased( x,y );
 			}
 		}

@@ -20,6 +20,7 @@ Vec2 GrabHandle::MoveCamera(const Mouse::Event& e)
 		{
 			float dist = (holdPos - mPos).GetLength();
 			grabbed = true;
+			lock = true;
 			lastPos = mPos;
 		}
 		if (grabbed)

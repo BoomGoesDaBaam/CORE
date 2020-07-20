@@ -6,6 +6,7 @@
 #include "SpriteEffect.h"
 #include "RandyRandom.h"
 #include "MainWindow.h"
+#include "GrabHandle.h"
 #pragma once
 class World
 {
@@ -16,7 +17,7 @@ public:
 		int defType = 0;
 		Vei2 wSize = { 500, 500 };
 		Vei2 cSize = { 50,50 };
-		int nIslands=200;
+		int nIslands=2000;
 	};
 private:
 	class Cell
@@ -85,6 +86,7 @@ private:
 	Vei2 PutInWorldX(Vei2& v)const;		//Calculates coordinates when x negativ or > cSize.x   !!! DANGER 1 !!! Reference!!!
 	//Private not const Funktions
 	void Zoom(Vei2 delta);				//Delta == delta cSize
+	void ApplyCameraChanges(Vec2 cDelta);
 
 	//World Generator
 	void Generate(WorldSettings& s);
@@ -95,8 +97,7 @@ public:
 	//change game values
 	
 	//Handles
-	void ApplyCameraChanges(Vec2 cDelta);
-	void HandleMouseEvents(Mouse::Event& e);
+	void HandleMouseEvents(Mouse::Event& e, GrabHandle& gH);
 	//Grafiken
 	void Draw(Graphics& gfx)const;
 

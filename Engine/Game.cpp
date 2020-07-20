@@ -68,6 +68,7 @@ void Game::ComposeFrame()
 	fps_c++;
 	curW->Draw(gfx);
 	go.Draw();
+	tC->Update(0.015f);
 
 	std::ostringstream oss1,oss2;
 	oss1 <<"FPS: "<< fps_d<<"   World cords:("<<curW->GetmCell().x<<" | "<<curW->GetmCell().y<<")"<<" Camera:(" << c.x << " | " << c.y << ")" ;
@@ -79,13 +80,11 @@ void Game::ComposeFrame()
 
 	gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
 }
-
+//Handle
 void Game::HandleMouseInput(Mouse::Event& e)
 {
-	Vec2 cDelta = gH.MoveCamera(e);
 
-	curW->ApplyCameraChanges(cDelta);
-	curW->HandleMouseEvents(e);
+	curW->HandleMouseEvents(e,gH);
 }
 void Game::HandleKeyboardInput(Keyboard::Event& e)
 {
