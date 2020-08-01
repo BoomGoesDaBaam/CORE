@@ -154,9 +154,9 @@
     <ClInclude Include="RandyRandom.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="ResourceCollection.h" />
     <ClInclude Include="SpriteEffect.h" />
     <ClInclude Include="Surface.h" />
-    <ClInclude Include="TexturesCollection.h" />
     <ClInclude Include="Tim.h" />
     <ClInclude Include="Vec2.h" />
     <ClInclude Include="World.h" />
@@ -174,8 +174,8 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="ResourceCollection.cpp" />
     <ClCompile Include="Surface.cpp" />
-    <ClCompile Include="TexturesCollection.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>

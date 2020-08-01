@@ -19,7 +19,7 @@
  *	along with The Chili DirectX Framework.  If not, see <http://www.gnu.org/licenses/>.  *
  ******************************************************************************************/
 #pragma once
-
+#define _USE_MATH_DEFINES
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "Graphics.h"
@@ -29,7 +29,7 @@
 #include "Matrix.h"
 #include "Tim.h"
 #include "World.h"
-#include "TexturesCollection.h"
+#include "ResourceCollection.h"
 #include "GrabHandle.h"
 
 //#include <sstream>
@@ -57,7 +57,10 @@ private:
 	GraphicObjects go;
 	RandyRandom rr;
 	Tim t;
-	std::shared_ptr<TexturesCollection> tC = nullptr;
+	float passedTime = 0;
+
+	std::shared_ptr<ResourceCollection> resC = nullptr;
+
 	std::unique_ptr<World> curW;
 	GrabHandle gH;
 	Vec2 c = { 0,0 };

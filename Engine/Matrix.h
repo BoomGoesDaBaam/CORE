@@ -1,23 +1,30 @@
 #pragma once
 #include <vector>
+#include <cassert>
 template<typename T>
 class Matrix
 {
-	class Cloum
+	class Cloumn
 	{
-		std::vector<T> colum;
+		std::vector<T> column;
 	public:
-		Cloum(int size, T value)
+		Cloumn(int size, T value)
 		{
 			for (int i = 0; i < size;i++)
 			{
-				colum.push_back(value);
+				column.push_back(value);
 			}
 		}
-		T& operator[](std::size_t i)
-		{
-			return colum[i];
+
+		const T& operator[](std::size_t i)const {
+			assert(i >= 0 && i < column.size());
+			return column[i];
 		}
+		T& operator[](std::size_t i) { 
+			assert(i >= 0 && i < column.size());
+			return column[i]; }
+
+
 		void SetValueOfALL(T value)
 		{
 			for (int i = 0; i < raw.size(); i++)
@@ -27,23 +34,30 @@ class Matrix
 		}
 		void SetValue(int i, T value)
 		{
-			colum[i] = value;
+			column[i] = value;
 		}
 	};
-	std::vector<Cloum> colums;
-	int nRaws, nColums;
+	std::vector<Cloumn> columns;
+	int nRaws, nColumns;
 public:
-	Matrix(int nRaws, int nColums, T value):nRaws(nRaws),nColums(nColums)
+	Matrix(int nRaws, int nColums, T value):nRaws(nRaws),nColumns(nColums)
 	{
-		assert(nRaws >= 1 && nColums >= 1);
+		assert(nRaws >= 1 && nColumns >= 1);
 		for (int i = 0; i < nRaws; i++)
 		{
-			colums.push_back(Cloum(nRaws,value));
+			columns.push_back(Cloumn(nRaws,value));
 		}
 	}
+
+	const T& operator()(Vei2 pos)const { return columns[pos.x][pos.y]; }
+	T& operator()(Vei2 pos) { return columns[pos.x][pos.y]; }
+	const Cloumn& operator[](std::size_t idx) const { return columns[idx]; }
+	Cloumn& operator[](std::size_t idx) { return columns[idx]; }
+
+
 	Vei2 GetSize()
 	{
-		return Vei2(nRaws, nColums);
+		return Vei2(nRaws, nColumns);
 	}
 	int GetRaws()const
 	{
@@ -51,15 +65,11 @@ public:
 	}
 	int GetColums()const
 	{
-		return nColums;
-	}
-	Cloum& operator[](std::size_t i)
-	{
-		return colums[i];
+		return nColumns;
 	}
 	void SetValueOfALL(T value)
 	{
-		for (int i = 0; i < nColums; i++)
+		for (int i = 0; i < nColumns; i++)
 		{
 			colums[i].SetValueOfALL(value);
 		}
@@ -67,57 +77,57 @@ public:
 	void SetValueOfRaw(int raw, T value)
 	{
 		assert(raw >= 0 && raw < nRaws);
-		for (int i = 0; i < nColums; i++)
+		for (int i = 0; i < nColumns; i++)
 		{
 			colums[i].SetValue(raw, value);
 		}
 	}
-	void SetValueOfColum(int colum, T value)
+	void SetValueOfColum(int column, T value)
 	{
-		assert(colum >= 0 && colum < nColums);
+		assert(column >= 0 && column < nColumns);
 		for (int i = 0; i < nRaws; i++)
 		{
-			colums[colum].SetValue(i, value);
+			colums[column].SetValue(i, value);
 		}
 	}
 	Matrix<T> Get3x3Surrounded(int x, int y, T notValue)
 	{	
-		assert(x >= 0 && x < nColums && y >= 0 && y < nRaws);
+		assert(x >= 0 && x < nColumns && y >= 0 && y < nRaws);
 		Matrix<T> newM = Matrix<T>(3,3,notValue);
-		newM[1][1] = colums[x][y];
+		newM[1][1] = columns[x][y];
 
 		if (x > 0 && y > 0)
 		{
-			newM[0][0] = colums[x-1][y-1];
+			newM[0][0] = columns[x-1][y-1];
 		}
 		if (nColums - 1 > x && y > 0)
 		{
-			newM[2][0] = colums[x + 1][y - 1];
+			newM[2][0] = columns[x + 1][y - 1];
 		}
 		if (x > 0 && nRaws - 1 > y)
 		{
-			newM[0][2] = colums[x - 1][y + 1];
+			newM[0][2] = columns[x - 1][y + 1];
 		}
 		if (nColums - 1 > x && nRaws - 1 > y)
 		{
-			newM[2][2] = colums[x + 1][y + 1];
+			newM[2][2] = columns[x + 1][y + 1];
 		}
 
 		if (x > 0)
 		{
-			newM[0][1] = colums[x - 1][y];
+			newM[0][1] = columns[x - 1][y];
 		}
 		if (y > 0)
 		{
-			newM[1][0] = colums[x][y - 1];
+			newM[1][0] = columns[x][y - 1];
 		}
 		if (nColums - 1 > x)
 		{
-			newM[2][1] = colums[x + 1][y];
+			newM[2][1] = columns[x + 1][y];
 		}
 		if (nRaws - 1 > y)
 		{
-			newM[1][2] = colums[x][y + 1];
+			newM[1][2] = columns[x][y + 1];
 		}
 		return newM;
 	}

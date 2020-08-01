@@ -27,7 +27,6 @@
 #include "Surface.h"
 #include <cassert>
 #include <cmath>
-#include "GigaMath.h"
 class Graphics
 {
 public:
@@ -88,6 +87,7 @@ public:
 				}
 			}
 		}
+
 		if (p1.x != p0.x && std::abs(m) <= 1.0f)
 		{
 			if (p0.x > p1.x)

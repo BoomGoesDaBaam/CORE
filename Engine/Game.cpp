@@ -21,13 +21,14 @@
 #include "MainWindow.h"
 #include "Game.h"
 #include <sstream>
+
 Game::Game(MainWindow& wnd)
 	:
 	wnd(wnd),
 	gfx(wnd),
 	go(gfx),
-	tC(std::make_shared<TexturesCollection>(gfx)),
-	curW(std::make_unique<World>(World::WorldSettings(),tC,c))
+	resC(std::make_shared<ResourceCollection>(gfx)),
+	curW(std::make_unique<World>(World::WorldSettings(),resC,c))
 {
 	//mat.SetValueOfALL(true);
 	//go.AddTileframe(Vec2(50.0f, 50.0f), mat, 0);
@@ -43,6 +44,9 @@ void Game::Go()
 
 void Game::UpdateModel()
 {
+	//OutputDebugStringW(L"I was here.");
+
+	passedTime += 0.01f;
 	//Set Up Things
 	if (t.CheckIfTimePassed(1.0f))//FPS
 	{
@@ -68,13 +72,13 @@ void Game::ComposeFrame()
 	fps_c++;
 	curW->Draw(gfx);
 	go.Draw();
-	tC->Update(0.015f);
+	resC->tC.Update(0.015f);
 
 	std::ostringstream oss1,oss2;
 	oss1 <<"FPS: "<< fps_d<<"   World cords:("<<curW->GetmCell().x<<" | "<<curW->GetmCell().y<<")"<<" Camera:(" << c.x << " | " << c.y << ")" ;
 	oss2 << "Ange:(" << curW->GetfCell().x<<"|"<< curW->GetfCell().y<<")"<<"   CSize:"<<curW->GetcSize().x;
-	tC->fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 15, Colors::Red);
-	tC->fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 15, Colors::Red);
+	resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 15, Colors::Red);
+	resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 15, Colors::Red);
 	
 	Vei2 mos = Graphics::GetMidOfScreen();
 

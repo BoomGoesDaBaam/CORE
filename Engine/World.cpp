@@ -1,13 +1,17 @@
 #include "World.h"
 
-World::World(WorldSettings wSettings, std::shared_ptr<TexturesCollection> tC, Vec2& camera) :tC(std::move(tC)), c(camera),cells(wSettings.wSize,wSettings.defType)
+World::World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera) 
+	:
+	resC(std::move(resC)),
+	c(camera),
+	cells(wSettings.wSize,wSettings.defType),
+	tC(&this->resC->tC),
+	fsC(&this->resC->fsC)
 {
-	LoadSettings(wSettings);
-	mCell = wSize / 2;
-	fCell = wSize / 2;
-	mCell.x = 0;
+	Init(wSettings);
 	Generate(wSettings);
 }
+//conMap(Matrix<int>(wSize.x, wSize.y, 0))
 bool World::IsInWorld(Vei2& v)const
 {
 	return v.x >= 0 && v.x < wSize.x && v.y >= 0 && v.y < wSize.y;
@@ -62,7 +66,42 @@ Matrix<int> World::GetAroundMatrix(Vei2 cell) const
 	}
 	return m;
 }
-
+void World::UpdateConMap()
+{
+	conMap.clear();
+	for (int type = 1; type < tC->s_Fields.size();type++)
+	{
+		conMap.push_back(Matrix<int>(wSize.x, wSize.y, 0));
+		for (int y = 0; y < wSize.y; y++)
+		{
+			for (int x = 0; x < wSize.y; x++)
+			{
+				if (type != cells(Vei2(x, y)).type && IsSurroundedBy(Vei2(x, y), type))
+				{
+					conMap[type-1][x][y] = 1;
+				}
+				else
+				{
+					conMap[type-1][x][y] = 0;
+				}
+			}
+		}
+	}
+}
+bool World::IsSurroundedBy(Vei2 pos, int type)
+{
+	for (int y = 0; y < 3; y++)
+	{
+		for (int x = 0; x < 3; x++)
+		{
+			if (cells(PutInWorldX(pos+Vei2(x-1,y-1))).type == type)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
 RectF World::GetCellRect(Vei2 cellP)const
 {
 	Vei2 d = cellP - mCell;
@@ -106,6 +145,7 @@ void World::Zoom(Vei2 delta)
 		c.y += delta.y / 2;
 		c.y = cSize.y * deltaY;
 	}
+	fsC->Update(cSize);
 }
 
 void World::ApplyCameraChanges(Vec2 cDelta)
@@ -183,11 +223,24 @@ void World::Draw(Graphics& gfx) const
 	*/
 
 	Vei2 mos = Graphics::GetMidOfScreen();
+
+	int xStart = -(mos.x / cSize.x) * 4;
+	int xStop = 1 + (mos.x / cSize.x) * 4;
+	int yStart = -(mos.y / cSize.y) * 4;
+	int yStop = 2 + (mos.y / cSize.y) * 4;
+
+	#ifdef _DEBUG 
+	xStart = -1;
+	xStop = 1;
+	yStart = 0;
+	yStop = 2;
+	#endif
+
 	for (int layer = 0; layer <= 2; layer++)
 	{
-		for (int y = -3 - (mos.y / cSize.y) * 4; y <= 3 + (mos.y / cSize.y) * 4; y++)
+		for (int y = yStart; y <= yStop; y++)
 		{
-			for (int x = -3 - (mos.x / cSize.x) * 4; x <= 3 + (mos.x / cSize.x) * 4; x++)
+			for (int x = xStart; x <= xStop; x++)
 			{
 				Vei2 curXY = PutInWorldX(mCell + Vei2(x, y) + Vei2(1, -1));
 				const Cell& curCell = cells(curXY);
@@ -201,7 +254,14 @@ void World::Draw(Graphics& gfx) const
 					//gfx.DrawSurface(curCellPos, tC->s_Fields.at(curCell.type), SpriteEffect::Chroma(Colors::Magenta));
 					gfx.DrawSurface(curCellPos, tC->s_Fields.at(cellType).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 
-					DrawConnections(1, curCellPos, GetAroundMatrix(curXY), gfx);
+					for (int i = 0; i < 2; i++)
+					{
+						if (conMap[i][curXY.x][curXY.y] == 1)
+						{
+							DrawConnections(1, Vei2(curCellPos.left,curCellPos.top), GetAroundMatrix(curXY), gfx);
+						}
+					}
+
 					break;
 				case 1:
 					if (curXY == fCell)
@@ -214,36 +274,56 @@ void World::Draw(Graphics& gfx) const
 		}
 	}
 }
-
-void World::DrawConnections(int lookFor,RectI curCellPos, Matrix<int> aMat, Graphics& gfx)const
+bool World::NeedsConnections(Vei2 curXY)const
+{
+	if (cells.InWorldAT(curXY).type == 1)
+	{
+		return false;
+	}
+	return true;
+}
+void World::DrawConnections(int lookFor,Vei2 topLeft, Matrix<int> aMat, Graphics& gfx)const
 {
 	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
 
 	if (aMat[1][1] != lookFor)
-	{
-		if (aMat[1][2] == lookFor)
+	{									
+		if (aMat[1][2] == lookFor)			//1
 		{
-			float w = curCellPos.GetWidth();
-			curCellPos.left += w / 10;
-			curCellPos.right -= w / 10;
-			float h = curCellPos.GetHeight();
-			curCellPos.bottom -= (9.f/10.f)*w;
-			gfx.DrawSurface(curCellPos, RectI(Vei2(5, 0), 40, 5), tC->s_FieldsC.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+			gfx.DrawSurface(resC->fsC.FieldCon[0] + topLeft, RectI(Vei2(0, 0), 50, 6), tC->s_FieldsC.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+		}
+		if (aMat[1][0] == lookFor)			//2
+		{
+			gfx.DrawSurface(resC->fsC.FieldCon[1] + topLeft, RectI(Vei2(0, 44), 50, 6), tC->s_FieldsC.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+		}
+		if (aMat[0][1] == lookFor)			//3
+		{
+			gfx.DrawSurface(resC->fsC.FieldCon[2] + topLeft, RectI(Vei2(0, 0), 6, 50), tC->s_FieldsC.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+		}
+		if (aMat[2][1] == lookFor)			//4
+		{
+			gfx.DrawSurface(resC->fsC.FieldCon[3] + topLeft, RectI(Vei2(44, 0), 6, 50), tC->s_FieldsC.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 		}
 	}
 }
 
-void World::LoadSettings(WorldSettings& s)
+void World::Init(WorldSettings& s)
 {
 	wSize = s.wSize;
 	cSize = s.cSize;
+	mCell = wSize / 2;
+	fCell = wSize / 2;
+	mCell.x = 0;
+	for (int type = 1; type < tC->s_Fields.size(); type++)		//Create connectionsmaps
+	{
+		conMap.push_back(Matrix<int>(wSize.x, wSize.y, 0));
+	}
 }
 
 void World::Generate(WorldSettings& s)
 {
-	int j = 0;
 	cells.Init(s.wSize,s.defType);						//Welt erstellen & default value setzen
-
+	
 	for (int i = 0; i < s.nIslands; i++)				//Alles mit Landschaft vollmachen
 	{
 		GenerateCircle(Vei2(rng.Calc(s.wSize.x), rng.Calc(s.wSize.y)), 7, 1);
@@ -253,6 +333,9 @@ void World::Generate(WorldSettings& s)
 		GenerateCircle(Vei2(i,0), rng.Calc(5), 2);
 		//GenerateCircle(Vei2(i,wSize.y-1), 1,2);
 	}
+	//GenerateLine(Vei2(0, 250), Vei2(10, 253), 2);
+	GenerateExplosion(Vei2(0, 250), 25, 2);
+	UpdateConMap();
 }
 void World::GenerateCircle(Vei2 pos, int radius,int type ,float density)
 {
@@ -278,6 +361,78 @@ void World::GenerateCircle(Vei2 pos, int radius,int type ,float density)
 					cells(putPos).type = type;
 				}
 			}
+		}
+	}
+}
+void World::GenerateLine(Vei2 p0, Vei2 p1, int type, int thickness, float density)
+{
+	//assert(p0 != p1);
+	float m = 0.0f;
+	if (p1.x != p0.x)
+	{
+		m = ((float)p1.y - p0.y) / ((float)p1.x - p0.x);
+	}
+	if (thickness > 1)
+	{
+		for (int i = -thickness / 2; i < thickness / 2; i++)
+		{
+			if (std::abs(m) <= 1.0f)
+			{
+				GenerateLine(Vei2(p1.x, p1.y + i), Vei2(p0.x, p0.y + i), type);
+			}
+			else
+			{
+				GenerateLine(Vei2(p1.x + i, p1.y), Vei2(p0.x + i, p0.y), type);
+			}
+		}
+	}
+	//	######
+	if (p1.x != p0.x && std::abs(m) <= 1.0f)
+	{
+		if (p0.x > p1.x)
+		{
+			std::swap(p0, p1);
+		}
+
+		const float b = p0.y - m * p0.x;
+
+		for (int x = (int)p0.x; x < (int)p1.x; x++)
+		{
+			const float y = m * (float)x + b;
+
+			const int yi = (int)y;
+			cells(PutInWorldX(Vei2(x,yi))).type = type;
+		}
+	}
+	else
+	{
+		if (p0.y > p1.y)
+		{
+			std::swap(p0, p1);
+		}
+
+		const float w = (p1.x - p0.x) / (p1.y - p0.y);
+		const float p = p0.x - w * p0.y;
+
+		for (int y = (int)p0.y; y < (int)p1.y; y++)
+		{
+			const float x = w * (float)y + p;
+
+			const int xi = (int)x;
+			
+			cells(PutInWorldX(Vei2(xi, y))).type = type;
+		}
+	}
+}
+void World::GenerateExplosion(Vei2 pos, int maxLineLength, int type)			//HIER WARST DU DRAN!!!!
+{
+	for (int i = 0; i < 10; i++)
+	{
+		float rad = (float)rng.Calc(360) * 0.0174533f;
+		Vec2 p1 = (Vec2) GigaMath::RotPointToOrigin(1,0, rad);
+		for (int i = 0; i < 10; i++)
+		{
+			GenerateLine(pos, pos + Vei2(p1 * (4+rng.Calc(maxLineLength-4))), 2);
 		}
 	}
 }

@@ -79,7 +79,7 @@ public:
 	}
 
 
-
+	
 	T GetLength() const
 	{
 		return (T)std::sqrt(GetLengthSq());
@@ -108,3 +108,4 @@ public:
 
 typedef Vec2_<float> Vec2;
 typedef Vec2_<int> Vei2;
+

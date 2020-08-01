@@ -1,9 +1,22 @@
 #pragma once
 #include <iostream>
+#include <cmath>
+#include "RandyRandom.h"
 namespace GigaMath
 {
+	template<typename T>
+	T const pi = std::acos(-T(1));
+
+	/*
+	double GetRandomRadiantt()
+	{
+		RandyRandom rng;
+		return rng.Calc(360) * 0.0174533f;
+	}
+	*/
+
 	template <typename T>
-	std::pair<T, T> RotPointToOrigin(T x, T y, float radiant)
+	std::pair<T, T> RotPointToOrigin(T x, T y, double radiant)
 	{
 		std::pair<T, T> p = { x,y };
 		float s = sin(radiant);
