@@ -88,7 +88,14 @@ void Mouse::OnMouseMove( int newx,int newy )
 	buffer.push( Mouse::Event( Mouse::Event::Move,*this ) );
 	TrimBuffer();
 }
+void Mouse::OnMouseMoveOutOfScreen(int newx, int newy)
+{
+	x = newx;
+	y = newy;
 
+	buffer.push(Mouse::Event(Mouse::Event::Invalid, *this));
+	TrimBuffer();
+}
 void Mouse::OnLeftPressed( int x,int y )
 {
 	leftIsPressed = true;

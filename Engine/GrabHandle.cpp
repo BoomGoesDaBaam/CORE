@@ -3,6 +3,10 @@ Vec2 GrabHandle::MoveCamera(const Mouse::Event& e)
 {
 	const Vec2 mPos = (Vec2)e.GetPos();
 
+	if (!e.IsValid())
+	{
+		grabbed = false; hold = false;
+	}
 	if (e.GetType() == Mouse::Event::Type::LPress)
 	{
 		//GRAB HANDLE
@@ -20,7 +24,6 @@ Vec2 GrabHandle::MoveCamera(const Mouse::Event& e)
 		{
 			float dist = (holdPos - mPos).GetLength();
 			grabbed = true;
-			lock = true;
 			lastPos = mPos;
 		}
 		if (grabbed)

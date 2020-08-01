@@ -12,7 +12,11 @@ bool World::IsInWorld(Vei2& v)const
 {
 	return v.x >= 0 && v.x < wSize.x && v.y >= 0 && v.y < wSize.y;
 }
-Vei2 World::PutInWorldX(Vei2& v)const
+bool World::IsInWorldY(int y)const
+{
+	return y >= 0 && y < wSize.y;
+}
+Vei2 World::PutInWorldX(Vei2 v)const
 {
 
 	if (v.x < 0)
@@ -36,6 +40,29 @@ Vei2 World::PutInWorldX(Vei2& v)const
 	}
 	return v;
 }
+Matrix<int> World::GetAroundMatrix(Vei2 cell) const
+{
+	Matrix<int> m = Matrix<int>(3, 3, 0);
+
+	for (int y = 0; y < 3; y++)
+	{
+		for (int x = 0; x < 3; x++)
+		{
+			Vei2 curCell = PutInWorldX(Vei2(cell.x+x-1,cell.y+y-1));
+
+			if (!IsInWorldY(y))
+			{
+				m[x][y] = -1;
+			}
+			else
+			{
+				m[x][y] = cells(curCell).type;
+			}
+		}
+	}
+	return m;
+}
+
 RectF World::GetCellRect(Vei2 cellP)const
 {
 	Vei2 d = cellP - mCell;
@@ -68,12 +95,12 @@ void World::Zoom(Vei2 delta)
 {
 	float deltaX = c.x / cSize.x;
 	float deltaY = c.y / cSize.y;
-	if (delta.x + cSize.x > 0 && delta.x + cSize.x <= 600)
+	if (delta.x + cSize.x > 0 && delta.x + cSize.x <= 400)
 	{
 		cSize.x += delta.x;
 		c.x = cSize.x * deltaX;
 	}
-	if (delta.y + cSize.y > 0 && delta.y + cSize.y <= 600)
+	if (delta.y + cSize.y > 0 && delta.y + cSize.y <= 400)
 	{
 		cSize.y += delta.y;
 		c.y += delta.y / 2;
@@ -129,7 +156,6 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 }
 void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 {
-	Vec2 cDelta = gH.MoveCamera(e);
 
 	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLooked())
 	{
@@ -144,6 +170,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		Zoom(Vei2(25, 25));
 	}
 
+	Vec2 cDelta = gH.MoveCamera(e);
 	ApplyCameraChanges(cDelta);
 }
 void World::Draw(Graphics& gfx) const
@@ -173,6 +200,8 @@ void World::Draw(Graphics& gfx) const
 					assert(cellType >= 0 && cellType < tC->s_Fields.size());
 					//gfx.DrawSurface(curCellPos, tC->s_Fields.at(curCell.type), SpriteEffect::Chroma(Colors::Magenta));
 					gfx.DrawSurface(curCellPos, tC->s_Fields.at(cellType).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+
+					DrawConnections(1, curCellPos, GetAroundMatrix(curXY), gfx);
 					break;
 				case 1:
 					if (curXY == fCell)
@@ -182,6 +211,24 @@ void World::Draw(Graphics& gfx) const
 					break;
 				}
 			}
+		}
+	}
+}
+
+void World::DrawConnections(int lookFor,RectI curCellPos, Matrix<int> aMat, Graphics& gfx)const
+{
+	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
+
+	if (aMat[1][1] != lookFor)
+	{
+		if (aMat[1][2] == lookFor)
+		{
+			float w = curCellPos.GetWidth();
+			curCellPos.left += w / 10;
+			curCellPos.right -= w / 10;
+			float h = curCellPos.GetHeight();
+			curCellPos.bottom -= (9.f/10.f)*w;
+			gfx.DrawSurface(curCellPos, RectI(Vei2(5, 0), 40, 5), tC->s_FieldsC.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 		}
 	}
 }

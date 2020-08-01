@@ -7,6 +7,7 @@
 #include "RandyRandom.h"
 #include "MainWindow.h"
 #include "GrabHandle.h"
+#include "Matrix.h"
 #pragma once
 class World
 {
@@ -83,7 +84,9 @@ private:
 	Vei2 GetCellHit(Vec2 mouseP)const;
 	void LoadSettings(WorldSettings& s);
 	bool IsInWorld(Vei2& v)const;
-	Vei2 PutInWorldX(Vei2& v)const;		//Calculates coordinates when x negativ or > cSize.x   !!! DANGER 1 !!! Reference!!!
+	bool IsInWorldY(int y)const;		
+	Vei2 PutInWorldX(Vei2 v)const;		//Calculates coordinates when x negativ or > cSize.x  
+	Matrix<int> GetAroundMatrix(Vei2 cell)const;	//in bounds: type		outside bounds(y-wise): -1		
 	//Private not const Funktions
 	void Zoom(Vei2 delta);				//Delta == delta cSize
 	void ApplyCameraChanges(Vec2 cDelta);
@@ -100,7 +103,9 @@ public:
 	void HandleMouseEvents(Mouse::Event& e, GrabHandle& gH);
 	//Grafiken
 	void Draw(Graphics& gfx)const;
+	void DrawConnections(int onCell, RectI curCellPos, Matrix<int> aMat, Graphics& gfx)const;
 
+	//
 	Vei2 GetwSize() { return wSize; }
 	Vei2 GetcSize() { return cSize; }
 	Vei2 GetfCell() { return fCell; }

@@ -3,7 +3,6 @@
 class GrabHandle
 {
 	bool grabbed=false;
-	bool lock = false;
 	bool hold = false;
 
 	Vec2 holdPos = { -1,-1 };
@@ -13,6 +12,5 @@ public:
 	GrabHandle() = default;
 	Vec2 MoveCamera(const Mouse::Event& e);
 	bool IsLooked() { return grabbed; }
-	void ReleaseLock() { lock = false; }
 };
 

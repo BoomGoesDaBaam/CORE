@@ -41,6 +41,10 @@ public:
 			colums.push_back(Cloum(nRaws,value));
 		}
 	}
+	Vei2 GetSize()
+	{
+		return Vei2(nRaws, nColums);
+	}
 	int GetRaws()const
 	{
 		return nRaws;

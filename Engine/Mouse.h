@@ -109,6 +109,7 @@ public:
 	void Flush();
 private:
 	void OnMouseMove( int x,int y );
+	void OnMouseMoveOutOfScreen(int newx, int newy);
 	void OnMouseLeave();
 	void OnMouseEnter();
 	void OnLeftPressed( int x,int y );
