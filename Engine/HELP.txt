@@ -1,0 +1,18 @@
+__________________
+#-#-# Fields #-#-#
+Index	Field
+0 		Water
+1 		Plants
+2 		Ice
+3 		Snow
+4 		Nutritious plants
+5 		Snow
+_____________________________
+#-#-# Field-connections #-#-#
+Index							Connectionsprites	
+0 - (Fields.size()-1)			A					
+Fields.size() bis ende			B
+
+______________________
+#-#-# Exceptions #-#-#
+Argument-Exception bei World.cpp bei Funktion HandleKeyBoardInput

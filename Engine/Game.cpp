@@ -63,7 +63,12 @@ void Game::UpdateModel()
 	}
 	while (!wnd.kbd.KeyIsEmpty())
 	{
-		HandleKeyboardInput(wnd.kbd.ReadKey());
+		Keyboard::Event e = wnd.kbd.ReadKey();
+		HandleKeyboardInput(e);
+		if (e.IsRelease() && e.GetCode() == 'D')
+		{
+			debugInfoOn = !debugInfoOn;
+		}
 	}
 }
 
@@ -74,15 +79,21 @@ void Game::ComposeFrame()
 	go.Draw();
 	resC->tC.Update(0.015f);
 
-	std::ostringstream oss1,oss2;
-	oss1 <<"FPS: "<< fps_d<<"   World cords:("<<curW->GetmCell().x<<" | "<<curW->GetmCell().y<<")"<<" Camera:(" << c.x << " | " << c.y << ")" ;
-	oss2 << "Ange:(" << curW->GetfCell().x<<"|"<< curW->GetfCell().y<<")"<<"   CSize:"<<curW->GetcSize().x;
-	resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 15, Colors::Red);
-	resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 15, Colors::Red);
-	
-	Vei2 mos = Graphics::GetMidOfScreen();
+	std::ostringstream oss3;
+	oss3 << "FPS: " << fps_d;
+	resC->tC.fonts.at(0).DrawText(oss3.str().c_str(), 5, 5, 13, Colors::Black);
 
-	gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
+	if (debugInfoOn)
+	{
+		std::ostringstream oss1, oss2;
+		oss1 <<"World cords:(" << curW->GetmCell().x << " | " << curW->GetmCell().y << ")" << " Camera:(" << c.x << " | " << c.y << ")";
+		oss2 <<"Ange:(" << curW->GetfCell().x << "|" << curW->GetfCell().y << ")" << "   CSize:" << curW->GetcSize().x;
+		resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 200, 25, 15, Colors::Red);
+		resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 15, Colors::Red);
+		Vei2 mos = Graphics::GetMidOfScreen();
+
+		gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
+	}
 }
 //Handle
 void Game::HandleMouseInput(Mouse::Event& e)
@@ -92,6 +103,6 @@ void Game::HandleMouseInput(Mouse::Event& e)
 }
 void Game::HandleKeyboardInput(Keyboard::Event& e)
 {
-
+	curW->HandleKeyboardEvents(e);
 }
 

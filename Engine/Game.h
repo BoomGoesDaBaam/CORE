@@ -58,6 +58,7 @@ private:
 	RandyRandom rr;
 	Tim t;
 	float passedTime = 0;
+	bool debugInfoOn = true;
 
 	std::shared_ptr<ResourceCollection> resC = nullptr;
 

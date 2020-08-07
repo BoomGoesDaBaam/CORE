@@ -3,15 +3,19 @@
 #include "Surface.h"
 #include "Font.h"
 #include "Animation.h"
+#include "Settings.h"
+#include "RandyRandom.h"
+#include "Settings.h"
 class TexturesCollection
 {
+	RandyRandom rng;
 public:
 	TexturesCollection(Graphics& gfx);
 	Surface spriteSHEEP = { "Textures/Spritesheet.bmp" };
 	//Surface s_Items[1];
-	std::vector<Animation>	s_Fields;
-	std::vector<Animation>	s_FieldsC;		//Field connections
-	std::vector<Surface>	s_Frames;
+	std::vector<Animation>	Fields;
+	std::vector<Animation>	FieldsC;		//Field connections
+	std::vector<Surface>	Frames;
 	std::vector<Font>		fonts;
 	void Update(float dt);
 };
@@ -29,7 +33,7 @@ class ResourceCollection
 {
 public:
 	ResourceCollection(Graphics& gfx);
-	TexturesCollection tC;
-	FramesizeCollection fsC;
+	TexturesCollection tC;		//Texturenansammlung
+	FramesizeCollection fsC;	//Gives Framesizes for Frames for Drawing, wich need to be prescaled for performance
 };
 

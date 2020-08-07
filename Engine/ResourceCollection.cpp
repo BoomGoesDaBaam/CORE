@@ -1,4 +1,5 @@
 #include "ResourceCollection.h"
+#include "Settings.h"
 //	##### MAIN #####
 
 ResourceCollection::ResourceCollection(Graphics& gfx)
@@ -13,26 +14,31 @@ ResourceCollection::ResourceCollection(Graphics& gfx)
 TexturesCollection::TexturesCollection(Graphics& gfx)
 {
 	//Frames
-	s_Frames.push_back(spriteSHEEP.GetSupSurface(RectI(Vei2(0, 51), 70, 70)));
+	Frames.push_back(spriteSHEEP.GetSupSurface(RectI(Vei2(0, 51), 70, 70)));
 	//Items
 
-	//Fields
-	s_Fields.push_back(Animation(1.0f));
-	s_Fields.push_back(Animation(3.0f));
-	s_Fields.push_back(Animation(0.5f));
-
-	s_FieldsC.push_back(Animation(1.0f));
-	s_FieldsC.push_back(Animation(3.0f));
-	s_FieldsC.push_back(Animation(0.5f));
-	for (int i = 0; i < 3; i++)
+	//	Fields
+	for (int i = 0; i < Settings::nDiffFieldTypes; i++)
 	{
-		for (int f = 0; f < 5; f++)
-		{
-			s_FieldsC[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(51, 122 + f * 51 + i * 255), 50, 50)));
-			s_Fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0, 122 + f * 51 + i * 255), 50, 50)));
-		}
+		float d = rng.GetNormalDist() * 3;
+		Fields.push_back(Animation(d));
+
+		FieldsC.push_back(Animation(d));
+		FieldsC.push_back(Animation(d));
 	}
 
+		for (int i = 0; i < Settings::nDiffFieldTypes; i++)				//i diffrent Fields
+		{
+			for (int f = 0; f < 5; f++)			//f diffent animations
+			{
+					FieldsC[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(51, 122 + f * 51 + i * 255), 142, 50)));	//A
+					Fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0, 122 + f * 51 + i * 255), 50, 50)));
+					
+					//FieldsC[(__int64)i + Settings::nDiffFieldTypes].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(102, 122 + f * 51 + i * 255), 27, 6)));	//B
+				
+			}
+		}
+	
 	//Fonts
 	fonts.push_back(Font("Spritesheet.bmp", 9, 11, 9, 13, '!', '~', gfx));
 
@@ -40,9 +46,10 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 }
 void TexturesCollection::Update(float dt)
 {
-	for (int i = 0; i < s_Fields.size(); i++)
+	for (int i = 0; i < Fields.size(); i++)
 	{
-		s_Fields.at(i).Update(dt);
+		Fields.at(i).Update(dt);
+		FieldsC.at(i).Update(dt);
 	}
 }
 
@@ -51,7 +58,7 @@ void TexturesCollection::Update(float dt)
 
 FramesizeCollection::FramesizeCollection()
 {
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 12; i++)
 	{
 		FieldCon.push_back(RectI(Vei2(0, 0), 0, 0));
 	}
@@ -60,7 +67,7 @@ FramesizeCollection::FramesizeCollection()
 
 void FramesizeCollection::Update(Vei2 cSize)
 {
-	RectI cur = RectI(Vei2(0,0), cSize.x, cSize.y);
+	RectI cur = RectI(Vei2(0,0), cSize.x, cSize.y);		//Field connections - straight lines
 	cur.bottom -= (44.f / 50.f) * cSize.y;
 	FieldCon[0] = cur;
 
@@ -75,4 +82,54 @@ void FramesizeCollection::Update(Vei2 cSize)
 	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
 	cur.left += (44.f / 50.f) * cSize.y;
 	FieldCon[3] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);			//inner corners
+	cur.left += (6.f / 50.f) * cSize.x;
+	cur.right -= (25.f / 50.f) * cSize.x;
+	cur.top += (6.f / 50.f) * cSize.y;
+	cur.bottom -= (25.f / 50.f) * cSize.y;
+	FieldCon[4] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.left += (25.f / 50.f) * cSize.x;
+	cur.right -= (6.f / 50.f) * cSize.x;
+	cur.top += (6.f / 50.f) * cSize.y;
+	cur.bottom -= (25.f / 50.f) * cSize.y;
+	FieldCon[5] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.left += (6.f / 50.f) * cSize.x;
+	cur.right -= (25.f / 50.f) * cSize.x;
+	cur.top += (25.f / 50.f) * cSize.y;
+	cur.bottom -= (6.f / 50.f) * cSize.y;
+	FieldCon[6] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.left += (25.f / 50.f) * cSize.x;
+	cur.right -= (6.f / 50.f) * cSize.x;
+	cur.top += (25.f / 50.f) * cSize.y;
+	cur.bottom -= (6.f / 50.f) * cSize.y;
+	FieldCon[7] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);			//outer corners
+	cur.right -= (44.f / 50.f) * cSize.x;
+	cur.bottom -= (44.f / 50.f) * cSize.y;
+	FieldCon[8] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);	
+	cur.left += (44.f / 50.f) * cSize.x;
+	cur.bottom -= (44.f / 50.f) * cSize.y; 
+	FieldCon[9] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.right -= (44.f / 50.f) * cSize.x;
+	cur.top += (44.f / 50.f) * cSize.y;
+	FieldCon[10] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.left += (44.f / 50.f) * cSize.x;
+	cur.top += (44.f / 50.f) * cSize.y;
+	FieldCon[11] = cur;
+
+	//new elements need to be added in loop
 }

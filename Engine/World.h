@@ -17,16 +17,20 @@ public:
 	class WorldSettings
 	{
 	public:
-		int defType = 0;
+		int defType = 1;
 		Vei2 wSize = { 500, 500 };
 		Vei2 cSize = { 50,50 };
 		int nIslands=2000;
 	};
 private:
+	class Objekt
+	{
+
+	};
 	class Cell
 	{
 	public:
-		Cell(int type) :type(type){}
+		Cell(int type):type(type){}
 		int type = 0;
 	};
 
@@ -99,10 +103,11 @@ private:
 	Vei2 wSize = { 0,0 };
 	Vei2 cSize = { 0,0 };
 	Vei2 fCell = { 0,0 };					//angeklickte Zelle
-	Vei2 mCell = { 0,0 };					//Zelle in der Mitte des Bildschirms
+	Vei2 mCell = { 0,0 };					//Zelle in der Mitte des Bildschirms audem Debugzeiger ist
 	Cells cells;
 	std::vector<Matrix<int>> conMap;		//Connectionmap	 (1 = needsConnections, 0 = doesn't, vectorindex for type)
 	Vec2& c;								//Camera
+	bool gritVisible=false;
 
 	//Private const Functions
 	RectF GetCellRect(Vei2 cellP)const;
@@ -123,14 +128,15 @@ private:
 	void GenerateCircle(Vei2 pos, int radius, int type, float density = 1.0f); //density gibt Wert fuer Normalverteilung an
 	//void GenerateLine(Vei2 p0,Vei2 p1, int type, int thickness = 1, float density = 1.0f); //density gibt Wert fuer Normalverteilung an
 public:
-	void GenerateLine(Vei2 p0, Vei2 p1, int type, int thickness = 1, float density = 1.0f); //density gibt Wert fuer Normalverteilung an
-	void GenerateExplosion(Vei2 pos, int maxLineLength, int type);
+	void GenerateLine(Vec2 p0, Vec2 p1, int type, int thickness = 1, float density = 1.0f); //density gibt Wert fuer Normalverteilung an
+	void GenerateExplosion(Vei2 pos, int maxLineLength, int type, int nRolls = 100);
 																							//Konstruktor + Operatoren
 	World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera);
 	//change game values
 	
 	//Handles
 	void HandleMouseEvents(Mouse::Event& e, GrabHandle& gH);
+	void HandleKeyboardEvents(Keyboard::Event& e);
 	//Grafiken
 	void Draw(Graphics& gfx)const;
 	void DrawConnections(int onCell, Vei2 topLeft, Matrix<int> aMat, Graphics& gfx)const;

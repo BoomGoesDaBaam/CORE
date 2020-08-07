@@ -77,7 +77,10 @@ public:
 	{
 		return x == rhs.x && y == rhs.y;
 	}
-
+	bool operator!=(const Vec2_& rhs)
+	{
+		return !(*this==rhs);
+	}
 
 	
 	T GetLength() const

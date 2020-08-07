@@ -73,6 +73,10 @@ public:
 		{
 			m = (p1.y - p0.y) / (p1.x - p0.x);
 		}
+		else
+		{
+			m = 2000000;
+		}
 		if (thickness > 1)
 		{
 			for (int i = -thickness / 2; i < thickness / 2; i++)
