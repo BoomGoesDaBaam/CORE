@@ -109,6 +109,9 @@ const Color* Surface::Data() const
 
 Surface Surface::GetSupSurface(RectI where)
 {
+	assert(where.left >= 0 && where.right < width);
+	assert(where.top >= 0 && where.bottom < height);
+
 	Surface sup = { where.GetWidth(),where.GetHeight() };
 	for (int y = 0; y < sup.GetHeight(); y++)
 	{

@@ -32,5 +32,9 @@ public:
 	{
 		return frames.at(curF);
 	}
+	void SetKeepTime(float keepTime)
+	{
+		this->keepTime = keepTime;
+	}
 };
 

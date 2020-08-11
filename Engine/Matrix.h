@@ -36,6 +36,17 @@ class Matrix
 		{
 			column[i] = value;
 		}
+		bool HasValue(T value)
+		{
+			for (int x = 0; x < column.size(); x++)
+			{
+				if (column[x] == value)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
 	};
 	std::vector<Cloumn> columns;
 	int nRaws, nColumns;
@@ -89,6 +100,17 @@ public:
 		{
 			colums[column].SetValue(i, value);
 		}
+	}
+	bool HasValue(T value)
+	{
+		for (int x = 0; x < nRaws; x++)
+		{
+			if (columns[x].HasValue(value))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 	Matrix<T> Get3x3Surrounded(int x, int y, T notValue)
 	{	

@@ -18,23 +18,22 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	//Items
 
 	//	Fields
-	for (int i = 0; i < Settings::nDiffFieldTypes; i++)
-	{
-		float delay = rng.GetNormalDist() * 3  + 1;
-		Fields.push_back(Animation(delay));
-	}
-
 	for (int i = 0; i < Settings::nDiffFieldTypes; i++)				//i diffrent Fields
 	{
+		float delay = rng.GetNormalDist() * 3 + 1;
+		Fields.push_back(Animation(delay));
 		for (int f = 0; f < 5; f++)			//f diffent animations
-			{
-						Fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0, 122 + f * 51 + i * 255), 210, 50)));
-					
-						//FieldsC[(__int64)i + Settings::nDiffFieldTypes].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(102, 122 + f * 51 + i * 255), 27, 6)));	//B
-				
-				}
-			}
-	
+		{
+			//Fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0, 122 + f * 51 + i * 255), 210, 50)));
+			Fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 7)) * 211, 122 + f * 51 + (i % 7) * 255), 210, 50)));
+						//	Fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 7)) * 211, 122 + f * 51 + (i%7) * 255), 210, 50)));
+		}
+	}
+	//Delay anpassen
+	Fields[6].SetKeepTime(0.3f);
+	Fields[7].SetKeepTime(0.4f);
+	Fields[0].SetKeepTime(0.3f);
+	Fields[12].SetKeepTime(0.3f);
 	//Fonts
 	fonts.push_back(Font("Spritesheet.bmp", 9, 11, 9, 13, '!', '~', gfx));
 

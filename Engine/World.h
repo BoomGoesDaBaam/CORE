@@ -17,8 +17,9 @@ public:
 	class WorldSettings
 	{
 	public:
-		int defType = 1;
-		Vei2 wSize = { 500, 500 };
+		int defBlueprint = 0;
+		int defType = 0;
+		Vei2 wSize = { 200, 200 };
 		Vei2 cSize = { 50,50 };
 		int nIslands=2000;
 	};
@@ -124,16 +125,24 @@ private:
 	void ApplyCameraChanges(Vec2 cDelta);
 
 	//World Generator
+	class SpawnTiles
+	{
+
+	};
 	void Generate(WorldSettings& s);
-	void GenerateCircle(Vei2 pos, int radius, int type, float density = 1.0f); //density gibt Wert fuer Normalverteilung an
-	//void GenerateLine(Vei2 p0,Vei2 p1, int type, int thickness = 1, float density = 1.0f); //density gibt Wert fuer Normalverteilung an
+	void GenerateCircle(Vei2 pos, int radius, int type, int ontoType = -1, int surrBy = -1); 
+	void GenerateLine(Vec2 p0, Vec2 p1, int type, int ontoType = -1, int thickness = 1, int surrBy = -1);
+	void GenerateExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 100, int surrBy = -1);
+	bool World::FIDF(int first, int second)const;//First is drawn first
+	//void GenerateWhenSurrBy(Vei2 pos, int type, int surrBy);
 public:
-	void GenerateLine(Vec2 p0, Vec2 p1, int type, int thickness = 1, float density = 1.0f); //density gibt Wert fuer Normalverteilung an
-	void GenerateExplosion(Vei2 pos, int maxLineLength, int type, int nRolls = 100);
 																							//Konstruktor + Operatoren
 	World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera);
 	//change game values
-	
+	int World::GetxStart() {
+		Vei2 mos = Graphics::GetMidOfScreen();
+		return -(mos.x / cSize.x) * 4;
+	};
 	//Handles
 	void HandleMouseEvents(Mouse::Event& e, GrabHandle& gH);
 	void HandleKeyboardEvents(Keyboard::Event& e);

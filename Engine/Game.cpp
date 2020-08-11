@@ -87,7 +87,7 @@ void Game::ComposeFrame()
 	{
 		std::ostringstream oss1, oss2;
 		oss1 <<"World cords:(" << curW->GetmCell().x << " | " << curW->GetmCell().y << ")" << " Camera:(" << c.x << " | " << c.y << ")";
-		oss2 <<"Ange:(" << curW->GetfCell().x << "|" << curW->GetfCell().y << ")" << "   CSize:" << curW->GetcSize().x;
+		oss2 <<"Ange:(" << curW->GetfCell().x << "|" << curW->GetfCell().y << ")" << "   CSize:" << curW->GetcSize().x << "   x-Felder:"<<curW->GetxStart()/4;
 		resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 200, 25, 15, Colors::Red);
 		resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 15, Colors::Red);
 		Vei2 mos = Graphics::GetMidOfScreen();
