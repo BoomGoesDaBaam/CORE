@@ -11,7 +11,6 @@ namespace SpriteEffect
 			gfx.PutPixel(x, y, sourceP);
 		}
 	};
-
 	class OneColor
 	{
 		Color c;
@@ -20,6 +19,22 @@ namespace SpriteEffect
 		void operator()(int x, int y, Color whatEVER ,Graphics& gfx)
 		{
 			gfx.PutPixel(x, y, c);
+		}
+	};
+	class Transparent
+	{
+		float alpha=0.5f;
+	public:
+		Transparent(float alpha = 0.5f):alpha(alpha) {}
+
+		void operator()(int x, int y, Color c, Graphics& gfx)
+		{
+			Color old = gfx.GetPixel(x, y) * (1 - alpha);
+			c *= alpha;
+			Color m = Color(old.GetR() + c.GetR(),old.GetG() + c.GetG(),old.GetB() + c.GetB());
+
+			
+			gfx.PutPixel(x, y, m);
 		}
 	};
 	class Chroma

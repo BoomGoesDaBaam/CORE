@@ -6,15 +6,17 @@
 #include "Settings.h"
 #include "RandyRandom.h"
 #include "Settings.h"
+#include "Matrix.h"
 class TexturesCollection
 {
 	RandyRandom rng;
-public:
+public:	
+
 	TexturesCollection(Graphics& gfx);
 	Surface spriteSHEEP = { "Textures/Spritesheet.bmp" };
 	//Surface s_Items[1];
 	std::vector<Animation>	Fields;			//All needed Textures for a Fieldtype
-	//std::vector<Animation>	FieldsC;		//Field connections
+	//std::vector<Animation>	FieldsC;	//Field connections
 	std::vector<Surface>	Frames;
 	std::vector<Font>		fonts;
 	void Update(float dt);

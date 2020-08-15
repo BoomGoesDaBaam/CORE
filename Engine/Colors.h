@@ -59,6 +59,17 @@ public:
 	{ 
 		return !(*this == rhs);
 	}
+	Color operator*(float rhs)
+	{
+		SetR(GetR() * rhs);
+		SetG(GetG() * rhs);
+		SetB(GetB() * rhs);
+		return *this;
+	}
+	Color& operator*=(float rhs)
+	{
+		return *this = *this * rhs;
+	}
 	constexpr unsigned char GetX() const
 	{
 		return dword >> 24u;

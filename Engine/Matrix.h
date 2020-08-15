@@ -47,9 +47,20 @@ class Matrix
 			}
 			return false;
 		}
+		int GetPosOfValue(T value)
+		{
+			for (int x = 0; x < column.size(); x++)
+			{
+				if (column[x] == value)
+				{
+					return x;
+				}
+			}
+			return -1;
+		}
 	};
 	std::vector<Cloumn> columns;
-	int nRaws, nColumns;
+	int nRaws = 1, nColumns = 1;
 public:
 	Matrix(int nRaws, int nColums, T value):nRaws(nRaws),nColumns(nColums)
 	{
@@ -58,6 +69,10 @@ public:
 		{
 			columns.push_back(Cloumn(nRaws,value));
 		}
+	}
+	Matrix()
+	{
+		columns.push_back(Cloumn(1, 0));
 	}
 
 	const T& operator()(Vei2 pos)const { return columns[pos.x][pos.y]; }
@@ -111,6 +126,18 @@ public:
 			}
 		}
 		return false;
+	}
+	Vei2 GetPosOfValue(T value)
+	{
+		for (int y = 0; y < nRaws; y++)
+		{
+			int curColumnHasV = columns[y].GetPosOfValue(value);
+			if (curColumnHasV != -1)
+			{
+				return Vei2(y, curColumnHasV);
+			}
+		}
+		return Vei2(-1, -1);
 	}
 	Matrix<T> Get3x3Surrounded(int x, int y, T notValue)
 	{	

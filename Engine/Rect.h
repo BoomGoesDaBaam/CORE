@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vec2.h"
+#include <cassert>
 
 template<typename T>
 class Rect_
@@ -48,6 +49,27 @@ public:
 	{
 		return left >= other.left && right <= other.right &&
 			top >= other.top && bottom <= other.bottom;
+	}
+	Rect_ PutInto(const Rect_& other)
+	{
+		assert(this->IsOverlappingWith(other));
+		if (other.left > left)
+		{
+			left = other.left;
+		}
+		if (other.right < right)
+		{
+			right = other.right;
+		}
+		if (other.top > top)
+		{
+			top = other.top;
+		}
+		if (other.bottom < bottom)
+		{
+			bottom = other.bottom;
+		}
+		return *this;
 	}
 	bool Contains(const Vec2_<T>& point) const
 	{

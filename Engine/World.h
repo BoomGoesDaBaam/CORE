@@ -107,6 +107,7 @@ private:
 	Vei2 mCell = { 0,0 };					//Zelle in der Mitte des Bildschirms audem Debugzeiger ist
 	Cells cells;
 	std::vector<Matrix<int>> conMap;		//Connectionmap	 (1 = needsConnections, 0 = doesn't, vectorindex for type)
+	Matrix<int> filledMap;					//MoveMap (0 = spot is empty, 1 = already filled)
 	Vec2& c;								//Camera
 	bool gritVisible=false;
 
@@ -118,22 +119,20 @@ private:
 	bool IsInWorldY(int y)const;		
 	Vei2 PutInWorldX(Vei2 v)const;		//Calculates coordinates when x negativ or > cSize.x  
 	Matrix<int> GetAroundMatrix(Vei2 cell)const;	//in bounds: type		outside bounds(y-wise): -1		
-	void UpdateConMap();				
+	void UpdateConMap();	
+	void UpdateFilledMap();
 	bool IsSurroundedBy(Vei2 pos, int type);		//3x3 around pos
 	//Private not const Funktions
 	void Zoom(Vei2 delta);				//Delta == delta cSize
 	void ApplyCameraChanges(Vec2 cDelta);
 
-	//World Generator
-	class SpawnTiles
-	{
 
-	};
 	void Generate(WorldSettings& s);
 	void GenerateCircle(Vei2 pos, int radius, int type, int ontoType = -1, int surrBy = -1); 
 	void GenerateLine(Vec2 p0, Vec2 p1, int type, int ontoType = -1, int thickness = 1, int surrBy = -1);
 	void GenerateExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 100, int surrBy = -1);
-	bool World::FIDF(int first, int second)const;//First is drawn first
+	bool FIDF(int first, int second)const;//First is drawn first
+	void CutHills(int replaceTo);
 	//void GenerateWhenSurrBy(Vei2 pos, int type, int surrBy);
 public:
 																							//Konstruktor + Operatoren
@@ -141,7 +140,7 @@ public:
 	//change game values
 	int World::GetxStart() {
 		Vei2 mos = Graphics::GetMidOfScreen();
-		return -(mos.x / cSize.x) * 4;
+		return -(mos.x / cSize.x) * 2;
 	};
 	//Handles
 	void HandleMouseEvents(Mouse::Event& e, GrabHandle& gH);

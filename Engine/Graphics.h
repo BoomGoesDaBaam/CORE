@@ -59,6 +59,7 @@ public:
 		PutPixel(x, y, { unsigned char(r),unsigned char(g),unsigned char(b) });
 	}
 	void PutPixel(int x, int y, Color c);
+	Color GetPixel(int x, int y);
 	void RainbowPutPixel(int x, int y);
 
 	bool PixelInFrame(Vei2 check) { return GetScreenRect<int>().Contains(check); }
@@ -139,6 +140,17 @@ public:
 		}
 	}
 	void DrawRect(Vec2 pos, Vec2 size, Color c, float radiant = 0);
+	template<typename E>
+	void DrawRect(RectF pos, Color& c, E& effect)
+	{
+		for (int y = 0; y < pos.GetHeight(); y++)
+		{
+			for (int x = 0; x < pos.GetWidth(); x++)
+			{
+				effect(x + pos.left, y + pos.top,c, *this);
+			}
+		}
+	}
 	/*
 	template<typename E>
 	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect)
@@ -252,6 +264,9 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11SamplerState>			pSamplerState;
 	D3D11_MAPPED_SUBRESOURCE							mappedSysBufferTexture;
 	Color* pSysBuffer = nullptr;
+
+	std::vector<Color*> pSysBackBuffer;
+	
 
 public:
 	static constexpr int ScreenWidth = 800;

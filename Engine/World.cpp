@@ -88,6 +88,22 @@ void World::UpdateConMap()
 		}
 	}
 }
+void World::UpdateFilledMap()
+{
+	using namespace Settings;
+	filledMap = Matrix<int>(wSize.y * CellSplitUpIn, wSize.x * CellSplitUpIn, 0);
+
+	for (int y = 0; y < wSize.y * CellSplitUpIn; y++)
+	{
+		for (int x = 0; x < wSize.x * CellSplitUpIn; x++)
+		{
+			if (!anyOfBuildOnTypes(cells[x / CellSplitUpIn][y / CellSplitUpIn].type))
+			{
+				filledMap[x][y] = 1;
+			}
+		}
+	}
+}
 bool World::IsSurroundedBy(Vei2 pos, int type)
 {
 	for (int y = 0; y < 3; y++)
@@ -196,7 +212,6 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 }
 void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 {
-
 	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLooked())
 	{
 		fCell = GetCellHit((Vec2) e.GetPos());
@@ -239,10 +254,10 @@ void World::Draw(Graphics& gfx) const
 
 	Vei2 mos = Graphics::GetMidOfScreen();
 
-	int xStart = -(mos.x / cSize.x)  * 2;
-	int xStop = 1 + (mos.x / cSize.x) * 2;
-	int yStart = -(mos.y / cSize.y) * 2;
-	int yStop = 2 + (mos.y / cSize.y) * 2;
+	int xStart = -(mos.x / cSize.x) *1.5f;
+	int xStop = 1 + (mos.x / cSize.x) * 1.5f;
+	int yStart = -(mos.y / cSize.y) * 1.5f;
+	int yStop = 2 + (mos.y / cSize.y) * 1.5f;
 
 	#ifdef _DEBUG 
 	xStart = -1;
@@ -261,18 +276,47 @@ void World::Draw(Graphics& gfx) const
 				const Cell& curCell = cells(curXY);
 				int cellType = curCell.type;
 				RectI curCellPos = (RectI)GetCellRect(Vei2(x, y) + mCell) + Vei2(-c.x, +c.y);
-				if(gritVisible)
-				for (int i = 0; i <= 25; i++)
+				if (gritVisible)
 				{
-					if (i == 0 || i == 25)
+					using namespace Settings;
+					Color c = Colors::Red;
+					SpriteEffect::Transparent e = SpriteEffect::Transparent(0.4f);
+					
+					for (int xOnCell = 0; xOnCell < CellSplitUpIn; xOnCell++)
 					{
-						gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)i / 25) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)i / 25) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black),3);
-						gfx.DrawLine(Vec2(curCellPos.left + ((float)i / 25) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)i / 25) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black), 3);
+						for (int yOnCell = 0; yOnCell < CellSplitUpIn; yOnCell++)
+						{
+							Vei2 v = (curXY * CellSplitUpIn + Vei2(xOnCell, yOnCell));
+							assert(v.x < 5000 && v.x >= 0);
+							assert(v.y < 5000 && v.y >= 0);
+
+							if (filledMap(v) == 1)		//NOT FINISHED!
+							{
+								float xPos = curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth();
+								float yPos = curCellPos.top + ((float)yOnCell / CellSplitUpIn) * curCellPos.GetHeight();
+								RectF curP = RectF(Vec2(xPos, yPos), curCellPos.GetWidth() / CellSplitUpIn, curCellPos.GetHeight() / CellSplitUpIn);
+								if (Graphics::GetScreenRect<float>().IsOverlappingWith(curP))
+								{
+									curP.PutInto(Graphics::GetScreenRect<float>());
+
+									gfx.DrawRect(curP, c,e);
+								}
+							}
+						}
 					}
-					else 
+					
+					for (int xOnCell = 0; xOnCell < Settings::CellSplitUpIn+1; xOnCell++)
 					{
-						gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)i / 25) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)i / 25) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black));
-						gfx.DrawLine(Vec2(curCellPos.left + ((float)i / 25) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)i / 25) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black));
+						if (xOnCell == 0 || xOnCell == CellSplitUpIn)
+						{
+							gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black), 3);
+							gfx.DrawLine(Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black), 3);
+						}
+						else
+						{
+							gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black));
+							gfx.DrawLine(Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black));
+						}
 					}
 				}
 				switch (layer)
@@ -280,17 +324,17 @@ void World::Draw(Graphics& gfx) const
 				case 0:
 					assert(cellType >= 0 && cellType < Settings::nDiffFieldTypes);
 					//gfx.DrawSurface(curCellPos, tC->s_Fields.at(curCell.type), SpriteEffect::Chroma(Colors::Magenta));
-					gfx.DrawSurface(curCellPos,RectI(Vei2(0,0),50,50), tC->Fields.at(cellType).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+					gfx.DrawSurface(curCellPos, RectI(Vei2(0, 0), 50, 50), tC->Fields.at(cellType).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 
 					for (int i = 0; i < Settings::nDiffFieldTypes - 1; i++)
 					{
-						
+
 						int order = Settings::typeLayer[i];
 						if (conMap[order][curXY.x][curXY.y] == 1)
 						{
-							DrawConnections(order, Vei2(curCellPos.left,curCellPos.top), GetAroundMatrix(curXY), gfx);
+							DrawConnections(order, Vei2(curCellPos.left, curCellPos.top), GetAroundMatrix(curXY), gfx);
 						}
-						
+
 					}
 
 					break;
@@ -301,6 +345,7 @@ void World::Draw(Graphics& gfx) const
 					}
 					break;
 				}
+				
 			}
 		}
 	}
@@ -326,6 +371,43 @@ bool World::FIDF(int first, int second)const
 		}
 	}
 	return false;
+}
+void World::CutHills(int replaceTo)
+{
+	using namespace Settings;
+	for (int y = 0; y < wSize.y; y++)
+	{
+		for (int x = 0; x < wSize.x; x++)
+		{
+			int arrSize = sizeof(hillTypesARE) / sizeof(hillTypesARE[0]);
+			bool test = false;
+			for (int i = 0; i < arrSize; i++)
+			{
+				if (cells[x][y].type == hillTypesARE[i])
+				{
+					test = true;
+				}
+			}
+			if (test)
+			{
+				for (int i = 0; i < arrSize; i++)
+				{
+					auto aMat = GetAroundMatrix(Vei2(x, y));
+					if (hillTypesARE[i] == aMat[1][1])
+					{
+						continue;
+					}
+					Vei2 problem = aMat.GetPosOfValue(hillTypesARE[i]);
+					if (problem != Vei2(-1,-1))
+					{
+						Vei2 where = problem + Vei2(x, y) + Vei2(-1,-1);
+						cells(where).type = replaceTo;
+						i=0;
+					}
+				}
+			}
+		}
+	}
 }
 void World::DrawConnections(int lookFor,Vei2 topLeft, Matrix<int> aMat, Graphics& gfx)const
 {
@@ -491,13 +573,13 @@ void World::Generate(WorldSettings& s)
 		break;
 	}
 
-	GenerateLine(Vec2(0, 100), Vec2(10, 90), 3,-1,11);
+	CutHills(1);		//NICHT ZUENDE!!!!
 
+	UpdateFilledMap();
 	UpdateConMap();
 }
 void World::GenerateCircle(Vei2 pos, int radius,int type, int ontoType, int surrBy)
 {
-	
 	for (int y = -radius; y < radius; y++)
 	{
 		for (int x = -radius; x < radius; x++)
