@@ -62,7 +62,7 @@ class Matrix
 	std::vector<Cloumn> columns;
 	int nRaws = 1, nColumns = 1;
 public:
-	Matrix(int nRaws, int nColums, T value):nRaws(nRaws),nColumns(nColums)
+	Matrix(int nColums, int nRaws, T value):nRaws(nRaws),nColumns(nColums)
 	{
 		assert(nRaws >= 1 && nColumns >= 1);
 		for (int i = 0; i < nRaws; i++)

@@ -24,6 +24,7 @@ public:
 	RectI GetRect() const;
 	void Fill(Color c);
 	const Color* Data() const;
+	bool IsInBounds(int x, int y)const;
 private:
 	std::vector<Color> pixels;
 	int width = 0;

@@ -85,11 +85,13 @@ void Game::ComposeFrame()
 
 	if (debugInfoOn)
 	{
-		std::ostringstream oss1, oss2;
+		std::ostringstream oss1, oss2,oss4;
 		oss1 <<"World cords:(" << curW->GetmCell().x << " | " << curW->GetmCell().y << ")" << " Camera:(" << c.x << " | " << c.y << ")";
 		oss2 <<"Ange:(" << curW->GetfCell().x << "|" << curW->GetfCell().y << ")" << "   CSize:" << curW->GetcSize().x << "   x-Felder:"<<curW->GetxStart();
+		oss4 << "Type:" << curW->GetfCellType();
 		resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 200, 25, 15, Colors::Red);
 		resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 15, Colors::Red);
+		resC->tC.fonts.at(0).DrawText(oss4.str().c_str(), 25, 65, 15, Colors::Red);
 		Vei2 mos = Graphics::GetMidOfScreen();
 
 		gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);

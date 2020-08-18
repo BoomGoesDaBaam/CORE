@@ -21,7 +21,6 @@ public:
 		int defType = 0;
 		Vei2 wSize = { 200, 200 };
 		Vei2 cSize = { 50,50 };
-		int nIslands=2000;
 	};
 private:
 	class Objekt
@@ -107,9 +106,9 @@ private:
 	Vei2 mCell = { 0,0 };					//Zelle in der Mitte des Bildschirms audem Debugzeiger ist
 	Cells cells;
 	std::vector<Matrix<int>> conMap;		//Connectionmap	 (1 = needsConnections, 0 = doesn't, vectorindex for type)
-	Matrix<int> filledMap;					//MoveMap (0 = spot is empty, 1 = already filled)
+	Matrix<int> groundedMap;				// 0 = spot is not grounded, 1 = is grounded, -1 = not identified yet (will be 0 if not changed)
 	Vec2& c;								//Camera
-	bool gritVisible=false;
+	int grit=0;
 
 	//Private const Functions
 	RectF GetCellRect(Vei2 cellP)const;
@@ -119,8 +118,8 @@ private:
 	bool IsInWorldY(int y)const;		
 	Vei2 PutInWorldX(Vei2 v)const;		//Calculates coordinates when x negativ or > cSize.x  
 	Matrix<int> GetAroundMatrix(Vei2 cell)const;	//in bounds: type		outside bounds(y-wise): -1		
-	void UpdateConMap();	
-	void UpdateFilledMap();
+	void UpdateConMap();							//UpdateConMap must be called before UpdateGroundedMap
+	void UpdateGroundedMap();
 	bool IsSurroundedBy(Vei2 pos, int type);		//3x3 around pos
 	//Private not const Funktions
 	void Zoom(Vei2 delta);				//Delta == delta cSize
@@ -148,11 +147,13 @@ public:
 	//Grafiken
 	void Draw(Graphics& gfx)const;
 	void DrawConnections(int onCell, Vei2 topLeft, Matrix<int> aMat, Graphics& gfx)const;
+	std::vector<SubAnimation> GetConnectionAnimationVec(int lookFor, Matrix<int> aMat)const;
 	bool NeedsConnections(Vei2 curXY)const;
 	//
 	Vei2 GetwSize() { return wSize; }
 	Vei2 GetcSize() { return cSize; }
 	Vei2 GetfCell() { return fCell; }
+	int GetfCellType() { return cells(fCell).type; }
 	Vei2 GetmCell() { return mCell; }
 };
 

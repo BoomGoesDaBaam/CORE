@@ -106,7 +106,10 @@ const Color* Surface::Data() const
 {
 	return pixels.data();
 }
-
+bool Surface::IsInBounds(int x, int y)const
+{
+	return y * width + x < pixels.size();
+}
 Surface Surface::GetSupSurface(RectI where)
 {
 	assert(where.left >= 0 && where.right < width);
@@ -129,7 +132,9 @@ void Surface::PutPixel(int x, int y, Color c)
 }
 Color Surface::GetPixel(int x, int y) const
 {
+	if(IsInBounds(x, y))
 	return pixels[y * width + x];
+	return pixels[0];
 }
 void Surface::Fill(Color c)
 {

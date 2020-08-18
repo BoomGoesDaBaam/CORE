@@ -74,7 +74,7 @@ void World::UpdateConMap()
 		conMap.push_back(Matrix<int>(wSize.x, wSize.y, 0));
 		for (int y = 0; y < wSize.y; y++)
 		{
-			for (int x = 0; x < wSize.y; x++)
+			for (int x = 0; x < wSize.x; x++)
 			{
 				if (type != cells(Vei2(x, y)).type && IsSurroundedBy(Vei2(x, y), type))
 				{
@@ -88,18 +88,92 @@ void World::UpdateConMap()
 		}
 	}
 }
-void World::UpdateFilledMap()
+void World::UpdateGroundedMap()
 {
 	using namespace Settings;
-	filledMap = Matrix<int>(wSize.y * CellSplitUpIn, wSize.x * CellSplitUpIn, 0);
+	groundedMap = Matrix<int>(wSize.x * CellSplitUpIn, wSize.y * CellSplitUpIn, -1);
 
-	for (int y = 0; y < wSize.y * CellSplitUpIn; y++)
+	for (int y = 0; y < wSize.y; y++)
 	{
-		for (int x = 0; x < wSize.x * CellSplitUpIn; x++)
+		for (int x = 0; x < wSize.x; x++)
 		{
-			if (!anyOfBuildOnTypes(cells[x / CellSplitUpIn][y / CellSplitUpIn].type))
+			if (anyGroundedTypes(cells[x][y].type))				//Fieldtypes that are grounded
 			{
-				filledMap[x][y] = 1;
+				for (int yInner = 0; yInner < CellSplitUpIn; yInner++)
+				{
+					for (int xInner = 0; xInner < CellSplitUpIn; xInner++)
+					{
+						groundedMap[(__int64)x * CellSplitUpIn + xInner][(__int64)y * CellSplitUpIn + yInner] = 1;
+					}
+				}
+			}
+			else
+			{
+				Matrix<int> m = GetAroundMatrix(Vei2(x, y));
+				
+				for (int i = 0; i < Settings::nDiffFieldTypes; i++)
+				{
+					int order = Settings::typeLayer[i];
+					if (!Settings::anyOfHillTypes(order) && conMap[order][x][y] == 1 && Settings::anyGroundedTypes(order))
+					{										//Fieldtypes that are not grounded and not hills	(liquids)
+					    std::vector<SubAnimation> sAVec = GetConnectionAnimationVec(order, m);
+						for (int vIndex = 0; vIndex < sAVec.size(); vIndex++)
+						{
+							SubAnimation& sA = sAVec[vIndex];
+							Matrix<int> diff = sA.GetPosOfChroma();
+							int xExtra = 0;
+							int yExtra = 0;
+							int xTO = diff.GetColums();
+							int yTO = diff.GetRaws();
+							if (sA.sourceR.top == 25)
+							{
+								yExtra = 13;
+								yTO--;
+							}
+							if (sA.sourceR.top == 14)
+							{
+								yExtra = 22;
+							}
+							if (sA.sourceR.top == 7)
+							{
+								xExtra = 22;
+							}
+							if (sA.sourceR.top == 21)
+							{
+								yExtra = 22;
+								xExtra = 22;
+							}
+							if (sA.sourceR.left == 76 || sA.sourceR.left == 134 || sA.sourceR.left == 185)
+							{
+								xExtra = 13;
+								xTO--;
+							}
+							for (int yInner = 0; yInner < yTO; yInner++)
+							{
+								for (int xInner = 0; xInner < xTO; xInner++)
+								{
+									int what = diff[xInner][yInner];
+									
+									if (what == 1 && groundedMap[(__int64)x * CellSplitUpIn + std::round(xInner / 2) + xExtra][(__int64)y * CellSplitUpIn + std::round(yInner / 2) + yExtra] != 0)
+									{
+										groundedMap[(__int64)x * CellSplitUpIn + std::round(xInner / 2) + xExtra][(__int64)y * CellSplitUpIn + std::round(yInner / 2) + yExtra] = 1;
+									}
+								}
+							}
+						}
+					}
+					else if(order == cells[x][y].type && Settings::anyOfHillTypes(order))	//Hills
+					{
+						for (int yInner = 0; yInner < Settings::CellSplitUpIn; yInner++)
+						{
+							for (int xInner = 0; xInner < Settings::CellSplitUpIn; xInner++)
+							{
+								groundedMap[(__int64)x * CellSplitUpIn + xInner][(__int64)y * CellSplitUpIn + yInner] = 0;
+							}
+						}
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -150,12 +224,12 @@ void World::Zoom(Vei2 delta)
 {
 	float deltaX = c.x / cSize.x;
 	float deltaY = c.y / cSize.y;
-	if (delta.x + cSize.x > 0 && delta.x + cSize.x <= 400)
+	if (delta.x + cSize.x > 0 && delta.x + cSize.x <= 600)
 	{
 		cSize.x += delta.x;
 		c.x = cSize.x * deltaX;
 	}
-	if (delta.y + cSize.y > 0 && delta.y + cSize.y <= 400)
+	if (delta.y + cSize.y > 0 && delta.y + cSize.y <= 600)
 	{
 		cSize.y += delta.y;
 		c.y += delta.y / 2;
@@ -215,6 +289,9 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLooked())
 	{
 		fCell = GetCellHit((Vec2) e.GetPos());
+		cells(fCell).type = 4;
+		UpdateConMap();
+		UpdateGroundedMap();
 	}
 	if (e.GetType() == Mouse::Event::WheelDown)
 	{
@@ -235,10 +312,14 @@ void World::HandleKeyboardEvents(Keyboard::Event& e)
 		switch (e.GetCode())
 		{
 		case 'G':
-			gritVisible = !gritVisible;
+			grit++;
+			if (grit == 3)
+			{
+				grit = 0;
+			}
 			break;
 		case 0x1B:	//ERROR?
-			fCell = Vei2(-1, -1);
+			fCell = Vei2(0, 0);
 			break;
 		}
 	}
@@ -251,13 +332,12 @@ void World::Draw(Graphics& gfx) const
 		for (int x = -1; x <= 1; x++)
 		{
 	*/
-
 	Vei2 mos = Graphics::GetMidOfScreen();
 
-	int xStart = -(mos.x / cSize.x) *1.5f;
-	int xStop = 1 + (mos.x / cSize.x) * 1.5f;
-	int yStart = -(mos.y / cSize.y) * 1.5f;
-	int yStop = 2 + (mos.y / cSize.y) * 1.5f;
+	int xStart = -(mos.x / cSize.x) *2 - 1;
+	int xStop = 1 + (mos.x / cSize.x) * 2;
+	int yStart = -(mos.y / cSize.y) * 2;
+	int yStop = 2 + (mos.y / cSize.y) * 2;
 
 	#ifdef _DEBUG 
 	xStart = -1;
@@ -266,7 +346,7 @@ void World::Draw(Graphics& gfx) const
 	yStop = 2;
 	#endif
 
-	for (int layer = 0; layer <= 2; layer++)
+	for (int layer = 0; layer <= 3; layer++)
 	{
 		for (int y = yStart; y <= yStop; y++)
 		{
@@ -276,65 +356,20 @@ void World::Draw(Graphics& gfx) const
 				const Cell& curCell = cells(curXY);
 				int cellType = curCell.type;
 				RectI curCellPos = (RectI)GetCellRect(Vei2(x, y) + mCell) + Vei2(-c.x, +c.y);
-				if (gritVisible)
-				{
-					using namespace Settings;
-					Color c = Colors::Red;
-					SpriteEffect::Transparent e = SpriteEffect::Transparent(0.4f);
-					
-					for (int xOnCell = 0; xOnCell < CellSplitUpIn; xOnCell++)
-					{
-						for (int yOnCell = 0; yOnCell < CellSplitUpIn; yOnCell++)
-						{
-							Vei2 v = (curXY * CellSplitUpIn + Vei2(xOnCell, yOnCell));
-							assert(v.x < 5000 && v.x >= 0);
-							assert(v.y < 5000 && v.y >= 0);
 
-							if (filledMap(v) == 1)		//NOT FINISHED!
-							{
-								float xPos = curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth();
-								float yPos = curCellPos.top + ((float)yOnCell / CellSplitUpIn) * curCellPos.GetHeight();
-								RectF curP = RectF(Vec2(xPos, yPos), curCellPos.GetWidth() / CellSplitUpIn, curCellPos.GetHeight() / CellSplitUpIn);
-								if (Graphics::GetScreenRect<float>().IsOverlappingWith(curP))
-								{
-									curP.PutInto(Graphics::GetScreenRect<float>());
-
-									gfx.DrawRect(curP, c,e);
-								}
-							}
-						}
-					}
-					
-					for (int xOnCell = 0; xOnCell < Settings::CellSplitUpIn+1; xOnCell++)
-					{
-						if (xOnCell == 0 || xOnCell == CellSplitUpIn)
-						{
-							gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black), 3);
-							gfx.DrawLine(Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black), 3);
-						}
-						else
-						{
-							gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black));
-							gfx.DrawLine(Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black));
-						}
-					}
-				}
 				switch (layer)
 				{
 				case 0:
 					assert(cellType >= 0 && cellType < Settings::nDiffFieldTypes);
-					//gfx.DrawSurface(curCellPos, tC->s_Fields.at(curCell.type), SpriteEffect::Chroma(Colors::Magenta));
 					gfx.DrawSurface(curCellPos, RectI(Vei2(0, 0), 50, 50), tC->Fields.at(cellType).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 
-					for (int i = 0; i < Settings::nDiffFieldTypes - 1; i++)
+					for (int i = 0; i < Settings::nDiffFieldTypes; i++)
 					{
-
 						int order = Settings::typeLayer[i];
 						if (conMap[order][curXY.x][curXY.y] == 1)
 						{
 							DrawConnections(order, Vei2(curCellPos.left, curCellPos.top), GetAroundMatrix(curXY), gfx);
 						}
-
 					}
 
 					break;
@@ -342,6 +377,87 @@ void World::Draw(Graphics& gfx) const
 					if (curXY == fCell)
 					{
 						gfx.DrawSurface(curCellPos.GetExpanded(cSize.x / 5), tC->Frames.at(0), SpriteEffect::Chroma(Colors::Magenta));
+					}
+					break;
+				case 3:
+					if (grit!=0)
+					{
+						using namespace Settings;
+						SpriteEffect::Transparent e = SpriteEffect::Transparent(0.6f);
+
+						for (int xOnCell = 0; xOnCell < CellSplitUpIn; xOnCell++)
+						{
+							for (int yOnCell = 0; yOnCell < CellSplitUpIn; yOnCell++)
+							{
+								Vei2 v = (curXY * CellSplitUpIn + Vei2(xOnCell, yOnCell));
+								assert(v.x < 5000 && v.x >= 0);
+								assert(v.y < 5000 && v.y >= 0);
+
+								if (groundedMap(v) == 0 || groundedMap(v) == -1 || groundedMap(v) == 2)
+								{
+									float xPos = curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth();
+									float yPos = curCellPos.top + ((float)yOnCell / CellSplitUpIn) * curCellPos.GetHeight();
+									RectF curP = RectF(Vec2(xPos, yPos), std::ceil((double)curCellPos.GetWidth() / CellSplitUpIn), std::ceil((double)curCellPos.GetHeight() / CellSplitUpIn));
+									if (Graphics::GetScreenRect<float>().IsOverlappingWith(curP))
+									{
+										curP.PutInto(Graphics::GetScreenRect<float>());
+										if (groundedMap(v) == 0)
+										{
+											gfx.DrawRect(curP, Colors::Red, e);
+										}else if (groundedMap(v) == -1)
+										{
+											gfx.DrawRect(curP, Colors::Magenta, e);
+										}
+										else if (groundedMap(v) == 2)
+										{
+											gfx.DrawRect(curP, Colors::Black, e);
+										}
+									}
+								}
+							}
+						}
+
+						for (int xOnCell = 0; xOnCell < Settings::CellSplitUpIn + 1; xOnCell++)
+						{
+							if (xOnCell == 0 || xOnCell == CellSplitUpIn)
+							{
+								gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black), 3);
+								gfx.DrawLine(Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black), 3);
+							}
+							else
+							{
+								gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black));
+								gfx.DrawLine(Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black));
+							}
+							/*
+							if (xOnCell == 0 || xOnCell == CellSplitUpIn)
+							{
+								if (grit == 1)
+								{
+									gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black), 3);
+									gfx.DrawLine(Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black), 3);
+								}
+								else if (grit == 2)
+								{
+									gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)xOnCell / CellSplitUpIn * 2) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)xOnCell / CellSplitUpIn * 2) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black), 3);
+									gfx.DrawLine(Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn*2) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn * 2) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black), 3);
+								}
+							}
+							else
+							{
+								if (grit == 1)
+								{
+									gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)xOnCell / CellSplitUpIn ) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)xOnCell / CellSplitUpIn ) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black));
+									gfx.DrawLine(Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn ) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn ) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black));
+								}
+								else if (grit == 2)
+								{
+									gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)xOnCell / CellSplitUpIn * 2) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)xOnCell / CellSplitUpIn * 2) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black));
+									gfx.DrawLine(Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn * 2) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn * 2) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black));
+								}
+							}
+							*/
+						}
 					}
 					break;
 				}
@@ -497,7 +613,93 @@ void World::DrawConnections(int lookFor,Vei2 topLeft, Matrix<int> aMat, Graphics
 		}
 	}
 }
+std::vector<SubAnimation> World::GetConnectionAnimationVec(int lookFor, Matrix<int> aMat)const
+{
+	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
+	using namespace Settings;
+	std::vector<SubAnimation> vec;
 
+	if (FIDF(aMat[1][1], lookFor))
+	{
+		if (aMat[1][2] == lookFor)
+		{
+			if (aMat[0][1] == lookFor)	// 1
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(51, 0), 25, 25)));
+			}
+			if (aMat[0][1] != lookFor)	// 13
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(160, 0), 25, 25)));
+			}
+			if (aMat[2][1] == lookFor)	// 2
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(76, 0), 25, 25)));
+			}
+			if (aMat[2][1] != lookFor)	// 14
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(185, 0), 25, 25)));
+			}
+		}
+		else if (aMat[1][2] != lookFor)
+		{
+			if (aMat[0][1] == lookFor)	//9
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(109, 0), 25, 25)));
+			}
+			if (FIDF(aMat[0][1], lookFor) && aMat[0][2] == lookFor)	// 5
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(102, 0), 6, 6)));
+			}
+			if (aMat[2][1] == lookFor)	//10
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(134, 0), 25, 25)));
+			}
+			if (FIDF(aMat[2][1], lookFor) && aMat[2][2] == lookFor)	// 6
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(102, 7), 6, 6)));
+			}
+		}
+		if (aMat[1][0] == lookFor)
+		{
+			if (aMat[0][1] == lookFor)	// 3
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(51, 25), 25, 25)));
+			}
+			if (aMat[0][1] != lookFor)	// 15
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(160, 25), 25, 25)));
+			}
+			if (aMat[2][1] == lookFor)	// 4
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(76, 25), 25, 25)));
+			}
+			if (aMat[2][1] != lookFor)	// 16
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(185, 25), 25, 25)));
+			}
+		}
+		else if (aMat[1][0] != lookFor)
+		{
+			if (FIDF(aMat[0][1], lookFor) && aMat[0][0] == lookFor)	// 7
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(102, 14), 6, 6)));
+			}
+			if (aMat[0][1] == lookFor)	// 11
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(109, 25), 25, 25)));
+			}
+			if (FIDF(aMat[2][1], lookFor) && aMat[2][0] == lookFor)	// 8
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(102, 21), 6, 6)));
+			}
+			if (aMat[2][1] == lookFor)	// 12
+			{
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(134, 25), 25, 25)));
+			}
+		}
+	}
+	return vec;
+}
 void World::Init(WorldSettings& s)
 {
 	wSize = s.wSize;
@@ -532,13 +734,18 @@ void World::Generate(WorldSettings& s)
 		{
 			GenerateExplosion(Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20)), rng.GetNormalDist() * 3 + 5, 1);
 		}
-		for (int i = 0; i < (wSize.x * wSize.y) / 200; i++)	//bright water
+		for (int i = 0; i < wSize.x * 5; i++)	//snow
+		{
+			GenerateExplosion(Vei2(rng.Calc(wSize.x), rng.GetNormalDist() * subArcticSize), rng.GetNormalDist() * 3, 5, -1);
+			GenerateExplosion(Vei2(rng.Calc(wSize.x), wSize.y - rng.GetNormalDist() * subArcticSize), rng.GetNormalDist() * 3, 5, -1);
+		}
+		for (int i = 0; i < (wSize.x * wSize.y) / 200; i++)	//coral reef
 		{
 			GenerateExplosion(Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20)), rng.GetNormalDist() * 3 + 3,6,0);
 		}
 		for (int i = 0; i < (wSize.x * wSize.y) / 6400; i++)	//candyland
 		{
-			GenerateExplosion(Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20)), 3, 12, 1);
+			GenerateExplosion(Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20)), 3, 13, 1);
 		}
 		for (int i = 0; i < (wSize.x * wSize.y) / 1600; i++)	//desert
 		{
@@ -549,34 +756,31 @@ void World::Generate(WorldSettings& s)
 		}
 		for (int i = 0; i < (wSize.x * wSize.y) / 3200; i++)	//rocks
 		{
-			GenerateExplosion(Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20)), rng.GetNormalDist() * 6 + 5, 9, -1);
-		}
-		for (int i = 0; i < (wSize.x * wSize.y) / 3200; i++)	//canjon
-		{
 			GenerateExplosion(Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20)), rng.GetNormalDist() * 6 + 5, 10, -1);
+		}
+		for (int i = 0; i < (wSize.x * wSize.y) / 3200; i++)	//canjon + savanne
+		{
+			Vei2 pos = Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20));
+			GenerateExplosion(pos, 6 + rng.GetNormalDist() * 6, 9, 1);
+			GenerateExplosion(pos, 4, 11,9);
 		}
 		for (int i = 0; i < (wSize.x * wSize.y) / 6400; i++)	//magma
 		{
 			Vei2 pos = Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20));
-			GenerateExplosion(pos, 6, 11, -1);
-			GenerateExplosion(pos, 4, 7, 11,10);
+			GenerateExplosion(pos,6, 12, -1);
+			GenerateExplosion(pos, 4,8,12);
 		}
 		for (int i = 0; i < (wSize.x * wSize.y) / 10; i++)	//nutritious plants
 		{
 			GenerateExplosion(Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20)), rng.GetNormalDist() * 3, 4, 1,20,0);
 		}
-		for (int i = 0; i < wSize.x * 5; i++)	//snow
-		{
-			GenerateExplosion(Vei2(rng.Calc(wSize.x), rng.GetNormalDist()*subArcticSize), rng.GetNormalDist() * 3, 5, -1);
-			GenerateExplosion(Vei2(rng.Calc(wSize.x), wSize.y - rng.GetNormalDist() * subArcticSize), rng.GetNormalDist() * 3, 5,-1);
-		}
 		break;
 	}
 
-	CutHills(1);		//NICHT ZUENDE!!!!
+	//CutHills(1);		//NICHT ZUENDE!!!!
 
-	UpdateFilledMap();
 	UpdateConMap();
+	UpdateGroundedMap();
 }
 void World::GenerateCircle(Vei2 pos, int radius,int type, int ontoType, int surrBy)
 {

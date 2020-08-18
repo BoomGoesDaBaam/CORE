@@ -24,7 +24,7 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 		Fields.push_back(Animation(delay));
 		for (int f = 0; f < 5; f++)			//f diffent animations
 		{
-			Fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 7)) * 211, 122 + f * 51 + (i % 7) * 255), 210, 50)));
+			Fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 211, 122 + f * 51 + (i % 8) * 255), 210, 50)));
 		}
 	}
 	//Delay anpassen

@@ -45,7 +45,7 @@ public:
 		return right > other.left&& left < other.right
 			&& bottom > other.top&& top < other.bottom;
 	}
-	bool IsContainedBy(const Rect_& other) const
+	bool IsContainedBy(const Rect_& other) const		// this is inside of other
 	{
 		return left >= other.left && right <= other.right &&
 			top >= other.top && bottom <= other.bottom;
