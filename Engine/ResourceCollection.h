@@ -29,6 +29,7 @@ public:
 	FramesizeCollection();
 	std::vector<RectI> FieldCon;
 	void Update(Vei2 cellSize);
+	std::vector<RectI> GetPositionsOfCon(Vei2 cSize);		//Get Position Of Connections in 50x50 grit
 };
 
 class ResourceCollection

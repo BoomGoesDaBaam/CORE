@@ -49,7 +49,7 @@ void TexturesCollection::Update(float dt)
 
 FramesizeCollection::FramesizeCollection()
 {
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < 8; i++)
 	{
 		FieldCon.push_back(RectI(Vei2(0, 0), 0, 0));
 	}
@@ -58,7 +58,6 @@ FramesizeCollection::FramesizeCollection()
 
 void FramesizeCollection::Update(Vei2 cSize)
 {
-
 	RectI cur = RectI(Vei2(0, 0), cSize.x, cSize.y);		//Field connections 1-4
 	cur.bottom -= (25.f / 50.f) * cSize.y;
 	cur.right -= (25.f / 50.f) * cSize.y;
@@ -98,5 +97,56 @@ void FramesizeCollection::Update(Vei2 cSize)
 	cur.left += (44.f / 50.f) * cSize.x;
 	cur.top += (44.f / 50.f) * cSize.y;
 	FieldCon[7] = cur;
-	//new elements need to be added in loop
+	//new elements need to be added in loop and in GetPositionsOfCon!!!!!!!!!!!!!
+}
+std::vector<RectI> FramesizeCollection::GetPositionsOfCon(Vei2 cSize)
+{
+	std::vector<RectI> FieldConRect;
+	for (int i = 0; i < 8; i++)
+	{
+		FieldConRect.push_back(RectI(Vei2(0, 0), 0, 0));
+	}
+
+	RectI cur = RectI(Vei2(0, 0), cSize.x, cSize.y);		//Field connections 1-4
+	cur.bottom -= (25.f / 50.f) * cSize.y;
+	cur.right -= (25.f / 50.f) * cSize.y;
+	FieldConRect[0] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.bottom -= (25.f / 50.f) * cSize.y;
+	cur.left += (25.f / 50.f) * cSize.y;
+	FieldConRect[1] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.top += (25.f / 50.f) * cSize.y;
+	cur.right -= (25.f / 50.f) * cSize.y;
+	FieldConRect[2] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.top += (25.f / 50.f) * cSize.y;
+	cur.left += (25.f / 50.f) * cSize.y;
+	FieldConRect[3] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);			//outer corners
+	cur.right -= (44.f / 50.f) * cSize.x;
+	cur.bottom -= (44.f / 50.f) * cSize.y;
+	FieldConRect[4] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.left += (44.f / 50.f) * cSize.x;
+	cur.bottom -= (44.f / 50.f) * cSize.y;
+	FieldConRect[5] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.right -= (44.f / 50.f) * cSize.x;
+	cur.top += (44.f / 50.f) * cSize.y;
+	FieldConRect[6] = cur;
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.left += (44.f / 50.f) * cSize.x;
+	cur.top += (44.f / 50.f) * cSize.y;
+	FieldConRect[7] = cur;
+
+	assert(FieldConRect.size() == FieldCon.size());
+	return FieldConRect;
 }

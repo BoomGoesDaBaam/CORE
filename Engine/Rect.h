@@ -50,6 +50,11 @@ public:
 		return left >= other.left && right <= other.right &&
 			top >= other.top && bottom <= other.bottom;
 	}
+	template <typename T>
+	Vec2_<T> GetTopLeft() const		
+	{
+		return Vec2_<T>(left, top);
+	}
 	Rect_ PutInto(const Rect_& other)
 	{
 		assert(this->IsOverlappingWith(other));

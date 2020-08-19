@@ -109,58 +109,48 @@ void World::UpdateGroundedMap()
 			}
 			else
 			{
-				Matrix<int> m = GetAroundMatrix(Vei2(x, y));
-				
-				for (int i = 0; i < Settings::nDiffFieldTypes; i++)
+
+				for (int i = 0; i < Settings::nDiffFieldTypes; i++)//Fieldtypes that are not grounded and not hills	(liquids)
 				{
 					int order = Settings::typeLayer[i];
-					if (!Settings::anyOfHillTypes(order) && conMap[order][x][y] == 1 && Settings::anyGroundedTypes(order))
-					{										//Fieldtypes that are not grounded and not hills	(liquids)
-					    std::vector<SubAnimation> sAVec = GetConnectionAnimationVec(order, m);
-						for (int vIndex = 0; vIndex < sAVec.size(); vIndex++)
+					if (!Settings::anyOfHillTypes(order) && conMap[order][x][y] == 1 && Settings::anyGroundedTypes(order)) {
+
+						Matrix<int> m = GetAroundMatrix(Vei2(x, y));
+						std::vector<SubAnimation> sAVec;
+						for (int h = 0; h < Settings::nDiffFieldTypes; h++)
 						{
-							SubAnimation& sA = sAVec[vIndex];
-							Matrix<int> diff = sA.GetPosOfChroma();
-							int xExtra = 0;
-							int yExtra = 0;
-							int xTO = diff.GetColums();
-							int yTO = diff.GetRaws();
-							if (sA.sourceR.top == 25)
-							{
-								yExtra = 13;
-								yTO--;
-							}
-							if (sA.sourceR.top == 14)
-							{
-								yExtra = 22;
-							}
-							if (sA.sourceR.top == 7)
-							{
-								xExtra = 22;
-							}
-							if (sA.sourceR.top == 21)
-							{
-								yExtra = 22;
-								xExtra = 22;
-							}
-							if (sA.sourceR.left == 76 || sA.sourceR.left == 134 || sA.sourceR.left == 185)
-							{
-								xExtra = 13;
-								xTO--;
-							}
-							for (int yInner = 0; yInner < yTO; yInner++)
-							{
-								for (int xInner = 0; xInner < xTO; xInner++)
+							int order = Settings::typeLayer[h];
+							if (!Settings::anyOfHillTypes(order) && conMap[order][x][y] == 1 && Settings::anyGroundedTypes(order))
+							{				
+								auto newVecs = GetConnectionAnimationVec(order, m);;
+								for (int c = 0; c < newVecs.size(); c++)
 								{
-									int what = diff[xInner][yInner];
-									
-									if (what == 1 && groundedMap[(__int64)x * CellSplitUpIn + std::round(xInner / 2) + xExtra][(__int64)y * CellSplitUpIn + std::round(yInner / 2) + yExtra] != 0)
-									{
-										groundedMap[(__int64)x * CellSplitUpIn + std::round(xInner / 2) + xExtra][(__int64)y * CellSplitUpIn + std::round(yInner / 2) + yExtra] = 1;
-									}
+									sAVec.push_back(newVecs[c]);
 								}
 							}
 						}
+
+						Matrix<int> chromaM = SubAnimation::PutOnTopOfEachOther(sAVec,Vei2(50,50),1,0);
+						chromaM = SubAnimation::HalfSize(chromaM,0);
+
+
+						for (int yInner = 0; yInner < Settings::CellSplitUpIn; yInner++)
+						{
+							for (int xInner = 0; xInner < Settings::CellSplitUpIn; xInner++)
+							{
+								if (chromaM[xInner][yInner] == 1 && groundedMap[(__int64)x * CellSplitUpIn + xInner][(__int64)y * CellSplitUpIn + yInner] != 0)
+								{
+									groundedMap[(__int64)x * CellSplitUpIn + xInner][(__int64)y * CellSplitUpIn + yInner] = 1;
+								}
+									/*
+								if (what == 1 && groundedMap[(__int64)x * CellSplitUpIn + std::round(xInner / 2) + xExtra][(__int64)y * CellSplitUpIn + std::round(yInner / 2) + yExtra] != 0)
+								{
+									groundedMap[(__int64)x * CellSplitUpIn + std::round(xInner / 2) + xExtra][(__int64)y * CellSplitUpIn + std::round(yInner / 2) + yExtra] = 1;
+								}
+								*/
+							}
+						}
+
 					}
 					else if(order == cells[x][y].type && Settings::anyOfHillTypes(order))	//Hills
 					{
@@ -289,9 +279,9 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLooked())
 	{
 		fCell = GetCellHit((Vec2) e.GetPos());
-		cells(fCell).type = 4;
-		UpdateConMap();
-		UpdateGroundedMap();
+		//cells(fCell).type = 4;
+		//UpdateConMap();
+		//UpdateGroundedMap();
 	}
 	if (e.GetType() == Mouse::Event::WheelDown)
 	{
@@ -618,6 +608,7 @@ std::vector<SubAnimation> World::GetConnectionAnimationVec(int lookFor, Matrix<i
 	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
 	using namespace Settings;
 	std::vector<SubAnimation> vec;
+	std::vector<RectI> posInGrit = fsC->GetPositionsOfCon(Vei2(50,50));
 
 	if (FIDF(aMat[1][1], lookFor))
 	{
@@ -625,76 +616,76 @@ std::vector<SubAnimation> World::GetConnectionAnimationVec(int lookFor, Matrix<i
 		{
 			if (aMat[0][1] == lookFor)	// 1
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(51, 0), 25, 25)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(51, 0), 25, 25), posInGrit[0]));
 			}
 			if (aMat[0][1] != lookFor)	// 13
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(160, 0), 25, 25)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(160, 0), 25, 25), posInGrit[0]));
 			}
 			if (aMat[2][1] == lookFor)	// 2
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(76, 0), 25, 25)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(76, 0), 25, 25), posInGrit[1]));
 			}
 			if (aMat[2][1] != lookFor)	// 14
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(185, 0), 25, 25)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(185, 0), 25, 25), posInGrit[1]));
 			}
 		}
 		else if (aMat[1][2] != lookFor)
 		{
 			if (aMat[0][1] == lookFor)	//9
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(109, 0), 25, 25)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(109, 0), 25, 25), posInGrit[0]));
 			}
 			if (FIDF(aMat[0][1], lookFor) && aMat[0][2] == lookFor)	// 5
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(102, 0), 6, 6)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(102, 0), 6, 6), posInGrit[4]));
 			}
 			if (aMat[2][1] == lookFor)	//10
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(134, 0), 25, 25)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(134, 0), 25, 25), posInGrit[1]));
 			}
 			if (FIDF(aMat[2][1], lookFor) && aMat[2][2] == lookFor)	// 6
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(102, 7), 6, 6)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(102, 7), 6, 6), posInGrit[5]));
 			}
 		}
 		if (aMat[1][0] == lookFor)
 		{
 			if (aMat[0][1] == lookFor)	// 3
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(51, 25), 25, 25)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(51, 25), 25, 25), posInGrit[2]));
 			}
 			if (aMat[0][1] != lookFor)	// 15
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(160, 25), 25, 25)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(160, 25), 25, 25), posInGrit[2]));
 			}
 			if (aMat[2][1] == lookFor)	// 4
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(76, 25), 25, 25)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(76, 25), 25, 25), posInGrit[3]));
 			}
 			if (aMat[2][1] != lookFor)	// 16
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(185, 25), 25, 25)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(185, 25), 25, 25), posInGrit[3]));
 			}
 		}
 		else if (aMat[1][0] != lookFor)
 		{
 			if (FIDF(aMat[0][1], lookFor) && aMat[0][0] == lookFor)	// 7
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(102, 14), 6, 6)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(102, 14), 6, 6), posInGrit[6]));
 			}
 			if (aMat[0][1] == lookFor)	// 11
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(109, 25), 25, 25)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(109, 25), 25, 25), posInGrit[2]));
 			}
 			if (FIDF(aMat[2][1], lookFor) && aMat[2][0] == lookFor)	// 8
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(102, 21), 6, 6)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(102, 21), 6, 6), posInGrit[7]));
 			}
 			if (aMat[2][1] == lookFor)	// 12
 			{
-				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(134, 25), 25, 25)));
+				vec.push_back(SubAnimation(tC->Fields.at(lookFor), RectI(Vei2(134, 25), 25, 25), posInGrit[3]));
 			}
 		}
 	}
