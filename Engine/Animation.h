@@ -97,7 +97,7 @@ public:
 		return mat;
 	}
 
-	static Matrix<int> PutOnTopOfEachOther(std::vector<SubAnimation> oldM, Vei2 dim, int lookFor, int other)		//keeps lookFor 
+	static Matrix<int> PutOnTopOfEachOther(std::vector<SubAnimation> oldM, Vei2 dim, int keep, int other)		//keep value will be layered and other is the rest
 	{
 		Matrix<int> newM = Matrix<int>(dim.x, dim.y, 0);
 		RectI size = RectI(Vei2(0, 0), dim.x, dim.y);
@@ -112,14 +112,14 @@ public:
 				{
 					int solid = 0;
 
-					if (oldM[i].posIn50x50grit.Contains(Vei2(x, y)) && oldM[i].chromaM[(__int64)x - oldM[i].posIn50x50grit.left][(__int64)y - oldM[i].posIn50x50grit.top] == lookFor)
+					if (oldM[i].posIn50x50grit.Contains(Vei2(x, y)) && oldM[i].chromaM[(__int64)x - oldM[i].posIn50x50grit.left][(__int64)y - oldM[i].posIn50x50grit.top] == keep)
 					{
-						value = lookFor;
+						value = keep;
 					}
 
 					if (solid == 4)
 					{
-						value = lookFor;
+						value = keep;
 					}
 				}
 				newM[x][y] = value;

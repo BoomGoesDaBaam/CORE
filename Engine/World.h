@@ -114,12 +114,14 @@ private:
 	RectF GetCellRect(Vei2 cellP)const;
 	Vei2 GetCellHit(Vec2 mouseP)const;
 	void Init(WorldSettings& s);
-	bool IsInWorld(Vei2& v)const;
+	bool IsInWorld(Vei2& pos)const;
 	bool IsInWorldY(int y)const;		
-	Vei2 PutInWorldX(Vei2 v)const;		//Calculates coordinates when x negativ or > cSize.x  
+	Vei2 PutInWorldX(Vei2 pos)const;		//Calculates coordinates when x negativ or > cSize.x  
 	Matrix<int> GetAroundMatrix(Vei2 cell)const;	//in bounds: type		outside bounds(y-wise): -1		
 	void UpdateConMap();							//UpdateConMap must be called before UpdateGroundedMap
 	void UpdateGroundedMap();
+	void SetTilesAT(Vei2 pos, int value);
+	void SetTilesAT(Vei2 pos, Matrix<int> matrix, int type);	//sets tile(x0,y0) in Cell(x1,y1) to type when matrix at(x0,y0) != 0
 	bool IsSurroundedBy(Vei2 pos, int type);		//3x3 around pos
 	//Private not const Funktions
 	void Zoom(Vei2 delta);				//Delta == delta cSize
@@ -144,10 +146,12 @@ public:
 	//Handles
 	void HandleMouseEvents(Mouse::Event& e, GrabHandle& gH);
 	void HandleKeyboardEvents(Keyboard::Event& e);
-	//Grafiken
+	//Grafiken + Einbindung dieser in groundedMap
 	void Draw(Graphics& gfx)const;
-	void DrawConnections(int onCell, Vei2 topLeft, Matrix<int> aMat, Graphics& gfx)const;
-	std::vector<SubAnimation> GetConnectionAnimationVec(int lookFor, Matrix<int> aMat)const;
+	void DrawConnections(int onCell, Vei2 topLeft, Vei2 pos, Graphics& gfx)const;
+	std::vector<SubAnimation> GetConnectionAnimationVec(int lookFor, Vei2 pos)const;
+	std::vector<SubAnimation> GetConnectionsOfTypes(Vei2 pos, int* types);
+	void PlaceConectionsIntoCelltiles(Vei2 pos, int value, int mixed, const int* types);
 	bool NeedsConnections(Vei2 curXY)const;
 	//
 	Vei2 GetwSize() { return wSize; }

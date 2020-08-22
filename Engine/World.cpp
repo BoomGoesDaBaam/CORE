@@ -97,73 +97,93 @@ void World::UpdateGroundedMap()
 	{
 		for (int x = 0; x < wSize.x; x++)
 		{
-			if (anyGroundedTypes(cells[x][y].type))				//Fieldtypes that are grounded
+			Vei2 pos = Vei2(x, y);
+			int curType = cells[x][y].type;
+			if (anyGroundedTypes(curType))				//fieldtypes that are grounded
 			{
-				for (int yInner = 0; yInner < CellSplitUpIn; yInner++)
+				SetTilesAT(pos, 1);
+				PlaceConectionsIntoCelltiles(pos, 0,1, hillTypesARE);
+			}
+			else if(Settings::anyOfHillTypes(curType))	//Hills
+			{
+				SetTilesAT(pos, 2);
+			}
+			else if (Settings::anyLiquidType(curType))
+			{
+				PlaceConectionsIntoCelltiles(pos, 0,1, hillTypesARE);
+				PlaceConectionsIntoCelltiles(pos, 1,0, groundedTypesARE);
+			}
+		}
+	}
+}
+void World::PlaceConectionsIntoCelltiles(Vei2 pos, int value, int prio, const int* types)
+{
+
+	auto a = GetAroundMatrix(pos);
+	std::vector<SubAnimation> sAVec;
+
+	for (int i = 0; i < Settings::ArrSize(types); i++)
+	{
+		int curType = types[i];
+
+		if (a.HasValue(curType))
+		{
+			std::vector<Vei2> locOfHill = a.GetPosOfValue(curType);
+
+			for (int h = 0; h < locOfHill.size(); h++)
+			{
+				if (conMap[curType][pos.x][pos.y] == 1)
 				{
-					for (int xInner = 0; xInner < CellSplitUpIn; xInner++)
+					auto newVecs = GetConnectionAnimationVec(curType, pos);
+					for (int c = 0; c < newVecs.size(); c++)
 					{
-						groundedMap[(__int64)x * CellSplitUpIn + xInner][(__int64)y * CellSplitUpIn + yInner] = 1;
+						sAVec.push_back(newVecs[c]);
 					}
 				}
 			}
-			else
+			Matrix<int> chromaM = SubAnimation::PutOnTopOfEachOther(sAVec, Vei2(50, 50), 1, 0);
+			chromaM = SubAnimation::HalfSize(chromaM, prio);
+			SetTilesAT(pos, chromaM, value);
+
+		}
+	}
+}
+std::vector<SubAnimation> World::GetConnectionsOfTypes(Vei2 pos, int* types)
+{
+	std::vector<SubAnimation> cons;
+	for (int i = 0; i < Settings::ArrSize(types); i++)
+	{
+		std::vector<SubAnimation> newC = GetConnectionAnimationVec(types[i], pos);
+		for (int n = 0; n < newC.size(); n++)
+		{
+			cons.push_back(newC[n]);
+		}
+	}
+	return cons;
+}
+void World::SetTilesAT(Vei2 pos, int value)
+{
+	for (int yInner = 0; yInner < Settings::CellSplitUpIn; yInner++)
+	{
+		for (int xInner = 0; xInner < Settings::CellSplitUpIn; xInner++)
+		{
+			groundedMap[(__int64)pos.x * Settings::CellSplitUpIn + xInner][(__int64)pos.y * Settings::CellSplitUpIn + yInner] = value;
+		}
+	}
+}
+void World::SetTilesAT(Vei2 pos, Matrix<int> matrix, int type)
+{
+	assert(matrix.GetColums() == Settings::CellSplitUpIn);
+	assert(matrix.GetRaws() == Settings::CellSplitUpIn);
+
+
+	for (int yInner = 0; yInner < Settings::CellSplitUpIn; yInner++)
+	{
+		for (int xInner = 0; xInner < Settings::CellSplitUpIn; xInner++)
+		{
+			if (matrix[xInner][yInner] == 1 && groundedMap[(__int64)pos.x * Settings::CellSplitUpIn + xInner][(__int64)pos.y * Settings::CellSplitUpIn + yInner] != 0)
 			{
-
-				for (int i = 0; i < Settings::nDiffFieldTypes; i++)//Fieldtypes that are not grounded and not hills	(liquids)
-				{
-					int order = Settings::typeLayer[i];
-					if (!Settings::anyOfHillTypes(order) && conMap[order][x][y] == 1 && Settings::anyGroundedTypes(order)) {
-
-						Matrix<int> m = GetAroundMatrix(Vei2(x, y));
-						std::vector<SubAnimation> sAVec;
-						for (int h = 0; h < Settings::nDiffFieldTypes; h++)
-						{
-							int order = Settings::typeLayer[h];
-							if (!Settings::anyOfHillTypes(order) && conMap[order][x][y] == 1 && Settings::anyGroundedTypes(order))
-							{				
-								auto newVecs = GetConnectionAnimationVec(order, m);;
-								for (int c = 0; c < newVecs.size(); c++)
-								{
-									sAVec.push_back(newVecs[c]);
-								}
-							}
-						}
-
-						Matrix<int> chromaM = SubAnimation::PutOnTopOfEachOther(sAVec,Vei2(50,50),1,0);
-						chromaM = SubAnimation::HalfSize(chromaM,0);
-
-
-						for (int yInner = 0; yInner < Settings::CellSplitUpIn; yInner++)
-						{
-							for (int xInner = 0; xInner < Settings::CellSplitUpIn; xInner++)
-							{
-								if (chromaM[xInner][yInner] == 1 && groundedMap[(__int64)x * CellSplitUpIn + xInner][(__int64)y * CellSplitUpIn + yInner] != 0)
-								{
-									groundedMap[(__int64)x * CellSplitUpIn + xInner][(__int64)y * CellSplitUpIn + yInner] = 1;
-								}
-									/*
-								if (what == 1 && groundedMap[(__int64)x * CellSplitUpIn + std::round(xInner / 2) + xExtra][(__int64)y * CellSplitUpIn + std::round(yInner / 2) + yExtra] != 0)
-								{
-									groundedMap[(__int64)x * CellSplitUpIn + std::round(xInner / 2) + xExtra][(__int64)y * CellSplitUpIn + std::round(yInner / 2) + yExtra] = 1;
-								}
-								*/
-							}
-						}
-
-					}
-					else if(order == cells[x][y].type && Settings::anyOfHillTypes(order))	//Hills
-					{
-						for (int yInner = 0; yInner < Settings::CellSplitUpIn; yInner++)
-						{
-							for (int xInner = 0; xInner < Settings::CellSplitUpIn; xInner++)
-							{
-								groundedMap[(__int64)x * CellSplitUpIn + xInner][(__int64)y * CellSplitUpIn + yInner] = 0;
-							}
-						}
-						break;
-					}
-				}
+				groundedMap[(__int64)pos.x * Settings::CellSplitUpIn + xInner][(__int64)pos.y * Settings::CellSplitUpIn + yInner] = type;
 			}
 		}
 	}
@@ -358,10 +378,9 @@ void World::Draw(Graphics& gfx) const
 						int order = Settings::typeLayer[i];
 						if (conMap[order][curXY.x][curXY.y] == 1)
 						{
-							DrawConnections(order, Vei2(curCellPos.left, curCellPos.top), GetAroundMatrix(curXY), gfx);
+							DrawConnections(order, Vei2(curCellPos.left, curCellPos.top), curXY, gfx);
 						}
 					}
-
 					break;
 				case 1:
 					if (curXY == fCell)
@@ -400,7 +419,7 @@ void World::Draw(Graphics& gfx) const
 										}
 										else if (groundedMap(v) == 2)
 										{
-											gfx.DrawRect(curP, Colors::Black, e);
+											gfx.DrawRect(curP, Colors::Green, e);
 										}
 									}
 								}
@@ -503,7 +522,7 @@ void World::CutHills(int replaceTo)
 					{
 						continue;
 					}
-					Vei2 problem = aMat.GetPosOfValue(hillTypesARE[i]);
+					Vei2 problem = aMat.GetPosOfValue(hillTypesARE[i])[0];
 					if (problem != Vei2(-1,-1))
 					{
 						Vei2 where = problem + Vei2(x, y) + Vei2(-1,-1);
@@ -515,12 +534,11 @@ void World::CutHills(int replaceTo)
 		}
 	}
 }
-void World::DrawConnections(int lookFor,Vei2 topLeft, Matrix<int> aMat, Graphics& gfx)const
+void World::DrawConnections(int lookFor,Vei2 topLeft, Vei2 pos, Graphics& gfx)const
 {
-	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3); 
 	using namespace Settings;
-	
-	
+	Matrix<int> aMat = GetAroundMatrix(Vei2(pos));
+	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
 
 	if (FIDF(aMat[1][1],lookFor))
 	{						
@@ -603,12 +621,13 @@ void World::DrawConnections(int lookFor,Vei2 topLeft, Matrix<int> aMat, Graphics
 		}
 	}
 }
-std::vector<SubAnimation> World::GetConnectionAnimationVec(int lookFor, Matrix<int> aMat)const
+std::vector<SubAnimation> World::GetConnectionAnimationVec(int lookFor, Vei2 pos)const
 {
-	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
 	using namespace Settings;
 	std::vector<SubAnimation> vec;
 	std::vector<RectI> posInGrit = fsC->GetPositionsOfCon(Vei2(50,50));
+	Matrix<int> aMat = GetAroundMatrix(Vei2(pos));
+	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
 
 	if (FIDF(aMat[1][1], lookFor))
 	{
