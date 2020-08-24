@@ -121,7 +121,7 @@ private:
 	void UpdateConMap();							//UpdateConMap must be called before UpdateGroundedMap
 	void UpdateGroundedMap();
 	void SetTilesAT(Vei2 pos, int value);
-	void SetTilesAT(Vei2 pos, Matrix<int> matrix, int type);	//sets tile(x0,y0) in Cell(x1,y1) to type when matrix at(x0,y0) != 0
+	void SetTilesAT(Vei2 pos, Matrix<int> matrix);	//sets tile(x0,y0) in Cell(x1,y1) to type when matrix at(x0,y0) != 0
 	bool IsSurroundedBy(Vei2 pos, int type);		//3x3 around pos
 	//Private not const Funktions
 	void Zoom(Vei2 delta);				//Delta == delta cSize
@@ -151,7 +151,9 @@ public:
 	void DrawConnections(int onCell, Vei2 topLeft, Vei2 pos, Graphics& gfx)const;
 	std::vector<SubAnimation> GetConnectionAnimationVec(int lookFor, Vei2 pos)const;
 	std::vector<SubAnimation> GetConnectionsOfTypes(Vei2 pos, int* types);
-	void PlaceConectionsIntoCelltiles(Vei2 pos, int value, int mixed, const int* types);
+	void PlaceConectionsIntoCelltiles(Vei2 pos, int value, int mixed, int valueOfZero, const int* types);
+	void ChangeGroundedVal(int from, int to);
+	void PlaceLadderableTiles(int type);
 	bool NeedsConnections(Vei2 curXY)const;
 	//
 	Vei2 GetwSize() { return wSize; }

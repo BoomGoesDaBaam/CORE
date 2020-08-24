@@ -127,34 +127,4 @@ public:
 		}
 		return newM;
 	}
-	static Matrix<int> HalfSize(Matrix<int> oldM, int prio)
-	{
-		Matrix<int> newM = Matrix<int>(oldM.GetColums()/2, oldM.GetRaws()/2, 0);
-		for (int y = 0; y < newM.GetRaws(); y++)
-		{
-			for (int x = 0; x < newM.GetColums(); x++)
-			{
-				bool hasPrio = false;
-				for (int yInner = 0; yInner < 2; yInner++)
-				{
-					for (int xInner = 0; xInner < 2; xInner++)
-					{
-						if (oldM[(__int64)x * 2 + xInner][(__int64)y * 2 + yInner] == prio)
-						{
-							hasPrio = true;
-						}
-					}
-				}
-				if (hasPrio)
-				{
-					newM[x][y] = prio;
-				}
-				else
-				{
-					newM[x][y] = oldM[(__int64)x * 2][(__int64)y * 2];
-				}
-			}
-		}
-		return newM;
-	}
 };

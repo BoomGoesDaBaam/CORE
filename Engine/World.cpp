@@ -99,26 +99,58 @@ void World::UpdateGroundedMap()
 		{
 			Vei2 pos = Vei2(x, y);
 			int curType = cells[x][y].type;
-			if (anyGroundedTypes(curType))				//fieldtypes that are grounded
+			if (anyGroundedTypes(curType))				//grounded
 			{
 				SetTilesAT(pos, 1);
-				PlaceConectionsIntoCelltiles(pos, 0,1, hillTypesARE);
+				PlaceConectionsIntoCelltiles(pos, 2, 2, -1, hillTypesARE);
 			}
-			else if(Settings::anyOfHillTypes(curType))	//Hills
+			else if(Settings::anyOfHillTypes(curType))	//hills
 			{
 				SetTilesAT(pos, 2);
 			}
-			else if (Settings::anyLiquidType(curType))
+			else if (Settings::anyLiquidType(curType))	//liqids
 			{
-				PlaceConectionsIntoCelltiles(pos, 0,1, hillTypesARE);
-				PlaceConectionsIntoCelltiles(pos, 1,0, groundedTypesARE);
+				PlaceConectionsIntoCelltiles(pos, 2,2,-1, hillTypesARE);
+				PlaceConectionsIntoCelltiles(pos, 1,0,-1, groundedTypesARE);
 			}
 		}
 	}
+	ChangeGroundedVal(-1, 0);
+	PlaceLadderableTiles(3);
 }
-void World::PlaceConectionsIntoCelltiles(Vei2 pos, int value, int prio, const int* types)
+void World::PlaceLadderableTiles(int type)
 {
-
+	for (int y = 0; y < wSize.y * Settings::CellSplitUpIn; y++)
+	{
+		for (int x = 0; x < wSize.x * Settings::CellSplitUpIn; x++)
+		{
+			if(groundedMap[x][y] == 2)
+			if (y > 1 &&(groundedMap[x][(__int64)y + 2] == 0 || groundedMap[x][(__int64)y + 2] == 1))
+			{
+				groundedMap[x][y] = type;
+			}
+			/*
+			if (y < wSize.y * Settings::CellSplitUpIn - 2 && groundedMap[x][y + 2] == 1)
+			{
+				groundedMap[x][y] = type;
+			}
+			*/
+		}
+	}
+}
+void World::ChangeGroundedVal(int from, int to)
+{
+	for (int y = 0; y < wSize.y * Settings::CellSplitUpIn; y++)
+	{
+		for (int x = 0; x < wSize.x * Settings::CellSplitUpIn; x++)
+		{
+			if (groundedMap[x][y] == from)
+				groundedMap[x][y] = to;
+		}
+	}
+}
+void World::PlaceConectionsIntoCelltiles(Vei2 pos, int value, int valOfMixed, int valueOfZero, const int* types)
+{
 	auto a = GetAroundMatrix(pos);
 	std::vector<SubAnimation> sAVec;
 
@@ -142,8 +174,9 @@ void World::PlaceConectionsIntoCelltiles(Vei2 pos, int value, int prio, const in
 				}
 			}
 			Matrix<int> chromaM = SubAnimation::PutOnTopOfEachOther(sAVec, Vei2(50, 50), 1, 0);
-			chromaM = SubAnimation::HalfSize(chromaM, prio);
-			SetTilesAT(pos, chromaM, value);
+			chromaM.Sort(value, valueOfZero);
+			chromaM = chromaM.HalfSize(chromaM, valOfMixed);
+			SetTilesAT(pos, chromaM);
 
 		}
 	}
@@ -171,19 +204,25 @@ void World::SetTilesAT(Vei2 pos, int value)
 		}
 	}
 }
-void World::SetTilesAT(Vei2 pos, Matrix<int> matrix, int type)
+void World::SetTilesAT(Vei2 pos, Matrix<int> matrix)
 {
 	assert(matrix.GetColums() == Settings::CellSplitUpIn);
 	assert(matrix.GetRaws() == Settings::CellSplitUpIn);
 
 
-	for (int yInner = 0; yInner < Settings::CellSplitUpIn; yInner++)
+	for (int yInCell = 0; yInCell < Settings::CellSplitUpIn; yInCell++)
 	{
-		for (int xInner = 0; xInner < Settings::CellSplitUpIn; xInner++)
+		for (int xInCell = 0; xInCell < Settings::CellSplitUpIn; xInCell++)
 		{
-			if (matrix[xInner][yInner] == 1 && groundedMap[(__int64)pos.x * Settings::CellSplitUpIn + xInner][(__int64)pos.y * Settings::CellSplitUpIn + yInner] != 0)
+			int curX = (__int64)pos.x * Settings::CellSplitUpIn + xInCell;
+			int curY = (__int64)pos.y * Settings::CellSplitUpIn + yInCell;
+
+			if (groundedMap[curX][curY] != 0)
 			{
-				groundedMap[(__int64)pos.x * Settings::CellSplitUpIn + xInner][(__int64)pos.y * Settings::CellSplitUpIn + yInner] = type;
+				if (matrix[xInCell][yInCell] != -1 && (groundedMap[curX][curY] == -1 || groundedMap[curX][curY] == 1))
+				{
+					groundedMap[curX][curY] = matrix[xInCell][yInCell];
+				}
 			}
 		}
 	}
@@ -420,6 +459,10 @@ void World::Draw(Graphics& gfx) const
 										else if (groundedMap(v) == 2)
 										{
 											gfx.DrawRect(curP, Colors::Green, e);
+										}
+										else if (groundedMap(v) == 3)
+										{
+											gfx.DrawRect(curP, Colors::Cyan, SpriteEffect::Transparent(0.5f));
 										}
 									}
 								}

@@ -47,6 +47,20 @@ class Matrix
 			}
 			return false;
 		}
+		void Sort(int nonZero, int zeros)
+		{
+			for (int i = 0; i < column.size(); i++)
+			{
+				if (column[i] != 0)
+				{
+					column[i] = nonZero;
+				}
+				else
+				{
+					column[i] = zeros;
+				}
+			}
+		}
 		std::vector<T> GetPosOfValue(T value)
 		{
 			std::vector<T> pos;
@@ -98,7 +112,14 @@ public:
 	{
 		for (int i = 0; i < nColumns; i++)
 		{
-			colums[i].SetValueOfALL(value);
+			columns[i].SetValueOfALL(value);
+		}
+	}
+	void Sort(int nonZero,int zeros)			//puts in every nonZero element value of parameter
+	{
+		for (int i = 0; i < nColumns; i++)
+		{
+			columns[i].Sort(nonZero, zeros);
 		}
 	}
 	void SetValueOfRaw(int raw, T value)
@@ -106,7 +127,7 @@ public:
 		assert(raw >= 0 && raw < nRaws);
 		for (int i = 0; i < nColumns; i++)
 		{
-			colums[i].SetValue(raw, value);
+			columns[i].SetValue(raw, value);
 		}
 	}
 	void SetValueOfColum(int column, T value)
@@ -114,7 +135,7 @@ public:
 		assert(column >= 0 && column < nColumns);
 		for (int i = 0; i < nRaws; i++)
 		{
-			colums[column].SetValue(i, value);
+			columns[column].SetValue(i, value);
 		}
 	}
 	bool HasValue(T value)
@@ -182,6 +203,38 @@ public:
 		if (nRaws - 1 > y)
 		{
 			newM[1][2] = columns[x][y + 1];
+		}
+		return newM;
+	}
+	static Matrix<int> HalfSize(Matrix<int> oldM, int valOfMixed)		//doesnt overrides this matrix!
+	{
+		Matrix<int> newM = Matrix<int>(oldM.GetColums() / 2, oldM.GetRaws() / 2, 0);
+		for (int y = 0; y < newM.GetRaws(); y++)
+		{
+			for (int x = 0; x < newM.GetColums(); x++)
+			{
+				bool hasMixed = false; 
+				int last = oldM[(__int64)x * 2][(__int64)y * 2];
+
+				for (int yInner = 0; yInner < 2; yInner++)
+				{
+					for (int xInner = 0; xInner < 2; xInner++)
+					{
+						if (oldM[(__int64)x * 2 + xInner][(__int64)y * 2 + yInner] != last)
+						{
+							hasMixed = true;
+						}
+					}
+				}
+				if (hasMixed)
+				{
+					newM[x][y] = valOfMixed;
+				}
+				else
+				{
+					newM[x][y] = oldM[(__int64)x * 2][(__int64)y * 2];
+				}
+			}
 		}
 		return newM;
 	}
