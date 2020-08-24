@@ -102,7 +102,7 @@ void World::UpdateGroundedMap()
 			if (anyGroundedTypes(curType))				//grounded
 			{
 				SetTilesAT(pos, 1);
-				PlaceConectionsIntoCelltiles(pos, 2, 2, -1, hillTypesARE);
+				PlaceConnectionsIntoCelltiles(pos, 2, 2, -1, hillTypesARE);
 			}
 			else if(Settings::anyOfHillTypes(curType))	//hills
 			{
@@ -110,8 +110,8 @@ void World::UpdateGroundedMap()
 			}
 			else if (Settings::anyLiquidType(curType))	//liqids
 			{
-				PlaceConectionsIntoCelltiles(pos, 2,2,-1, hillTypesARE);
-				PlaceConectionsIntoCelltiles(pos, 1,0,-1, groundedTypesARE);
+				PlaceConnectionsIntoCelltiles(pos, 2,2,-1, hillTypesARE);
+				PlaceConnectionsIntoCelltiles(pos, 1,0,-1, groundedTypesARE);
 			}
 		}
 	}
@@ -124,19 +124,51 @@ void World::PlaceLadderableTiles(int type)
 	{
 		for (int x = 0; x < wSize.x * Settings::CellSplitUpIn; x++)
 		{
-			if(groundedMap[x][y] == 2)
-			if (y > 1 &&(groundedMap[x][(__int64)y + 2] == 0 || groundedMap[x][(__int64)y + 2] == 1))
+			if (groundedMap[x][y] == 2)
 			{
-				groundedMap[x][y] = type;
+				if (y > 1 && (groundedMap[x][(__int64)y + 2] == 0 || groundedMap[x][(__int64)y + 2] == 1))
+				{
+					groundedMap[x][y] = type;
+				}
+				if (y < wSize.y * Settings::CellSplitUpIn - 2 && (groundedMap[x][(__int64)y - 2] == 0 || groundedMap[x][(__int64)y - 2] == 1))
+				{
+					groundedMap[x][y] = type;
+				}
+				if (groundedMap(PutTileIntoWorld((__int64)x + 2,y)) == 0 || groundedMap(PutTileIntoWorld((__int64)x + 2, y)) == 1)
+				{
+					groundedMap[x][y] = type;
+				}
+				if (groundedMap(PutTileIntoWorld((__int64)x - 2, y)) == 0 || groundedMap(PutTileIntoWorld((__int64)x - 2, y)) == 1)
+				{
+					groundedMap[x][y] = type;
+				}
 			}
-			/*
-			if (y < wSize.y * Settings::CellSplitUpIn - 2 && groundedMap[x][y + 2] == 1)
-			{
-				groundedMap[x][y] = type;
-			}
-			*/
 		}
 	}
+}
+Vei2 World::PutTileIntoWorld(Vei2 pos)
+{
+	return PutTileIntoWorld(pos.x, pos.y);
+}
+Vei2 World::PutTileIntoWorld(int x, int y)
+{
+	if (y < 0)
+	{
+		y = 0;
+	}
+	if (y >= wSize.y * Settings::CellSplitUpIn)
+	{
+		y = wSize.y * Settings::CellSplitUpIn - 1;
+	}
+	while (x < 0)
+	{
+		x += wSize.x * Settings::CellSplitUpIn;
+	}
+	while (x >= wSize.x * Settings::CellSplitUpIn)
+	{
+		x -= wSize.x * Settings::CellSplitUpIn;
+	}
+	return Vei2(x, y);
 }
 void World::ChangeGroundedVal(int from, int to)
 {
@@ -149,7 +181,7 @@ void World::ChangeGroundedVal(int from, int to)
 		}
 	}
 }
-void World::PlaceConectionsIntoCelltiles(Vei2 pos, int value, int valOfMixed, int valueOfZero, const int* types)
+void World::PlaceConnectionsIntoCelltiles(Vei2 pos, int value, int valOfMixed, int valueOfZero, const int* types)
 {
 	auto a = GetAroundMatrix(pos);
 	std::vector<SubAnimation> sAVec;
@@ -175,7 +207,8 @@ void World::PlaceConectionsIntoCelltiles(Vei2 pos, int value, int valOfMixed, in
 			}
 			Matrix<int> chromaM = SubAnimation::PutOnTopOfEachOther(sAVec, Vei2(50, 50), 1, 0);
 			chromaM.Sort(value, valueOfZero);
-			chromaM = chromaM.HalfSize(chromaM, valOfMixed);
+			chromaM.HalfSize(chromaM, valOfMixed);
+			chromaM.MirrowVertical();
 			SetTilesAT(pos, chromaM);
 
 		}
@@ -207,7 +240,7 @@ void World::SetTilesAT(Vei2 pos, int value)
 void World::SetTilesAT(Vei2 pos, Matrix<int> matrix)
 {
 	assert(matrix.GetColums() == Settings::CellSplitUpIn);
-	assert(matrix.GetRaws() == Settings::CellSplitUpIn);
+	assert(matrix.GetRows() == Settings::CellSplitUpIn);
 
 
 	for (int yInCell = 0; yInCell < Settings::CellSplitUpIn; yInCell++)
@@ -441,10 +474,9 @@ void World::Draw(Graphics& gfx) const
 								assert(v.x < 5000 && v.x >= 0);
 								assert(v.y < 5000 && v.y >= 0);
 
-								if (groundedMap(v) == 0 || groundedMap(v) == -1 || groundedMap(v) == 2)
-								{
+								
 									float xPos = curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth();
-									float yPos = curCellPos.top + ((float)yOnCell / CellSplitUpIn) * curCellPos.GetHeight();
+									float yPos = curCellPos.bottom - ((float)(yOnCell+1) / CellSplitUpIn) * curCellPos.GetHeight();
 									RectF curP = RectF(Vec2(xPos, yPos), std::ceil((double)curCellPos.GetWidth() / CellSplitUpIn), std::ceil((double)curCellPos.GetHeight() / CellSplitUpIn));
 									if (Graphics::GetScreenRect<float>().IsOverlappingWith(curP))
 									{
@@ -452,20 +484,25 @@ void World::Draw(Graphics& gfx) const
 										if (groundedMap(v) == 0)
 										{
 											gfx.DrawRect(curP, Colors::Red, e);
-										}else if (groundedMap(v) == -1)
+										}
+										else if (groundedMap(v) == 1)
+										{
+											gfx.DrawRect(curP, Colors::Green, e);
+										}
+										else if (groundedMap(v) == -1)
 										{
 											gfx.DrawRect(curP, Colors::Magenta, e);
 										}
 										else if (groundedMap(v) == 2)
 										{
-											gfx.DrawRect(curP, Colors::Green, e);
+											gfx.DrawRect(curP, Colors::Blue, e);
 										}
 										else if (groundedMap(v) == 3)
 										{
 											gfx.DrawRect(curP, Colors::Cyan, SpriteEffect::Transparent(0.5f));
 										}
 									}
-								}
+								
 							}
 						}
 

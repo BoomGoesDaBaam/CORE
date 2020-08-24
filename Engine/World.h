@@ -151,10 +151,12 @@ public:
 	void DrawConnections(int onCell, Vei2 topLeft, Vei2 pos, Graphics& gfx)const;
 	std::vector<SubAnimation> GetConnectionAnimationVec(int lookFor, Vei2 pos)const;
 	std::vector<SubAnimation> GetConnectionsOfTypes(Vei2 pos, int* types);
-	void PlaceConectionsIntoCelltiles(Vei2 pos, int value, int mixed, int valueOfZero, const int* types);
+	void PlaceConnectionsIntoCelltiles(Vei2 pos, int value, int mixed, int valueOfZero, const int* types);
 	void ChangeGroundedVal(int from, int to);
 	void PlaceLadderableTiles(int type);
 	bool NeedsConnections(Vei2 curXY)const;
+	Vei2 PutTileIntoWorld(Vei2 pos);
+	Vei2 PutTileIntoWorld(int x, int y);
 	//
 	Vei2 GetwSize() { return wSize; }
 	Vei2 GetcSize() { return cSize; }

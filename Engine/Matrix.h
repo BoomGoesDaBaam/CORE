@@ -4,11 +4,11 @@
 template<typename T>
 class Matrix
 {
-	class Cloumn
+	class Column
 	{
 		std::vector<T> column;
 	public:
-		Cloumn(int size, T value)
+		Column(int size, T value)
 		{
 			for (int i = 0; i < size;i++)
 			{
@@ -74,35 +74,57 @@ class Matrix
 			return pos;
 		}
 	};
-	std::vector<Cloumn> columns;
-	int nRaws = 1, nColumns = 1;
+	std::vector<Column> columns;
+	int nRows = 1, nColumns = 1;
 public:
-	Matrix(int nColums, int nRaws, T value):nRaws(nRaws),nColumns(nColums)
+	Matrix(int nColums, int nRaws, T value):nRows(nRaws),nColumns(nColums)
 	{
 		assert(nRaws >= 1 && nColumns >= 1);
-		for (int i = 0; i < nRaws; i++)
+		for (int i = 0; i < nColums; i++)
 		{
-			columns.push_back(Cloumn(nRaws,value));
+			columns.push_back(Column(nRaws,value));
 		}
 	}
 	Matrix()
 	{
-		columns.push_back(Cloumn(1, 0));
+		columns.push_back(Column(1, 0));
 	}
-
+	
 	const T& operator()(Vei2 pos)const { return columns[pos.x][pos.y]; }
 	T& operator()(Vei2 pos) { return columns[pos.x][pos.y]; }
-	const Cloumn& operator[](std::size_t idx) const { return columns[idx]; }
-	Cloumn& operator[](std::size_t idx) { return columns[idx]; }
+	const Column& operator[](std::size_t idx) const { return columns[idx]; }
+	Column& operator[](std::size_t idx) { return columns[idx]; }
 
+	void ReInit(int nColumns, int nRows, int value)
+	{
+		columns.clear();
+		for (int y = 0; y < nColumns; y++)
+		{
+			columns.push_back(Column(nRows, value));
+		}
+	}
+	void ReInit(Matrix<int> newM)
+	{
+		columns.clear();
+		nColumns = newM.GetColums();
+		nRows = newM.GetRows();
 
+		for (int x = 0; x < newM.GetColums(); x++)
+		{
+			columns.push_back(Column(newM.GetRows(), 0));
+			for (int y = 0; y < newM.GetRows(); y++)
+			{
+				columns[x].SetValue(y, newM[x][y]);
+			}
+		}
+	}
 	Vei2 GetSize()
 	{
-		return Vei2(nRaws, nColumns);
+		return Vei2(nRows, nColumns);
 	}
-	int GetRaws()const
+	int GetRows()const
 	{
-		return nRaws;
+		return nRows;
 	}
 	int GetColums()const
 	{
@@ -124,7 +146,7 @@ public:
 	}
 	void SetValueOfRaw(int raw, T value)
 	{
-		assert(raw >= 0 && raw < nRaws);
+		assert(raw >= 0 && raw < nRows);
 		for (int i = 0; i < nColumns; i++)
 		{
 			columns[i].SetValue(raw, value);
@@ -133,14 +155,14 @@ public:
 	void SetValueOfColum(int column, T value)
 	{
 		assert(column >= 0 && column < nColumns);
-		for (int i = 0; i < nRaws; i++)
+		for (int i = 0; i < nRows; i++)
 		{
 			columns[column].SetValue(i, value);
 		}
 	}
 	bool HasValue(T value)
 	{
-		for (int x = 0; x < nRaws; x++)
+		for (int x = 0; x < nRows; x++)
 		{
 			if (columns[x].HasValue(value))
 			{
@@ -152,7 +174,7 @@ public:
 	std::vector<Vec2_<T>> GetPosOfValue(T value)
 	{
 		std::vector<Vec2_<T>> v;
-		for (int x = 0; x < nRaws; x++)
+		for (int x = 0; x < nRows; x++)
 		{
 			if (columns[x].HasValue(value))
 			{
@@ -167,7 +189,7 @@ public:
 	}
 	Matrix<T> Get3x3Surrounded(int x, int y, T notValue)
 	{	
-		assert(x >= 0 && x < nColumns && y >= 0 && y < nRaws);
+		assert(x >= 0 && x < nColumns && y >= 0 && y < nRows);
 		Matrix<T> newM = Matrix<T>(3,3,notValue);
 		newM[1][1] = columns[x][y];
 
@@ -179,11 +201,11 @@ public:
 		{
 			newM[2][0] = columns[x + 1][y - 1];
 		}
-		if (x > 0 && nRaws - 1 > y)
+		if (x > 0 && nRows - 1 > y)
 		{
 			newM[0][2] = columns[x - 1][y + 1];
 		}
-		if (nColums - 1 > x && nRaws - 1 > y)
+		if (nColums - 1 > x && nRows - 1 > y)
 		{
 			newM[2][2] = columns[x + 1][y + 1];
 		}
@@ -200,16 +222,16 @@ public:
 		{
 			newM[2][1] = columns[x + 1][y];
 		}
-		if (nRaws - 1 > y)
+		if (nRows - 1 > y)
 		{
 			newM[1][2] = columns[x][y + 1];
 		}
 		return newM;
 	}
-	static Matrix<int> HalfSize(Matrix<int> oldM, int valOfMixed)		//doesnt overrides this matrix!
+	void HalfSize(Matrix<int> oldM, int valOfMixed)	
 	{
-		Matrix<int> newM = Matrix<int>(oldM.GetColums() / 2, oldM.GetRaws() / 2, 0);
-		for (int y = 0; y < newM.GetRaws(); y++)
+		Matrix<int> newM = Matrix<int>(oldM.GetColums() / 2, oldM.GetRows() / 2, 0);
+		for (int y = 0; y < newM.GetRows(); y++)
 		{
 			for (int x = 0; x < newM.GetColums(); x++)
 			{
@@ -236,6 +258,17 @@ public:
 				}
 			}
 		}
-		return newM;
+		ReInit(newM);
+	}
+	void MirrowVertical()
+	{
+		Matrix<int> oldM = Matrix<int>(*this);
+		for (int x = 0; x < nColumns; x++)
+		{
+			for (int y = 0; y < nRows; y++)
+			{
+				columns[x].SetValue(y, oldM[x][(__int64)nRows - y - 1]);
+			}
+		}
 	}
 };

@@ -91,7 +91,7 @@ public:
 		void Draw(Graphics& gfx)override
 		{
 			Matrix<int> sur = Matrix<int>(3, 3, 0);
-			for (int y = 0; y < configs.matrix.GetRaws(); y++)
+			for (int y = 0; y < configs.matrix.GetRows(); y++)
 			{
 				for (int x = 0; x < configs.matrix.GetColums(); x++)
 				{
