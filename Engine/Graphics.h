@@ -27,6 +27,8 @@
 #include "Surface.h"
 #include <cassert>
 #include <cmath>
+#include "Matrix.h"
+#include "Settings.h"
 class Graphics
 {
 public:
@@ -148,6 +150,93 @@ public:
 			for (int x = 0; x < pos.GetWidth(); x++)
 			{
 				effect(x + pos.left, y + pos.top,c, *this);
+			}
+		}
+	}
+	bool FIDF(int first, int second)const;			//First is drawn first (for DrawCon)
+	template <typename T>
+	void DrawConnections(int lookFor, Vei2 topLeft, Matrix<int> aMat, std::vector<RectI> drawOffset, const Surface& surface, T effect)
+	{
+		using namespace Settings;
+		assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
+
+		if (FIDF(aMat[1][1], lookFor))
+		{
+			if (aMat[1][2] == lookFor)
+			{
+				if (aMat[0][1] == lookFor)	// 1
+				{
+					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(51, 0), 25, 25), surface, effect);
+				}
+				else if (aMat[0][1] != lookFor)	// 13
+				{
+					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(160, 0), 25, 25), surface, effect);
+				}
+				if (aMat[2][1] == lookFor)	// 2
+				{
+					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(76, 0), 25, 25), surface, effect);
+				}
+				else if (aMat[2][1] != lookFor)	// 14
+				{
+					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(185, 0), 25, 25), surface, effect);
+				}
+			}
+			else if (aMat[1][2] != lookFor)
+			{
+				if (aMat[0][1] == lookFor)	//9
+				{
+					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(109, 0), 25, 25), surface, effect);
+				}
+				else if (FIDF(aMat[0][1], lookFor) && aMat[0][2] == lookFor)	// 5
+				{
+					DrawSurface(drawOffset[4] + topLeft, RectI(Vei2(102, 0), 6, 6), surface, effect);
+				}
+				if (aMat[2][1] == lookFor)	//10
+				{
+					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(134, 0), 25, 25), surface, effect);
+				}
+				else if (FIDF(aMat[2][1], lookFor) && aMat[2][2] == lookFor)	// 6
+				{
+					DrawSurface(drawOffset[5] + topLeft, RectI(Vei2(102, 7), 6, 6), surface, effect);
+				}
+			}
+			if (aMat[1][0] == lookFor)
+			{
+				if (aMat[0][1] == lookFor)	// 3
+				{
+					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(51, 25), 25, 25), surface, effect);
+				}
+				else if (aMat[0][1] != lookFor)	// 15
+				{
+					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(160, 25), 25, 25), surface, effect);
+				}
+				if (aMat[2][1] == lookFor)	// 4
+				{
+					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(76, 25), 25, 25), surface, effect);
+				}
+				else if (aMat[2][1] != lookFor)	// 16
+				{
+					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(185, 25), 25, 25), surface, effect);
+				}
+			}
+			else if (aMat[1][0] != lookFor)
+			{
+				if (FIDF(aMat[0][1], lookFor) && aMat[0][0] == lookFor)	// 7
+				{
+					DrawSurface(drawOffset[6] + topLeft, RectI(Vei2(102, 14), 6, 6), surface, effect);
+				}
+				else if (aMat[0][1] == lookFor)	// 11
+				{
+					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(109, 25), 25, 25), surface, effect);
+				}
+				if (FIDF(aMat[2][1], lookFor) && aMat[2][0] == lookFor)	// 8
+				{
+					DrawSurface(drawOffset[7] + topLeft, RectI(Vei2(102, 21), 6, 6), surface, effect);
+				}
+				else if (aMat[2][1] == lookFor)	// 12
+				{
+					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(134, 25), 25, 25), surface, effect);
+				}
 			}
 		}
 	}

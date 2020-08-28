@@ -17,6 +17,12 @@ public:
 	class WorldSettings
 	{
 	public:
+		WorldSettings()
+		{
+#ifdef _DEBUG 
+			wSize = Vei2(50, 50);
+#endif
+		}
 		int defBlueprint = 0;
 		int defType = 0;
 		Vei2 wSize = { 200, 200 };
@@ -108,7 +114,7 @@ private:
 	std::vector<Matrix<int>> conMap;		//Connectionmap	 (1 = needsConnections, 0 = doesn't, vectorindex for type)
 	Matrix<int> groundedMap;				// 0 = spot is not grounded, 1 = is grounded, -1 = not identified yet (will be 0 if not changed)
 	Vec2& c;								//Camera
-	int grit=0;
+	bool grit=false;
 
 	//Private const Functions
 	RectF GetCellRect(Vei2 cellP)const;
@@ -118,8 +124,8 @@ private:
 	bool IsInWorldY(int y)const;		
 	Vei2 PutInWorldX(Vei2 pos)const;		//Calculates coordinates when x negativ or > cSize.x  
 	Matrix<int> GetAroundMatrix(Vei2 cell)const;	//in bounds: type		outside bounds(y-wise): -1		
-	void UpdateConMap();							//UpdateConMap must be called before UpdateGroundedMap
-	void UpdateGroundedMap();
+	void UpdateConMap();							//
+	void UpdateGroundedMap();						// VERY performance heavy - UpdateConMap must be called before UpdateGroundedMap
 	void SetTilesAT(Vei2 pos, int value);
 	void SetTilesAT(Vei2 pos, Matrix<int> matrix);	//sets tile(x0,y0) in Cell(x1,y1) to type when matrix at(x0,y0) != 0
 	bool IsSurroundedBy(Vei2 pos, int type);		//3x3 around pos
@@ -148,7 +154,6 @@ public:
 	void HandleKeyboardEvents(Keyboard::Event& e);
 	//Grafiken + Einbindung dieser in groundedMap
 	void Draw(Graphics& gfx)const;
-	void DrawConnections(int onCell, Vei2 topLeft, Vei2 pos, Graphics& gfx)const;
 	std::vector<SubAnimation> GetConnectionAnimationVec(int lookFor, Vei2 pos)const;
 	std::vector<SubAnimation> GetConnectionsOfTypes(Vei2 pos, int* types);
 	void PlaceConnectionsIntoCelltiles(Vei2 pos, int value, int mixed, int valueOfZero, const int* types);

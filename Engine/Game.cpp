@@ -26,11 +26,25 @@ Game::Game(MainWindow& wnd)
 	:
 	wnd(wnd),
 	gfx(wnd),
-	go(gfx),
 	resC(std::make_shared<ResourceCollection>(gfx)),
+	go(gfx, resC),
 	curW(std::make_unique<World>(World::WorldSettings(),resC,c))
 {
-	//mat.SetValueOfALL(true);
+	PARTCONF pc(resC);
+	pc.pos = Vec2(610, 30);
+	Matrix<int>m(3, 5, 1);
+	m[0][2] = 0;
+	m[0][3] = 0;
+	m[1][2] = 0;
+	m[1][3] = 0;
+	pc.size = 50;
+
+	TILEFRAME p(pc, m);
+	//p.AddScrollWindow(RectF(Vec2(50, 50), 50, 50), RectF(Vec2(60, 60), 10, 50));
+	go.Add(&p);
+
+	//go.AddVoc(&p, &pc, 20, 70);
+	
 	//go.AddTileframe(Vec2(50.0f, 50.0f), mat, 0);
 }
 
@@ -70,6 +84,18 @@ void Game::UpdateModel()
 			debugInfoOn = !debugInfoOn;
 		}
 	}
+
+	//go.objects[0]->SetPos((Vec2)wnd.mouse.GetPos());
+	/*
+	PARTCONF pc(resC);
+	pc.pos = (Vec2) wnd.mouse.GetPos();
+	
+	PARTICLE p = PARTICLE(pc);
+	*/
+
+	//go.AddVoc(&p, &pc, 20, 70);
+
+
 }
 
 void Game::ComposeFrame()
@@ -88,19 +114,18 @@ void Game::ComposeFrame()
 		std::ostringstream oss1, oss2,oss4;
 		oss1 <<"World cords:(" << curW->GetmCell().x << " | " << curW->GetmCell().y << ")" << " Camera:(" << c.x << " | " << c.y << ")";
 		oss2 <<"Ange:(" << curW->GetfCell().x << "|" << curW->GetfCell().y << ")" << "   CSize:" << curW->GetcSize().x << "   x-Felder:"<<curW->GetxStart();
-		oss4 << "Type:" << curW->GetfCellType();
+		oss4 << "Type:"<<curW->GetfCellType()<<"  use count:"<<resC.use_count();
 		resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 200, 25, 15, Colors::Red);
 		resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 15, Colors::Red);
 		resC->tC.fonts.at(0).DrawText(oss4.str().c_str(), 25, 65, 15, Colors::Red);
 		Vei2 mos = Graphics::GetMidOfScreen();
-
 		gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
 	}
+
 }
 //Handle
 void Game::HandleMouseInput(Mouse::Event& e)
 {
-
 	curW->HandleMouseEvents(e,gH);
 }
 void Game::HandleKeyboardInput(Keyboard::Event& e)

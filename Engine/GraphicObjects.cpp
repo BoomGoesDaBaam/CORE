@@ -1,8 +1,10 @@
 #pragma once
 #include "GraphicObjects.h"
 
-GraphicObjects::GraphicObjects(Graphics& gfx):gfx(gfx)
+GraphicObjects::GraphicObjects(Graphics& gfx, std::shared_ptr<ResourceCollection> resC):gfx(gfx), resC(std::move(resC))
 {
+	tC = &resC->tC;
+	fsC = &resC->fsC;
 }
 
 void GraphicObjects::Update(float dt)
@@ -49,7 +51,6 @@ GraphicObjects::Object::Object(PartConf& configs) : configs(configs){}
 void GraphicObjects::AddVoc(Object* obj,const PartConf* configsTemplate, int size, int spreadSpeed)
 {
 	PartConf configs= PartConf(*configsTemplate);
-	configs.width = 1;
 	configs.size = (float)rr.Calc(size) + 1;
 	configs.ScaleBody((float)rr.Calc(size) + 1);
 	configs.vel=Vec2((float)rr.Calc(spreadSpeed) - (spreadSpeed / 2), (float)rr.Calc(spreadSpeed) - (spreadSpeed / 2));

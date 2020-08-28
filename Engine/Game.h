@@ -54,15 +54,16 @@ private:
 	/********************************/
 	/*  User Variables              */
 	Font f = { "Spritesheet.bmp",9,11,9,13,'!','~',gfx };
-	GraphicObjects go;
+	
 	RandyRandom rr;
 	Tim t;
 	float passedTime = 0;
 	bool debugInfoOn = true;
 
 	std::shared_ptr<ResourceCollection> resC = nullptr;
-
+	GraphicObjects go;
 	std::unique_ptr<World> curW;
+
 	GrabHandle gH;
 	Vec2 c = { 0,0 };
 

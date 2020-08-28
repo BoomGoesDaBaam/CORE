@@ -453,6 +453,20 @@ void Graphics::DrawRect(Vec2 pos, Vec2 size, Color c, float radiant)
 	DrawLine(p2, p3, Colors::Red, 3);
 	DrawLine(p3, p0, Colors::Red, 3);
 }
+bool Graphics::FIDF(int first, int second)const
+{
+	if (first != second)
+	{
+		for (int i = 0; i < Settings::nDiffFieldTypes; i++)
+		{
+			if (Settings::typeLayer[i] == first || Settings::typeLayer[i] == second)
+			{
+				return Settings::typeLayer[i] == first;
+			}
+		}
+	}
+	return false;
+}
 //
 //////////////////////////////////////////////////
 //           Graphics Exception

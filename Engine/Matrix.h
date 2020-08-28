@@ -76,6 +76,7 @@ class Matrix
 	};
 	std::vector<Column> columns;
 	int nRows = 1, nColumns = 1;
+	bool leftOutRightIn = false;
 public:
 	Matrix(int nColums, int nRaws, T value):nRows(nRaws),nColumns(nColums)
 	{
@@ -270,5 +271,59 @@ public:
 				columns[x].SetValue(y, oldM[x][(__int64)nRows - y - 1]);
 			}
 		}
+	}
+	Matrix<T> GetMatPlusZeroOutline() const
+	{
+		Matrix<T> newM(nColumns + 2, nRows + 2, 0);
+		for (int x = 0; x < nColumns; x++)
+		{
+			for (int y = 0; y < nRows; y++)
+			{
+				newM.columns[x+1].SetValue(y+1, columns[x][y]);
+			}
+		}
+		return newM;
+	}
+	bool InBoundsY(int y) const
+	{
+		return y >= 0 && y < nRows;
+	}
+	bool InBoundsX(int x) const
+	{
+		return x >= 0 && x < nColumns;
+	}
+	//Matrix<int> GetAroundMatrix(Vei2 cell)const;	//in bounds: type		outside bounds(y-wise): -1		
+	Matrix<int> GetAroundMatrix(Vei2 pos) const		
+	{
+		Matrix<int> m = Matrix<int>(3, 3, 0);
+
+		for (int y = 0; y < 3; y++)
+		{
+			for (int x = 0; x < 3; x++)
+			{
+				Vei2 curP(x + pos.x - 1, y + pos.y - 1);
+
+				if (!InBoundsY(curP.y))
+				{
+					m[x][y] = -1;
+				}
+				else if (!InBoundsX(curP.x))
+				{
+					if (leftOutRightIn)
+					{
+
+					}
+					else
+					{
+						m[x][y] = -1;
+					}
+				}
+				else
+				{
+					m[x][y] = this->operator()(curP);
+				}
+			}
+		}
+		return m;
 	}
 };

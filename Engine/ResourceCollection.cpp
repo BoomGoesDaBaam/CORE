@@ -1,6 +1,6 @@
 #include "ResourceCollection.h"
 #include "Settings.h"
-//	##### MAIN #####
+//	##### RESOURCE COLLECTION #####
 
 ResourceCollection::ResourceCollection(Graphics& gfx)
 	:
@@ -15,6 +15,16 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 {
 	//	Frames
 	Frames.push_back(spriteSHEEP.GetSupSurface(RectI(Vei2(0, 51), 70, 70)));
+	//	windows
+	for (int i = 0; i < Settings::nDiffWindows; i++)
+	{
+		float delay = rng.GetNormalDist() * 3 + 1;
+		windows.push_back(Animation(delay));
+		for (int f = 0; f < 5; f++)			//f diffent animations
+		{
+			windows[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 211, 2162 + f * 51 + (i % 8) * 255), 210, 50)));
+		}
+	}
 	//	Items
 
 	//	Fields
@@ -35,7 +45,6 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	//Fonts
 	fonts.push_back(Font("Spritesheet.bmp", 9, 11, 9, 13, '!', '~', gfx));
 
-
 }
 void TexturesCollection::Update(float dt)
 {
@@ -44,7 +53,6 @@ void TexturesCollection::Update(float dt)
 		Fields.at(i).Update(dt);
 	}
 }
-
 //  ##### Framesize #####
 
 FramesizeCollection::FramesizeCollection()
@@ -55,98 +63,53 @@ FramesizeCollection::FramesizeCollection()
 	}
 	Update(Vei2(100, 100));								// !!! Hardcoded
 }
+std::vector<RectI> FramesizeCollection::GetConOffset(Vei2 cSize)
+{
+	std::vector<RectI> v;
+	RectI cur = RectI(Vei2(0, 0), cSize.x, cSize.y);		//Field connections 1-4
+	cur.bottom -= (25.f / 50.f) * cSize.y;
+	cur.right -= (25.f / 50.f) * cSize.y;
+	v.push_back(cur);
 
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.bottom -= (25.f / 50.f) * cSize.y;
+	cur.left += (25.f / 50.f) * cSize.y;
+	v.push_back(cur);
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.top += (25.f / 50.f) * cSize.y;
+	cur.right -= (25.f / 50.f) * cSize.y;
+	v.push_back(cur);
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.top += (25.f / 50.f) * cSize.y;
+	cur.left += (25.f / 50.f) * cSize.y;
+	v.push_back(cur);
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);			//outer corners
+	cur.right -= (44.f / 50.f) * cSize.x;
+	cur.bottom -= (44.f / 50.f) * cSize.y;
+	v.push_back(cur);
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.left += (44.f / 50.f) * cSize.x;
+	cur.bottom -= (44.f / 50.f) * cSize.y;
+	v.push_back(cur);
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.right -= (44.f / 50.f) * cSize.x;
+	cur.top += (44.f / 50.f) * cSize.y;
+	v.push_back(cur);
+
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur.left += (44.f / 50.f) * cSize.x;
+	cur.top += (44.f / 50.f) * cSize.y;
+	v.push_back(cur);
+	//new elements need to be added in loop and in GetPositionsOfCon!!!!!!!!!!!!!
+	return v;
+}
 void FramesizeCollection::Update(Vei2 cSize)
 {
-	RectI cur = RectI(Vei2(0, 0), cSize.x, cSize.y);		//Field connections 1-4
-	cur.bottom -= (25.f / 50.f) * cSize.y;
-	cur.right -= (25.f / 50.f) * cSize.y;
-	FieldCon[0] = cur;
+	FieldCon = GetConOffset(cSize);
 
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);		
-	cur.bottom -= (25.f / 50.f) * cSize.y;
-	cur.left += (25.f / 50.f) * cSize.y;
-	FieldCon[1] = cur;
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);		
-	cur.top += (25.f / 50.f) * cSize.y;
-	cur.right -= (25.f / 50.f) * cSize.y;
-	FieldCon[2] = cur;
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);		
-	cur.top += (25.f / 50.f) * cSize.y;
-	cur.left += (25.f / 50.f) * cSize.y;
-	FieldCon[3] = cur;
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);			//outer corners
-	cur.right -= (44.f / 50.f) * cSize.x;
-	cur.bottom -= (44.f / 50.f) * cSize.y;
-	FieldCon[4] = cur;
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
-	cur.left += (44.f / 50.f) * cSize.x;
-	cur.bottom -= (44.f / 50.f) * cSize.y;
-	FieldCon[5] = cur;
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
-	cur.right -= (44.f / 50.f) * cSize.x;
-	cur.top += (44.f / 50.f) * cSize.y;
-	FieldCon[6] = cur;
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
-	cur.left += (44.f / 50.f) * cSize.x;
-	cur.top += (44.f / 50.f) * cSize.y;
-	FieldCon[7] = cur;
-	//new elements need to be added in loop and in GetPositionsOfCon!!!!!!!!!!!!!
-}
-std::vector<RectI> FramesizeCollection::GetPositionsOfCon(Vei2 cSize)
-{
-	std::vector<RectI> FieldConRect;
-	for (int i = 0; i < 8; i++)
-	{
-		FieldConRect.push_back(RectI(Vei2(0, 0), 0, 0));
-	}
-
-	RectI cur = RectI(Vei2(0, 0), cSize.x, cSize.y);		//Field connections 1-4
-	cur.bottom -= (25.f / 50.f) * cSize.y;
-	cur.right -= (25.f / 50.f) * cSize.y;
-	FieldConRect[0] = cur;
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
-	cur.bottom -= (25.f / 50.f) * cSize.y;
-	cur.left += (25.f / 50.f) * cSize.y;
-	FieldConRect[1] = cur;
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
-	cur.top += (25.f / 50.f) * cSize.y;
-	cur.right -= (25.f / 50.f) * cSize.y;
-	FieldConRect[2] = cur;
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
-	cur.top += (25.f / 50.f) * cSize.y;
-	cur.left += (25.f / 50.f) * cSize.y;
-	FieldConRect[3] = cur;
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);			//outer corners
-	cur.right -= (44.f / 50.f) * cSize.x;
-	cur.bottom -= (44.f / 50.f) * cSize.y;
-	FieldConRect[4] = cur;
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
-	cur.left += (44.f / 50.f) * cSize.x;
-	cur.bottom -= (44.f / 50.f) * cSize.y;
-	FieldConRect[5] = cur;
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
-	cur.right -= (44.f / 50.f) * cSize.x;
-	cur.top += (44.f / 50.f) * cSize.y;
-	FieldConRect[6] = cur;
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
-	cur.left += (44.f / 50.f) * cSize.x;
-	cur.top += (44.f / 50.f) * cSize.y;
-	FieldConRect[7] = cur;
-
-	assert(FieldConRect.size() == FieldCon.size());
-	return FieldConRect;
 }

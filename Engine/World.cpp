@@ -394,11 +394,7 @@ void World::HandleKeyboardEvents(Keyboard::Event& e)
 		switch (e.GetCode())
 		{
 		case 'G':
-			grit++;
-			if (grit == 3)
-			{
-				grit = 0;
-			}
+			grit = !grit;
 			break;
 		case 0x1B:	//ERROR?
 			fCell = Vei2(0, 0);
@@ -450,7 +446,7 @@ void World::Draw(Graphics& gfx) const
 						int order = Settings::typeLayer[i];
 						if (conMap[order][curXY.x][curXY.y] == 1)
 						{
-							DrawConnections(order, Vei2(curCellPos.left, curCellPos.top), curXY, gfx);
+							gfx.DrawConnections(order, Vei2(curCellPos.left, curCellPos.top),GetAroundMatrix(curXY),fsC->FieldCon,tC->Fields[order].GetCurSurface(),SpriteEffect::Chroma(Colors::Magenta));
 						}
 					}
 					break;
@@ -461,7 +457,7 @@ void World::Draw(Graphics& gfx) const
 					}
 					break;
 				case 3:
-					if (grit!=0)
+					if (grit)
 					{
 						using namespace Settings;
 						SpriteEffect::Transparent e = SpriteEffect::Transparent(0.6f);
@@ -487,7 +483,7 @@ void World::Draw(Graphics& gfx) const
 										}
 										else if (groundedMap(v) == 1)
 										{
-											gfx.DrawRect(curP, Colors::Green, e);
+											//gfx.DrawRect(curP, Colors::Green, e);
 										}
 										else if (groundedMap(v) == -1)
 										{
@@ -614,98 +610,11 @@ void World::CutHills(int replaceTo)
 		}
 	}
 }
-void World::DrawConnections(int lookFor,Vei2 topLeft, Vei2 pos, Graphics& gfx)const
-{
-	using namespace Settings;
-	Matrix<int> aMat = GetAroundMatrix(Vei2(pos));
-	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
-
-	if (FIDF(aMat[1][1],lookFor))
-	{						
-
-		if (aMat[1][2] == lookFor)			
-		{
-			if (aMat[0][1] == lookFor)	// 1
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[0] + topLeft, RectI(Vei2(51, 0), 25, 25), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-			else if (aMat[0][1] != lookFor)	// 13
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[0] + topLeft, RectI(Vei2(160, 0), 25, 25), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-			if (aMat[2][1] == lookFor)	// 2
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[1] + topLeft, RectI(Vei2(76, 0), 25, 25), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-			else if (aMat[2][1] != lookFor)	// 14
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[1] + topLeft, RectI(Vei2(185, 0), 25, 25), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-		}
-		else if (aMat[1][2] != lookFor)
-		{	
-			if (aMat[0][1] == lookFor)	//9
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[0] + topLeft, RectI(Vei2(109, 0), 25, 25), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-			else if (FIDF(aMat[0][1],lookFor) && aMat[0][2] == lookFor)	// 5
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[4] + topLeft, RectI(Vei2(102, 0), 6, 6), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-			if (aMat[2][1] == lookFor)	//10
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[1] + topLeft, RectI(Vei2(134, 0), 25, 25), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-			else if (FIDF(aMat[2][1],lookFor) && aMat[2][2] == lookFor)	// 6
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[5] + topLeft, RectI(Vei2(102, 7), 6, 6), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-		}
-		if (aMat[1][0] == lookFor)					
-		{
-			if (aMat[0][1] == lookFor)	// 3
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[2] + topLeft, RectI(Vei2(51, 25), 25, 25), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-			else if (aMat[0][1] != lookFor)	// 15
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[2] + topLeft, RectI(Vei2(160, 25), 25, 25), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-			if (aMat[2][1] == lookFor)	// 4
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[3] + topLeft, RectI(Vei2(76, 25), 25, 25), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-			else if (aMat[2][1] != lookFor)	// 16
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[3] + topLeft, RectI(Vei2(185, 25), 25, 25), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-		}
-		else if (aMat[1][0] != lookFor)
-		{
-			if (FIDF(aMat[0][1],lookFor) && aMat[0][0] == lookFor)	// 7
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[6] + topLeft, RectI(Vei2(102, 14), 6, 6), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-			else if (aMat[0][1] == lookFor)	// 11
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[2] + topLeft, RectI(Vei2(109, 25), 25, 25), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-			if (FIDF(aMat[2][1],lookFor) && aMat[2][0] == lookFor)	// 8
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[7] + topLeft, RectI(Vei2(102, 21), 6, 6), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-			else if (aMat[2][1] == lookFor)	// 12
-			{
-				gfx.DrawSurface(resC->fsC.FieldCon[3] + topLeft, RectI(Vei2(134, 25), 25, 25), tC->Fields.at(lookFor).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			}
-		}
-	}
-}
 std::vector<SubAnimation> World::GetConnectionAnimationVec(int lookFor, Vei2 pos)const
 {
 	using namespace Settings;
 	std::vector<SubAnimation> vec;
-	std::vector<RectI> posInGrit = fsC->GetPositionsOfCon(Vei2(50,50));
+	std::vector<RectI> posInGrit = fsC->GetConOffset(Vei2(50,50));
 	Matrix<int> aMat = GetAroundMatrix(Vei2(pos));
 	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
 

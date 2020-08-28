@@ -1,7 +1,8 @@
 #pragma once
+#include "Rect.h"
 namespace Settings
 {
-	/*		##Types##
+	/*		### Types ###
 			0 = water				5 = snow				10 = mountains (high)			
 			1 = dirt				6 = coral reef			11 = canjon	   (high)
 			2 = ice					7 = Stone				12 = lavahills (high)
@@ -9,14 +10,26 @@ namespace Settings
 			4 = nutritious dirt		9 = savanne		
 	
 	*/
+
+	const struct V
+	{
+		const int x=2, y=45;
+		V(const int x, const int y):x(x),y(y){}
+	};
+
 	static constexpr int nDiffFieldTypes = 14;										//Array Nullterminator == -1
+	static constexpr int nDiffWindows = 1;
 	static constexpr int typeLayer[] = { 6,0,8,4,3,9,1,5,7,2,13,12,10,11,-1};		//Orden in wich the connections are drawn
 	static constexpr int hillTypesARE[] = { 11,10,12,-1 };
 	static constexpr int liquidsTypesARE[] = { 0,6,8,-1 };
 	static constexpr int groundedTypesARE[] = { 13,1,2,3,4,5,7,9,-1 };				//Types where you can place normal Buildings	
-	static constexpr int CellSplitUpIn = 25;									//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
-																				
+	static constexpr int CellSplitUpIn = 25;										//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
 	
+
+	// ### Framesize and Offsets ###
+	//static constexpr V offset[] = { (const V(23,2)),V(2,2) };
+
+
 	
 	static bool anyOfHillTypes(int Type)
 	{

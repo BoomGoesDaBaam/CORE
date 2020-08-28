@@ -7,37 +7,73 @@
 #include "Matrix.h"
 #include "SpriteEffect.h"
 #include "GigaMath.h"
+#include "ResourceCollection.h"
+class Componentss
+{
+	RectF pos;
+public:
+	Componentss(RectF pos) :pos(pos) {}
+	//virtual void Draw(Graphics& gfx) { //gfx.DrawRect(pos,Colors::Red,SpriteEffect::Rainbow());
+	//}
+};
 class GraphicObjects
 {
-	class Pictures
+	/*
+	class Scrollbar// : public Component
 	{
 	public:
-		std::vector<Surface> tileFramePics;
-		std::vector<Vei2> tfSize;
-		Pictures()
+		Scrollbar(RectF posSB)//: Component(posSB) 
+		{}
+	};
+	class Textfield// : public Component
+	{
+		std::string text;
+		int size;
+		Font& font;
+	public:
+		Textfield(RectF pos, std::string text, int size, Font& font)
+			://Component(pos),
+			text(text), size(size), font(font) {}
+	};
+	class Element //: public Component
+	{
+		RectF pos;
+	public:
+		Element(RectF pos) //:Component(pos) 
+			:pos(pos)
+		{}
+
+	};
+	*/
+	class ScrollWindow
+	{
+		//Scrollbar scrollBar;
+		int type, nElem;
+		std::string defValue;
+	public:
+		ScrollWindow(RectF posWind, RectF posSB, int type=0, int nElem=5, std::string defValue="Text hier") 
+		:	//Component(posWind),
+			//scrollBar(posSB),
+			type(type),nElem(nElem),defValue(defValue)
 		{
-			tileFramePics.push_back(Surface("Textures/6.bmp"));
-			tfSize.push_back(Vei2(30, 30));
+		
 		}
+		//void Draw(Graphics& gfx)override { gfx.DrawRect(pos, Colors::Red, SpriteEffect::Nothing()); }
 	};
 public:
 	struct PartConf	//Particle Configs
 	{
-		PartConf() = default;
-		
+		PartConf(std::shared_ptr<ResourceCollection> resC) :resC(std::move(resC)) {}
+		std::shared_ptr<ResourceCollection> resC;
 		float size=5.0f;
 		float angleVel = 0;
 		bool killMe = false;
 		int style = 0;
-		int width=3;
 		Vec2_<Color> colors = { Colors::Yellow, Colors::Red };
 		Vec2 pos = Vec2(0.0f, 0.0f);
 		Vec2 vel = Vec2(0.0f, 0.0f);
-		Vec2 gravity = Vec2(0.0f, 2.0f);
-		Matrix<int> matrix = Matrix<int>(1,1,1);
-		const Pictures* pics=nullptr;
+		Vec2 gravity = Vec2(0.0f, 0.0f);
 		std::vector<Vec2> body = { {-2,-2},{2,-2},{2,2},{-2,2},{3,5},{1,-7},{3,-5} };
-
 		void ScaleBody(float size)
 		{
 			for (int i = 0; i < body.size(); i++)
@@ -45,11 +81,17 @@ public:
 				body[i] *= size;
 			}
 		}
+		//template <typename T>
+		RectI GetRect()
+		{
+			return RectI(Vei2(pos.x, pos.y), size, size);
+		}
 	};
 	class Object
 	{
-	protected:
+	public:
 		PartConf configs;
+		//std::vector<std::unique_ptr<Componentss>> comps;
 	public:
 		Object() = default;
 		Object(PartConf& configs);
@@ -58,6 +100,10 @@ public:
 		bool ChoosenToDie() { return configs.killMe; }
 		void SetConfigs(PartConf configs) { this->configs = configs; }
 		Color GetColor() { return configs.colors.x; }
+		void SetPos(Vec2 newP)
+		{
+			configs.pos = newP;
+		}
 	};
 
 	class Particle : public Object
@@ -84,23 +130,48 @@ public:
 	};
 	class TileFrame : public Object
 	{
-
+		Matrix<int> outline, matrix;
+		std::vector<RectI> offset;
 	public:
-		TileFrame(PartConf& configs) : Object(configs) {}
+		TileFrame(PartConf& configs, Matrix<int> matrix) 
+			: Object(configs),
+			matrix(matrix),
+			offset(configs.resC->fsC.GetConOffset(Vei2(configs.size, configs.size))),
+			outline(matrix.GetMatPlusZeroOutline())
+		{
+			
+		}
 		TileFrame() = default;
 		void Draw(Graphics& gfx)override
 		{
-			Matrix<int> sur = Matrix<int>(3, 3, 0);
-			for (int y = 0; y < configs.matrix.GetRows(); y++)
+			for (int y = 0; y < outline.GetRows(); y++)
 			{
-				for (int x = 0; x < configs.matrix.GetColums(); x++)
+				for (int x = 0; x < outline.GetColums(); x++)
 				{
-					if (y == 0 && x == 0 && configs.matrix[x][y])
+					if (outline[x][y] == 1)
 					{
+						gfx.DrawSurface(configs.GetRect() + Vei2(configs.size * (x-1), configs.size * (y-1)), RectI(Vei2(0, 0), 50, 50), configs.resC->tC.windows.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						//gfx.DrawSurface(configs.pos, RectI(Vei2(0, 0), 50, 50), configs.resC->tC.windows[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 						//gfx.DrawSurface(RectI((Vei2)configs.pos, configs.pics->tfSize[configs.style].x, configs.pics->tfSize[configs.style].y), RectI(Vei2(0, 0), configs.pics->tfSize[configs.style].x, configs.pics->tfSize[configs.style].y),Graphics::GetScreenRect<int>(), configs.pics->tileFramePics[configs.style], SpriteEffect::Chroma(Colors::Magenta));
+					}
+					else
+					{
+						auto a = outline.GetAroundMatrix(Vei2(x, y));
+						a.MirrowVertical();
+						gfx.DrawConnections(1,(Vei2) configs.pos + Vei2(configs.size * (x-1), configs.size * (y-1)), a, offset, configs.resC->tC.windows[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 					}
 				}
 			}
+			/*
+			for (int i = 0; i < comps.size(); i++)
+			{
+				//comps[i]->Draw(gfx);
+			}
+			*/
+		}
+		void AddScrollWindow(RectF posWind, RectF posSB, int type = 0, int nElem = 5, std::string defValue = "Text hier")
+		{
+			//comps.emplace_back(std::make_unique<ScrollWindow>(posWind, posSB,type,nElem,defValue));
 		}
 	};
 	class Shot : public Object
@@ -109,16 +180,18 @@ public:
 		Shot(PartConf& configs) : Object(configs){}
 		Shot() = default;
 		void Draw(Graphics& gfx)override {
-			gfx.DrawLine(configs.pos, configs.pos + configs.vel * configs.size * 0.05f, configs.colors.x, (int)configs.width);
+			gfx.DrawLine(configs.pos, configs.pos + configs.vel * configs.size * 0.05f, configs.colors.x, 4);
 		}
 	};
 private:
-	std::vector<std::unique_ptr<Object>> objects;
 	Graphics& gfx;
 	RandyRandom rr;
-	Pictures pic;
+	std::shared_ptr<ResourceCollection> resC;
+	TexturesCollection* tC;
+	FramesizeCollection* fsC;
 public:
-	GraphicObjects(Graphics& gfx);
+	std::vector<std::unique_ptr<Object>> objects;
+	GraphicObjects(Graphics& gfx, std::shared_ptr<ResourceCollection> resC);
 	void Update(float dt);
 	void Draw();
 	void Add(Object* object)					//WHEN U ADD A NEW OBJECT U NEED TO ADD IT HERE ASS WELL
@@ -142,7 +215,7 @@ public:
 	}
 
 	//Particle Blueprints			
-	void AddVolcano(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
+	//void AddVolcano(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
 	//void AddSpark(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
 	//void AddShot(Vec2 p0, Vec2 pGoal, float speed, Vec2_<Color> colors = { Colors::Yellow,Colors::Red });
 	//void AddTileframe(Vec2 pos, Matrix<bool> size, int style);
