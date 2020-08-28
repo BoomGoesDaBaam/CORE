@@ -282,7 +282,7 @@ RectF World::GetCellRect(Vei2 cellP)const
 
 	mos.x += d.x * cSize.x;
 	mos.y -= d.y * cSize.y;
-	return RectF(Vec2(mos), cSize.x, cSize.y);
+	return RectF(Vec2(mos), (float)cSize.x, (float)cSize.y);
 }
 Vei2 World::GetCellHit(Vec2 mP)const
 {
@@ -357,12 +357,12 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 	Vec2 mos = (Vec2) Graphics::GetMidOfScreen();		//Move mCell
 	if (mCell.y < mos.y / cSize.y)
 	{
-		mCell.y = mos.y / cSize.y;
+		mCell.y =(int) mos.y / cSize.y;
 		c.y = 0;
 	}
 	if (mCell.y > wSize.y - (mos.y / cSize.y) - 1)
 	{
-		mCell.y = wSize.y - (mos.y / cSize.y) - 1;
+		mCell.y = (int)(wSize.y - (mos.y / cSize.y) - 1);
 		c.y = cSize.y-0.001f;
 	}
 }
@@ -433,7 +433,7 @@ void World::Draw(Graphics& gfx) const
 				Vei2 curXY = PutInWorldX(mCell + Vei2(x, y) + Vei2(0, -1));
 				const Cell& curCell = cells(curXY);
 				int cellType = curCell.type;
-				RectI curCellPos = (RectI)GetCellRect(Vei2(x, y) + mCell) + Vei2(-c.x, +c.y);
+				RectI curCellPos = (RectI)GetCellRect(Vei2(x, y) + mCell) + Vei2(-(int)c.x, +(int)c.y);
 
 				switch (layer)
 				{
@@ -473,7 +473,7 @@ void World::Draw(Graphics& gfx) const
 								
 									float xPos = curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth();
 									float yPos = curCellPos.bottom - ((float)(yOnCell+1) / CellSplitUpIn) * curCellPos.GetHeight();
-									RectF curP = RectF(Vec2(xPos, yPos), std::ceil((double)curCellPos.GetWidth() / CellSplitUpIn), std::ceil((double)curCellPos.GetHeight() / CellSplitUpIn));
+									RectF curP = RectF(Vec2(xPos, yPos), (float)std::ceil((double)curCellPos.GetWidth() / CellSplitUpIn), (float)std::ceil((double)curCellPos.GetHeight() / CellSplitUpIn));
 									if (Graphics::GetScreenRect<float>().IsOverlappingWith(curP))
 									{
 										curP.PutInto(Graphics::GetScreenRect<float>());
@@ -506,13 +506,13 @@ void World::Draw(Graphics& gfx) const
 						{
 							if (xOnCell == 0 || xOnCell == CellSplitUpIn)
 							{
-								gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black), 3);
-								gfx.DrawLine(Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black), 3);
+								gfx.DrawLine(Vec2((float)curCellPos.left, (float)curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2((float)curCellPos.right, (float)curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black), 3);
+								gfx.DrawLine(Vec2((float)curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), (float)curCellPos.top), Vec2((float)curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), (float)curCellPos.bottom), SpriteEffect::OneColor(Colors::Black), 3);
 							}
 							else
 							{
-								gfx.DrawLine(Vec2(curCellPos.left, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2(curCellPos.right, curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black));
-								gfx.DrawLine(Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.top), Vec2(curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), curCellPos.bottom), SpriteEffect::OneColor(Colors::Black));
+								gfx.DrawLine(Vec2((float)curCellPos.left, (float)curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2((float)curCellPos.right, (float)curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black));
+								gfx.DrawLine(Vec2((float)curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), (float)curCellPos.top), Vec2((float)curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), (float)curCellPos.bottom), SpriteEffect::OneColor(Colors::Black));
 							}
 							/*
 							if (xOnCell == 0 || xOnCell == CellSplitUpIn)

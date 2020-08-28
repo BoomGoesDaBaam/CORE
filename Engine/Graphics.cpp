@@ -330,13 +330,13 @@ void Graphics::RainbowPutPixel(int x, int y)
 	assert(y >= 0);
 	assert(y < int(Graphics::ScreenHeight));
 
-	float dist0 = (GiMa::GetDist<float>(ScreenWidth/2	, ScreenHeight / 4, x, y) / 500);
-	float dist1 = (GiMa::GetDist<float>(ScreenWidth/4	, ScreenHeight / 4*3, x, y) / 500);
-	float dist2 = (GiMa::GetDist<float>(ScreenWidth/4*3	, ScreenHeight / 4 * 3, x, y) / 500);
+	float dist0 = (GiMa::GetDist<float>(ScreenWidth/2	, ScreenHeight / 4, (float)x, (float)y) / 500);
+	float dist1 = (GiMa::GetDist<float>(ScreenWidth/4	, ScreenHeight / 4*3, (float)x, (float)y) / 500);
+	float dist2 = (GiMa::GetDist<float>(ScreenWidth/4*3	, ScreenHeight / 4 * 3, (float)x, (float)y) / 500);
 
-	unsigned char r = ((1 - dist0)	* 255);
-	unsigned char g = ((1 - dist1)	* 255);
-	unsigned char b = ((1 - dist2)  * 255);
+	unsigned char r = unsigned char((1 - dist0)	* 255);
+	unsigned char g = unsigned char((1 - dist1)	* 255);
+	unsigned char b = unsigned char((1 - dist2)  * 255);
 
 	Color c = Colors::MakeRGB(r, g, b);
 	pSysBuffer[Graphics::ScreenWidth * y + x] = c;

@@ -77,7 +77,7 @@ public:
 
 
 		Matrix<int> mat = Matrix<int>(sourceR.GetWidth(), sourceR.GetHeight(), 1);
-		int size = a.GetFrames().size();
+		int size = (int)a.GetFrames().size();
 		auto& frames = a.GetFrames();
 
 		for (int y = 0; y < sourceR.GetHeight(); y++)

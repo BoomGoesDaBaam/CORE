@@ -39,7 +39,7 @@ void GraphicObjects::Object::Update(float dt)
 	configs.vel += configs.gravity*dt;
 	for (int i = 0; i < configs.body.size(); i++)
 	{
-		configs.body[i] = (Vec2)GigaMath::RotPointToOrigin(configs.body[i].x, configs.body[i].y, dt * configs.angleVel / 15);
+		configs.body[i] = (Vec2)GigaMath::RotPointToOrigin(configs.body[i].x, configs.body[i].y,(double)dt * configs.angleVel / 15);
 	}
 	if (!(Graphics::GetScreenRect<int>().Contains((Vei2)configs.pos)))
 	{

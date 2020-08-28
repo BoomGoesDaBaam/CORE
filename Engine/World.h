@@ -71,7 +71,7 @@ private:
 			{
 				x = -x;
 				x %= cellsX.size();
-				x = cellsX.size() - x;
+				x = (int)cellsX.size() - x;
 			}
 			if (x >= cellsX.size())
 			{

@@ -82,16 +82,23 @@ public:
 			}
 		}
 		//template <typename T>
-		RectI GetRect()
+		RectF GetRect()
 		{
-			return RectI(Vei2(pos.x, pos.y), size, size);
+			return RectF(Vec2(pos.x, pos.y), size, size);
 		}
 	};
+	/*
+	Particle(PartConf&& rhs) = delete;
+		Particle& operator=(Particle&& rhs)
+		{
+			configs = rhs.configs;
+			comps = std::move(rhs.comps);
+		}
+	*/
 	class Object
 	{
 	public:
 		PartConf configs;
-		//std::vector<std::unique_ptr<Componentss>> comps;
 	public:
 		Object() = default;
 		Object(PartConf& configs);
@@ -108,9 +115,12 @@ public:
 
 	class Particle : public Object
 	{
+		
 	public:
 		Particle(PartConf& configs) : Object(configs) {}
 		Particle() = default;
+
+		
 		void Draw(Graphics& gfx)override {
 			gfx.DrawCircle((int)configs.pos.x, (int)configs.pos.y, configs.size, configs.size - (configs.size / 3), configs.colors.x, configs.colors.y);
 		}
@@ -136,7 +146,7 @@ public:
 		TileFrame(PartConf& configs, Matrix<int> matrix) 
 			: Object(configs),
 			matrix(matrix),
-			offset(configs.resC->fsC.GetConOffset(Vei2(configs.size, configs.size))),
+			offset(configs.resC->fsC.GetConOffset(Vei2((int)configs.size, (int)configs.size))),
 			outline(matrix.GetMatPlusZeroOutline())
 		{
 			
@@ -150,7 +160,7 @@ public:
 				{
 					if (outline[x][y] == 1)
 					{
-						gfx.DrawSurface(configs.GetRect() + Vei2(configs.size * (x-1), configs.size * (y-1)), RectI(Vei2(0, 0), 50, 50), configs.resC->tC.windows.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						gfx.DrawSurface((RectI)configs.GetRect() + Vei2((int)configs.size * (x-1), (int)configs.size * (y-1)), RectI(Vei2(0, 0), 50, 50), configs.resC->tC.windows.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 						//gfx.DrawSurface(configs.pos, RectI(Vei2(0, 0), 50, 50), configs.resC->tC.windows[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 						//gfx.DrawSurface(RectI((Vei2)configs.pos, configs.pics->tfSize[configs.style].x, configs.pics->tfSize[configs.style].y), RectI(Vei2(0, 0), configs.pics->tfSize[configs.style].x, configs.pics->tfSize[configs.style].y),Graphics::GetScreenRect<int>(), configs.pics->tileFramePics[configs.style], SpriteEffect::Chroma(Colors::Magenta));
 					}
@@ -158,7 +168,7 @@ public:
 					{
 						auto a = outline.GetAroundMatrix(Vei2(x, y));
 						a.MirrowVertical();
-						gfx.DrawConnections(1,(Vei2) configs.pos + Vei2(configs.size * (x-1), configs.size * (y-1)), a, offset, configs.resC->tC.windows[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						gfx.DrawConnections(1,(Vei2) configs.pos + Vei2((int)configs.size * (x-1), (int)configs.size * (y-1)), a, offset, configs.resC->tC.windows[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 					}
 				}
 			}

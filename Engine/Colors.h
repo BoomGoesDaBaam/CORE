@@ -61,9 +61,9 @@ public:
 	}
 	Color operator*(float rhs)
 	{
-		SetR(GetR() * rhs);
-		SetG(GetG() * rhs);
-		SetB(GetB() * rhs);
+		SetR((unsigned char)(GetR() * rhs));
+		SetG((unsigned char)(GetG() * rhs));
+		SetB((unsigned char)(GetB() * rhs));
 		return *this;
 	}
 	Color& operator*=(float rhs)
