@@ -31,8 +31,8 @@
 #include "World.h"
 #include "ResourceCollection.h"
 #include "GrabHandle.h"
+#include "FrameHandle.h"
 
-//#include <sstream>
 class Game
 {
 public:
@@ -58,11 +58,12 @@ private:
 	RandyRandom rr;
 	Tim t;
 	float passedTime = 0;
-	bool debugInfoOn = true;
+	bool debugInfoOn = true,ignoreMouse=false;			//Ignores the Mouseiput for curW unless eventtype is LRelease
 
 	std::shared_ptr<ResourceCollection> resC = nullptr;
 	GraphicObjects go;
 	std::unique_ptr<World> curW;
+	FrameHandle igwH;
 
 	GrabHandle gH;
 	Vec2 c = { 0,0 };

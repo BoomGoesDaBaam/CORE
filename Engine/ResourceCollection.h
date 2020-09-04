@@ -15,8 +15,9 @@ public:
 	TexturesCollection(Graphics& gfx);
 	Surface spriteSHEEP = { "Textures/Spritesheet.bmp" };
 	//Surface s_Items[1];
-	std::vector<Animation>	Fields;			//All needed Textures for a Fieldtype
-	//std::vector<Animation>	FieldsC;	//Field connections
+	std::vector<Animation>	Fields;			//all needed Textures for a Fieldtype
+	std::vector<Animation>	maskedFields;	//types that need speacial cyan masking
+	//std::vector<Animation>	FieldsC;	//field connections
 	std::vector<Surface>	Frames;
 	std::vector<Animation>	windows;
 	std::vector<Font>		fonts;
@@ -42,4 +43,4 @@ public:
 	FramesizeCollection fsC;	//Gives Framesizes for Frames for Drawing, wich need to be prescaled for performance
 
 };
-
+typedef std::shared_ptr<ResourceCollection> sharedResC;

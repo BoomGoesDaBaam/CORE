@@ -88,17 +88,26 @@ void World::UpdateConMap()
 		}
 	}
 }
-void World::UpdateGroundedMap()
+void World::UpdateGroundedMap(Vei2 pos, Vei2 size)
 {
-	using namespace Settings;
-	groundedMap = Matrix<int>(wSize.x * CellSplitUpIn, wSize.y * CellSplitUpIn, -1);
+	assert(pos.y >= 0 && pos.y < wSize.y);
 
-	for (int y = 0; y < wSize.y; y++)
+	using namespace Settings;
+	if (size == Vei2(-1, -1) || size == wSize)
 	{
-		for (int x = 0; x < wSize.x; x++)
+		size = wSize;
+		groundedMap = Matrix<int>(wSize.x * CellSplitUpIn, wSize.y * CellSplitUpIn, -1);
+	}
+
+	for (int y = pos.y; y < pos.y+size.y; y++)
+	{
+		for (int x = pos.x; x < pos.x+size.x; x++)
 		{
-			Vei2 pos = Vei2(x, y);
-			int curType = cells[x][y].type;
+			Vei2 pos = PutInWorldX(Vei2(x, y));
+			assert(IsInWorld(pos));
+			SetTilesAT(pos, -1);
+
+			int curType = cells[pos.x][pos.y].type;
 			if (anyGroundedTypes(curType))				//grounded
 			{
 				SetTilesAT(pos, 1);
@@ -111,13 +120,22 @@ void World::UpdateGroundedMap()
 			else if (Settings::anyLiquidType(curType))	//liqids
 			{
 				PlaceConnectionsIntoCelltiles(pos, 2,2,-1, hillTypesARE);
-				PlaceConnectionsIntoCelltiles(pos, 1,0,-1, groundedTypesARE);
+
+				PlaceConnectionsIntoCelltiles(pos, 1,-1,-1, groundedTypesARE);
+				PlaceConnectionsIntoCelltiles(pos, 1, -1, -1, maskTypesARE);
+			}
+			else if (Settings::anyMaskedType(curType))	//swamp
+			{
+				PlaceTilesForMaskedField(pos,1, -1, -1, 14);
+				PlaceConnectionsIntoCelltiles(pos, 2, 2, -1, hillTypesARE);
+				PlaceConnectionsIntoCelltiles(pos, 1, -1, -1, groundedTypesARE);
 			}
 		}
 	}
 	ChangeGroundedVal(-1, 0);
 	PlaceLadderableTiles(3);
 }
+
 void World::PlaceLadderableTiles(int type)
 {
 	for (int y = 0; y < wSize.y * Settings::CellSplitUpIn; y++)
@@ -181,6 +199,17 @@ void World::ChangeGroundedVal(int from, int to)
 		}
 	}
 }
+void World::PlaceTilesForMaskedField(Vei2 pos, int value, int valOfMixed, int valueOfZero, int type)
+{
+	SubAnimation sa = SubAnimation(resC->tC.maskedFields[Settings::translateIntoMaskedType(type)],RectI(Vei2(0,0),50,50), RectI(Vei2(0, 0), 50, 50));
+
+	Matrix<int> chromaM = sa.chromaM;
+	chromaM.Sort(value, valueOfZero);
+	chromaM.HalfSize(chromaM, valOfMixed);
+	chromaM.MirrowVertical();
+	SetTilesAT(pos, chromaM);
+
+}
 void World::PlaceConnectionsIntoCelltiles(Vei2 pos, int value, int valOfMixed, int valueOfZero, const int* types)
 {
 	auto a = GetAroundMatrix(pos);
@@ -189,30 +218,31 @@ void World::PlaceConnectionsIntoCelltiles(Vei2 pos, int value, int valOfMixed, i
 	for (int i = 0; i < Settings::ArrSize(types); i++)
 	{
 		int curType = types[i];
-
 		if (a.HasValue(curType))
 		{
-			std::vector<Vei2> locOfHill = a.GetPosOfValue(curType);
-
-			for (int h = 0; h < locOfHill.size(); h++)
+			if (conMap[curType][pos.x][pos.y] == 1)
 			{
-				if (conMap[curType][pos.x][pos.y] == 1)
+				std::vector<SubAnimation> newVecs;
+				if (Settings::anyMaskedType(curType))
 				{
-					auto newVecs = GetConnectionAnimationVec(curType, pos);
-					for (int c = 0; c < newVecs.size(); c++)
-					{
-						sAVec.push_back(newVecs[c]);
-					}
+					newVecs = GetMaskedConnectionAnimationVec(curType, pos);
+				}
+				else
+				{
+					newVecs = GetConnectionAnimationVec(curType, pos);
+				}
+				for (int c = 0; c < newVecs.size(); c++)
+				{
+					sAVec.push_back(newVecs[c]);
 				}
 			}
-			Matrix<int> chromaM = SubAnimation::PutOnTopOfEachOther(sAVec, Vei2(50, 50), 1, 0);
-			chromaM.Sort(value, valueOfZero);
-			chromaM.HalfSize(chromaM, valOfMixed);
-			chromaM.MirrowVertical();
-			SetTilesAT(pos, chromaM);
-
 		}
 	}
+	Matrix<int> chromaM = SubAnimation::PutOnTopOfEachOther(sAVec, Vei2(50, 50), 1, 0);
+	chromaM.Sort(value, valueOfZero);
+	chromaM.HalfSize(chromaM, valOfMixed);
+	chromaM.MirrowVertical();
+	SetTilesAT(pos, chromaM);
 }
 std::vector<SubAnimation> World::GetConnectionsOfTypes(Vei2 pos, int* types)
 {
@@ -368,12 +398,12 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 }
 void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 {
-	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLooked())
+	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLocked())
 	{
 		fCell = GetCellHit((Vec2) e.GetPos());
-		//cells(fCell).type = 4;
-		//UpdateConMap();
-		//UpdateGroundedMap();
+		cells(fCell).type = 14;
+		UpdateConMap();
+		UpdateGroundedMap(Vei2(fCell.x-1,fCell.y-1),Vei2(3,3));
 	}
 	if (e.GetType() == Mouse::Event::WheelDown)
 	{
@@ -440,13 +470,18 @@ void World::Draw(Graphics& gfx) const
 				case 0:
 					assert(cellType >= 0 && cellType < Settings::nDiffFieldTypes);
 					gfx.DrawSurface(curCellPos, RectI(Vei2(0, 0), 50, 50), tC->Fields.at(cellType).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-
+					
+					if (conMap[14](curXY) == 1)
+					{
+						gfx.DrawRect((Vec2)curCellPos.GetCenter(), Vec2(curCellPos.GetWidth(), curCellPos.GetHeight()), Colors::Green);
+					}
+					
 					for (int i = 0; i < Settings::nDiffFieldTypes; i++)
 					{
 						int order = Settings::typeLayer[i];
 						if (conMap[order][curXY.x][curXY.y] == 1)
 						{
-							gfx.DrawConnections(order, Vei2(curCellPos.left, curCellPos.top),GetAroundMatrix(curXY),fsC->FieldCon,tC->Fields[order].GetCurSurface(),SpriteEffect::Chroma(Colors::Magenta));
+							gfx.DrawConnections(order, Vei2(curCellPos.left, curCellPos.top), GetAroundMatrix(curXY), fsC->FieldCon, tC->Fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 						}
 					}
 					break;
@@ -457,6 +492,7 @@ void World::Draw(Graphics& gfx) const
 					}
 					break;
 				case 3:
+					
 					if (grit)
 					{
 						using namespace Settings;
@@ -699,6 +735,97 @@ std::vector<SubAnimation> World::GetConnectionAnimationVec(int lookFor, Vei2 pos
 	}
 	return vec;
 }
+std::vector<SubAnimation> World::GetMaskedConnectionAnimationVec(int lookFor, Vei2 pos)const
+{
+	using namespace Settings;
+	std::vector<SubAnimation> vec;
+	std::vector<RectI> posInGrit = fsC->GetConOffset(Vei2(50, 50));
+	Matrix<int> aMat = GetAroundMatrix(Vei2(pos));
+	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
+
+	int arrIndex = translateIntoMaskedType(lookFor);
+
+	if (FIDF(aMat[1][1], lookFor))
+	{
+		if (aMat[1][2] == lookFor)
+		{
+			if (aMat[0][1] == lookFor)	// 1
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(51, 0), 25, 25), posInGrit[0]));
+			}
+			if (aMat[0][1] != lookFor)	// 13
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(160, 0), 25, 25), posInGrit[0]));
+			}
+			if (aMat[2][1] == lookFor)	// 2
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(76, 0), 25, 25), posInGrit[1]));
+			}
+			if (aMat[2][1] != lookFor)	// 14
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(185, 0), 25, 25), posInGrit[1]));
+			}
+		}
+		else if (aMat[1][2] != lookFor)
+		{
+			if (aMat[0][1] == lookFor)	//9
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(109, 0), 25, 25), posInGrit[0]));
+			}
+			if (FIDF(aMat[0][1], lookFor) && aMat[0][2] == lookFor)	// 5
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(102, 0), 6, 6), posInGrit[4]));
+			}
+			if (aMat[2][1] == lookFor)	//10
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(134, 0), 25, 25), posInGrit[1]));
+			}
+			if (FIDF(aMat[2][1], lookFor) && aMat[2][2] == lookFor)	// 6
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(102, 7), 6, 6), posInGrit[5]));
+			}
+		}
+		if (aMat[1][0] == lookFor)
+		{
+			if (aMat[0][1] == lookFor)	// 3
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(51, 25), 25, 25), posInGrit[2]));
+			}
+			if (aMat[0][1] != lookFor)	// 15
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(160, 25), 25, 25), posInGrit[2]));
+			}
+			if (aMat[2][1] == lookFor)	// 4
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(76, 25), 25, 25), posInGrit[3]));
+			}
+			if (aMat[2][1] != lookFor)	// 16
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(185, 25), 25, 25), posInGrit[3]));
+			}
+		}
+		else if (aMat[1][0] != lookFor)
+		{
+			if (FIDF(aMat[0][1], lookFor) && aMat[0][0] == lookFor)	// 7
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(102, 14), 6, 6), posInGrit[6]));
+			}
+			if (aMat[0][1] == lookFor)	// 11
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(109, 25), 25, 25), posInGrit[2]));
+			}
+			if (FIDF(aMat[2][1], lookFor) && aMat[2][0] == lookFor)	// 8
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(102, 21), 6, 6), posInGrit[7]));
+			}
+			if (aMat[2][1] == lookFor)	// 12
+			{
+				vec.push_back(SubAnimation(tC->maskedFields.at(arrIndex), RectI(Vei2(134, 25), 25, 25), posInGrit[3]));
+			}
+		}
+	}
+	return vec;
+}
 void World::Init(WorldSettings& s)
 {
 	wSize = s.wSize;
@@ -772,6 +899,14 @@ void World::Generate(WorldSettings& s)
 		for (int i = 0; i < (wSize.x * wSize.y) / 10; i++)	//nutritious plants
 		{
 			GenerateExplosion(Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20)), rng.GetNormalDist() * 3, 4, 1,20,0);
+		}
+		for (int i = 0; i < (wSize.x * wSize.y) / 10; i++)	//nutritious plants
+		{
+			GenerateExplosion(Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20)), rng.GetNormalDist() * 3, 14, 1, 20, 0);
+		}
+		for (int i = 0; i < (wSize.x * wSize.y); i++)	//nutritious plants
+		{
+			GenerateExplosion(Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20)), rng.GetNormalDist() * 3, 14, 0, 20, 14);
 		}
 		break;
 	}

@@ -11,6 +11,11 @@ class GrabHandle
 public:
 	GrabHandle() = default;
 	Vec2 MoveCamera(const Mouse::Event& e);
-	bool IsLooked() { return grabbed; }
+	bool IsLocked() { return grabbed; }
+	void Unlock()
+	{
+		grabbed = false;
+		hold = false;
+	}
 };
 

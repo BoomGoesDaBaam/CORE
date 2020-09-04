@@ -38,6 +38,10 @@ public:
 	{
 		this->keepTime = keepTime;
 	}
+	float GetKeepTime()
+	{
+		return keepTime;
+	}
 	std::vector<Surface>& GetFrames()
 	{
 		return frames;
@@ -53,6 +57,14 @@ public:
 	int GetHeight()
 	{
 		return frames[0].GetHeight();
+	}
+	Color GetPixel(int frame, int x, int y)
+	{
+		return frames[frame].GetPixel(x, y);
+	}
+	void PutPixel(int frame, int x, int y, Color c)
+	{
+		frames[frame].PutPixel(x, y,c);
 	}
 };
 

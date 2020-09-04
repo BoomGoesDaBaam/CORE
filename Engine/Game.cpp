@@ -28,21 +28,25 @@ Game::Game(MainWindow& wnd)
 	gfx(wnd),
 	resC(std::make_shared<ResourceCollection>(gfx)),
 	go(gfx, resC),
-	curW(std::make_unique<World>(World::WorldSettings(),resC,c))
+	curW(std::make_unique<World>(World::WorldSettings(),resC,c)),
+	igwH(resC)
 {
+
 	PARTCONF pc(resC);
-	pc.pos = Vec2(610, 30);
+	pc.pos = Vec2(60, 60);
 	Matrix<int>m(3, 5, 1);
-	m[0][2] = 0;
-	m[0][3] = 0;
-	m[1][2] = 0;
-	m[1][3] = 0;
 	pc.size = 50;
+	
+	igwH.AddTileFrame(Vec2(10, 200),m,0,50, resC);
 
-	TILEFRAME p(pc, m);
+	//AddScrollWindow(RectF(Vec2(50, 50), 50, 50), RectF(Vec2(110, 50), 10, 50));
+	//AddText(RectF(Vec2(50, 100), 500, 500), "Yahhhhhhooooouuuu", 10, configs.resC->tC.fonts[0]);
+	//TILEFRAME p(pc, m);
+	//p.AddText(RectF(Vec2(0, 0), 100, 100), "Ressourcen", 14, resC->tC.fonts[0],Colors::Black);
+	//p.AddButton(RectF(Vec2(0, 0), 50, 100),Colors::Blue);
 	//p.AddScrollWindow(RectF(Vec2(50, 50), 50, 50), RectF(Vec2(60, 60), 10, 50));
-	go.Add(&p);
-
+	//go.Add(&p);
+	
 	//go.AddVoc(&p, &pc, 20, 70);
 	
 	//go.AddTileframe(Vec2(50.0f, 50.0f), mat, 0);
@@ -114,19 +118,32 @@ void Game::ComposeFrame()
 		std::ostringstream oss1, oss2,oss4;
 		oss1 <<"World cords:(" << curW->GetmCell().x << " | " << curW->GetmCell().y << ")" << " Camera:(" << c.x << " | " << c.y << ")";
 		oss2 <<"Ange:(" << curW->GetfCell().x << "|" << curW->GetfCell().y << ")" << "   CSize:" << curW->GetcSize().x << "   x-Felder:"<<curW->GetxStart();
-		oss4 << "Type:"<<curW->GetfCellType()<<"  use count:"<<resC.use_count();
+		oss4 << "Type:"<<curW->GetfCellType()<<"  use count:"<<resC.use_count()<<" Something:"<< ignoreMouse;
 		resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 200, 25, 15, Colors::Red);
 		resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 15, Colors::Red);
 		resC->tC.fonts.at(0).DrawText(oss4.str().c_str(), 25, 65, 15, Colors::Red);
 		Vei2 mos = Graphics::GetMidOfScreen();
 		gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
 	}
-
+	igwH.Draw(gfx);
 }
 //Handle
 void Game::HandleMouseInput(Mouse::Event& e)
 {
-	curW->HandleMouseEvents(e,gH);
+	if (ignoreMouse && e.GetType() == Mouse::Event::Type::LRelease)
+	{
+		ignoreMouse = false;
+		return;
+	}
+	if (e.GetType() == Mouse::Event::Type::LPress && igwH.HandleMouseInput(e))
+	{
+		ignoreMouse = true;
+		gH.Unlock();
+	}
+	else
+	{
+		curW->HandleMouseEvents(e, gH);
+	}
 }
 void Game::HandleKeyboardInput(Keyboard::Event& e)
 {

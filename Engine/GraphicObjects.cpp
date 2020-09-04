@@ -59,7 +59,6 @@ void GraphicObjects::AddVoc(Object* obj,const PartConf* configsTemplate, int siz
 	Add(obj);
 }
 
-
 /*
 //######################## BLUEPRINTS
 void GraphicObjects::AddVolcano(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors)

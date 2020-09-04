@@ -143,7 +143,7 @@ public:
 	}
 	void DrawRect(Vec2 pos, Vec2 size, Color c, float radiant = 0);
 	template<typename E>
-	void DrawRect(RectF pos, Color c, E& effect)
+	void DrawRect(RectF pos, Color c, E effect)
 	{
 		for (int y = 0; y < pos.GetHeight(); y++)
 		{

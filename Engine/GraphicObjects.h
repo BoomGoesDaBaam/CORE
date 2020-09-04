@@ -8,58 +8,11 @@
 #include "SpriteEffect.h"
 #include "GigaMath.h"
 #include "ResourceCollection.h"
-class Componentss
-{
-	RectF pos;
-public:
-	Componentss(RectF pos) :pos(pos) {}
-	//virtual void Draw(Graphics& gfx) { //gfx.DrawRect(pos,Colors::Red,SpriteEffect::Rainbow());
-	//}
-};
-class GraphicObjects
-{
-	/*
-	class Scrollbar// : public Component
-	{
-	public:
-		Scrollbar(RectF posSB)//: Component(posSB) 
-		{}
-	};
-	class Textfield// : public Component
-	{
-		std::string text;
-		int size;
-		Font& font;
-	public:
-		Textfield(RectF pos, std::string text, int size, Font& font)
-			://Component(pos),
-			text(text), size(size), font(font) {}
-	};
-	class Element //: public Component
-	{
-		RectF pos;
-	public:
-		Element(RectF pos) //:Component(pos) 
-			:pos(pos)
-		{}
+#include "World.h"
 
-	};
-	*/
-	class ScrollWindow
-	{
-		//Scrollbar scrollBar;
-		int type, nElem;
-		std::string defValue;
-	public:
-		ScrollWindow(RectF posWind, RectF posSB, int type=0, int nElem=5, std::string defValue="Text hier") 
-		:	//Component(posWind),
-			//scrollBar(posSB),
-			type(type),nElem(nElem),defValue(defValue)
-		{
-		
-		}
-		//void Draw(Graphics& gfx)override { gfx.DrawRect(pos, Colors::Red, SpriteEffect::Nothing()); }
-	};
+class GraphicObjects				
+{
+	
 public:
 	struct PartConf	//Particle Configs
 	{
@@ -81,20 +34,11 @@ public:
 				body[i] *= size;
 			}
 		}
-		//template <typename T>
 		RectF GetRect()
 		{
 			return RectF(Vec2(pos.x, pos.y), size, size);
 		}
 	};
-	/*
-	Particle(PartConf&& rhs) = delete;
-		Particle& operator=(Particle&& rhs)
-		{
-			configs = rhs.configs;
-			comps = std::move(rhs.comps);
-		}
-	*/
 	class Object
 	{
 	public:
@@ -102,6 +46,7 @@ public:
 	public:
 		Object() = default;
 		Object(PartConf& configs);
+
 		virtual void Update(float dt);
 		virtual void Draw(Graphics& gfx) {};
 		bool ChoosenToDie() { return configs.killMe; }
@@ -112,19 +57,16 @@ public:
 			configs.pos = newP;
 		}
 	};
-
 	class Particle : public Object
 	{
-		
 	public:
 		Particle(PartConf& configs) : Object(configs) {}
 		Particle() = default;
-
-		
 		void Draw(Graphics& gfx)override {
 			gfx.DrawCircle((int)configs.pos.x, (int)configs.pos.y, configs.size, configs.size - (configs.size / 3), configs.colors.x, configs.colors.y);
 		}
 	};
+	
 	class Polygon : public Object
 	{
 	public:
@@ -138,10 +80,12 @@ public:
 			gfx.DrawLine(configs.body[configs.body.size()-1] + configs.pos, configs.body[0] + configs.pos, SpriteEffect::Rainbow());
 		}
 	};
+	
 	class TileFrame : public Object
 	{
 		Matrix<int> outline, matrix;
 		std::vector<RectI> offset;
+		
 	public:
 		TileFrame(PartConf& configs, Matrix<int> matrix) 
 			: Object(configs),
@@ -151,7 +95,7 @@ public:
 		{
 			
 		}
-		TileFrame() = default;
+		
 		void Draw(Graphics& gfx)override
 		{
 			for (int y = 0; y < outline.GetRows(); y++)
@@ -172,18 +116,10 @@ public:
 					}
 				}
 			}
-			/*
-			for (int i = 0; i < comps.size(); i++)
-			{
-				//comps[i]->Draw(gfx);
-			}
-			*/
-		}
-		void AddScrollWindow(RectF posWind, RectF posSB, int type = 0, int nElem = 5, std::string defValue = "Text hier")
-		{
-			//comps.emplace_back(std::make_unique<ScrollWindow>(posWind, posSB,type,nElem,defValue));
+			
 		}
 	};
+
 	class Shot : public Object
 	{
 	public:
@@ -193,6 +129,7 @@ public:
 			gfx.DrawLine(configs.pos, configs.pos + configs.vel * configs.size * 0.05f, configs.colors.x, 4);
 		}
 	};
+
 private:
 	Graphics& gfx;
 	RandyRandom rr;
@@ -216,12 +153,13 @@ public:
 		}
 		if (TileFrame* v = dynamic_cast<TileFrame*>(object))
 		{
-			objects.push_back(std::make_unique<TileFrame>(*v));
+			objects.push_back(std::move(std::make_unique<TileFrame>(*v)));
 		}
 		if (Polygon* v = dynamic_cast<Polygon*>(object))
 		{
 			objects.push_back(std::make_unique<Polygon>(*v));
 		}
+		
 	}
 
 	//Particle Blueprints			
@@ -233,10 +171,12 @@ public:
 };
 typedef GraphicObjects GRAPH_OBJ;
 typedef GraphicObjects::PartConf PARTCONF;
+
 typedef GraphicObjects::Particle PARTICLE;
 typedef GraphicObjects::Shot SHOT;
 typedef GraphicObjects::TileFrame TILEFRAME;
 typedef GraphicObjects::Polygon POLYGON;
+
 /*
 static class PartBlueprints
 {

@@ -16,18 +16,19 @@ Font::Font(std::string filename, int nRaws, int nColums, int charWidth, int char
 }
 void Font::DrawText(std::string text, int x, int y, int size, Color c)
 {
+	float radio = 9.f / 13.f;
 	int xM = 0;
 	int yM = 0;
 	for (int i = 0; i < text.length(); i++)
 	{
 		if (text[i] >= first && text[i] <= last)
 		{
-			gfx.DrawSurface(RectI(Vei2(x+xM,y), size, size),cRects[text[i] - first],Graphics::GetScreenRect<int>(),s, SpriteEffect::ChromaColor(Colors::Magenta,c));
-			xM += size;
+			gfx.DrawSurface(RectI(Vei2(x+xM,y), size* radio, size),cRects[(__int64)text[i] - first],Graphics::GetScreenRect<int>(),s, SpriteEffect::ChromaColor(Colors::Magenta,c));
+			xM += size* radio;
 		}
 		if(text[i] == ' ')
 		{
-			xM += size;
+			xM += size* radio;
 		}
 	}
 }

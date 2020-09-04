@@ -125,7 +125,7 @@ private:
 	Vei2 PutInWorldX(Vei2 pos)const;		//Calculates coordinates when x negativ or > cSize.x  
 	Matrix<int> GetAroundMatrix(Vei2 cell)const;	//in bounds: type		outside bounds(y-wise): -1		
 	void UpdateConMap();							//
-	void UpdateGroundedMap();						// VERY performance heavy - UpdateConMap must be called before UpdateGroundedMap
+	void UpdateGroundedMap(Vei2 pos=Vei2(0,0), Vei2 size = Vei2(-1,-1));						// VERY performance heavy - UpdateConMap must be called before UpdateGroundedMap
 	void SetTilesAT(Vei2 pos, int value);
 	void SetTilesAT(Vei2 pos, Matrix<int> matrix);	//sets tile(x0,y0) in Cell(x1,y1) to type when matrix at(x0,y0) != 0
 	bool IsSurroundedBy(Vei2 pos, int type);		//3x3 around pos
@@ -140,7 +140,6 @@ private:
 	void GenerateExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 100, int surrBy = -1);
 	bool FIDF(int first, int second)const;//First is drawn first
 	void CutHills(int replaceTo);
-	//void GenerateWhenSurrBy(Vei2 pos, int type, int surrBy);
 public:
 																							//Konstruktor + Operatoren
 	World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera);
@@ -155,8 +154,10 @@ public:
 	//Grafiken + Einbindung dieser in groundedMap
 	void Draw(Graphics& gfx)const;
 	std::vector<SubAnimation> GetConnectionAnimationVec(int lookFor, Vei2 pos)const;
+	std::vector<SubAnimation> GetMaskedConnectionAnimationVec(int lookFor, Vei2 pos)const;
 	std::vector<SubAnimation> GetConnectionsOfTypes(Vei2 pos, int* types);
 	void PlaceConnectionsIntoCelltiles(Vei2 pos, int value, int mixed, int valueOfZero, const int* types);
+	void PlaceTilesForMaskedField(Vei2 pos, int value, int valOfMixed, int valueOfZero, int type);
 	void ChangeGroundedVal(int from, int to);
 	void PlaceLadderableTiles(int type);
 	bool NeedsConnections(Vei2 curXY)const;

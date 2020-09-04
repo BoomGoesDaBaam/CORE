@@ -28,6 +28,7 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	//	Items
 
 	//	Fields
+	int nMasked = 0;
 	for (int i = 0; i < Settings::nDiffFieldTypes; i++)				//i diffrent Fields
 	{
 		float delay = rng.GetNormalDist() * 3 + 1;
@@ -35,6 +36,30 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 		for (int f = 0; f < 5; f++)			//f diffent animations
 		{
 			Fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 211, 122 + f * 51 + (i % 8) * 255), 210, 50)));
+			
+			
+			if (Settings::anyMaskedType(i))
+			{
+				maskedFields.push_back(Animation(delay));
+				maskedFields[nMasked].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 211, 122 + f * 51 + (i % 8) * 255), 210, 50)));
+				
+				Fields[i].SetKeepTime(Fields[0].GetKeepTime());
+				for (int y = 0; y < 50; y++)
+				{
+					for (int x = 0; x < 210; x++)
+					{
+						if (Fields[i].GetPixel(f, x, y) == Colors::Magenta)
+						{
+							Fields[i].PutPixel(f, x, y, Fields[0].GetPixel(f, x, y));
+							maskedFields[nMasked].PutPixel(f, x, y, Colors::Magenta);
+						}
+					}
+				}
+			}
+			if (f == 4)
+			{
+				//nMasked++;
+			}
 		}
 	}
 	//Delay anpassen
