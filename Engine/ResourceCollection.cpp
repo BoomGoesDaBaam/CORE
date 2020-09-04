@@ -22,7 +22,7 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 		windows.push_back(Animation(delay));
 		for (int f = 0; f < 5; f++)			//f diffent animations
 		{
-			windows[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 211, 2162 + f * 51 + (i % 8) * 255), 210, 50)));
+			windows[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 255, 2162 + f * 51 + (i % 8) * 255), 254, 50)));
 		}
 	}
 	//	Items
@@ -35,13 +35,13 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 		Fields.push_back(Animation(delay));
 		for (int f = 0; f < 5; f++)			//f diffent animations
 		{
-			Fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 211, 122 + f * 51 + (i % 8) * 255), 210, 50)));
+			Fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 255, 122 + f * 51 + (i % 8) * 255), 254, 50)));
 			
 			
 			if (Settings::anyMaskedType(i))
 			{
 				maskedFields.push_back(Animation(delay));
-				maskedFields[nMasked].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 211, 122 + f * 51 + (i % 8) * 255), 210, 50)));
+				maskedFields[nMasked].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 255, 122 + f * 51 + (i % 8) * 255), 254, 50)));
 				
 				Fields[i].SetKeepTime(Fields[0].GetKeepTime());
 				for (int y = 0; y < 50; y++)
@@ -82,7 +82,7 @@ void TexturesCollection::Update(float dt)
 
 FramesizeCollection::FramesizeCollection()
 {
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		FieldCon.push_back(RectI(Vei2(0, 0), 0, 0));
 	}
@@ -91,44 +91,24 @@ FramesizeCollection::FramesizeCollection()
 std::vector<RectI> FramesizeCollection::GetConOffset(Vei2 cSize)
 {
 	std::vector<RectI> v;
-	RectI cur = RectI(Vei2(0, 0), cSize.x, cSize.y);		//Field connections 1-4
+	RectI cur = RectI(Vei2(0, 0), cSize.x, cSize.y);		// topleft
 	cur.bottom -= (25.f / 50.f) * cSize.y;
 	cur.right -= (25.f / 50.f) * cSize.y;
 	v.push_back(cur);
 
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);				// topright
 	cur.bottom -= (25.f / 50.f) * cSize.y;
 	cur.left += (25.f / 50.f) * cSize.y;
 	v.push_back(cur);
 
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);				// bottomleft
 	cur.top += (25.f / 50.f) * cSize.y;
 	cur.right -= (25.f / 50.f) * cSize.y;
 	v.push_back(cur);
 
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
+	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);				// bottomright
 	cur.top += (25.f / 50.f) * cSize.y;
 	cur.left += (25.f / 50.f) * cSize.y;
-	v.push_back(cur);
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);			//outer corners
-	cur.right -= (44.f / 50.f) * cSize.x;
-	cur.bottom -= (44.f / 50.f) * cSize.y;
-	v.push_back(cur);
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
-	cur.left += (44.f / 50.f) * cSize.x;
-	cur.bottom -= (44.f / 50.f) * cSize.y;
-	v.push_back(cur);
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
-	cur.right -= (44.f / 50.f) * cSize.x;
-	cur.top += (44.f / 50.f) * cSize.y;
-	v.push_back(cur);
-
-	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);
-	cur.left += (44.f / 50.f) * cSize.x;
-	cur.top += (44.f / 50.f) * cSize.y;
 	v.push_back(cur);
 	//new elements need to be added in loop and in GetPositionsOfCon!!!!!!!!!!!!!
 	return v;

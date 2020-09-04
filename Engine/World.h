@@ -153,8 +153,8 @@ public:
 	void HandleKeyboardEvents(Keyboard::Event& e);
 	//Grafiken + Einbindung dieser in groundedMap
 	void Draw(Graphics& gfx)const;
-	std::vector<SubAnimation> GetConnectionAnimationVec(int lookFor, Vei2 pos)const;
-	std::vector<SubAnimation> GetMaskedConnectionAnimationVec(int lookFor, Vei2 pos)const;
+	std::vector<SubAnimation> GetConnectionAnimationVec(int lookFor, Vei2 pos, bool masked = false)const;
+
 	std::vector<SubAnimation> GetConnectionsOfTypes(Vei2 pos, int* types);
 	void PlaceConnectionsIntoCelltiles(Vei2 pos, int value, int mixed, int valueOfZero, const int* types);
 	void PlaceTilesForMaskedField(Vei2 pos, int value, int valOfMixed, int valueOfZero, int type);

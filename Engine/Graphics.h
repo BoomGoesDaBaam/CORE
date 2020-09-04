@@ -170,7 +170,7 @@ public:
 				}
 				else if (aMat[0][1] != lookFor)	// 13
 				{
-					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(160, 0), 25, 25), surface, effect);
+					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(204, 0), 25, 25), surface, effect);
 				}
 				if (aMat[2][1] == lookFor)	// 2
 				{
@@ -178,26 +178,26 @@ public:
 				}
 				else if (aMat[2][1] != lookFor)	// 14
 				{
-					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(185, 0), 25, 25), surface, effect);
+					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(229, 0), 25, 25), surface, effect);
 				}
 			}
 			else if (aMat[1][2] != lookFor)
 			{
 				if (aMat[0][1] == lookFor)	//9
 				{
-					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(109, 0), 25, 25), surface, effect);
+					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(153, 0), 25, 25), surface, effect);
 				}
 				else if (FIDF(aMat[0][1], lookFor) && aMat[0][2] == lookFor)	// 5
 				{
-					DrawSurface(drawOffset[4] + topLeft, RectI(Vei2(102, 0), 6, 6), surface, effect);
+					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(102, 0), 25, 25), surface, effect);
 				}
 				if (aMat[2][1] == lookFor)	//10
 				{
-					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(134, 0), 25, 25), surface, effect);
+					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(178, 0), 25, 25), surface, effect);
 				}
 				else if (FIDF(aMat[2][1], lookFor) && aMat[2][2] == lookFor)	// 6
 				{
-					DrawSurface(drawOffset[5] + topLeft, RectI(Vei2(102, 7), 6, 6), surface, effect);
+					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(127, 0), 25, 25), surface, effect);
 				}
 			}
 			if (aMat[1][0] == lookFor)
@@ -208,7 +208,7 @@ public:
 				}
 				else if (aMat[0][1] != lookFor)	// 15
 				{
-					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(160, 25), 25, 25), surface, effect);
+					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(204, 25), 25, 25), surface, effect);
 				}
 				if (aMat[2][1] == lookFor)	// 4
 				{
@@ -216,26 +216,26 @@ public:
 				}
 				else if (aMat[2][1] != lookFor)	// 16
 				{
-					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(185, 25), 25, 25), surface, effect);
+					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(229, 25), 25, 25), surface, effect);
 				}
 			}
 			else if (aMat[1][0] != lookFor)
 			{
 				if (FIDF(aMat[0][1], lookFor) && aMat[0][0] == lookFor)	// 7
 				{
-					DrawSurface(drawOffset[6] + topLeft, RectI(Vei2(102, 14), 6, 6), surface, effect);
+					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(102, 25), 25, 25), surface, effect);
 				}
 				else if (aMat[0][1] == lookFor)	// 11
 				{
-					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(109, 25), 25, 25), surface, effect);
+					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(153, 25), 25, 25), surface, effect);
 				}
 				if (FIDF(aMat[2][1], lookFor) && aMat[2][0] == lookFor)	// 8
 				{
-					DrawSurface(drawOffset[7] + topLeft, RectI(Vei2(102, 21), 6, 6), surface, effect);
+					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(127, 25), 25, 25), surface, effect);
 				}
 				else if (aMat[2][1] == lookFor)	// 12
 				{
-					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(134, 25), 25, 25), surface, effect);
+					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(178, 25), 25, 25), surface, effect);
 				}
 			}
 		}
