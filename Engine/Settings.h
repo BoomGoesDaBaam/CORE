@@ -28,6 +28,7 @@ namespace Settings
 	static constexpr int groundedTypesARE[] = { 13,1,2,3,4,5,7,9,-1 };				//Types where you can place normal Buildings	
 	static constexpr int CellSplitUpIn = 25;										//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
 	
+	//static constexpr std::string fontSprites[] = { "Textures/Font1.bmp" };
 
 	// ### Framesize and Offsets ###
 	//static constexpr V offset[] = { (const V(23,2)),V(2,2) };

@@ -53,7 +53,7 @@ private:
 	Graphics gfx;
 	/********************************/
 	/*  User Variables              */
-	Font f = { "Spritesheet.bmp",9,11,9,13,'!','~',gfx };
+	Font f = { "Textures/Font1.bmp",9,11,9,13,'!','~',gfx };
 	
 	RandyRandom rr;
 	Tim t;

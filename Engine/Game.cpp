@@ -36,8 +36,11 @@ Game::Game(MainWindow& wnd)
 	pc.pos = Vec2(60, 60);
 	Matrix<int>m(3, 5, 1);
 	pc.size = 50;
-	
-	igwH.AddTileFrame(Vec2(10, 200),m,0,50, resC);
+
+	igwH.AddFrame(RectF(Vec2(540, 110),100,230),0, resC);
+
+	igwH.AddTileFrame(Vec2(540, 110), m, 0, 50, resC);
+	igwH[0].AddText("Feldinformationen", RectF(Vec2(50, 50), 50, 50), 13, resC->tC.fonts[0], Colors::Black);
 
 	//AddScrollWindow(RectF(Vec2(50, 50), 50, 50), RectF(Vec2(110, 50), 10, 50));
 	//AddText(RectF(Vec2(50, 100), 500, 500), "Yahhhhhhooooouuuu", 10, configs.resC->tC.fonts[0]);
@@ -130,19 +133,23 @@ void Game::ComposeFrame()
 //Handle
 void Game::HandleMouseInput(Mouse::Event& e)
 {
-	if (ignoreMouse && e.GetType() == Mouse::Event::Type::LRelease)
+	if (e.IsValid())
 	{
-		ignoreMouse = false;
-		return;
-	}
-	if (e.GetType() == Mouse::Event::Type::LPress && igwH.HandleMouseInput(e))
-	{
-		ignoreMouse = true;
-		gH.Unlock();
-	}
-	else
-	{
-		curW->HandleMouseEvents(e, gH);
+		if (ignoreMouse && e.GetType() == Mouse::Event::Type::LRelease)
+		{
+			ignoreMouse = false;
+			igwH.HandleMouseInput(e);
+			return;
+		}
+		if (igwH.HandleMouseInput(e) && e.GetType() == Mouse::Event::Type::LPress)
+		{
+			ignoreMouse = true;
+			gH.Unlock();
+		}
+		else
+		{
+			curW->HandleMouseEvents(e, gH);
+		}
 	}
 }
 void Game::HandleKeyboardInput(Keyboard::Event& e)
