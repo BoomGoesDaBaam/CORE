@@ -457,7 +457,7 @@ void World::Draw(Graphics& gfx) const
 	yStop = 2;
 	#endif
 
-	for (int layer = 0; layer <= 3; layer++)
+	for (int layer = 0; layer <= 2; layer++)
 	{
 		for (int y = yStart; y <= yStop; y++)
 		{
@@ -484,13 +484,6 @@ void World::Draw(Graphics& gfx) const
 					}
 					break;
 				case 1:
-					if (curXY == fCell)
-					{
-						gfx.DrawSurface(curCellPos.GetExpanded(cSize.x / 5), tC->Frames.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-					}
-					break;
-				case 3:
-					
 					if (grit)
 					{
 						using namespace Settings;
@@ -577,6 +570,12 @@ void World::Draw(Graphics& gfx) const
 							}
 							*/
 						}
+					}
+					break;
+				case 2:
+					if (curXY == fCell)
+					{
+						gfx.DrawSurface(curCellPos.GetExpanded(cSize.x / 5), tC->Frames.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 					}
 					break;
 				}

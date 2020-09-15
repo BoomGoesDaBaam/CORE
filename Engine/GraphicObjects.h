@@ -104,7 +104,7 @@ public:
 				{
 					if (outline[x][y] == 1)
 					{
-						gfx.DrawSurface((RectI)configs.GetRect() + Vei2((int)configs.size * (x-1), (int)configs.size * (y-1)), RectI(Vei2(0, 0), 50, 50), configs.resC->tC.windows.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						//gfx.DrawSurface((RectI)configs.GetRect() + Vei2((int)configs.size * (x-1), (int)configs.size * (y-1)), RectI(Vei2(0, 0), 50, 50), configs.resC->tC.windows.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 						//gfx.DrawSurface(configs.pos, RectI(Vei2(0, 0), 50, 50), configs.resC->tC.windows[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 						//gfx.DrawSurface(RectI((Vei2)configs.pos, configs.pics->tfSize[configs.style].x, configs.pics->tfSize[configs.style].y), RectI(Vei2(0, 0), configs.pics->tfSize[configs.style].x, configs.pics->tfSize[configs.style].y),Graphics::GetScreenRect<int>(), configs.pics->tileFramePics[configs.style], SpriteEffect::Chroma(Colors::Magenta));
 					}
@@ -112,7 +112,7 @@ public:
 					{
 						auto a = outline.GetAroundMatrix(Vei2(x, y));
 						a.MirrowVertical();
-						gfx.DrawConnections(1,(Vei2) configs.pos + Vei2((int)configs.size * (x-1), (int)configs.size * (y-1)), a, offset, configs.resC->tC.windows[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						//gfx.DrawConnections(1,(Vei2) configs.pos + Vei2((int)configs.size * (x-1), (int)configs.size * (y-1)), a, offset, configs.resC->tC.windows[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 					}
 				}
 			}

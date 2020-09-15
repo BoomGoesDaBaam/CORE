@@ -53,12 +53,11 @@ private:
 	Graphics gfx;
 	/********************************/
 	/*  User Variables              */
-	Font f = { "Textures/Font1.bmp",9,11,9,13,'!','~',gfx };
-	
+
 	RandyRandom rr;
 	Tim t;
 	float passedTime = 0;
-	bool debugInfoOn = true,ignoreMouse=false;			//Ignores the Mouseiput for curW unless eventtype is LRelease
+	bool debugInfoOn = false,ignoreMouse=false;			//Ignores the Mouseiput for curW unless eventtype is LRelease
 
 	std::shared_ptr<ResourceCollection> resC = nullptr;
 	GraphicObjects go;

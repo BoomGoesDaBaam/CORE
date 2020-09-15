@@ -188,47 +188,7 @@ public:
 		}
 		return v;
 	}
-	Matrix<T> Get3x3Surrounded(int x, int y, T notValue)
-	{	
-		assert(x >= 0 && x < nColumns && y >= 0 && y < nRows);
-		Matrix<T> newM = Matrix<T>(3,3,notValue);
-		newM[1][1] = columns[x][y];
-
-		if (x > 0 && y > 0)
-		{
-			newM[0][0] = columns[x-1][y-1];
-		}
-		if (nColums - 1 > x && y > 0)
-		{
-			newM[2][0] = columns[x + 1][y - 1];
-		}
-		if (x > 0 && nRows - 1 > y)
-		{
-			newM[0][2] = columns[x - 1][y + 1];
-		}
-		if (nColums - 1 > x && nRows - 1 > y)
-		{
-			newM[2][2] = columns[x + 1][y + 1];
-		}
-
-		if (x > 0)
-		{
-			newM[0][1] = columns[x - 1][y];
-		}
-		if (y > 0)
-		{
-			newM[1][0] = columns[x][y - 1];
-		}
-		if (nColums - 1 > x)
-		{
-			newM[2][1] = columns[x + 1][y];
-		}
-		if (nRows - 1 > y)
-		{
-			newM[1][2] = columns[x][y + 1];
-		}
-		return newM;
-	}
+	
 	void HalfSize(Matrix<int> oldM, int valOfMixed)	
 	{
 		Matrix<int> newM = Matrix<int>(oldM.GetColums() / 2, oldM.GetRows() / 2, 0);

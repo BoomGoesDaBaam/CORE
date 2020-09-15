@@ -24,17 +24,20 @@ namespace SpriteEffect
 	class Transparent
 	{
 		float alpha=0.5f;
+		Color chroma = Colors::OtherMagenta;
 	public:
-		Transparent(float alpha = 0.5f):alpha(alpha) {}
+		Transparent(Color chroma,float alpha = 0.5f):chroma(chroma),alpha(alpha) {}
+		Transparent(float alpha = 0.5f) :alpha(alpha) {}
 
 		void operator()(int x, int y, Color c, Graphics& gfx)
 		{
-			Color old = gfx.GetPixel(x, y) * (1 - alpha);
-			c *= alpha;
-			Color m = Color(old.GetR() + c.GetR(),old.GetG() + c.GetG(),old.GetB() + c.GetB());
-
-			
-			gfx.PutPixel(x, y, m);
+			if(c != chroma)
+			{
+				Color old = gfx.GetPixel(x, y) * (1 - alpha);
+				c *= alpha;
+				Color m = Color(old.GetR() + c.GetR(), old.GetG() + c.GetG(), old.GetB() + c.GetB());
+				gfx.PutPixel(x, y, m);
+			}
 		}
 	};
 	class Chroma

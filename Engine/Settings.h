@@ -3,38 +3,53 @@
 namespace Settings
 {
 	/*		### Types ###
-			0 = water				5 = snow				10 = mountains (high)			
+			0 = water				5 = snow				10 = mountains (high)
 			1 = dirt				6 = coral reef			11 = canjon	   (high)
 			2 = ice					7 = Stone				12 = lavahills (high)
 			3 = desert				8 = lava				13 = candyland
 			4 = nutritious dirt		9 = savanne				14 = swamp
-	
+
 			### Masked Array ###
 			0 = swamp
+
+			### Windows ###
+			1 = Fieldinformaion
 	*/
 
-	const struct V
-	{
-		const int x=2, y=45;
-		V(const int x, const int y):x(x),y(y){}
-	};
 
 	static constexpr int nDiffFieldTypes = 15;										//Array Nullterminator == -1
 	static constexpr int nDiffWindows = 1;
-	static constexpr int typeLayer[] = { 6,0,8,14,4,3,9,1,5,7,2,13,12,10,11,-1};		//Orden in wich the connections are drawn
+	static constexpr int typeLayer[] = { 6,0,8,14,4,3,9,1,5,7,2,13,12,10,11,-1 };		//Orden in wich the connections are drawn
 	static constexpr int hillTypesARE[] = { 11,10,12,-1 };
 	static constexpr int liquidsTypesARE[] = { 0,6,8,-1 };
 	static constexpr int maskTypesARE[] = { 14,-1 };							    //Types like swamp that need to copy watertexture behind
 	static constexpr int groundedTypesARE[] = { 13,1,2,3,4,5,7,9,-1 };				//Types where you can place normal Buildings	
 	static constexpr int CellSplitUpIn = 25;										//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
 	
-	//static constexpr std::string fontSprites[] = { "Textures/Font1.bmp" };
+	static int lang = 0;															//choosen language (0 = german, 1 = english)
 
-	// ### Framesize and Offsets ###
-	//static constexpr V offset[] = { (const V(23,2)),V(2,2) };
+	const std::string lang_Feldinformationen[] = { "Feldinformationen","Field information" };
+
+	const std::string lang_Wasser[] = { "Wasser","water" };
+	const std::string lang_Ebene[] = { "Ebene","plans" };
+	const std::string lang_Eis[] = { "Eis","ice" };
+	const std::string lang_Wurste[] = { "Wueste","Desert" };
+	const std::string lang_nährreicheEbene[] = { "Nährreicher Ebene","nutritious plans" };
+	const std::string lang_Schnee[] = { "wwwwffom","wwff" };
+	const std::string lang_Korallenriff[] = { "Korallenriff","Coral reef" };
+	const std::string lang_Steinlandschaft[] = { "Steinig","stony" };
+	const std::string lang_Lava[] = { "Lava","lava" };
+	const std::string lang_Savanne[] = { "Savanne","savannah" };
+	const std::string lang_Berge[] = { "Lava","lava" };
+	const std::string lang_Canyon[] = { "Canyon","Canyon" };
+	const std::string lang_Lavahills[] = { "Lavahügel","lavahills" };
+	const std::string lang_Candyland[] = { "Süßigkeitenland","Candyland" };
+	const std::string lang_Swamp[] = { "Sumpf","swamp" };
+
+	const std::string lang_Unbekannt[] = { "unknown", "unbekannt" };
+	const std::string lang_Flora[] = { "Flora", "flora" };			// Goettin
 
 
-	
 	static bool anyOfHillTypes(int Type)
 	{
 		for (int i = 0; i < sizeof(hillTypesARE) / sizeof(hillTypesARE[0]); i++)
@@ -89,8 +104,6 @@ namespace Settings
 		}
 		return -1;
 	}
-
-
 	static int ArrSize(int* start)		// max size is 999	arrays need "-1" terminator
 	{
 		int n = 0;
@@ -125,5 +138,58 @@ namespace Settings
 			v.push_back(second[i]);
 		}
 		return v;
+	}
+	
+	static std::string GetTypeString(int type)
+	{
+		switch (type)
+		{
+		case 0:
+			return lang_Wasser[lang];
+			break;
+		case 1:
+			return lang_Ebene[lang];
+			break;
+		case 2:
+			return lang_Eis[lang];
+			break;
+		case 3:
+			return lang_Wurste[lang];
+			break;
+		case 4:
+			return lang_nährreicheEbene[lang];
+			break;
+		case 5:
+			return lang_Schnee[lang];
+			break;
+		case 6:
+			return lang_Korallenriff[lang];
+			break;
+		case 7:
+			return lang_Steinlandschaft[lang];
+			break;
+		case 8:
+			return lang_Lava[lang];
+			break;
+		case 9:
+			return lang_Savanne[lang];
+			break;
+		case 10:
+			return lang_Berge[lang];
+			break;
+		case 11:
+			return lang_Canyon[lang];
+			break;
+		case 12:
+			return lang_Lavahills[lang];
+			break;
+		case 13:
+			return lang_Candyland[lang];
+			break;
+		case 14:
+			return lang_Swamp[lang];
+			break;
+		}
+		return lang_Unbekannt[lang];
 	}
 };

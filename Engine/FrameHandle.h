@@ -3,11 +3,12 @@
 #include <memory>
 class Component
 {
-protected:
+public:
 	RectF pos;
 	Color c;
-public:
-	Component(RectF pos, Color c):pos(pos),c(c){}
+	std::vector<int> activInStates;
+	std::string text;
+	Component(RectF pos, std::string text, Color c,std::vector<int> activInStates):pos(pos),c(c),text(text), activInStates(activInStates){}
 	virtual void Draw(RectF parent, Graphics& gfx)
 	{
 		gfx.DrawRect(pos+Vec2(parent.left, parent.top), c, SpriteEffect::Nothing());
@@ -15,16 +16,28 @@ public:
 };
 class Text: public Component
 {
-	std::string text;
+public:
 	Font f;
 	int size;
-public:
-	Text(std::string text, RectF pos, int size, Font f, Color c);
+	Text(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates);
 	void Draw(RectF parent, Graphics& gfx) override
 	{
 		f.DrawText(text, pos.left + parent.left, pos.top + parent.top, size, c);
 	}
 };
+class Button : public Component
+{
+public:
+	Font f;
+	int size;
+	Button(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates);
+	void Draw(RectF parent, Graphics& gfx) override
+	{
+		gfx.DrawRect(pos + parent.GetTopLeft<float>(), Colors::Blue, SpriteEffect::Rainbow());
+		f.DrawText(text, pos.left + parent.left, pos.top + parent.top, size, c);
+	}
+};
+
 
 class FrameHandle
 {
@@ -35,28 +48,62 @@ class FrameHandle
 		bool visible = true;
 		bool grabbed = false;
 		bool mouseHovers = false;
-		int type;
+		int type,curState=0, nStates=1;
 		RectF pos;
 		std::vector<std::unique_ptr<Component>> comps;
 		Vec2 lastMouseP = Vec2(0,0);
+		Vec2 posOfLastPress = Vec2(-1, -1);
 	public:
-		Frame(RectF pos, int type, sharedResC resC);
-
-		virtual void Draw(Graphics& gfx) {
+		Frame(RectF pos, int type, int nStates, sharedResC resC);
+		void Draw(Graphics& gfx) {
 			if (mouseHovers)
 			{
-				gfx.DrawRect(pos, Colors::Blue, SpriteEffect::Nothing());
+				switch (type)
+				{
+				case 0:
+					switch (curState)
+					{
+					case 0:
+						gfx.DrawSurface(RectI(pos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						gfx.DrawSurface((RectI)pos, resC->tC.windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.9f));
+						break;
+					case 1:
+						gfx.DrawSurface(RectI(pos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						break;
+					}
+					break;
+				}
 			}
 			else
 			{
-				gfx.DrawRect(pos, Colors::Red, SpriteEffect::Nothing());
+				switch (type)
+				{
+				case 0:
+					switch (curState)
+					{
+					case 0:
+						gfx.DrawSurface(RectI(pos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						gfx.DrawSurface((RectI)pos, resC->tC.windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.75f));
+						break;
+					case 1:
+						gfx.DrawSurface(RectI(pos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						break;
+					}
+					break;
+				}
 			}
 			DrawComps(gfx);
 		}
-		void DrawComps(Graphics& gfx);
-		virtual bool HandleMouseInput(Mouse::Event& e)
+		void Settext(std::string text, int index)
+		{
+			assert(index >= 0 && index < comps.size());
+			comps[index]->text = text;
+		}
+		bool HandleMouseInput(Mouse::Event& e)
 		{
 			Vec2 mP = (Vec2)e.GetPos();
+			bool hit = Hit(mP);
+
 			if (grabbed)
 			{
 				if (e.GetType() == Mouse::Event::LRelease)
@@ -68,212 +115,95 @@ class FrameHandle
 					Move(mP);
 				}
 			}
-			if (e.GetType() == Mouse::Event::LPress)
+			if (e.GetType() == Mouse::Event::LPress && hit)
 			{
 				Grab(mP);
+				posOfLastPress = mP;
 			}
-			if (pos.Contains((Vec2)e.GetPos()))
+			if (nStates > 1 && hit && e.GetType() == Mouse::Event::LRelease && posOfLastPress == mP)
+			{
+				curState++;
+				if (curState == nStates)
+				{
+					curState = 0;
+				}
+			}
+			if (hit)
 			{
 				mouseHovers = true;
+				return true;
 			}
 			else
 			{
 				mouseHovers = false;
 			}
-			return pos.Contains((Vec2)e.GetPos());
+			return false;
 		}
-		void AddText(std::string text, RectF pos, int size, Font f, Color c);
-		void AddButton(std::string text, RectF pos, int size, Font f, Color c);
+		bool Hit(Vec2 mP)
+		{
+			Vei2 mpRel = (Vei2)(mP - pos.GetTopLeft<float>());
+			switch (type)
+			{
+			case 0:
+				switch (curState)
+				{
+				case 0:
+					return resC->tC.windowsFrame[0].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel) || resC->tC.windowsFrame[2].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
+					break;
+				case 1:
+
+					return resC->tC.windowsFrame[1].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
+				
+					/*
+					Matrix<int> chromaM = resC->tC.windowsFrame[1].GetCurSurface().GetChromaMatrix(Colors::Magenta);
+					chromaM.MirrowVertical();
+					float xRel = (float)mpRel.x / pos.GetWidth(); 
+					float yRel = (float)mpRel.y / (pos.GetHeight() / 20);
+					if (Vec2::IsPositivFactor(Vec2(xRel, yRel)) && chromaM(Vei2(xRel * surSize.x, yRel * surSize.y)) == 1)
+					{
+						return true;
+					}
+					*/
+					break;
+				}
+				break;
+
+
+			}
+			return false;
+		}
+		void SetStates(int nStates);
+		void DrawComps(Graphics& gfx);
+		void AddText(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates = {});
+		void AddButton(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates = {});
 		void Grab(Vec2 mP);
 		void Move(Vec2 mP);
 		void Release();
 	};
-	class TileFrame: public Frame
-	{
-		Matrix<int> matrix, outline;
-		int cellSize;
-		std::vector<RectI> offset;
-	public:
-		TileFrame(Vec2 pos, Matrix<int> matrix, int type, int tileSize, sharedResC resC);
-		void Draw(Graphics& gfx)override
-		{
-			RectI tileRect = RectI(pos.GetTopLeft<int>(), cellSize, cellSize) + Vei2(cellSize, cellSize);
-			for (int y = 0; y < outline.GetRows(); y++)
-			{
-				for (int x = 0; x < outline.GetColums(); x++)
-				{
-					if (outline[x][y] == 1)
-					{
-						gfx.DrawSurface(tileRect + Vei2(cellSize * (x - 1), cellSize * (y - 1)), RectI(Vei2(0, 0), 50, 50), resC->tC.windows.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-						//gfx.DrawSurface(configs.pos, RectI(Vei2(0, 0), 50, 50), configs.resC->tC.windows[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-						//gfx.DrawSurface(RectI((Vei2)configs.pos, configs.pics->tfSize[configs.style].x, configs.pics->tfSize[configs.style].y), RectI(Vei2(0, 0), configs.pics->tfSize[configs.style].x, configs.pics->tfSize[configs.style].y),Graphics::GetScreenRect<int>(), configs.pics->tileFramePics[configs.style], SpriteEffect::Chroma(Colors::Magenta));
-					}
-					else
-					{
-						auto a = outline.GetAroundMatrix(Vei2(x, y));
-						a.MirrowVertical();
-						gfx.DrawConnections(1, pos.GetTopLeft<int>() + Vei2(cellSize * (x), cellSize * (y)), a, offset, resC->tC.windows[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-					}
-				}
-			}
-			DrawComps(gfx);
-		}
-		bool HandleMouseInput(Mouse::Event& e)override
-		{
-			Vec2 mP = (Vec2)e.GetPos();
-			Vec2 delta = mP - pos.GetTopLeft<float>();
-			Vec2 onCellPos = Vec2((int)delta.x % cellSize, (int)delta.y % cellSize);
-			Vei2 hitCell = (Vei2)delta / cellSize;
-
-			if (e.GetType() == Mouse::Event::LPress)
-			{
-				if (pos.Contains((Vec2)e.GetPos()))
-				{
-					if (outline(hitCell) == 1)
-					{
-						Grab(mP);
-						return true;
-					}
-					if (hitCell.x == 0 || hitCell.x == outline.GetColums() - 1 || hitCell.y == 0 || hitCell.y == outline.GetRows() - 1)
-					{
-						Matrix<int> chromaM = SubAnimation::PutOnTopOfEachOther(resC->fsC.GetConnectionAnimationVec(1, hitCell, false, outline.GetAroundMatrix(hitCell)), Vei2(50, 50), 1, 0);
-						chromaM.MirrowVertical();
-						if (chromaM[onCellPos.x][onCellPos.y] == 1)
-						{
-							Grab(mP);
-							return true;
-						}
-
-					}
-				}
-			}
-			else if(grabbed)
-			{
-				if (e.GetType() == Mouse::Event::LRelease)
-				{
-					Release();
-				}
-				else
-				{
-					Move(mP);
-				}
-				return true;
-			}
-
-			return false;
-		}
-	};
-	/*
-	void Draw(Graphics& gfx)override
-		{
-			for (int y = 0; y < outline.GetRows(); y++)
-			{
-				for (int x = 0; x < outline.GetColums(); x++)
-				{
-					if (outline[x][y] == 1)
-					{
-						gfx.DrawSurface((RectI)configs.GetRect() + Vei2((int)configs.size * (x-1), (int)configs.size * (y-1)), RectI(Vei2(0, 0), 50, 50), configs.resC->tC.windows.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-						//gfx.DrawSurface(configs.pos, RectI(Vei2(0, 0), 50, 50), configs.resC->tC.windows[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-						//gfx.DrawSurface(RectI((Vei2)configs.pos, configs.pics->tfSize[configs.style].x, configs.pics->tfSize[configs.style].y), RectI(Vei2(0, 0), configs.pics->tfSize[configs.style].x, configs.pics->tfSize[configs.style].y),Graphics::GetScreenRect<int>(), configs.pics->tileFramePics[configs.style], SpriteEffect::Chroma(Colors::Magenta));
-					}
-					else
-					{
-						auto a = outline.GetAroundMatrix(Vei2(x, y));
-						a.MirrowVertical();
-						gfx.DrawConnections(1,(Vei2) configs.pos + Vei2((int)configs.size * (x-1), (int)configs.size * (y-1)), a, offset, configs.resC->tC.windows[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-					}
-				}
-			}
-
-		}
-
-
-
-
-
-	class Scrollbar// : public Component
-	{
-	public:
-		Scrollbar(RectF posSB)//: Component(posSB)
-		{}
-	};
 	
-	class Textfield : public Frame
-	{
-		std::string text;
-		int size;
-		Font& font;
-		Color c;
-	public:
-		Textfield(RectF pos, int type, std::string text, int size, Font& font, Color c)
-			:Frame(pos,type),
-			text(text), size(size), font(font) {}
-		void Draw(Graphics& gfx)override {
-			font.DrawText(text, pos.left, pos.top, size, c);
-		}
-	};
-	/*
-	class Element //: public Component
-	{
-		RectF pos;
-	public:
-		Element(RectF pos) //:Component(pos)
-			:pos(pos)
-		{}
-
-	};
-	*/
-	/*
-	class ExpandableWindow : public Component
-	{
-		ExpandableWindow(RectI posWind, RectI posExpButton)
-	};
-	class Button : public Frame
-	{
-		Color c;
-	public:
-		Button(RectF pos, int type, Color c) : Frame(pos,type), c(c)
-		{
-
-		}
-		bool Hit(Vei2 mP, Color c)
-		{
-			return pos.Contains((Vec2)mP);
-		}
-		void Draw(Graphics& gfx)override { gfx.DrawRect(pos, c, SpriteEffect::Nothing()); }
-	};
-
-	class ScrollWindow : public Frame
-	{
-		//Scrollbar scrollBar;
-		int nElem;
-		std::string defValue;
-	public:
-		ScrollWindow(RectF posWind, RectF posSB, int type = 0, int nElem = 5, std::string defValue = "Text hier")
-			: Frame(posWind,type),
-			//scrollBar(posSB),
-			nElem(nElem), defValue(defValue)
-		{
-
-		}
-		void Draw(Graphics& gfx)override { gfx.DrawRect(pos, Colors::Red, SpriteEffect::Nothing()); }
-	};
-	*/
 
 	std::vector<std::unique_ptr<Frame>> frames;
 	sharedResC resC;
 public:
 	const Frame& operator[](std::size_t idx) const { return *frames[idx].get(); }
-	Frame& operator[](std::size_t idx) { return *frames[idx].get();  }
+	Frame& operator[](std::size_t idx) { return *frames[idx].get();  }		
 
 	FrameHandle(sharedResC resC);
 	bool HandleMouseInput(Mouse::Event& e);
 	void Draw(Graphics& gfx);
-	void AddFrame(RectF posWind, int type, sharedResC resC);
-	void AddTileFrame(Vec2 posWind, Matrix<int> matrix, int type, int tileSize, sharedResC resC);
+	void AddFrame(RectF posWind, int type, int nStates, sharedResC resC);
 	void AddScrollWindow(RectF posWind, RectF posSB, int type = 0, int nElem = 5, std::string defValue = "Text hier");
-	void AddText(RectF posWind, std::string text, int size, Font& font, Color c);
-	void AddButton(RectF posWind, Color c);
-	static constexpr float percentForGrab = 0.2;			// 0 - 1
+
+	// ###### Update existing Frames ######
+	void UpdateFieldinformation(World& curW)				
+	{
+		frames[0]->Settext(Settings::lang_Flora[Settings::lang] + ":" + Settings::GetTypeString(curW.GetfCellType()), 1);
+	}
+
+
+
+	static constexpr float percentForGrab = 0.05;			// 0 - 1
 };
+
+
 

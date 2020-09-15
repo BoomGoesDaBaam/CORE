@@ -109,7 +109,7 @@ public:
 		return mat;
 	}
 
-	static Matrix<int> PutOnTopOfEachOther(std::vector<SubAnimation> oldM, Vei2 dim, int keep, int other)		//keep value will be layered and other is the rest
+	static Matrix<int> PutOnTopOfEachOther(std::vector<SubAnimation> oldM, Vei2 dim, int keep, int other)		//'keep' value will be layered and 'other' is the rest
 	{
 		Matrix<int> newM = Matrix<int>(dim.x, dim.y, 0);
 		RectI size = RectI(Vei2(0, 0), dim.x, dim.y);

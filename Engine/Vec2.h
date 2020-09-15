@@ -104,6 +104,11 @@ public:
 		}
 		return *this;
 	}
+	template <typename T>
+	static bool IsPositivFactor(Vec2_<T> v)
+	{
+		return v.x >= 0 && v.x <= 1.0f && v.y >= 0 && v.y <= 1;
+	}
 public:
 	T x;
 	T y;

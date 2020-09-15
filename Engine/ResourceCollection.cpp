@@ -20,16 +20,27 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	{
 		Frames[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(i * 71, 51), 70, 70)));
 	}
-	//	windows
+	//	windows - Tileframes
 	for (int i = 0; i < Settings::nDiffWindows; i++)
 	{
 		float delay = rng.GetNormalDist() * 3 + 1;
-		windows.push_back(Animation(delay));
+		windowsFrametile.push_back(Animation(delay));
 		for (int f = 0; f < 5; f++)			//f diffent animations
 		{
-			windows[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 255, 2162 + f * 51 + (i % 8) * 255), 254, 50)));
+			windowsFrametile[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 255, 2162 + f * 51 + (i % 8) * 255), 254, 50)));
 		}
 	}
+	//	window - Frames
+	float delay = rng.GetNormalDist() * 3 + 1;
+	windowsFrame.push_back(Animation(delay));
+	windowsFrame[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(510, 1397), 140, 280)));
+
+	windowsFrame.push_back(Animation(delay));
+	windowsFrame[1].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(651, 1397), 140, 14)));
+
+	windowsFrame.push_back(Animation(delay));
+	windowsFrame[2].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(651, 1412), 140, 14)));
+
 	//	Items
 
 	//	Fields
@@ -73,8 +84,8 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	Fields[0].SetKeepTime(0.3f);
 	Fields[12].SetKeepTime(0.3f);
 	//Fonts
-	fonts.push_back(Font("Textures/Font1.bmp", 9, 11, 9, 13, '!', '~', gfx));
-
+	fonts.push_back(Font("Textures/Font4.bmp", 28, '!', '~', Colors::FontDelimitor, Colors::FontNewLine, gfx));
+	fonts.push_back(Font("Textures/Font4.bmp", 28, '!', '~', Colors::FontDelimitor, Colors::FontNewLine, gfx));
 }
 void TexturesCollection::Update(float dt)
 {

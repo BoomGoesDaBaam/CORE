@@ -16,10 +16,10 @@ public:
 	Surface spriteSHEEP = { "Textures/Spritesheet.bmp" };
 	//Surface s_Items[1];
 	std::vector<Animation>	Fields;			//all needed Textures for a Fieldtype
-	std::vector<Animation>	maskedFields;	//types that need speacial cyan masking
-	//std::vector<Animation>	FieldsC;	//field connections
+	std::vector<Animation>	maskedFields;	//types that need speacial masking (smurpf for example)
 	std::vector<Animation>	Frames;
-	std::vector<Animation>	windows;
+	std::vector<Animation>	windowsFrametile;
+	std::vector<Animation>	windowsFrame;
 	std::vector<Font>		fonts;
 	void Update(float dt);
 };
