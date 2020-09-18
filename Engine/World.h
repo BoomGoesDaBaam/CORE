@@ -29,10 +29,12 @@ public:
 		Vei2 cSize = { 50,50 };
 	};
 private:
-	class Objekt
+	class Obstacle
 	{
 
 	};
+
+
 	class Cell
 	{
 	public:
@@ -109,16 +111,21 @@ private:
 	Vei2 wSize = { 0,0 };
 	Vei2 cSize = { 0,0 };
 	Vei2 fCell = { 0,0 };					//angeklickte Zelle
-	Vei2 mCell = { 0,0 };					//Zelle in der Mitte des Bildschirms audem Debugzeiger ist
+	Vei2 fTile = { 0,0 };
+	Vei2 mCell = { 0,0 };					//Zelle in der Mitte des Bildschirms auf dem Debugzeiger ist
 	Cells cells;
 	std::vector<Matrix<int>> conMap;		//Connectionmap	 (1 = needsConnections, 0 = doesn't, vectorindex for type)
 	Matrix<int> groundedMap;				// 0 = spot is not grounded, 1 = is grounded, -1 = not identified yet (will be 0 if not changed)
+	Matrix<int> obstacleMap;
 	Vec2& c;								//Camera
-	bool grit=false;
+	bool grit=false;						//show grit
+	bool buildMode = false;					//place something
 
 	//Private const Functions
 	RectF GetCellRect(Vei2 cellP)const;
-	Vei2 GetCellHit(Vec2 mouseP)const;
+	RectF GetTileRect(Vei2 tileP)const;
+	Vei2 GetCellHit(Vec2 mP)const;
+	Vei2 GetTileHit(Vec2 mP)const;
 	void Init(WorldSettings& s);
 	bool IsInWorld(Vei2& pos)const;
 	bool IsInWorldY(int y)const;		
@@ -163,10 +170,12 @@ public:
 	Vei2 PutTileIntoWorld(Vei2 pos);
 	Vei2 PutTileIntoWorld(int x, int y);
 	//
-	Vei2 GetwSize() { return wSize; }
-	Vei2 GetcSize() { return cSize; }
-	Vei2 GetfCell() { return fCell; }
-	int GetfCellType() { return cells(fCell).type; }
-	Vei2 GetmCell() { return mCell; }
+	Vei2 GetwSize()const { return wSize; }
+	Vei2 GetcSize()const { return cSize; }
+	Vec2 GetTileSize()const { return (Vec2)cSize/Settings::CellSplitUpIn; }
+	Vei2 GetfCell()const { return fCell; }
+	Vei2 GetfTile()const { return fTile; }
+	int GetfCellType()const { return cells(fCell).type; }
+	Vei2 GetmCell()const { return mCell; }
 };
 

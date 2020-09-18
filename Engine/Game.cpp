@@ -31,19 +31,6 @@ Game::Game(MainWindow& wnd)
 	curW(std::make_unique<World>(World::WorldSettings(),resC,c)),
 	igwH(resC)
 {
-
-	PARTCONF pc(resC);
-	pc.pos = Vec2(60, 60);
-	pc.pos = Vec2(60, 60);
-	Matrix<int>m(3, 5, 1);
-	pc.size = 50;
-
-	igwH.AddFrame(RectF(Vec2(540, 110),140,280), 0, 2, resC);
-	std::vector<int> a = {1, 0};
-	igwH[0].AddText(Settings::lang_Feldinformationen[Settings::lang], RectF(Vec2(35, 3), 50, 50), 7, resC->tC.fonts[0], Colors::Black);
-	igwH[0].AddText(Settings::lang_Flora[Settings::lang] + ":", RectF(Vec2(10, 30), 50, 50), 7, resC->tC.fonts[0], Colors::Black,a);
-	igwH[0].AddText(Settings::lang_Flora[Settings::lang] + ":", RectF(Vec2(70, 30), 50, 50), 7, resC->tC.fonts[0], Colors::Black, a);
-
 	
 	//AddScrollWindow(RectF(Vec2(50, 50), 50, 50), RectF(Vec2(110, 50), 10, 50));
 	//AddText(RectF(Vec2(50, 100), 500, 500), "Yahhhhhhooooouuuu", 10, configs.resC->tC.fonts[0]);
@@ -121,15 +108,24 @@ void Game::ComposeFrame()
 
 	if (debugInfoOn)
 	{
-		std::ostringstream oss1, oss2,oss4;
+		std::ostringstream oss1, oss2, oss4, oss5;
 		oss1 <<"World cords:(" << curW->GetmCell().x << " | " << curW->GetmCell().y << ")" << " Camera:(" << c.x << " | " << c.y << ")";
-		oss2 <<"Ange:(" << curW->GetfCell().x << "|" << curW->GetfCell().y << ")" << "   CSize:" << curW->GetcSize().x << "   x-Felder:"<<curW->GetxStart();
-		oss4 << "Type:"<<curW->GetfCellType()<<"  use count:"<<resC.use_count()<<" Something:"<< ignoreMouse;
-		resC->tC.fonts.at(1).DrawText(oss1.str().c_str(), 200, 25, 15, Colors::Red);
-		resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 20, Colors::Red);
-		resC->tC.fonts.at(0).DrawText(oss4.str().c_str(), 25, 65, 20, Colors::Red);
+		oss2 <<"fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CSize:" << curW->GetcSize().x << "   x-Felder:"<<curW->GetxStart();
+		oss4 << "Type:"<<curW->GetfCellType()<<"  use count tC:"<<resC.use_count()<<" ignoreMouse:"<< ignoreMouse;
+		resC->tC.fonts.at(1).DrawText(oss1.str().c_str(), 25, 25, 14, Colors::Red);
+		resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 14, Colors::Red);
+		resC->tC.fonts.at(0).DrawText(oss4.str().c_str(), 25, 65, 14, Colors::Red);
 		Vei2 mos = Graphics::GetMidOfScreen();
 		gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
+		for (int y = 1; y <= 7; y++)
+		{
+			gfx.DrawLine(Vec2(y * 100, 0), Vec2(y * 100, 600), Colors::Red);
+		}
+		for (int x = 1; x <= 5; x++)
+		{
+			gfx.DrawLine(Vec2(0, x * 100), Vec2(800, x * 100), Colors::Red);
+		}
+
 	}
 	igwH.Draw(gfx);
 }
@@ -152,7 +148,7 @@ void Game::HandleMouseInput(Mouse::Event& e)
 		else
 		{
 			curW->HandleMouseEvents(e, gH);
-			igwH.UpdateFieldinformation(*curW);
+			//igwH.UpdateFieldinformation(*curW);
 		}
 	}
 }

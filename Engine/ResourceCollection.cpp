@@ -20,16 +20,6 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	{
 		Frames[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(i * 71, 51), 70, 70)));
 	}
-	//	windows - Tileframes
-	for (int i = 0; i < Settings::nDiffWindows; i++)
-	{
-		float delay = rng.GetNormalDist() * 3 + 1;
-		windowsFrametile.push_back(Animation(delay));
-		for (int f = 0; f < 5; f++)			//f diffent animations
-		{
-			windowsFrametile[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 255, 2162 + f * 51 + (i % 8) * 255), 254, 50)));
-		}
-	}
 	//	window - Frames
 	float delay = rng.GetNormalDist() * 3 + 1;
 	windowsFrame.push_back(Animation(delay));
@@ -40,8 +30,12 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 
 	windowsFrame.push_back(Animation(delay));
 	windowsFrame[2].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(651, 1412), 140, 14)));
+	//Obstacles
+	obstacles.push_back(delay);
+	obstacles[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0,0), 8, 17)));
 
 	//	Items
+
 
 	//	Fields
 	int nMasked = 0;

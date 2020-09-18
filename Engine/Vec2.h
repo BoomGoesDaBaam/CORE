@@ -113,6 +113,12 @@ public:
 	T x;
 	T y;
 };
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Vec2_<T>& obj)
+{
+	os << "(" << obj.x << "|" << obj.y << ")";
+	return os;
+}
 
 typedef Vec2_<float> Vec2;
 typedef Vec2_<int> Vei2;

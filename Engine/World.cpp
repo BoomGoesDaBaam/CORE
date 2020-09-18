@@ -108,7 +108,7 @@ void World::UpdateGroundedMap(Vei2 pos, Vei2 size)
 			SetTilesAT(pos, -1);
 
 			int curType = cells[pos.x][pos.y].type;
-			if (anyGroundedTypes(curType))				//grounded
+			if (Settings::anyGroundedTypes(curType))				//grounded
 			{
 				SetTilesAT(pos, 1);
 				PlaceConnectionsIntoCelltiles(pos, 2, 2, -1, hillTypesARE);
@@ -309,11 +309,44 @@ RectF World::GetCellRect(Vei2 cellP)const
 {
 	Vei2 d = cellP - mCell;
 
+	if (d.x > wSize.x / 2)
+	{
+		d.x -= wSize.x;
+	}
+	if (d.x < -wSize.x / 2)
+	{
+		d.x += wSize.x;
+	}
+
+	if (d.y > wSize.y / 2)
+	{
+		d.y -= wSize.y;
+	}
+	if (d.y < -wSize.y / 2)
+	{
+		d.y += wSize.y;
+	}
+
 	Vei2 mos = Graphics::GetMidOfScreen();
 
 	mos.x += d.x * cSize.x;
 	mos.y -= d.y * cSize.y;
-	return RectF(Vec2(mos), (float)cSize.x, (float)cSize.y);
+	return RectF(Vec2(mos), (float)cSize.x, (float)cSize.y) + Vec2(-(int)c.x, +(int)c.y);
+}
+RectF World::GetTileRect(Vei2 tileP)const
+{
+	using namespace Settings;
+
+	Vei2 cellHit = Vei2(tileP.x / CellSplitUpIn, tileP.y / CellSplitUpIn);
+	RectF cellPos = GetCellRect(cellHit);
+	Vec2 tileSize = GetTileSize();
+
+	cellPos.left += (tileP.x % CellSplitUpIn) * tileSize.x;
+	cellPos.right = cellPos.left + tileSize.x;
+	cellPos.bottom -= (tileP.y % CellSplitUpIn) * tileSize.y;
+	cellPos.top = cellPos.bottom - tileSize.y;
+
+	return cellPos;
 }
 Vei2 World::GetCellHit(Vec2 mP)const
 {
@@ -332,6 +365,19 @@ Vei2 World::GetCellHit(Vec2 mP)const
 		deltaCells.x++;
 
 	return PutInWorldX(deltaCells + mCell);
+}
+Vei2 World::GetTileHit(Vec2 mP)const
+{
+	Vec2 mos = (Vec2)Graphics::GetMidOfScreen();
+
+	Vei2 cell = GetCellHit(mP) ;
+	RectF cellRect = GetCellRect(cell);
+	Vei2 delta = Vei2(mP.x - cellRect.left,cellRect.bottom - mP.y);
+	//assert(delta.x > 0 && delta.y > 0);
+	Vec2 tileSize = GetTileSize();
+	Vei2 hitTile = Vei2(cell.x * Settings::CellSplitUpIn + delta.x / tileSize.x, (cell.y - 1) * Settings::CellSplitUpIn + delta.y / tileSize.y);
+
+	return hitTile;
 }
 void World::Zoom(Vei2 delta)
 {
@@ -396,12 +442,16 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 		mCell.y = (int)(wSize.y - (mos.y / cSize.y) - 1);
 		c.y = cSize.y-0.001f;
 	}
+
+
 }
 void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 {
+	Vec2 mP = (Vec2)e.GetPos();
 	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLocked())
 	{
-		fCell = GetCellHit((Vec2) e.GetPos());
+		fCell = GetCellHit(mP);
+		fTile = GetTileHit(mP);
 		/*
 		cells(fCell).type = 14;
 		UpdateConMap();
@@ -416,7 +466,6 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 	{
 		Zoom(Vei2(25, 25));
 	}
-
 	Vec2 cDelta = gH.MoveCamera(e);
 	ApplyCameraChanges(cDelta);
 }
@@ -427,6 +476,10 @@ void World::HandleKeyboardEvents(Keyboard::Event& e)
 		switch (e.GetCode())
 		{
 		case 'G':
+			grit = !grit;
+			break;
+		case 'B':
+			buildMode = !buildMode;
 			grit = !grit;
 			break;
 		case 0x1B:	//ERROR?
@@ -466,7 +519,7 @@ void World::Draw(Graphics& gfx) const
 				Vei2 curXY = PutInWorldX(mCell + Vei2(x, y) + Vei2(0, -1));
 				const Cell& curCell = cells(curXY);
 				int cellType = curCell.type;
-				RectI curCellPos = (RectI)GetCellRect(Vei2(x, y) + mCell) + Vei2(-(int)c.x, +(int)c.y);
+				RectI curCellPos = (RectI)GetCellRect(Vei2(x, y) + mCell);
 
 				switch (layer)
 				{
@@ -524,6 +577,10 @@ void World::Draw(Graphics& gfx) const
 										{
 											gfx.DrawRect(curP, Colors::Cyan, SpriteEffect::Transparent(0.5f));
 										}
+										if (v == fTile)
+										{
+											gfx.DrawRect(curP, Colors::Black, SpriteEffect::Transparent(0.5f));
+										}
 									}
 								
 							}
@@ -570,6 +627,10 @@ void World::Draw(Graphics& gfx) const
 							}
 							*/
 						}
+					}
+					if (buildMode)
+					{
+						//gfx.DrawRect(GetTileRect(fTile), Colors::Black, SpriteEffect::Rainbow());
 					}
 					break;
 				case 2:

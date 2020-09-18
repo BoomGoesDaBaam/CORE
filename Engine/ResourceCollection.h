@@ -18,8 +18,8 @@ public:
 	std::vector<Animation>	Fields;			//all needed Textures for a Fieldtype
 	std::vector<Animation>	maskedFields;	//types that need speacial masking (smurpf for example)
 	std::vector<Animation>	Frames;
-	std::vector<Animation>	windowsFrametile;
 	std::vector<Animation>	windowsFrame;
+	std::vector<Animation>	obstacles;
 	std::vector<Font>		fonts;
 	void Update(float dt);
 };

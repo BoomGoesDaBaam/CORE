@@ -14,6 +14,13 @@ namespace Settings
 
 			### Windows ###
 			1 = Fieldinformaion
+
+			### Frame Types ###		
+			0 = frame with bar to open
+
+			### Multiframe Types ###
+			0 = empty
+
 	*/
 
 
@@ -34,16 +41,16 @@ namespace Settings
 	const std::string lang_Ebene[] = { "Ebene","plans" };
 	const std::string lang_Eis[] = { "Eis","ice" };
 	const std::string lang_Wurste[] = { "Wueste","Desert" };
-	const std::string lang_nährreicheEbene[] = { "Nährreicher Ebene","nutritious plans" };
-	const std::string lang_Schnee[] = { "wwwwffom","wwff" };
+	const std::string lang_nährreicheEbene[] = { "Naehrreiche Ebene","nutritious plans" };
+	const std::string lang_Schnee[] = { "Schnee","snow" };
 	const std::string lang_Korallenriff[] = { "Korallenriff","Coral reef" };
 	const std::string lang_Steinlandschaft[] = { "Steinig","stony" };
 	const std::string lang_Lava[] = { "Lava","lava" };
 	const std::string lang_Savanne[] = { "Savanne","savannah" };
-	const std::string lang_Berge[] = { "Lava","lava" };
+	const std::string lang_Berge[] = { "Berge","Hills" };
 	const std::string lang_Canyon[] = { "Canyon","Canyon" };
-	const std::string lang_Lavahills[] = { "Lavahügel","lavahills" };
-	const std::string lang_Candyland[] = { "Süßigkeitenland","Candyland" };
+	const std::string lang_Lavahills[] = { "Lavaberge","lavahills" };
+	const std::string lang_Candyland[] = { "Sueßigkeitenland","Candyland" };
 	const std::string lang_Swamp[] = { "Sumpf","swamp" };
 
 	const std::string lang_Unbekannt[] = { "unknown", "unbekannt" };
