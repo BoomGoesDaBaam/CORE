@@ -148,7 +148,8 @@ void Game::HandleMouseInput(Mouse::Event& e)
 		else
 		{
 			curW->HandleMouseEvents(e, gH);
-			//igwH.UpdateFieldinformation(*curW);
+			World& w = *curW.get();
+			igwH.UpdateFieldinformation(w);
 		}
 	}
 }

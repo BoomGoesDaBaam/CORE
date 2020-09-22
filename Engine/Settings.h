@@ -33,28 +33,31 @@ namespace Settings
 	static constexpr int groundedTypesARE[] = { 13,1,2,3,4,5,7,9,-1 };				//Types where you can place normal Buildings	
 	static constexpr int CellSplitUpIn = 25;										//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
 	
-	static int lang = 0;															//choosen language (0 = german, 1 = english)
+	static int lang = 0;															//choosen language (0 = english, 1 = german)
 
-	const std::string lang_Feldinformationen[] = { "Feldinformationen","Field information" };
+	const std::string lang_fieldInformation[] = { "Field information", "Feldinformationen" };
+	const std::string lang_buildmenu[] = { "Build menue", "Baumenue" };
+	const std::string lang_buildings[] = { "Buildings", "Gebeaude" };
 
-	const std::string lang_Wasser[] = { "Wasser","water" };
-	const std::string lang_Ebene[] = { "Ebene","plans" };
-	const std::string lang_Eis[] = { "Eis","ice" };
-	const std::string lang_Wurste[] = { "Wueste","Desert" };
-	const std::string lang_n‰hrreicheEbene[] = { "Naehrreiche Ebene","nutritious plans" };
-	const std::string lang_Schnee[] = { "Schnee","snow" };
-	const std::string lang_Korallenriff[] = { "Korallenriff","Coral reef" };
-	const std::string lang_Steinlandschaft[] = { "Steinig","stony" };
-	const std::string lang_Lava[] = { "Lava","lava" };
-	const std::string lang_Savanne[] = { "Savanne","savannah" };
-	const std::string lang_Berge[] = { "Berge","Hills" };
-	const std::string lang_Canyon[] = { "Canyon","Canyon" };
-	const std::string lang_Lavahills[] = { "Lavaberge","lavahills" };
-	const std::string lang_Candyland[] = { "Sueﬂigkeitenland","Candyland" };
-	const std::string lang_Swamp[] = { "Sumpf","swamp" };
+	const std::string lang_water[] = { "water", "Wasser" };
+	const std::string lang_plans[] = {"plans", "Ebene"};
+	const std::string lang_ice[] = { "ice", "Eis" };
+	const std::string lang_desert[] = { "Desert", "Wueste" };
+	const std::string lang_nutritiousPlans[] = { "nutritious plans", "Naehrreiche Ebene" };
+	const std::string lang_snow[] = { "snow", "Schnee" };
+	const std::string lang_coralreef[] = { "Coral reef", "Korallenriff" };
+	const std::string lang_stonelands[] = { "stony", "Steinig" };
+	const std::string lang_lava[] = { "lava", "Lava" };
+	const std::string lang_savannah[] = { "savannah", "Savanne" };
+	const std::string lang_hills[] = { "hills", "Berge" };
+	const std::string lang_canyon[] = { "canyon", "Canyon" };
+	const std::string lang_lavahills[] = { "lavahills", "Lavaberge" };
+	const std::string lang_candyland[] = { "candyland", "Suessigkeitenland" };
+	const std::string lang_swamp[] = { "swamp", "Sumpf" };
 
-	const std::string lang_Unbekannt[] = { "unknown", "unbekannt" };
-	const std::string lang_Flora[] = { "Flora", "flora" };			// Goettin
+	const std::string lang_unknown[] = { "unbekannt", "unknown" };
+	const std::string lang_noInformations[] = { "no information", "Keine Informationen vorhanden" };
+	const std::string lang_flora[] = { "flora", "Flora" };			// Goettin
 
 
 	static bool anyOfHillTypes(int Type)
@@ -152,51 +155,51 @@ namespace Settings
 		switch (type)
 		{
 		case 0:
-			return lang_Wasser[lang];
+			return lang_water[lang];
 			break;
 		case 1:
-			return lang_Ebene[lang];
+			return lang_plans[lang];
 			break;
 		case 2:
-			return lang_Eis[lang];
+			return lang_ice[lang];
 			break;
 		case 3:
-			return lang_Wurste[lang];
+			return lang_desert[lang];
 			break;
 		case 4:
-			return lang_n‰hrreicheEbene[lang];
+			return lang_nutritiousPlans[lang];
 			break;
 		case 5:
-			return lang_Schnee[lang];
+			return lang_snow[lang];
 			break;
 		case 6:
-			return lang_Korallenriff[lang];
+			return lang_coralreef[lang];
 			break;
 		case 7:
-			return lang_Steinlandschaft[lang];
+			return lang_stonelands[lang];
 			break;
 		case 8:
-			return lang_Lava[lang];
+			return lang_lava[lang];
 			break;
 		case 9:
-			return lang_Savanne[lang];
+			return lang_savannah[lang];
 			break;
 		case 10:
-			return lang_Berge[lang];
+			return lang_hills[lang];
 			break;
 		case 11:
-			return lang_Canyon[lang];
+			return lang_canyon[lang];
 			break;
 		case 12:
-			return lang_Lavahills[lang];
+			return lang_lavahills[lang];
 			break;
 		case 13:
-			return lang_Candyland[lang];
+			return lang_candyland[lang];
 			break;
 		case 14:
-			return lang_Swamp[lang];
+			return lang_swamp[lang];
 			break;
 		}
-		return lang_Unbekannt[lang];
+		return lang_unknown[lang];
 	}
 };

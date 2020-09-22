@@ -1,9 +1,9 @@
 #pragma once
 #include "FrameHandle.h"
 //		### Componente ###
-Text::Text(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates, RectF& parentPos)
+Text::Text(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates, Component* parentC)
 	:
-	Component(parentPos,pos),
+	Component(pos, parentC),
 	f(f),
 	size(size)
 {
@@ -11,24 +11,22 @@ Text::Text(std::string text, RectF pos, int size, Font f, Color c, std::vector<i
 	this->text = text;
 	this->c = c;
 }
-Button::Button(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates, RectF& parentPos)
+Button::Button(RectF pos, Animation& a, Animation& aHover, std::vector<int> activInStates, Component* parentC)
 	:
-	Component(parentPos,pos),
-	f(f),
-	size(size)
+	Component(pos, parentC),
+	a(a), 
+	aHover(aHover)
 {
 	this->activInStates = activInStates;
-	this->text = text;
-	this->c = c;
 }
 //		### Framehandle::Frame ###
 
-FrameHandle::Frame::Frame(RectF pos, int type, RectF& parentPos, sharedResC resC)
+FrameHandle::Frame::Frame(RectF pos, int type, sharedResC resC, Component* parentC)
 	:
-	Component(parentPos,pos),
+	Component(pos, parentC),
 	nStates(nStates),
 	type(type),
-	resC(std::move(resC)) 
+	resC(std::move(resC))
 {
 	assert(type == 0 || type == -1);
 	if (type == 0)
@@ -38,6 +36,16 @@ FrameHandle::Frame::Frame(RectF pos, int type, RectF& parentPos, sharedResC resC
 	}
 }
 
+FrameHandle::PageFrame::PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages)
+	:
+	Frame(pos, type, resC, parentC),
+	nPages(nPages)
+{
+	std::vector<int> a = {0, 1};
+	AddButton(RectF(Vec2(5, 19), 34, 9), resC->tC.buttons[0], resC->tC.buttons[1], 0, a);
+	AddButton(RectF(Vec2(99, 19), 34, 9), resC->tC.buttons[2], resC->tC.buttons[3], 0, a);
+
+}
 
 void FrameHandle::Frame::SetText(std::string text, int index)
 {
@@ -46,26 +54,29 @@ void FrameHandle::Frame::SetText(std::string text, int index)
 }
 bool FrameHandle::Frame::Hit(Vec2 mP)
 {
-	assert(type == 0 || type == -1);
-	Vei2 mpRel = (Vei2)(mP - pos.GetTopLeft<float>() - parentPos.GetTopLeft<float>());
-	switch (type)
+	if (visible)
 	{
-	case 0:
-		switch (curState)
+		assert(type == 0 || type == -1);
+		Vei2 mpRel = (Vei2)(mP - GetPos().GetTopLeft<float>());
+		switch (type)
 		{
 		case 0:
+			switch (curState)
+			{
+			case 0:
+				return resC->tC.windowsFrame[1].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
+				break;
+			case 1:
+				return resC->tC.windowsFrame[0].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel) || resC->tC.windowsFrame[2].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
+				break;
+			}
+			break;
+		case -1:
 			return resC->tC.windowsFrame[1].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
 			break;
-		case 1:
-			return resC->tC.windowsFrame[0].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel) || resC->tC.windowsFrame[2].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
-			break;
 		}
-		break;
-	case -1:
-		return resC->tC.windowsFrame[1].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
-		break;
+		return false;
 	}
-	return false;
 }
 bool FrameHandle::Frame::IsExtended() 
 { 
@@ -89,41 +100,6 @@ int FrameHandle::Frame::GetExtendedHeight()
 	}
 	return 0;
 }
-void FrameHandle::Frame::DrawComps(Graphics& gfx)
-{
-	for (int i = 0; i < comps.size(); i++)
-	{
-		if (comps[i]->activInStates[curState] == 1){
-			comps[i]->Draw(gfx);
-		}
-	}
-}
-void FrameHandle::Frame::AddText(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates)
-{
-	if (activInStates.size() == 0)
-	{
-		for (int i = 0; i < nStates; i++)
-		{
-			activInStates.push_back(1);
-		}
-	}
-	comps.push_back(std::make_unique<Text>(text, pos, size, f, c, activInStates,this->pos));
-}
-void FrameHandle::Frame::AddButton(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates)
-{
-	if (activInStates.size() == 0)
-	{
-		for (int i = 0; i < nStates; i++)
-		{
-			activInStates.push_back(1);
-		}
-	}
-	comps.push_back(std::make_unique<Button>(text, pos, size, f, c, activInStates, this->pos));
-}
-void FrameHandle::Frame::AddSubFrame(RectF pos, int type, sharedResC resC)
-{
-	comps.push_back(std::make_unique<Frame>(pos, type, this->pos, resC));
-}
 void FrameHandle::Frame::Grab(Vec2 mP)
 {
 	Vec2 delta = mP - pos.GetTopLeft<float>();
@@ -143,12 +119,30 @@ void FrameHandle::Frame::Release()
 {
 	grabbed = false;
 }
-//	### Framehandle::MultiFrame ###
-FrameHandle::Frame* FrameHandle::MultiFrame::AddFrame(Frame frame)
+std::vector<int> FrameHandle::Frame::GetActivInVector(int val, int count)
 {
-	frames.push_back(std::make_unique<Frame>(frame));
+	std::vector<int> activInStates;
+	for (int i = 0; i < count; i++)
+	{
+		activInStates.push_back(val);
+	}
+	return activInStates;
+}
+//  ### Framehandle::PageFrame ###
+
+
+//	### Framehandle::MultiFrame ###
+FrameHandle::Frame* FrameHandle::MultiFrame::AddFrame(RectF pos, int type, sharedResC resC, Component* parentC)
+{
+	frames.push_back(std::make_unique<Frame>(pos,type,resC,parentC));
 	return frames[frames.size() - 1].get();
 }
+FrameHandle::PageFrame* FrameHandle::MultiFrame::AddPageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages)
+{
+	frames.push_back(std::make_unique<PageFrame>(pos, type, resC, parentC, nPages));
+	return static_cast<PageFrame*>(frames[frames.size() - 1].get());
+}
+
 //	### Framehandle ###
 FrameHandle::FrameHandle(sharedResC resC)
 	:resC(std::move(resC))
@@ -160,7 +154,7 @@ bool FrameHandle::HandleMouseInput(Mouse::Event& e)
 {
 	for (auto& frame : windows)
 	{
-		if (frame->HandleMouseInput(e))
+		if (frame->HandleMouseInput(e, true))
 		{
 			return true;
 		}
@@ -175,17 +169,20 @@ void FrameHandle::Draw(Graphics& gfx)
 		windows[i]->Draw(gfx);
 	}
 }
-void FrameHandle::AddFrame(RectF pos, int type, RectF& parent, sharedResC resC)
+void FrameHandle::AddFrame(RectF pos, int type, sharedResC resC)
 {
-	windows.push_back(std::make_unique<Frame>(pos, type, parent, resC));
+	windows.push_back(std::make_unique<Frame>(pos, type, resC, nullptr));
 }
-FrameHandle::MultiFrame* FrameHandle::AddMultiFrame(RectF pos, int type, int nStates, RectF& parentPos, sharedResC resC)
+FrameHandle::MultiFrame* FrameHandle::AddMultiFrame(RectF pos, int type, int nStates, sharedResC resC)
 {
 	std::vector<int> activInStates;
 	for (int i = 0; i < nStates; i++)
 	{
 		activInStates.push_back(1);
 	}
-	windows.push_back(std::make_unique<MultiFrame>(parentPos, pos, resC));
+	windows.push_back(std::make_unique<MultiFrame>(pos, resC, nullptr));
 	return static_cast<MultiFrame*>(windows[windows.size() - 1].get());
 }
+
+
+

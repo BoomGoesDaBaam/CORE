@@ -15,10 +15,10 @@ ResourceCollection::ResourceCollection(Graphics& gfx)
 TexturesCollection::TexturesCollection(Graphics& gfx)
 {
 	//	Frames
-	Frames.push_back(Animation(0.5f));
+	frames.push_back(Animation(0.5f));
 	for (int i = 0; i < 2; i++)
 	{
-		Frames[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(i * 71, 51), 70, 70)));
+		frames[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(i * 71, 51), 70, 70)));
 	}
 	//	window - Frames
 	float delay = rng.GetNormalDist() * 3 + 1;
@@ -30,10 +30,26 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 
 	windowsFrame.push_back(Animation(delay));
 	windowsFrame[2].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(651, 1412), 140, 14)));
-	//Obstacles
-	obstacles.push_back(delay);
-	obstacles[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0,0), 8, 17)));
+	//Obstacles goldchair
+	//obstacles.push_back(delay);
+	//obstacles[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0,0), 8, 17)));
+	
+	//Buttons buttons
+	buttons.push_back(0.1f);
+	buttons[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0, 0), 34, 9)));
+	buttons.push_back(0.1f);
+	for (int i = 0; i < 5; i++)
+	{
+		buttons[1].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(35, i * 10), 34, 9)));
+	}
 
+	buttons.push_back(0.1f);
+	buttons[2].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(105, 0), 34, 9)));
+	buttons.push_back(0.1f);
+	for (int i = 0; i < 5; i++)
+	{
+		buttons[3].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(70, i * 10), 34, 9)));
+	}
 	//	Items
 
 
@@ -42,10 +58,10 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	for (int i = 0; i < Settings::nDiffFieldTypes; i++)				//i diffrent Fields
 	{
 		float delay = rng.GetNormalDist() * 3 + 1;
-		Fields.push_back(Animation(delay));
+		fields.push_back(Animation(delay));
 		for (int f = 0; f < 5; f++)			//f diffent animations
 		{
-			Fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 255, 122 + f * 51 + (i % 8) * 255), 254, 50)));
+			fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 255, 122 + f * 51 + (i % 8) * 255), 254, 50)));
 			
 			
 			if (Settings::anyMaskedType(i))
@@ -53,14 +69,14 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 				maskedFields.push_back(Animation(delay));
 				maskedFields[nMasked].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 255, 122 + f * 51 + (i % 8) * 255), 254, 50)));
 				
-				Fields[i].SetKeepTime(Fields[0].GetKeepTime());
+				fields[i].SetKeepTime(fields[0].GetKeepTime());
 				for (int y = 0; y < 50; y++)
 				{
 					for (int x = 0; x < 210; x++)
 					{
-						if (Fields[i].GetPixel(f, x, y) == Colors::Magenta)
+						if (fields[i].GetPixel(f, x, y) == Colors::Magenta)
 						{
-							Fields[i].PutPixel(f, x, y, Fields[0].GetPixel(f, x, y));
+							fields[i].PutPixel(f, x, y, fields[0].GetPixel(f, x, y));
 							maskedFields[nMasked].PutPixel(f, x, y, Colors::Magenta);
 						}
 					}
@@ -73,23 +89,38 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 		}
 	}
 	//Delay anpassen
-	Fields[6].SetKeepTime(0.3f);
-	Fields[7].SetKeepTime(0.4f);
-	Fields[0].SetKeepTime(0.3f);
-	Fields[12].SetKeepTime(0.3f);
+	fields[6].SetKeepTime(0.3f);
+	fields[7].SetKeepTime(0.4f);
+	fields[0].SetKeepTime(0.3f);
+	fields[12].SetKeepTime(0.3f);
 	//Fonts
-	fonts.push_back(Font("Textures/Font4.bmp", 28, '!', '~', Colors::FontDelimitor, Colors::FontNewLine, gfx));
 	fonts.push_back(Font("Textures/Font4.bmp", 28, '!', '~', Colors::FontDelimitor, Colors::FontNewLine, gfx));
 }
 void TexturesCollection::Update(float dt)
 {
-	for (int i = 0; i < Fields.size(); i++)
+	for (int i = 0; i < fields.size(); i++)
 	{
-		Fields.at(i).Update(dt);
+		fields.at(i).Update(dt);
 	}
-	for (int i = 0; i < Frames.size(); i++)
+	for (int i = 0; i < maskedFields.size(); i++)
 	{
-		Frames.at(i).Update(dt);
+		maskedFields.at(i).Update(dt);
+	}
+	for (int i = 0; i < frames.size(); i++)
+	{
+		frames.at(i).Update(dt);
+	}
+	for (int i = 0; i < windowsFrame.size(); i++)
+	{
+		windowsFrame.at(i).Update(dt);
+	}
+	for (int i = 0; i < buttons.size(); i++)
+	{
+		buttons.at(i).Update(dt);
+	}
+	for (int i = 0; i < obstacles.size(); i++)
+	{
+		obstacles.at(i).Update(dt);
 	}
 }
 //  ##### Framesize #####
@@ -138,7 +169,7 @@ std::vector<SubAnimation> FramesizeCollection::GetConnectionAnimationVec(int loo
 	std::vector<SubAnimation> vec;
 	std::vector<RectI> posInGrit = GetConOffset(Vei2(50, 50));
 	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
-	auto v = tC->Fields.at(lookFor);
+	auto v = tC->fields.at(lookFor);
 	if (masked)
 	{
 		v = tC->maskedFields.at(translateIntoMaskedType(lookFor));

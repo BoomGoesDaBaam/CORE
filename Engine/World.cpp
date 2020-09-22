@@ -525,14 +525,14 @@ void World::Draw(Graphics& gfx) const
 				{
 				case 0:
 					assert(cellType >= 0 && cellType < Settings::nDiffFieldTypes);
-					gfx.DrawSurface(curCellPos, RectI(Vei2(0, 0), 50, 50), tC->Fields.at(cellType).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+					gfx.DrawSurface(curCellPos, RectI(Vei2(0, 0), 50, 50), tC->fields.at(cellType).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 					
 					for (int i = 0; i < Settings::nDiffFieldTypes; i++)
 					{
 						int order = Settings::typeLayer[i];
 						if (conMap[order][curXY.x][curXY.y] == 1)
 						{
-							gfx.DrawConnections(order, Vei2(curCellPos.left, curCellPos.top), GetAroundMatrix(curXY), fsC->FieldCon, tC->Fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+							gfx.DrawConnections(order, Vei2(curCellPos.left, curCellPos.top), GetAroundMatrix(curXY), fsC->FieldCon, tC->fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 						}
 					}
 					break;
@@ -636,7 +636,7 @@ void World::Draw(Graphics& gfx) const
 				case 2:
 					if (curXY == fCell)
 					{
-						gfx.DrawSurface(curCellPos.GetExpanded(cSize.x / 5), tC->Frames.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						gfx.DrawSurface(curCellPos.GetExpanded(cSize.x / 5), tC->frames.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 					}
 					break;
 				}
@@ -712,7 +712,7 @@ void World::Init(WorldSettings& s)
 	mCell = wSize / 2;
 	fCell = wSize / 2;
 	mCell.x = 0;
-	for (int type = 1; type < tC->Fields.size(); type++)		//Create connectionsmaps
+	for (int type = 1; type < tC->fields.size(); type++)		//Create connectionsmaps
 	{
 		conMap.push_back(Matrix<int>(wSize.x, wSize.y, 0));
 	}
