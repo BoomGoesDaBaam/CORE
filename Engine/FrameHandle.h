@@ -4,7 +4,7 @@
 
 
 class ButtonFunctions;
-
+class PageFrame;
 
 class Component
 {
@@ -47,7 +47,7 @@ public:
 	Text(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates, Component* parentC);
 	void Draw(Graphics& gfx) override
 	{
-		f.DrawText(text, GetPos().left, GetPos().top, size, c);
+		f.DrawTextCentered(text, GetPos().left, GetPos().top, size, c);
 	}
 };
 class Button : public Component
@@ -55,6 +55,10 @@ class Button : public Component
 	Animation& a;
 	Animation& aHover;
 public:
+	bool(*bFunc)(PageFrame* pF);
+	PageFrame* ppF = nullptr;
+	//Frame* pF = nullptr;
+
 	Button(RectF pos, Animation& a, Animation& aHover, std::vector<int> activInStates, Component* parentC); 
 	void Draw(Graphics& gfx) override
 	{
@@ -68,331 +72,361 @@ public:
 			gfx.DrawSurface((RectI)GetPos(), a.GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta));
 		}
 	}
-};
-
-
-class FrameHandle
-{
-public:
-	class Frame: public Component
+	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
-	protected:
-		sharedResC resC;
-		bool grabbed = false;
-		int type,curState=0, nStates=1;								//'curState' = 0 is minimized in every type
-		std::vector<std::unique_ptr<Component>> comps;
-		Vec2 lastMouseP = Vec2(0,0);
-		Vec2 posOfLastPress = Vec2(-1, -1);
-	public:
-		Frame(RectF pos, int type, sharedResC resC, Component* parentC);
-		
-		
-		virtual void DrawComps(Graphics& gfx)
+		Component::HandleMouseInput(e, interact);
+		if (GetPos().Contains((Vec2)e.GetPos()) && e.GetType() == Mouse::Event::LRelease && interact)
 		{
-			for (int i = 0; i < comps.size(); i++)
+			if (ppF != nullptr)
 			{
-				if (comps[i]->activInStates[curState] == 1 && comps[i]->visible) {
-					comps[i]->Draw(gfx);
-				}
+				return bFunc(ppF);
 			}
 		}
-		virtual void Draw(Graphics& gfx)override {
-			if (visible)
+		return false;
+	}
+};
+
+class Frame : public Component
+{
+protected:
+	sharedResC resC;
+	bool grabbed = false;
+	int type, curState = 0, nStates = 1;								//'curState' = 0 is minimized in every type
+	std::vector<std::unique_ptr<Component>> comps;
+	Vec2 lastMouseP = Vec2(0, 0);
+	Vec2 posOfLastPress = Vec2(-1, -1);
+public:
+	Frame(RectF pos, int type, sharedResC resC, Component* parentC);
+
+
+	virtual void DrawComps(Graphics& gfx)
+	{
+		for (int i = 0; i < comps.size(); i++)
+		{
+			if (comps[i]->activInStates[curState] == 1 && comps[i]->visible) {
+				comps[i]->Draw(gfx);
+			}
+		}
+	}
+	virtual void Draw(Graphics& gfx)override {
+		if (visible)
+		{
+			assert(type == 0 || type == -1);
+			RectF cPos = GetPos();
+			if (mouseHovers)
 			{
-				assert(type == 0 || type == -1);
-				RectF cPos = GetPos();
-				if (mouseHovers)
+				switch (type)
 				{
-					switch (type)
+				case 0:
+					switch (curState)
 					{
 					case 0:
-						switch (curState)
-						{
-						case 0:
-							gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-							break;
-						case 1:
-							gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-							gfx.DrawSurface((RectI)cPos, resC->tC.windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.9f));
-							break;
-						}
+						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						break;
+					case 1:
+						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						gfx.DrawSurface((RectI)cPos, resC->tC.windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.9f));
 						break;
 					}
+					break;
+				}
+			}
+			else
+			{
+				switch (type)
+				{
+				case 0:
+					switch (curState)
+					{
+					case 0:
+						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						break;
+					case 1:
+						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						gfx.DrawSurface((RectI)cPos, resC->tC.windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.75f));
+						break;
+					}
+					break;
+				}
+			}
+			DrawComps(gfx);
+		}
+	}
+
+	bool HandleMouseInput(Mouse::Event& e, bool interact)override
+	{
+		if (visible)
+		{
+			bool hitComp = false;
+			for (int i = 0; i < comps.size(); i++)
+			{
+				hitComp = comps[i]->activInStates[curState] == 1 && comps[i]->visible && comps[i]->HandleMouseInput(e, interact && !hitComp) || hitComp;
+			}
+
+			if (hitComp && interact)
+			{
+				return true;
+			}
+			if (hitComp)
+			{
+				return false;
+			}
+			Vec2 mP = (Vec2)e.GetPos();
+			bool hit = Hit(mP);
+
+			if (grabbed)
+			{
+				if (e.GetType() == Mouse::Event::LRelease)
+				{
+					Release();
 				}
 				else
 				{
-					switch (type)
-					{
-					case 0:
-						switch (curState)
-						{
-						case 0:
-							gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-							break;
-						case 1:
-							gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-							gfx.DrawSurface((RectI)cPos, resC->tC.windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.75f));
-							break;
-						}
-						break;
-					}
+					Move(mP);
 				}
-				DrawComps(gfx);
 			}
-		}
-		
-		bool HandleMouseInput(Mouse::Event& e, bool interact)override
-		{
-			if (visible)
+			if (e.GetType() == Mouse::Event::LPress && hit)
 			{
-				bool hitComp = false;
-				for (int i = 0; i < comps.size(); i++)
-				{
-					hitComp = comps[i]->activInStates[curState] == 1 && comps[i]->visible && comps[i]->HandleMouseInput(e, interact && !hitComp) || hitComp;
-				}
-
-				if (hitComp && interact)
+				Grab(mP);
+				posOfLastPress = mP;
+			}
+			Vei2 delta((posOfLastPress - mP).GetAbsVec());
+			if (nStates > 1 && hit && e.GetType() == Mouse::Event::LRelease && delta.GetLength() < 15)
+			{
+				NextState();
+			}
+			if (hit)
+			{
+				mouseHovers = true;
+				if (type != -1)
 				{
 					return true;
 				}
-				if (hitComp)
-				{
-					return false;
-				}
-				Vec2 mP = (Vec2)e.GetPos();
-				bool hit = Hit(mP);
-
-				if (grabbed)
-				{
-					if (e.GetType() == Mouse::Event::LRelease)
-					{
-						Release();
-					}
-					else
-					{
-						Move(mP);
-					}
-				}
-				if (e.GetType() == Mouse::Event::LPress && hit)
-				{
-					Grab(mP);
-					posOfLastPress = mP;
-				}
-				if (nStates > 1 && hit && e.GetType() == Mouse::Event::LRelease && posOfLastPress == mP)
-				{
-					NextState();
-				}
-				if (hit)
-				{
-					mouseHovers = true;
-					if (type != -1)
-					{
-						return true;
-					}
-				}
-				else
-				{
-					mouseHovers = false;
-				}
 			}
-			return false;
-		}
-		bool Hit(Vec2 mP);
-		
-		void SetText(std::string text, int index);
-		bool SetState(int state) { bool changed = curState == state; curState = state; return changed; }
-		void NextState()
-		{
-			curState++;
-			if (curState == nStates)
+			else
 			{
-				curState = 0;
+				mouseHovers = false;
 			}
 		}
-		Component* GetComp(int index) {
-			assert(index >= 0 && index < comps.size());
-			return comps[index].get(); }
-		int GetNumberOfComps() { return comps.size(); }
-		int GetCurState() { return curState; }
-		int GetExtendedHeight();
-		bool IsExtended();
-		std::vector<int> GetActivInVector(int val, int count);
+		return false;
+	}
+	bool Hit(Vec2 mP);
 
-		virtual void AddText(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates = {})
-		{
-			if (activInStates.size() == 0)
-			{
-				activInStates = GetActivInVector(1, nStates);
-			}
-			comps.push_back(std::make_unique<Text>(text, pos, size, f, c, activInStates, this));
-		}
-		virtual void AddButton(RectF pos, Animation& a, Animation& aHover, std::vector<int> activInStates = {})
-		{
-			if (activInStates.size() == 0)
-			{
-				activInStates = GetActivInVector(1, nStates);
-			}
-			comps.push_back(std::make_unique<Button>(pos, a, aHover, activInStates, this));
-		}
-
-		
-		void Grab(Vec2 mP);
-		void Move(Vec2 mP);
-		void Release();
-	};
-
-	template <typename T>
-	struct fail : std::false_type
+	void SetText(std::string text, int index);
+	bool SetState(int state) { bool changed = curState == state; curState = state; return changed; }
+	void NextState()
 	{
-	};
+		curState++;
+		if (curState == nStates)
+		{
+			curState = 0;
+		}
+	}
+	Component* GetComp(int index) {
+		assert(index >= 0 && index < comps.size());
+		return comps[index].get();
+	}
+	int GetNumberOfComps() { return comps.size(); }
+	int GetCurState() { return curState; }
+	int GetExtendedHeight();
+	bool IsExtended();
+	std::vector<int> FillWith1WhenSize0(std::vector<int> activInStates, int nStages);
 
-	class PageFrame : public Frame
+	virtual Text* AddText(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates = {})
 	{
-		int nPages = 1;
-		int curPage = 0;
-		std::vector<int> compBelongsToPage;
-	public:
-		PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages);
-
-		template<typename T = bool>
-		void AddText(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates = {})
-		{
-			static_assert (fail<T>::value, "Do not use!");
-		}
-		template<typename T = bool>
-		void AddButton(RectF pos, Animation& a, Animation& aHover, std::vector<int> activInStates = {})
-		{
-			static_assert (fail<T>::value, "Do not use!");
-		}
-
-		void AddText(std::string text, RectF pos, int size, Font f, Color c, int onPage, std::vector<int> activInStates = {})
-		{
-			Frame::AddText(text, pos, size, f, c, activInStates);
-			compBelongsToPage.push_back(onPage);
-		}
-		void AddButton(RectF pos, Animation& a, Animation& aHover, int onPage, std::vector<int> activInStates = {})
-		{
-			Frame::AddButton(pos, a, aHover, activInStates);
-			compBelongsToPage.push_back(onPage);
-		}
-		void DrawComps(Graphics& gfx) override
-		{
-			for (int i = 0; i < comps.size(); i++)
-			{
-				if (comps[i]->activInStates[curState] == 1 && compBelongsToPage[i] == curPage && comps[i]->visible) {
-					comps[i]->Draw(gfx);
-				}
-			}
-		}
-	
-		bool HandleMouseInput(Mouse::Event& e, bool interact)override
-		{
-			if (visible)
-			{
-				bool hit = Frame::HandleMouseInput(e, interact);
-				if (curPage == 0)
-				{
-					comps[0]->visible = false;
-				}
-				else
-				{
-					comps[0]->visible = true;
-				}
-
-				if (curPage == nPages - 1)
-				{
-					comps[1]->visible = false;
-				}
-				else if (curPage > 0)
-				{
-					comps[1]->visible = true;
-				}
-				return hit;
-			}
-			return false;
-		}
-	};
-
-	class MultiFrame: public Frame	
+		activInStates = FillWith1WhenSize0(activInStates, nStates);
+		assert(activInStates.size() == nStates);
+		comps.push_back(std::make_unique<Text>(text, pos, size, f, c, activInStates, this));
+		return static_cast<Text*>(comps[comps.size()-1].get());
+	}
+	virtual Button* AddButton(RectF pos, Animation& a, Animation& aHover, std::vector<int> activInStates = {})
 	{
-		std::vector<std::unique_ptr<Frame>> frames;
-	public:
-		MultiFrame(RectF pos, sharedResC resC, Component* parentC) :Frame(pos, -1, resC, parentC) {}
-		
-		Frame* AddFrame(RectF pos, int type, sharedResC resC, Component* parentC);
-		PageFrame* AddPageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages);
-		
-		void Draw(Graphics& gfx)override 
+		activInStates = FillWith1WhenSize0(activInStates, nStates);
+		assert(activInStates.size() == nStates);
+		comps.push_back(std::make_unique<Button>(pos, a, aHover, activInStates, this));
+		return static_cast<Button*>(comps[comps.size() - 1].get());
+	}
+
+
+	void Grab(Vec2 mP);
+	void Move(Vec2 mP);
+	void Release();
+};
+
+template <typename T>
+struct fail : std::false_type
+{
+};
+
+class PageFrame : public Frame
+{
+	int nPages = 1;
+	int curPage = 0;
+	std::vector<std::vector<int>> compActivOnPages;
+public:
+	PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages);
+
+	template<typename T = bool>
+	void AddText(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates = {})
+	{
+		static_assert (fail<T>::value, "Do not use!");
+	}
+	template<typename T = bool>
+	void AddButton(RectF pos, Animation& a, Animation& aHover, std::vector<int> activInStates = {})
+	{
+		static_assert (fail<T>::value, "Do not use!");
+	}
+
+	Text* AddText(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
+	{
+		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
+		assert(activOnPages.size() == nPages);
+		compActivOnPages.push_back(activOnPages);
+		return Frame::AddText(text, pos, size, f, c, activInStates);
+	}
+	Button* AddButton(RectF pos, Animation& a, Animation& aHover, int onPage, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
+	{
+		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
+		assert(activOnPages.size() == nPages);
+		compActivOnPages.push_back(activOnPages);
+		return Frame::AddButton(pos, a, aHover, activInStates);
+	}
+	void DrawComps(Graphics& gfx) override
+	{
+		for (int i = 0; i < comps.size(); i++)
 		{
-			for (int i = 0; i < frames.size(); i++)
-			{
-				frames[i]->Draw(gfx);
+			if (comps[i]->activInStates[curState] == 1 && compActivOnPages[i][curPage] == 1 && comps[i]->visible) {
+				comps[i]->Draw(gfx);
 			}
 		}
-		bool HandleMouseInput(Mouse::Event& e, bool interact)override
+	}
+	bool HandleMouseInput(Mouse::Event& e, bool interact)override
+	{
+		if (visible)
 		{
 			bool hit = Frame::HandleMouseInput(e, interact);
-			std::vector<bool> extended;
-			for (int i = 0; i < frames.size(); i++)
+			if (curPage == 0)
 			{
-				extended.push_back(frames[i]->GetCurState());
+				comps[0]->visible = false;
 			}
-			int changed = -1;
-			int yMove = 0;
-			for (int n = 0; n < frames.size(); n++)
+			else
 			{
-				bool hitFrame = frames[n]->HandleMouseInput(e, interact);
-				hit = hit || hitFrame;
-				if (hitFrame)
-				{
-					for (int i = 0; i < frames.size(); i++)
-					{
-						frames[i]->pos.top += yMove;
-						frames[i]->pos.bottom += yMove;
-						if (extended[i] != frames[i]->GetCurState())
-						{
-							changed = i;
-							n = frames.size();
-							if (extended[i])
-							{
-								yMove -= frames[i]->GetExtendedHeight();
-							}
-							if (!extended[i])
-							{
-								yMove += frames[i]->GetExtendedHeight();
-							}
-						}
-					}
-				}
+				comps[0]->visible = true;
 			}
-			yMove = 0;
-			if (changed != -1)
+
+			if (curPage == nPages - 1)
+			{
+				comps[1]->visible = false;
+			}
+			else
+			{
+				comps[1]->visible = true;
+			}
+			return hit;
+		}
+		return false;
+	}
+
+	void NextPage()
+	{
+		if (curPage + 1 < nPages)
+		{
+			curPage ++;
+		}
+	}
+	void PriviousPage()
+	{
+		if (curPage - 1 >= 0)
+		{
+			curPage--;
+		}
+	}
+};
+
+
+bool B1(PageFrame* pF);
+bool B2(PageFrame* pF);
+
+class MultiFrame : public Frame
+{
+	std::vector<std::unique_ptr<Frame>> frames;
+public:
+	MultiFrame(RectF pos, sharedResC resC, Component* parentC) :Frame(pos, -1, resC, parentC) {}
+
+	Frame* AddFrame(RectF pos, int type, sharedResC resC, Component* parentC);
+	PageFrame* AddPageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages);
+
+	void Draw(Graphics& gfx)override
+	{
+		for (int i = 0; i < frames.size(); i++)
+		{
+			frames[i]->Draw(gfx);
+		}
+	}
+	bool HandleMouseInput(Mouse::Event& e, bool interact)override
+	{
+		bool hit = Frame::HandleMouseInput(e, interact);
+		std::vector<bool> extended;
+		for (int i = 0; i < frames.size(); i++)
+		{
+			extended.push_back(frames[i]->GetCurState());
+		}
+		int changed = -1;
+		int yMove = 0;
+		for (int n = 0; n < frames.size(); n++)
+		{
+			bool hitFrame = frames[n]->HandleMouseInput(e, interact);
+			hit = hit || hitFrame;
+			if (hitFrame)
 			{
 				for (int i = 0; i < frames.size(); i++)
 				{
 					frames[i]->pos.top += yMove;
 					frames[i]->pos.bottom += yMove;
-					if (frames[i]->IsExtended() && i != changed)
+					if (extended[i] != frames[i]->GetCurState())
 					{
-						frames[i]->SetState(0);
-						yMove -= frames[i]->GetExtendedHeight();
+						changed = i;
+						n = frames.size();
+						if (extended[i])
+						{
+							yMove -= frames[i]->GetExtendedHeight();
+						}
+						if (!extended[i])
+						{
+							yMove += frames[i]->GetExtendedHeight();
+						}
 					}
 				}
 			}
-			if (hit)
-			{
-				return true;
-			}
-			return changed != -1;
 		}
-		Frame* GetFrame(int index)
+		yMove = 0;
+		if (changed != -1)
 		{
-			assert(index >= 0 && index < frames.size());
-			return frames[index].get();
+			for (int i = 0; i < frames.size(); i++)
+			{
+				frames[i]->pos.top += yMove;
+				frames[i]->pos.bottom += yMove;
+				if (frames[i]->IsExtended() && i != changed)
+				{
+					frames[i]->SetState(0);
+					yMove -= frames[i]->GetExtendedHeight();
+				}
+			}
 		}
-	};
-
-private:
+		if (hit)
+		{
+			return true;
+		}
+		return changed != -1;
+	}
+	Frame* GetFrame(int index)
+	{
+		assert(index >= 0 && index < frames.size());
+		return frames[index].get();
+	}
+};
+class FrameHandle
+{
 	std::vector<std::unique_ptr<Frame>> windows;
 	sharedResC resC;
 	RectF overallParent = Graphics::GetScreenRect<float>();
@@ -415,17 +449,21 @@ public:
 		MultiFrame* m = AddMultiFrame(RectF(Vec2(540, 110), 140, 280), 0, 1, resC);
 		
 		Frame* f1 = m->AddFrame(RectF(Vec2(0, 0), 140, 280), 0, resC, m);
-		PageFrame* p2 = m->AddPageFrame(RectF(Vec2(0, 12), 140, 280), 0, resC, m, 2);
+		PageFrame* p2 = m->AddPageFrame(RectF(Vec2(0, 12), 140, 280), 0, resC, m, 4);
 		Frame* f3 = m->AddFrame(RectF(Vec2(0, 24), 140, 280), 0, resC, m);
 		
 		f1->AddText(Settings::lang_fieldInformation[Settings::lang], RectF(Vec2(35, 3), 50, 50), 7, resC->tC.fonts[0], Colors::Black);
 		f1->AddText(Settings::lang_noInformations[Settings::lang], RectF(Vec2(7, 19), 50, 50), 7, resC->tC.fonts[0], Colors::Black, a);
 		
-		p2->AddText(Settings::lang_buildmenu[Settings::lang], RectF(Vec2(35, 3), 50, 10), 7, resC->tC.fonts[0], Colors::Black, 0);
-		p2->AddText(Settings::lang_buildings[Settings::lang], RectF(Vec2(42, 19), 50, 10), 7, resC->tC.fonts[0], Colors::Black, 0, a);
-		
-		
+		p2->AddText(Settings::lang_buildmenu[Settings::lang], RectF(Vec2(35, 3), 50, 10), 7, resC->tC.fonts[0], Colors::Black);
+		p2->AddText(Settings::lang_housing[Settings::lang], RectF(Vec2(42, 19), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0, 0 });
+		p2->AddText(Settings::lang_productions[Settings::lang], RectF(Vec2(42, 19), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 0, 1, 0, 0 });
+		p2->AddText(Settings::lang_decoration[Settings::lang], RectF(Vec2(42, 19), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 0, 0, 1, 0 });
+		p2->AddText(Settings::lang_agility[Settings::lang], RectF(Vec2(42, 19), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 0, 0, 0, 1 });
 
+
+		
+		
 		/*
 		AddFrame(RectF(Vec2(540, 110), 140, 280), 0, 2, overallParent, resC);
 		windows[0]->NextState();
@@ -455,17 +493,3 @@ public:
 	static constexpr float percentForGrab = 0.05;			
 };
 
-
-
-class ButFunc
-{
-public:
-	class B1
-	{
-	public:
-		void operator()(FrameHandle::PageFrame* c) {
-
-		}
-	};
-
-};

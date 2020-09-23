@@ -38,6 +38,10 @@ namespace Settings
 	const std::string lang_fieldInformation[] = { "Field information", "Feldinformationen" };
 	const std::string lang_buildmenu[] = { "Build menue", "Baumenue" };
 	const std::string lang_buildings[] = { "Buildings", "Gebeaude" };
+	const std::string lang_housing[] = { "Housing", "Unterkuenfte" };
+	const std::string lang_productions[] = { "Productions", "Produktionen" };
+	const std::string lang_agility[] = { "Agility", "Beweglichkeit" };
+	const std::string lang_decoration[] = { "Decoration", "Dekoration" };
 
 	const std::string lang_water[] = { "water", "Wasser" };
 	const std::string lang_plans[] = {"plans", "Ebene"};
@@ -59,6 +63,7 @@ namespace Settings
 	const std::string lang_noInformations[] = { "no information", "Keine Informationen vorhanden" };
 	const std::string lang_flora[] = { "flora", "Flora" };			// Goettin
 
+	static constexpr float percentForGrab[] = { 0.05f, 0.05f };
 
 	static bool anyOfHillTypes(int Type)
 	{

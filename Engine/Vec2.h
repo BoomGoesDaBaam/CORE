@@ -91,6 +91,10 @@ public:
 	{
 		return x * x + y * y;
 	}
+	Vec2_ GetAbsVec()
+	{
+		return Vec2_<T>(std::abs(x), std::abs(y));
+	}
 	Vec2_& Normalize()
 	{
 		return *this = GetNormalized();
