@@ -43,6 +43,24 @@ namespace Settings
 	const std::string lang_agility[] = { "Agility", "Beweglichkeit" };
 	const std::string lang_decoration[] = { "Decoration", "Dekoration" };
 
+	const std::string lang_constructionMaterials[] = { "Construction materials", "Baumaterialien" };
+	const std::string lang_resources[] = { "Resources", "Rohstoffe" };
+	const std::string lang_materials[] = { "Materials", "Werkstoffe" };
+	const std::string lang_organic[] = { "Organic", "Oragnisches" };
+
+	const std::string lang_wood[] = { "wood", "Holz" };
+	const std::string lang_iron[] = { "iron", "Eisen" };
+	const std::string lang_sand[] = { "sand", "Sand" };
+	const std::string lang_stone[] = { "stone", "Stein" };
+	const std::string lang_copper[] = { "copper", "Kupfer" };
+	const std::string lang_gold[] = { "gold", "Gold" };
+	const std::string lang_aluminum[] = { "aluminum", "Aluminium" };
+	const std::string lang_emerald[] = { "emerald", "Smaragd" };
+	const std::string lang_sapphire[] = { "sapphire", "Saphir" };
+	const std::string lang_robin[] = { "robin", "Robin" };
+	const std::string lang_diamond[] = { "diamond", "Diamant" };
+	const std::string lang_amber[] = { "amber", "Bernstein" };
+
 	const std::string lang_water[] = { "water", "Wasser" };
 	const std::string lang_plans[] = {"plans", "Ebene"};
 	const std::string lang_ice[] = { "ice", "Eis" };
@@ -62,6 +80,10 @@ namespace Settings
 	const std::string lang_unknown[] = { "unbekannt", "unknown" };
 	const std::string lang_noInformations[] = { "no information", "Keine Informationen vorhanden" };
 	const std::string lang_flora[] = { "flora", "Flora" };			// Goettin
+	const std::string lang_kilogram[] = { "kg", "kg" };		
+
+	const std::string lang_tent[] = { "tent", "Zelt" };
+
 
 	static constexpr float percentForGrab[] = { 0.05f, 0.05f };
 

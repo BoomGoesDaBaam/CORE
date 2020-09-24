@@ -9,6 +9,7 @@
 #include "Matrix.h"
 #include "ResourceCollection.h"
 #include "GigaMath.h"
+#include "Team.h"
 #pragma once
 
 class World
@@ -120,7 +121,9 @@ private:
 	Vec2& c;								//Camera
 	bool grit=false;						//show grit
 	bool buildMode = false;					//place something
+	int placeObstacle = 0;
 
+	Team player = Team("Die reinlich raeudigen Raucher");
 	//Private const Functions
 	RectF GetCellRect(Vei2 cellP)const;
 	RectF GetTileRect(Vei2 tileP)const;
@@ -169,6 +172,7 @@ public:
 	bool NeedsConnections(Vei2 curXY)const;
 	Vei2 PutTileIntoWorld(Vei2 pos);
 	Vei2 PutTileIntoWorld(int x, int y);
+	void SetBuildMode(int obstacle);
 	//
 	Vei2 GetwSize()const { return wSize; }
 	Vei2 GetcSize()const { return cSize; }
@@ -177,5 +181,6 @@ public:
 	Vei2 GetfTile()const { return fTile; }
 	int GetfCellType()const { return cells(fCell).type; }
 	Vei2 GetmCell()const { return mCell; }
+	Team& GetPlayer() { return player; }
 };
 

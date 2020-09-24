@@ -85,8 +85,10 @@ void Font::DrawText(std::string text, int x, int y, int size, Color c)
 		}
 	}
 }
-void Font::DrawTextCentered(std::string text, int x, int y, int size, Color c)
+void Font::DrawTextCentered(std::string text, Vei2 pos, int size, Color c)
 {
+	int x = pos.x;
+	int y = pos.y;
 	int xM = 0;
 	int yM = 0;
 	if (costumWidth)

@@ -141,9 +141,9 @@ public:
 			}
 		}
 	}
-	void DrawRect(Vec2 pos, Vec2 size, Color c, float radiant = 0);
+	void DrawFilledRect(Vec2 pos, Vec2 size, Color c, float radiant = 0);
 	template<typename E>
-	void DrawRect(RectF pos, Color c, E effect)
+	void DrawFilledRect(RectF pos, Color c, E effect)
 	{
 		for (int y = 0; y < pos.GetHeight(); y++)
 		{
@@ -152,6 +152,18 @@ public:
 				effect(x + pos.left, y + pos.top,c, *this);
 			}
 		}
+	}
+	void DrawRect(RectF pos, Color c)
+	{
+		Vec2 p1(pos.left,pos.top);
+		Vec2 p2(pos.right, pos.top);
+		Vec2 p3(pos.left, pos.bottom);
+		Vec2 p4(pos.right, pos.bottom);
+
+		DrawLine(p1, p2, c);
+		DrawLine(p1, p3, c);
+		DrawLine(p4, p2, c);
+		DrawLine(p4, p3, c);
 	}
 	bool FIDF(int first, int second)const;			//First is drawn first (for DrawCon)
 	template <typename T>

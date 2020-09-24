@@ -30,9 +30,9 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 
 	windowsFrame.push_back(Animation(delay));
 	windowsFrame[2].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(651, 1412), 140, 14)));
-	//Obstacles goldchair
+	//Obstacles
 	//obstacles.push_back(delay);
-	//obstacles[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0,0), 8, 17)));
+	//obstacles[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(284, 51), 8, 8)));
 	
 	//Buttons buttons
 	buttons.push_back(0.1f);
@@ -94,7 +94,7 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	fields[0].SetKeepTime(0.3f);
 	fields[12].SetKeepTime(0.3f);
 	//Fonts
-	fonts.push_back(Font("Textures/Font4.bmp", 28, '!', '~', Colors::FontDelimitor, Colors::FontNewLine, gfx));
+	fonts.push_back(Font("Textures/Font5.bmp", 112, '!', '~', Colors::FontDelimitor, Colors::FontNewLine, gfx));
 }
 void TexturesCollection::Update(float dt)
 {

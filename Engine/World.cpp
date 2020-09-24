@@ -169,6 +169,13 @@ Vei2 World::PutTileIntoWorld(Vei2 pos)
 {
 	return PutTileIntoWorld(pos.x, pos.y);
 }
+
+void World::SetBuildMode(int obstacle)
+{
+	buildMode = true;
+	placeObstacle = obstacle;
+}
+
 Vei2 World::PutTileIntoWorld(int x, int y)
 {
 	if (y < 0)
@@ -559,7 +566,7 @@ void World::Draw(Graphics& gfx) const
 										curP.PutInto(Graphics::GetScreenRect<float>());
 										if (groundedMap(v) == 0)
 										{
-											gfx.DrawRect(curP, Colors::Red, e);
+											gfx.DrawFilledRect(curP, Colors::Red, e);
 										}
 										else if (groundedMap(v) == 1)
 										{
@@ -567,19 +574,19 @@ void World::Draw(Graphics& gfx) const
 										}
 										else if (groundedMap(v) == -1)
 										{
-											gfx.DrawRect(curP, Colors::Magenta, e);
+											gfx.DrawFilledRect(curP, Colors::Magenta, e);
 										}
 										else if (groundedMap(v) == 2)
 										{
-											gfx.DrawRect(curP, Colors::Blue, e);
+											gfx.DrawFilledRect(curP, Colors::Blue, e);
 										}
 										else if (groundedMap(v) == 3)
 										{
-											gfx.DrawRect(curP, Colors::Cyan, SpriteEffect::Transparent(0.5f));
+											gfx.DrawFilledRect(curP, Colors::Cyan, SpriteEffect::Transparent(0.5f));
 										}
 										if (v == fTile)
 										{
-											gfx.DrawRect(curP, Colors::Black, SpriteEffect::Transparent(0.5f));
+											gfx.DrawFilledRect(curP, Colors::Black, SpriteEffect::Transparent(0.5f));
 										}
 									}
 								
@@ -628,10 +635,17 @@ void World::Draw(Graphics& gfx) const
 							*/
 						}
 					}
+					/*
 					if (buildMode)
 					{
-						//gfx.DrawRect(GetTileRect(fTile), Colors::Black, SpriteEffect::Rainbow());
+						Vec2 tileSize = GetTileSize();
+						RectI dRect = (RectI) GetTileRect(fTile);
+						dRect.right += tileSize.x;
+						dRect.bottom += tileSize.y;
+						gfx.DrawSurface(dRect,tC->obstacles[0].GetCurSurface(), SpriteEffect::Nothing());
+						//gfx.DrawSurface(GetTileRect(fTile), Colors::Black, SpriteEffect::Rainbow());
 					}
+					*/
 					break;
 				case 2:
 					if (curXY == fCell)

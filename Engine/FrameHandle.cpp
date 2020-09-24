@@ -1,11 +1,12 @@
 #pragma once
 #include "FrameHandle.h"
 //		### Componente ###
-Text::Text(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates, Component* parentC)
+Text::Text(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc)
 	:
 	Component(pos, parentC),
 	f(f),
-	size(size)
+	size(size),
+	textLoc(textLoc)
 {
 	this->activInStates = activInStates;
 	this->text = text;
@@ -51,9 +52,9 @@ PageFrame::PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, i
 	nPages(nPages)
 {
 	std::vector<int> a = {0, 1};
-	Button* b1 = AddButton(RectF(Vec2(5, 19), 34, 9), resC->tC.buttons[0], resC->tC.buttons[1], 0, a);
+	Button* b1 = AddButton(RectF(Vec2(5, 18), 34, 9), resC->tC.buttons[0], resC->tC.buttons[1], a);
 	b1->bFunc = B1;
-	Button* b2 = AddButton(RectF(Vec2(99, 19), 34, 9), resC->tC.buttons[2], resC->tC.buttons[3], 0, a);
+	Button* b2 = AddButton(RectF(Vec2(99, 18), 34, 9), resC->tC.buttons[2], resC->tC.buttons[3], a);
 	b2->bFunc = B2;
 }
 
@@ -129,6 +130,13 @@ bool B2(PageFrame* pF)
 	pF->NextPage();
 	return true;
 }
+/*
+bool B3(PageFrame* pF, World& curW)
+{
+	//curW.SetBuildMode(0);
+	return true;
+}
+*/
 void Frame::Move(Vec2 mP)
 {
 	Vec2 deltaMove = lastMouseP - mP;

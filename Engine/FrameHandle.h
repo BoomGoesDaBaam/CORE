@@ -26,7 +26,7 @@ public:
 	Component(RectF pos, Component* parentC) :pos(pos), parentC(parentC){}
 	virtual void Draw(Graphics& gfx)
 	{
-		gfx.DrawRect(GetPos(), c, SpriteEffect::Nothing());
+		gfx.DrawFilledRect(GetPos(), c, SpriteEffect::Nothing());
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
@@ -43,11 +43,31 @@ class Text: public Component
 {
 public:
 	Font f;
-	int size;
-	Text(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates, Component* parentC);
+	int size, textLoc;			//		'0' = centered			 '1' = left
+	Text(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc);
 	void Draw(Graphics& gfx) override
 	{
-		f.DrawTextCentered(text, GetPos().left, GetPos().top, size, c);
+		if (textLoc == 0)
+		{
+			RectF drawPos = parentC->GetPos() + pos.GetCenter();
+			f.DrawTextCentered(text, drawPos.GetTopLeft<int>(), size, c);
+		}
+		else if (textLoc == 1)
+		{
+			RectF drawPos = parentC->GetPos() + pos.GetTopLeft<float>();
+			f.DrawText(text, drawPos.left, drawPos.top, size, c);
+		}
+		//gfx.DrawRect(GetPos(), Colors::Red);
+	}
+	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)override
+	{
+		if (interact && GetPos().Contains((Vec2)e.GetPos()))
+		{
+			mouseHovers = true;
+			return false;
+		}
+		mouseHovers = false;
+		return false;
 	}
 };
 class Button : public Component
@@ -55,21 +75,20 @@ class Button : public Component
 	Animation& a;
 	Animation& aHover;
 public:
-	bool(*bFunc)(PageFrame* pF);
+	bool(*bFunc)(PageFrame* pF) = nullptr;
 	PageFrame* ppF = nullptr;
 	//Frame* pF = nullptr;
 
 	Button(RectF pos, Animation& a, Animation& aHover, std::vector<int> activInStates, Component* parentC); 
 	void Draw(Graphics& gfx) override
 	{
-		auto k = []() {};
 		if (mouseHovers)
 		{
 			gfx.DrawSurface((RectI)GetPos(), aHover.GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.6f));
 		}
 		else
 		{
-			gfx.DrawSurface((RectI)GetPos(), a.GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta));
+			gfx.DrawSurface((RectI)GetPos(), a.GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta,0.6));
 		}
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
@@ -77,9 +96,13 @@ public:
 		Component::HandleMouseInput(e, interact);
 		if (GetPos().Contains((Vec2)e.GetPos()) && e.GetType() == Mouse::Event::LRelease && interact)
 		{
-			if (ppF != nullptr)
+			if (ppF != nullptr && bFunc != nullptr)
 			{
 				return bFunc(ppF);
+			}
+			else if (ppF != nullptr)
+			{
+				return true;
 			}
 		}
 		return false;
@@ -143,7 +166,7 @@ public:
 						break;
 					case 1:
 						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-						gfx.DrawSurface((RectI)cPos, resC->tC.windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.75f));
+						gfx.DrawSurface((RectI)cPos, resC->tC.windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.8f));
 						break;
 					}
 					break;
@@ -232,11 +255,11 @@ public:
 	bool IsExtended();
 	std::vector<int> FillWith1WhenSize0(std::vector<int> activInStates, int nStages);
 
-	virtual Text* AddText(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates = {})
+	virtual Text* AddText(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates = {}, int textLoc = 0)
 	{
 		activInStates = FillWith1WhenSize0(activInStates, nStates);
 		assert(activInStates.size() == nStates);
-		comps.push_back(std::make_unique<Text>(text, pos, size, f, c, activInStates, this));
+		comps.push_back(std::make_unique<Text>(text, pos, size, f, c, activInStates, this, textLoc));
 		return static_cast<Text*>(comps[comps.size()-1].get());
 	}
 	virtual Button* AddButton(RectF pos, Animation& a, Animation& aHover, std::vector<int> activInStates = {})
@@ -277,14 +300,14 @@ public:
 		static_assert (fail<T>::value, "Do not use!");
 	}
 
-	Text* AddText(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
+	Text* AddText(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {}, int textLoc = 0)
 	{
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
 		compActivOnPages.push_back(activOnPages);
-		return Frame::AddText(text, pos, size, f, c, activInStates);
+		return Frame::AddText(text, pos, size, f, c, activInStates, textLoc);
 	}
-	Button* AddButton(RectF pos, Animation& a, Animation& aHover, int onPage, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
+	Button* AddButton(RectF pos, Animation& a, Animation& aHover, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
 	{
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
@@ -346,6 +369,7 @@ public:
 
 bool B1(PageFrame* pF);
 bool B2(PageFrame* pF);
+//bool B3(PageFrame* pF, World& curW);
 
 class MultiFrame : public Frame
 {
@@ -446,36 +470,62 @@ public:
 	{
 		std::vector<int> a = { 0,1 };
 
-		MultiFrame* m = AddMultiFrame(RectF(Vec2(540, 110), 140, 280), 0, 1, resC);
+		MultiFrame* m = AddMultiFrame(RectF(Vec2(540, 110), 140, 280), 0, 1, resC);			//Size of frames is hardcoded
 		
 		Frame* f1 = m->AddFrame(RectF(Vec2(0, 0), 140, 280), 0, resC, m);
 		PageFrame* p2 = m->AddPageFrame(RectF(Vec2(0, 12), 140, 280), 0, resC, m, 4);
-		Frame* f3 = m->AddFrame(RectF(Vec2(0, 24), 140, 280), 0, resC, m);
+		PageFrame* p3 = m->AddPageFrame(RectF(Vec2(0, 24), 140, 280), 0, resC, m, 3);
 		
-		f1->AddText(Settings::lang_fieldInformation[Settings::lang], RectF(Vec2(35, 3), 50, 50), 7, resC->tC.fonts[0], Colors::Black);
-		f1->AddText(Settings::lang_noInformations[Settings::lang], RectF(Vec2(7, 19), 50, 50), 7, resC->tC.fonts[0], Colors::Black, a);
+		// #1
+/* 0*/	f1->AddText(Settings::lang_fieldInformation[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, resC->tC.fonts[0], Colors::Black);
+	
+/* 1*/	f1->AddText(Settings::lang_noInformations[Settings::lang], RectF(Vec2(20, 19), 50, 8), 7, resC->tC.fonts[0], Colors::Black, a);
 		
-		p2->AddText(Settings::lang_buildmenu[Settings::lang], RectF(Vec2(35, 3), 50, 10), 7, resC->tC.fonts[0], Colors::Black);
-		p2->AddText(Settings::lang_housing[Settings::lang], RectF(Vec2(42, 19), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0, 0 });
-		p2->AddText(Settings::lang_productions[Settings::lang], RectF(Vec2(42, 19), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 0, 1, 0, 0 });
-		p2->AddText(Settings::lang_decoration[Settings::lang], RectF(Vec2(42, 19), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 0, 0, 1, 0 });
-		p2->AddText(Settings::lang_agility[Settings::lang], RectF(Vec2(42, 19), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 0, 0, 0, 1 });
+		// #2
+/* 0*/	p2->AddText(Settings::lang_buildmenu[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, resC->tC.fonts[0], Colors::Black);
 
-
+/* 1*/	p2->AddText(Settings::lang_housing[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0, 0 });
+/* 2*/	p2->AddText(Settings::lang_productions[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 0, 1, 0, 0 });
+/* 3*/	p2->AddText(Settings::lang_decoration[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 0, 0, 1, 0 });
+/* 4*/	p2->AddText(Settings::lang_agility[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 0, 0, 0, 1 });
 		
+/* 5*/	p2->AddText(Settings::lang_tent[Settings::lang], RectF(Vec2(5, 40), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0, 0 }, 1);
+/* 6*/	//Button* b3 = p2->AddButton(RectF(Vec2(99, 40), 34, 9), resC->tC.buttons[2], resC->tC.buttons[3], a, { 1,0,0,0 });
+		//b3->bFunc = B3;
+
+		// #3
+/* 0*/	p3->AddText(Settings::lang_constructionMaterials[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, resC->tC.fonts[0], Colors::Black);
 		
-		/*
-		AddFrame(RectF(Vec2(540, 110), 140, 280), 0, 2, overallParent, resC);
-		windows[0]->NextState();
+/* 1*/	p3->AddText(Settings::lang_resources[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0});
+/* 2*/	p3->AddText(Settings::lang_materials[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 0, 1, 0});
+/* 3*/	p3->AddText(Settings::lang_organic[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 0, 0, 1 });
 
-		windows[0]->AddSubFrame(RectF(Vec2(0, 12), 140, 280), 0,2,b, resC);
-		Frame* mt = static_cast<Frame*>(windows[0]->GetComp(0));
-		mt->NextState();
+/* 4*/	p3->AddText(Settings::lang_wood[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/* 5*/	p3->AddText(Settings::lang_iron[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/* 6*/	p3->AddText(Settings::lang_sand[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/* 7*/	p3->AddText(Settings::lang_stone[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/* 8*/	p3->AddText(Settings::lang_copper[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/* 9*/	p3->AddText(Settings::lang_gold[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*10*/	p3->AddText(Settings::lang_aluminum[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*11*/	p3->AddText(Settings::lang_emerald[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*12*/	p3->AddText(Settings::lang_sapphire[Settings::lang] + ":", RectF(Vec2(5, 130), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*13*/	p3->AddText(Settings::lang_robin[Settings::lang] + ":", RectF(Vec2(5, 140), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*14*/	p3->AddText(Settings::lang_diamond[Settings::lang] + ":", RectF(Vec2(5, 150), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*15*/	p3->AddText(Settings::lang_amber[Settings::lang] + ":", RectF(Vec2(5, 160), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
 
-		windows[0]->AddText(Settings::lang_Feldinformationen[Settings::lang], RectF(Vec2(35, 3), 50, 50), 7, resC->tC.fonts[0], Colors::Black);
-		windows[0]->AddText(Settings::lang_Flora[Settings::lang] + ":", RectF(Vec2(7, 19), 50, 50), 7, resC->tC.fonts[0], Colors::Black, a);
-		windows[0]->AddText(Settings::lang_Flora[Settings::lang] + ":", RectF(Vec2(70, 19), 50, 50), 7, resC->tC.fonts[0], Colors::Black, a);
-		*/
+/*16*/	p3->AddText(Settings::lang_kilogram[Settings::lang], RectF(Vec2(100, 40), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*17*/	p3->AddText("11", RectF(Vec2(100, 50), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*18*/	p3->AddText("2", RectF(Vec2(100, 60), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*19*/	p3->AddText("2", RectF(Vec2(100, 70), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*20*/	p3->AddText("44", RectF(Vec2(100, 80), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*21*/	p3->AddText("2", RectF(Vec2(100, 90), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*22*/	p3->AddText("24", RectF(Vec2(100, 100), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*23*/	p3->AddText("3", RectF(Vec2(100, 110), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*24*/	p3->AddText("4", RectF(Vec2(100, 120), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*25*/	p3->AddText("2", RectF(Vec2(100, 130), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*26*/	p3->AddText("4", RectF(Vec2(100, 140), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*27*/	p3->AddText("24", RectF(Vec2(100, 150), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
+/*28*/	p3->AddText("24", RectF(Vec2(100, 160), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0 }, 1);
 
 
 	}
@@ -484,11 +534,29 @@ public:
 	// ###### Update existing Frames ######
 	void UpdateFieldinformation(World& curW)				
 	{
-		MultiFrame* m = static_cast<MultiFrame*>(windows[0].get());				
+		MultiFrame* m = static_cast<MultiFrame*>(windows[0].get());
+		Team& player = curW.GetPlayer();
+		Materials& playerM = player.GetMaterials();
+		//#1
 		Frame* f1 = static_cast<Frame*>(m->GetFrame(0));			
 		f1->SetText(Settings::GetTypeString(curW.GetfCellType()), 1);
+		//#2
+		PageFrame* p2 = static_cast<PageFrame*>(m->GetFrame(1));
+		//#3
+		PageFrame* p3 = static_cast<PageFrame*>(m->GetFrame(2));
+		p3->SetText(std::to_string(playerM.wood), 19);
+		p3->SetText(std::to_string(playerM.iron), 20);
+		p3->SetText(std::to_string(playerM.sand), 21);
+		p3->SetText(std::to_string(playerM.stone), 22);
+		p3->SetText(std::to_string(playerM.copper), 23);
+		p3->SetText(std::to_string(playerM.gold), 24);
+		p3->SetText(std::to_string(playerM.aluminum), 25);
+		p3->SetText(std::to_string(playerM.emerald), 26);
+		p3->SetText(std::to_string(playerM.sapphire), 27);
+		p3->SetText(std::to_string(playerM.robin), 28); 
+		p3->SetText(std::to_string(playerM.diamond), 29);
+		p3->SetText(std::to_string(playerM.amber), 30);
 	}
-
 
 	static constexpr float percentForGrab = 0.05;			
 };

@@ -437,7 +437,7 @@ void Graphics::DrawLine(Vec2 p0, Vec2 p1, Color c, int thickness)
 		}
 	}
 }
-void Graphics::DrawRect(Vec2 pos, Vec2 size, Color c, float radiant)
+void Graphics::DrawFilledRect(Vec2 pos, Vec2 size, Color c, float radiant)
 {	
 	Vec2 p0 = (Vec2)GigaMath::RotPointToOrigin(-size.x / 2, -size.y / 2, radiant);
 	Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin(size.x / 2, size.y / -2, radiant);
