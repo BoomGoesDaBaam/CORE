@@ -34,6 +34,11 @@ public:
 	{
 		return frames.at(curF);
 	}
+	const Surface& GetSurfaceAt(int x) const
+	{
+		assert(x >= 0 && x < frames.size());
+		return frames.at(x);
+	}
 	void SetKeepTime(float keepTime)
 	{
 		this->keepTime = keepTime;
@@ -41,6 +46,10 @@ public:
 	float GetKeepTime()
 	{
 		return keepTime;
+	}
+	int GetNumberOfFrames()
+	{
+		return frames.size();
 	}
 	std::vector<Surface>& GetFrames()
 	{

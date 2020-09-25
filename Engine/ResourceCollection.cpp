@@ -31,9 +31,14 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	windowsFrame.push_back(Animation(delay));
 	windowsFrame[2].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(651, 1412), 140, 14)));
 	//Obstacles
-	//obstacles.push_back(delay);
-	//obstacles[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(284, 51), 8, 8)));
-	
+	obstacles.push_back(0.2f);
+	for (int i = 0; i < 5; i++)
+	{
+		obstacles[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(345, i * 17), 16, 16)));
+	}
+	obstacles.push_back(0.2f);
+	obstacles[1].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(362, 0), 8, 8)));
+
 	//Buttons buttons
 	buttons.push_back(0.1f);
 	buttons[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0, 0), 34, 9)));

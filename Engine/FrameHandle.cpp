@@ -65,7 +65,7 @@ void Frame::SetText(std::string text, int index)
 }
 bool Frame::Hit(Vec2 mP)
 {
-	if (visible)
+	if (IsVisible())
 	{
 		assert(type == 0 || type == -1);
 		Vei2 mpRel = (Vei2)(mP - GetPos().GetTopLeft<float>());
@@ -120,23 +120,21 @@ void Frame::Grab(Vec2 mP)
 		lastMouseP = mP;
 	}
 }
-bool B1(PageFrame* pF)
+bool B1(PageFrame* pF, World& curW)
 {
 	pF->PriviousPage();
 	return true;
 }
-bool B2(PageFrame* pF)
+bool B2(PageFrame* pF, World& curW)
 {
 	pF->NextPage();
 	return true;
 }
-/*
 bool B3(PageFrame* pF, World& curW)
 {
-	//curW.SetBuildMode(0);
+	curW.SetBuildMode(0);
 	return true;
 }
-*/
 void Frame::Move(Vec2 mP)
 {
 	Vec2 deltaMove = lastMouseP - mP;
@@ -178,11 +176,11 @@ FrameHandle::FrameHandle(sharedResC resC)
 	InitFrames();
 }
 
-bool FrameHandle::HandleMouseInput(Mouse::Event& e)
+bool FrameHandle::HandleMouseInput(Mouse::Event& e, World& curW)
 {
 	for (auto& frame : windows)
 	{
-		if (frame->HandleMouseInput(e, true))
+		if (frame->HandleMouseInput(e, true, curW))
 		{
 			return true;
 		}

@@ -8,6 +8,7 @@ class PageFrame;
 
 class Component
 {
+	bool visible = true;
 public:
 	Component* parentC;
 	RectF GetPos() {
@@ -21,14 +22,12 @@ public:
 	std::vector<int> activInStates;
 	std::string text = "no title";
 	bool mouseHovers = false;
-	bool visible = true;
-
 	Component(RectF pos, Component* parentC) :pos(pos), parentC(parentC){}
 	virtual void Draw(Graphics& gfx)
 	{
 		gfx.DrawFilledRect(GetPos(), c, SpriteEffect::Nothing());
 	}
-	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
+	virtual bool HandleMouseInput(Mouse::Event& e, bool interact, World& curW)
 	{
 		if (interact && GetPos().Contains((Vec2)e.GetPos()))
 		{
@@ -37,6 +36,18 @@ public:
 		}
 		mouseHovers = false;
 		return false;
+	}
+	void SetVisible(bool visible)
+	{
+		this->visible = visible;
+		if (!visible)
+		{
+			mouseHovers = false;
+		}
+	}
+	bool IsVisible()
+	{
+		return visible;
 	}
 };
 class Text: public Component
@@ -59,7 +70,7 @@ public:
 		}
 		//gfx.DrawRect(GetPos(), Colors::Red);
 	}
-	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)override
+	virtual bool HandleMouseInput(Mouse::Event& e, bool interact, World& curW)override
 	{
 		if (interact && GetPos().Contains((Vec2)e.GetPos()))
 		{
@@ -75,7 +86,7 @@ class Button : public Component
 	Animation& a;
 	Animation& aHover;
 public:
-	bool(*bFunc)(PageFrame* pF) = nullptr;
+	bool(*bFunc)(PageFrame* pF, World& curW) = nullptr;
 	PageFrame* ppF = nullptr;
 	//Frame* pF = nullptr;
 
@@ -91,14 +102,14 @@ public:
 			gfx.DrawSurface((RectI)GetPos(), a.GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta,0.6));
 		}
 	}
-	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
+	virtual bool HandleMouseInput(Mouse::Event& e, bool interact, World& curW)
 	{
-		Component::HandleMouseInput(e, interact);
+		Component::HandleMouseInput(e, interact, curW);
 		if (GetPos().Contains((Vec2)e.GetPos()) && e.GetType() == Mouse::Event::LRelease && interact)
 		{
 			if (ppF != nullptr && bFunc != nullptr)
 			{
-				return bFunc(ppF);
+				return bFunc(ppF, curW);
 			}
 			else if (ppF != nullptr)
 			{
@@ -126,13 +137,13 @@ public:
 	{
 		for (int i = 0; i < comps.size(); i++)
 		{
-			if (comps[i]->activInStates[curState] == 1 && comps[i]->visible) {
+			if (comps[i]->activInStates[curState] == 1 && comps[i]->IsVisible()) {
 				comps[i]->Draw(gfx);
 			}
 		}
 	}
 	virtual void Draw(Graphics& gfx)override {
-		if (visible)
+		if (IsVisible())
 		{
 			assert(type == 0 || type == -1);
 			RectF cPos = GetPos();
@@ -176,14 +187,14 @@ public:
 		}
 	}
 
-	bool HandleMouseInput(Mouse::Event& e, bool interact)override
+	bool HandleMouseInput(Mouse::Event& e, bool interact, World& curW)override
 	{
-		if (visible)
+		if (IsVisible())
 		{
 			bool hitComp = false;
 			for (int i = 0; i < comps.size(); i++)
 			{
-				hitComp = comps[i]->activInStates[curState] == 1 && comps[i]->visible && comps[i]->HandleMouseInput(e, interact && !hitComp) || hitComp;
+				hitComp = comps[i]->activInStates[curState] == 1 && comps[i]->IsVisible() && comps[i]->HandleMouseInput(e, interact && !hitComp, curW) || hitComp;
 			}
 
 			if (hitComp && interact)
@@ -318,32 +329,32 @@ public:
 	{
 		for (int i = 0; i < comps.size(); i++)
 		{
-			if (comps[i]->activInStates[curState] == 1 && compActivOnPages[i][curPage] == 1 && comps[i]->visible) {
+			if (comps[i]->activInStates[curState] == 1 && compActivOnPages[i][curPage] == 1 && comps[i]->IsVisible()) {
 				comps[i]->Draw(gfx);
 			}
 		}
 	}
-	bool HandleMouseInput(Mouse::Event& e, bool interact)override
+	bool HandleMouseInput(Mouse::Event& e, bool interact, World& curW)override
 	{
-		if (visible)
+		if (IsVisible())
 		{
-			bool hit = Frame::HandleMouseInput(e, interact);
+			bool hit = Frame::HandleMouseInput(e, interact, curW);
 			if (curPage == 0)
 			{
-				comps[0]->visible = false;
+				comps[0]->SetVisible(false);
 			}
 			else
 			{
-				comps[0]->visible = true;
+				comps[0]->SetVisible(true);
 			}
 
 			if (curPage == nPages - 1)
 			{
-				comps[1]->visible = false;
+				comps[1]->SetVisible(false);
 			}
 			else
 			{
-				comps[1]->visible = true;
+				comps[1]->SetVisible(true);
 			}
 			return hit;
 		}
@@ -367,9 +378,9 @@ public:
 };
 
 
-bool B1(PageFrame* pF);
-bool B2(PageFrame* pF);
-//bool B3(PageFrame* pF, World& curW);
+bool B1(PageFrame* pF, World& curW);
+bool B2(PageFrame* pF, World& curW);
+bool B3(PageFrame* pF, World& curW);
 
 class MultiFrame : public Frame
 {
@@ -387,9 +398,9 @@ public:
 			frames[i]->Draw(gfx);
 		}
 	}
-	bool HandleMouseInput(Mouse::Event& e, bool interact)override
+	bool HandleMouseInput(Mouse::Event& e, bool interact, World& curW)override
 	{
-		bool hit = Frame::HandleMouseInput(e, interact);
+		bool hit = Frame::HandleMouseInput(e, interact, curW);
 		std::vector<bool> extended;
 		for (int i = 0; i < frames.size(); i++)
 		{
@@ -399,7 +410,7 @@ public:
 		int yMove = 0;
 		for (int n = 0; n < frames.size(); n++)
 		{
-			bool hitFrame = frames[n]->HandleMouseInput(e, interact);
+			bool hitFrame = frames[n]->HandleMouseInput(e, interact, curW);
 			hit = hit || hitFrame;
 			if (hitFrame)
 			{
@@ -459,7 +470,7 @@ public:
 	Frame& operator[](std::size_t idx) { return *windows[idx].get();  }
 
 	FrameHandle(sharedResC resC);
-	bool HandleMouseInput(Mouse::Event& e);
+	bool HandleMouseInput(Mouse::Event& e, World& curW);
 	void Draw(Graphics& gfx);
 	
 	void AddFrame(RectF pos, int type, sharedResC resC);
@@ -490,8 +501,8 @@ public:
 /* 4*/	p2->AddText(Settings::lang_agility[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 0, 0, 0, 1 });
 		
 /* 5*/	p2->AddText(Settings::lang_tent[Settings::lang], RectF(Vec2(5, 40), 50, 10), 7, resC->tC.fonts[0], Colors::Black, { 0,1 }, { 1, 0, 0, 0 }, 1);
-/* 6*/	//Button* b3 = p2->AddButton(RectF(Vec2(99, 40), 34, 9), resC->tC.buttons[2], resC->tC.buttons[3], a, { 1,0,0,0 });
-		//b3->bFunc = B3;
+/* 6*/	Button* b3 = p2->AddButton(RectF(Vec2(99, 40), 34, 9), resC->tC.buttons[2], resC->tC.buttons[3], a, { 1,0,0,0 });
+		b3->bFunc = B3;
 
 		// #3
 /* 0*/	p3->AddText(Settings::lang_constructionMaterials[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, resC->tC.fonts[0], Colors::Black);

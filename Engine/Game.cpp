@@ -137,10 +137,10 @@ void Game::HandleMouseInput(Mouse::Event& e)
 		if (ignoreMouse && e.GetType() == Mouse::Event::Type::LRelease)
 		{
 			ignoreMouse = false;
-			igwH.HandleMouseInput(e);
+			igwH.HandleMouseInput(e, *curW.get());
 			return;
 		}
-		if (igwH.HandleMouseInput(e) && e.GetType() == Mouse::Event::Type::LPress)
+		if (igwH.HandleMouseInput(e, *curW.get()) && e.GetType() == Mouse::Event::Type::LPress)
 		{
 			ignoreMouse = true;
 			gH.Unlock();

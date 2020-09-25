@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <cassert>
+#include "Rect.h"
 template<typename T>
 class Matrix
 {

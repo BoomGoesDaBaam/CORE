@@ -9,6 +9,10 @@ namespace Settings
 			3 = desert				8 = lava				13 = candyland
 			4 = nutritious dirt		9 = savanne				14 = swamp
 
+			### Obstacles ###
+			0 = tent
+			1 = tree
+
 			### Masked Array ###
 			0 = swamp
 

@@ -32,7 +32,16 @@ public:
 private:
 	class Obstacle
 	{
+		Vei2 tilePos;				//pos is bottomleft
+		Matrix<int> size;
+	public:
+		Obstacle(Vei2 tilePos, Matrix<int> size)
+			:
+			tilePos(tilePos),
+			size(size)
+		{
 
+		}
 	};
 
 
@@ -116,12 +125,16 @@ private:
 	Vei2 mCell = { 0,0 };					//Zelle in der Mitte des Bildschirms auf dem Debugzeiger ist
 	Cells cells;
 	std::vector<Matrix<int>> conMap;		//Connectionmap	 (1 = needsConnections, 0 = doesn't, vectorindex for type)
-	Matrix<int> groundedMap;				// 0 = spot is not grounded, 1 = is grounded, -1 = not identified yet (will be 0 if not changed)
-	Matrix<int> obstacleMap;
+	Matrix<int> groundedMap;				// '0' = spot is not grounded, '1' = is grounded, '-1' = not identified yet (will be 0 if not changed)
+	Matrix<int> obstacleMap;				// '-1' = empty   < -1 index of obstacle in obstacleVec
+	std::vector<Obstacle> obstacles;
+	std::vector<Vei2> obstacleSizes = { Vei2(2,2) };
+
 	Vec2& c;								//Camera
 	bool grit=false;						//show grit
 	bool buildMode = false;					//place something
 	int placeObstacle = 0;
+	bool posAllowed = true;
 
 	Team player = Team("Die reinlich raeudigen Raucher");
 	//Private const Functions
@@ -150,6 +163,7 @@ private:
 	void GenerateExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 100, int surrBy = -1);
 	bool FIDF(int first, int second)const;//First is drawn first
 	void CutHills(int replaceTo);
+	void PlaceObstacle();
 public:
 																							//Konstruktor + Operatoren
 	World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera);
@@ -163,6 +177,7 @@ public:
 	void HandleKeyboardEvents(Keyboard::Event& e);
 	//Grafiken + Einbindung dieser in groundedMap
 	void Draw(Graphics& gfx)const;
+	void DrawObstacle(Vei2 pos, Graphics& gfx, int frame = -1)const;
 
 	std::vector<SubAnimation> GetConnectionsOfTypes(Vei2 pos, int* types);
 	void PlaceConnectionsIntoCelltiles(Vei2 pos, int value, int mixed, int valueOfZero, const int* types);
@@ -170,8 +185,8 @@ public:
 	void ChangeGroundedVal(int from, int to);
 	void PlaceLadderableTiles(int type);
 	bool NeedsConnections(Vei2 curXY)const;
-	Vei2 PutTileIntoWorld(Vei2 pos);
-	Vei2 PutTileIntoWorld(int x, int y);
+	Vei2 PutTileInWorld(Vei2 pos)const;
+	Vei2 PutTileInWorld(int x, int y)const;
 	void SetBuildMode(int obstacle);
 	//
 	Vei2 GetwSize()const { return wSize; }
