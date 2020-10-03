@@ -126,4 +126,3 @@ std::ostream& operator<<(std::ostream& os, const Vec2_<T>& obj)
 
 typedef Vec2_<float> Vec2;
 typedef Vec2_<int> Vei2;
-

@@ -9,9 +9,11 @@ namespace Settings
 			3 = desert				8 = lava				13 = candyland
 			4 = nutritious dirt		9 = savanne				14 = swamp
 
-			### Obstacles ###
+			### Obstacles ###		mo = multiobstacle
 			0 = tent
-			1 = tree
+			1 = tree		(mo #1)
+			2 = bonfire
+			3 = townhall
 
 			### Masked Array ###
 			0 = swamp
@@ -26,7 +28,8 @@ namespace Settings
 			0 = empty
 
 	*/
-
+	//	'constexpr' = already generated in compiletime
+	//	'const'		= generated in runtime
 
 	static constexpr int nDiffFieldTypes = 15;										//Array Nullterminator == -1
 	static constexpr int nDiffWindows = 1;
@@ -37,6 +40,13 @@ namespace Settings
 	static constexpr int groundedTypesARE[] = { 13,1,2,3,4,5,7,9,-1 };				//Types where you can place normal Buildings	
 	static constexpr int CellSplitUpIn = 25;										//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
 	
+
+	static const Vei2 obstacleSizes[] = { Vei2(2,2), Vei2(1,1), Vei2(1,1), Vei2(4,4) };
+	static const std::vector<Vei2> multiObstacleSize[] = { {Vei2(5,5)} };					//sizes of hidden frames
+	static const Vei2 multiObstaclePos[] = { Vei2(-2,-2)};									//relativ pos of hidden frames in tiles
+
+
+
 	static int lang = 0;															//choosen language (0 = english, 1 = german)
 
 	const std::string lang_fieldInformation[] = { "Field information", "Feldinformationen" };
@@ -65,6 +75,25 @@ namespace Settings
 	const std::string lang_diamond[] = { "diamond", "Diamant" };
 	const std::string lang_amber[] = { "amber", "Bernstein" };
 
+	const std::string lang_steel[] = { "steel", "Stahl" };
+	const std::string lang_plastic[] = { "plastic", "Kunststoff" };
+	const std::string lang_concrete[] = { "concrete", "Beton" };
+	const std::string lang_glass[] = { "glass", "Glas" };
+	const std::string lang_ceramics[] = { "ceramics", "Keramik" };
+
+	const std::string lang_corals[] = { "corals", "Korallen" };
+	const std::string lang_sticks[] = { "sticks", "Stoecke" };
+	const std::string lang_leaves[] = { "leaves", "Blaetter" };
+	const std::string lang_wool[] = { "wool", "Wolle" };
+	const std::string lang_leather[] = { "leather", "Leder" };
+	const std::string lang_fur[] = { "fur", "Fell" };
+	const std::string lang_meat[] = { "meat", "Fleisch" };
+	const std::string lang_fish[] = { "fish", "Fisch" };
+	const std::string lang_berrys[] = { "berrys", "Beeren" };
+	const std::string lang_apples[] = { "apples", "Aepfel" };
+	const std::string lang_cactus[] = { "cactus", "Kaktus" };
+
+
 	const std::string lang_water[] = { "water", "Wasser" };
 	const std::string lang_plans[] = {"plans", "Ebene"};
 	const std::string lang_ice[] = { "ice", "Eis" };
@@ -87,6 +116,8 @@ namespace Settings
 	const std::string lang_kilogram[] = { "kg", "kg" };		
 
 	const std::string lang_tent[] = { "tent", "Zelt" };
+	const std::string lang_bonfire[] = { "bonfire", "Lagerfeuer" };
+	const std::string lang_townhall[] = { "townhall", "Rathaus" };
 
 
 	static constexpr float percentForGrab[] = { 0.05f, 0.05f };
@@ -141,6 +172,15 @@ namespace Settings
 		switch (Type)
 		{
 		case 14:
+			return 0;
+		}
+		return -1;
+	}
+	static int Obstacle2MultiObstacle(int Type)				//translates type into index for resC->tC.maskedFields
+	{
+		switch (Type)
+		{
+		case 1:
 			return 0;
 		}
 		return -1;

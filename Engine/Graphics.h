@@ -370,8 +370,8 @@ private:
 	
 
 public:
-	static constexpr int ScreenWidth = 2000;
-	static constexpr int ScreenHeight = 2000;
+	static constexpr int ScreenWidth = 800;
+	static constexpr int ScreenHeight = 600;
 	static Vei2 GetMidOfScreen() { return Vei2(ScreenWidth / 2, ScreenHeight / 2); };
 	template<typename T>
 	const static Rect_<T> GetScreenRect() { return Rect_<T>(Vec2_<T>(0, 0), ScreenWidth, ScreenHeight); };

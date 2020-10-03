@@ -56,7 +56,7 @@ void Game::Go()
 void Game::UpdateModel()
 {
 	//OutputDebugStringW(L"I was here.");
-
+	
 	passedTime += 0.01f;
 	//Set Up Things
 	if (t.CheckIfTimePassed(1.0f))//FPS

@@ -52,16 +52,19 @@ PageFrame::PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, i
 	nPages(nPages)
 {
 	std::vector<int> a = {0, 1};
-	Button* b1 = AddButton(RectF(Vec2(5, 18), 34, 9), resC->tC.buttons[0], resC->tC.buttons[1], a);
+	Button* b1 = AddButton(RectF(Vec2(5, 18), 34, 9), resC->tC.buttons[0], resC->tC.buttons[1], "b_left", a);
 	b1->bFunc = B1;
-	Button* b2 = AddButton(RectF(Vec2(99, 18), 34, 9), resC->tC.buttons[2], resC->tC.buttons[3], a);
+	Button* b2 = AddButton(RectF(Vec2(99, 18), 34, 9), resC->tC.buttons[2], resC->tC.buttons[3], "b_right", a);
 	b2->bFunc = B2;
 }
 
-void Frame::SetText(std::string text, int index)
+void Frame::SetText(std::string text, std::string key)
 {
-	assert(index >= 0 && index < comps.size());
-	comps[index]->text = text;
+	std::map<std::string, std::unique_ptr<Component>>::iterator it = comps.find(key);
+	if (it != comps.end())
+	{
+		it->second->text = text;
+	}
 }
 bool Frame::Hit(Vec2 mP)
 {
@@ -135,6 +138,17 @@ bool B3(PageFrame* pF, World& curW)
 	curW.SetBuildMode(0);
 	return true;
 }
+bool B4(PageFrame* pF, World& curW)
+{
+	curW.SetBuildMode(2);
+	return true;
+}
+bool B5(PageFrame* pF, World& curW)
+{
+	curW.SetBuildMode(3);
+	return true;
+}
+
 void Frame::Move(Vec2 mP)
 {
 	Vec2 deltaMove = lastMouseP - mP;

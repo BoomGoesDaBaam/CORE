@@ -21,6 +21,7 @@ public:
 	std::vector<Animation>	windowsFrame;
 	std::vector<Animation>	buttons;
 	std::vector<Animation>	obstacles;
+	std::vector<Animation>	multiObstacles;
 	std::vector<Font>		fonts;		
 	void Update(float dt);
 };
