@@ -33,46 +33,27 @@ private:
 	class Obstacle
 	{
 	protected:
-		Vei2 tilePos;				//pos is bottomleft
-		int type;
-		int animSets = 1;
 		sharedResC resC;
 	public:
+		Vei2 tilePos;				//pos is bottomleft
+		int type, state = 0;
 		Obstacle(Vei2 tilePos, int type, sharedResC resC)
 			:
 			tilePos(tilePos),
 			type(type),
 			resC(std::move(resC))
 		{
+			switch (type)
+			{
+			case 1:
+				state = 1;
+				break;
 
+			}
 		}
-		int GetType()const
+		void Draw(Graphics& gfx, RectF tilePos)const
 		{
-			return type;
-		}
-		virtual void Draw(Graphics& gfx, RectF tilePos)const
-		{
-			Vec2 tileSize = Vec2(tilePos.GetWidth(), tilePos.GetHeight());
-
-			tilePos.right += tileSize.x * (Settings::obstacleSizes[type].x - 1);
-			tilePos.top -= tileSize.y * (Settings::obstacleSizes[type].y - 1);
-			gfx.DrawSurface((RectI)tilePos, resC->tC.obstacles[type].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-		}
-	};
-
-	class MultiAnimObstacle: public Obstacle
-	{
-		int curA = 0;
-	public:
-		MultiAnimObstacle(Vei2 tilePos, int type, sharedResC resC)
-			:
-			Obstacle(tilePos, type, resC)
-		{
-			curA++;
-		}
-		virtual void Draw(Graphics& gfx, RectF tilePos)const override
-		{
-			if (curA == 0)
+			if (state == 0)
 			{
 				Vec2 tileSize = Vec2(tilePos.GetWidth(), tilePos.GetHeight());
 				tilePos.right += tileSize.x * (Settings::obstacleSizes[type].x - 1);
@@ -83,8 +64,8 @@ private:
 			{
 				Vec2 tileSize = Vec2(tilePos.GetWidth(), tilePos.GetHeight());
 				int multiObstIndex = Settings::Obstacle2MultiObstacle(type);
-				tilePos += Vec2(Settings::multiObstaclePos[multiObstIndex].x * tileSize.x, - Settings::multiObstaclePos[multiObstIndex].y * tileSize.y) ;
-				Vei2 size = Settings::multiObstacleSize[multiObstIndex][(__int64)curA - 1];
+				tilePos += Vec2(Settings::multiObstaclePos[multiObstIndex].x * tileSize.x, -Settings::multiObstaclePos[multiObstIndex].y * tileSize.y);
+				Vei2 size = Settings::multiObstacleSize[multiObstIndex][(__int64)state - 1];
 				tilePos.right += tileSize.x * (size.x - 1);
 				tilePos.top -= tileSize.y * (size.y - 1);
 				gfx.DrawSurface((RectI)tilePos, resC->tC.multiObstacles[multiObstIndex].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
@@ -191,15 +172,21 @@ private:
 	RectF GetTileRect(Vei2 tileP)const;
 	Vei2 GetCellHit(Vec2 mP)const;
 	Vei2 GetTileHit(Vec2 mP)const;	
+
 	bool CellIsInWorld(Vei2& pos)const;
+	bool TileIsInWorld(Vei2& pos)const;
 	bool CellIsInWorldY(int y)const;		
+	bool TileIsInWorldY(int y)const;
+
 	Vei2 PutCellInWorldX(Vei2 pos)const;		//Calculates coordinates when x negativ or > cSize.x  
+	Vei2 PutCellInWorldX(int x, int y)const;
 	Vei2 PutTileInWorld(Vei2 pos)const;
 	Vei2 PutTileInWorld(int x, int y)const;
-	bool TileIsInWorld(Vei2& pos)const;
-
+	
+	void DestroyObstacleAt(Vei2 tilePos);
 
 	Matrix<int> GetAroundMatrix(Vei2 cell)const;	//in bounds: type		outside bounds(y-wise): -1		
+	Matrix<int> GetObstacleAroundMatrix(Vei2 cell)const;
 	void UpdateConMap();							//
 	void UpdateGroundedMap(Vei2 pos=Vei2(0,0), Vei2 size = Vei2(-1,-1));						// VERY performance heavy - UpdateConMap must be called before UpdateGroundedMap
 	void SetTilesAT(Vei2 pos, int value);
@@ -219,6 +206,9 @@ private:
 	void CutHills(int replaceTo);
 	void GenerateObstacle(Vei2 tilePos, int type);
 	bool ObstaclePosAllowed(Vei2 tilePos, int type);
+	void GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 100, int surrBy = -1);
+	void GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, int ontoType = -1, int thickness = 1, int surrBy = -1);
+
 public:
 																							//Konstruktor + Operatoren
 	World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera);
@@ -232,7 +222,7 @@ public:
 	void HandleKeyboardEvents(Keyboard::Event& e);
 	//Grafiken + Einbindung dieser in groundedMap
 	void Draw(Graphics& gfx)const;
-	void DrawObstacle(Vei2 tilePos, int type, Graphics& gfx, int frame = -1)const;
+	void DrawObstacle(Vei2 tilePos, int type, Graphics& gfx, Color color = Colors::Magenta, int frame = -1)const;
 
 	std::vector<SubAnimation> GetConnectionsOfTypes(Vei2 pos, int* types);
 	void PlaceConnectionsIntoCelltiles(Vei2 pos, int value, int mixed, int valueOfZero, const int* types);

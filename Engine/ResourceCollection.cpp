@@ -50,10 +50,8 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 		obstacles[2].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(67, 2417 + i * 9), 8, 8)));
 	}
 	obstacles.push_back(0.2f);//#3
-	for (int i = 0; i < 5; i++)
-	{
-		obstacles[3].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(76, 2417 + i * 41), 32, 32)));
-	}
+	obstacles[3].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(76, 2417), 32, 32)));
+
 	//Buttons buttons
 	buttons.push_back(0.1f);
 	buttons[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0, 0), 34, 9)));

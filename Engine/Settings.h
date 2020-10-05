@@ -40,7 +40,7 @@ namespace Settings
 	static constexpr int groundedTypesARE[] = { 13,1,2,3,4,5,7,9,-1 };				//Types where you can place normal Buildings	
 	static constexpr int CellSplitUpIn = 25;										//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
 	
-
+	static const int obstacleStats[] = { 1,2,1,1 };
 	static const Vei2 obstacleSizes[] = { Vei2(2,2), Vei2(1,1), Vei2(1,1), Vei2(4,4) };
 	static const std::vector<Vei2> multiObstacleSize[] = { {Vei2(5,5)} };					//sizes of hidden frames
 	static const Vei2 multiObstaclePos[] = { Vei2(-2,-2)};									//relativ pos of hidden frames in tiles

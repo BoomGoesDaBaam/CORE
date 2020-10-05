@@ -20,33 +20,41 @@ bool World::CellIsInWorldY(int y)const
 {
 	return y >= 0 && y < wSize.y;
 }
+bool World::TileIsInWorldY(int y)const
+{
+	return y >= 0 && y < wSize.y * Settings::CellSplitUpIn;
+}
 bool World::TileIsInWorld(Vei2& pos)const
 {
 	return pos.x >= 0 && pos.x < wSize.x * Settings::CellSplitUpIn && pos.y >= 0 && pos.y < wSize.y * Settings::CellSplitUpIn;
 }
 Vei2 World::PutCellInWorldX(Vei2 v)const
 {
+	return PutCellInWorldX(v.x, v.y);
+}
+Vei2 World::PutCellInWorldX(int x, int y)const
+{
 
-	if (v.x < 0)
+	if (x < 0)
 	{
-		v.x = -v.x;
-		v.x %= wSize.x;
-		v.x = wSize.x - v.x;
+		x = -x;
+		x %= wSize.x;
+		x = wSize.x - x;
 	}
-	if (v.x >= wSize.x)
+	if (x >= wSize.x)
 	{
-		v.x = v.x % wSize.x;
+		x = x % wSize.x;
 	}
 
-	if (v.y < 0)
+	if (y < 0)
 	{
-		v.y = 0;
+		y = 0;
 	}
-	if (v.y >= wSize.y)
+	if (y >= wSize.y)
 	{
-		v.y = wSize.y - 1;
+		y = wSize.y - 1;
 	}
-	return v;
+	return Vei2(x,y);
 }
 Matrix<int> World::GetAroundMatrix(Vei2 cell) const
 {
@@ -65,6 +73,35 @@ Matrix<int> World::GetAroundMatrix(Vei2 cell) const
 			else
 			{
 				m[x][y] = cells(curCell).type;
+			}
+		}
+	}
+	return m;
+}
+Matrix<int> World::GetObstacleAroundMatrix(Vei2 cell)const
+{
+	Matrix<int> m = Matrix<int>(3, 3, 0);
+
+	for (int y = 0; y < 3; y++)
+	{
+		for (int x = 0; x < 3; x++)
+		{
+			Vei2 tilePos = PutTileInWorld(Vei2(cell.x + x - 1, cell.y + y - 1));
+
+			if (!TileIsInWorldY(y))
+			{
+				m[x][y] = -1;
+			}
+			else
+			{
+				if (obstacleMap(tilePos) != -1)
+				{
+					m[x][y] = obstacles[obstacleMap(tilePos)]->type;
+				}
+				else
+				{
+					m[x][y] = -1;
+				}
 			}
 		}
 	}
@@ -199,6 +236,23 @@ Vei2 World::PutTileInWorld(int x, int y)const
 		x -= wSize.x * Settings::CellSplitUpIn;
 	}
 	return Vei2(x, y);
+}
+void World::DestroyObstacleAt(Vei2 tilePos)
+{
+	if (obstacleMap(tilePos) != -1)
+	{
+		int index = obstacleMap(tilePos);
+		Obstacle* curObst = obstacles[obstacleMap(tilePos)].get();
+		Vei2 size = Settings::obstacleSizes[curObst->type];
+		for (int y = 0; y < size.y; y++)
+		{
+			for (int x = 0; x < size.x; x++)
+			{
+				obstacleMap(PutTileInWorld(tilePos + Vei2(x, y))) = -1;
+			}
+		}
+		obstacles.erase(obstacles.begin() + index);
+	}
 }
 void World::ChangeGroundedVal(int from, int to)
 {
@@ -470,6 +524,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		{
 			GenerateObstacle(fTile, placeObstacle);
 		}
+		GenerateObstacleExplosion(fTile, 100, 1, -1, 300);
 		/*
 		cells(fCell).type = 14;
 		UpdateConMap();
@@ -578,13 +633,14 @@ void World::Draw(Graphics& gfx) const
 										{
 											if (obstacleMap(PutTileInWorld(v - Vei2(1, 0))) != obstacleMap(v) && obstacleMap(PutTileInWorld(v - Vei2(0, 1))) != obstacleMap(v))
 											{
-												if (obstacleMap(v) == -1)
+												if (tileLayer == 1 && Settings::Obstacle2MultiObstacle(obstacles[obstacleMap(v)]->type) != -1)
 												{
-													int lll = 23;
+													obstacles[obstacleMap(v)]->Draw(gfx, GetTileRect(v));
 												}
-												obstacles[obstacleMap(v)]->Draw(gfx, GetTileRect(v));
-
-												//DrawObstacle(v, obstacles[obstacleMap(v)].GetType(), gfx);
+												if (tileLayer == 0 && Settings::Obstacle2MultiObstacle(obstacles[obstacleMap(v)]->type) == -1)
+												{
+													obstacles[obstacleMap(v)]->Draw(gfx, GetTileRect(v));
+												}
 											}
 										}
 										if (grit || buildMode)
@@ -639,14 +695,10 @@ void World::Draw(Graphics& gfx) const
 						}
 					if (buildMode)
 					{
-						DrawObstacle(fTile, placeObstacle, gfx,0);
+						DrawObstacle(fTile, placeObstacle, gfx, Colors::Magenta, 0);
 						if (!posAllowed)
 						{
-							RectF a = GetTileRect(fTile);
-							a.right += a.GetWidth() * (obstacleSizes[0].x - 1);
-							a.top -= a.GetHeight() * (obstacleSizes[0].y - 1);
-							gfx.DrawRect(a, Colors::Red);
-							gfx.DrawFilledRect(a, Colors::Red, SpriteEffect::Transparent(0.25f));
+							DrawObstacle(fTile, placeObstacle, gfx, Colors::Red, 0);
 						}
 						//gfx.DrawSurface(GetTileRect(fTile), Colors::Black, SpriteEffect::Rainbow());
 					}
@@ -664,21 +716,37 @@ void World::Draw(Graphics& gfx) const
 		}
 	}
 }
-void World::DrawObstacle(Vei2 tilePos, int type, Graphics& gfx, int frame)const
+void World::DrawObstacle(Vei2 tilePos, int type, Graphics& gfx, Color color, int frame)const
 {
 	Vec2 tileSize = GetTileSize();
 	RectI dRect = (RectI)GetTileRect(tilePos);
-	dRect.right += tileSize.x;
-	dRect.top -= tileSize.y;
+	dRect.right += (tileSize.x * (Settings::obstacleSizes[placeObstacle].x - 1));
+	dRect.top -= (tileSize.y * (Settings::obstacleSizes[placeObstacle].y - 1));
 	
 	if (frame == -1)
 	{
-		gfx.DrawSurface(dRect, tC->obstacles[type].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+		if (color == Colors::Magenta)
+		{
+			gfx.DrawSurface(dRect, tC->obstacles[type].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+		}
+		else
+		{
+			gfx.DrawRect((RectF)dRect, color);
+			gfx.DrawFilledRect((RectF)dRect, Colors::Red, SpriteEffect::Transparent(0.25f));
+		}
 	}
 	else
 	{
 		assert(frame >= 0 && frame < tC->obstacles[type].GetNumberOfFrames());
-		gfx.DrawSurface(dRect, tC->obstacles[type].GetSurfaceAt(frame), SpriteEffect::Chroma(Colors::Magenta));
+		if (color == Colors::Magenta)
+		{
+			gfx.DrawSurface(dRect, tC->obstacles[type].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+		}
+		else
+		{
+			gfx.DrawRect((RectF)dRect, color);
+			gfx.DrawFilledRect((RectF)dRect, Colors::Red, SpriteEffect::Transparent(0.25f));
+		}
 	}
 }
 bool World::NeedsConnections(Vei2 curXY)const
@@ -745,15 +813,8 @@ void World::GenerateObstacle(Vei2 tilePos, int type)
 	if (ObstaclePosAllowed(tilePos, type))
 	{
 		int index = obstacles.size();
-		switch (type)
-		{
-		case 1:
-			obstacles.emplace_back(std::make_unique<MultiAnimObstacle>(tilePos, type, resC));
-			break;
-		default:
-			obstacles.emplace_back(std::make_unique<Obstacle>(tilePos, type, resC));
-			break;
-		}
+		obstacles.emplace_back(std::make_unique<Obstacle>(tilePos, type, resC));
+		
 		for (int y = 0; y < Settings::obstacleSizes[type].y; y++)
 		{
 			for (int x = 0; x < Settings::obstacleSizes[type].x; x++)
@@ -876,7 +937,8 @@ void World::Generate(WorldSettings& s)
 
 		break;
 	}
-
+	GenerateObstacleExplosion(Vei2(0, wSize.y * Settings::CellSplitUpIn / 2 - 200), 100, 1, -1, 300);
+	GenerateObstacleLine(Vec2(0,wSize.y * Settings::CellSplitUpIn/2 - 200),Vec2(100, wSize.y * Settings::CellSplitUpIn/2),1,-1,1);
 	//CutHills(1);		//NICHT ZUENDE!!!!
 }
 void World::GenerateCircle(Vei2 pos, int radius,int type, int ontoType, int surrBy)
@@ -975,6 +1037,100 @@ void World::GenerateLine(Vec2 p0, Vec2 p1, int type, int ontoType, int thickness
 		}
 	}
 }
+void World::GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, int ontoType, int thickness, int surrBy) //bnot
+{
+	if (tile0 != tile1) {
+		float m = 0.0f;
+		if (tile1.x != tile0.x)
+		{
+			m = ((float)tile1.y - tile0.y) / ((float)tile1.x - tile0.x);
+		}
+		if (thickness > 1)
+		{
+			for (int i = -thickness / 2; i < thickness / 2; i++)
+			{
+				if (std::abs(m) <= 1.0f)
+				{
+					GenerateLine(Vec2(tile1.x, tile1.y + i), Vec2(tile0.x, tile0.y + i), type, ontoType, 1, surrBy);
+				}
+				else
+				{
+					GenerateLine(Vec2(tile1.x + i, tile1.y), Vec2(tile0.x + i, tile0.y), type, ontoType, 1, surrBy);
+				}
+			}
+		}
+		//	######
+		if (tile1.x != tile0.x && std::abs(m) <= 1.0f)
+		{
+			if (tile0.x > tile1.x)
+			{
+				std::swap(tile0, tile1);
+			}
+
+			const float b = tile0.y - m * tile0.x;
+
+			for (int x = (int)tile0.x; x < (int)tile1.x; x++)
+			{
+				const float y = m * (float)x + b;
+
+				const int yi = (int)y;
+
+				Vei2 tilePos = PutTileInWorld(Vei2(x, yi));
+				auto aMat = GetAroundMatrix(tilePos);
+				int curObstacleIndex = obstacleMap(tilePos);
+				if (curObstacleIndex != -1 && obstacles[curObstacleIndex]->type == ontoType)
+				{
+					DestroyObstacleAt(tilePos);
+				}
+				if (obstacleMap(tilePos) == -1 && (aMat.HasValue(surrBy) || surrBy == -1) && aMat[1][1] != surrBy)
+				{
+					GenerateObstacle(tilePos, type);
+				}
+			}
+		}
+		else
+		{
+			if (tile0.y > tile1.y)
+			{
+				std::swap(tile0, tile1);
+			}
+
+			const float w = (tile1.x - tile0.x) / (tile1.y - tile0.y);
+			const float p = tile0.x - w * tile0.y;
+
+			for (int y = (int)tile0.y; y < (int)tile1.y; y++)
+			{
+				const float x = w * (float)y + p;
+
+				const int xi = (int)x;
+				
+				Vei2 tilePos = PutTileInWorld(Vei2(xi, y));
+				auto aMat = GetAroundMatrix(tilePos);
+				int curObstacleIndex = obstacleMap(tilePos);
+				if (curObstacleIndex != -1 && obstacles[curObstacleIndex]->type == ontoType)
+				{
+					DestroyObstacleAt(tilePos);
+				}
+				if (obstacleMap(tilePos) == -1 && (aMat.HasValue(surrBy) || surrBy == -1) && aMat[1][1] != surrBy)
+				{
+					GenerateObstacle(tilePos, type);
+				}
+			}
+		}
+	}
+}
+void World::GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, int ontoType, int nRolls, int surrBy)
+{
+	for (int i = 0; i < nRolls; i++)
+	{
+		float rad = (float)rng.Calc(360) * 0.0174533f;
+		Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin<double>(1.0f, 0.0f, rad);
+		Vei2 scaled = pos + (Vei2)((p1 * maxLineLength) * GigaMath::GetRandomNormDistribution());
+
+		GenerateObstacle(scaled, 1);
+		//GenerateObstacleLine(Vec2(pos), Vec2(scaled), type, ontoType, 1, surrBy);
+	}
+}
 void World::GenerateExplosion(Vei2 pos, int maxLineLength, int type,int ontoType, int nRolls, int surrBy)//not
 {
 	for (int i = 0; i < nRolls; i++)
@@ -983,5 +1139,30 @@ void World::GenerateExplosion(Vei2 pos, int maxLineLength, int type,int ontoType
 		Vec2 p1 = (Vec2) GigaMath::RotPointToOrigin<float>(1.0f,0.0f, rad);
 		Vei2 scaled = pos + Vei2(p1 * (maxLineLength*1/2+ rng.Calc(maxLineLength*1/2)));
 		GenerateLine(Vec2(pos), Vec2(scaled), type, ontoType,1, surrBy);
+
+
 	}
 }
+/*
+void World::GenerateExplosion(Vei2 pos, int maxLineLength, int type, int ontoType, int nRolls, int surrBy)//not
+{
+	for (int i = 0; i < nRolls; i++)
+	{
+		float rad = (float)rng.Calc(360) * 0.0174533f;
+		Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin<double>(1.0f, 0.0f, rad);
+		Vei2 scaled = pos + (Vei2)((p1 * maxLineLength) * GigaMath::GetRandomNormDistribution());
+
+		//cells(PutCellInWorld(pos + scaled)).type = type;
+		GenerateCell(pos + scaled, type, ontoType, surrBy);
+	}
+}
+void World::GenerateCell(Vei2 pos, int type, int ontoType, int surrBy)
+{
+	pos = PutCellInWorld(pos);
+	Matrix<int> aMat = GetAroundMatrix(pos);
+	if ((surrBy == -1 || aMat.HasValue(surrBy)) && (ontoType == -1 || ontoType == cells(pos).type))
+	{
+		cells(pos).type = type;
+	}
+}
+*/

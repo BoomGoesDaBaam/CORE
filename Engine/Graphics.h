@@ -149,7 +149,10 @@ public:
 		{
 			for (int x = 0; x < pos.GetWidth(); x++)
 			{
-				effect(x + pos.left, y + pos.top,c, *this);
+				if (PixelInFrame(Vei2(x + pos.left, y + pos.top)))
+				{
+					effect(x + pos.left, y + pos.top, c, *this);
+				}
 			}
 		}
 	}
