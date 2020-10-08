@@ -110,7 +110,7 @@ void Game::ComposeFrame()
 	if (debugInfoOn)
 	{
 		std::ostringstream oss1, oss2, oss4, oss5;
-		oss1 <<"World cords:(" << curW->GetmCell().x << " | " << curW->GetmCell().y << ")" << " Camera:(" << c.x << " | " << c.y << ")" << "mP: " << mP;
+		oss1 <<"World cords" << curW->GetmChunk().x << " Camera:(" << c.x << " | " << c.y << ")" << "mP: " << mP;
 		oss2 <<"fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CSize:" << curW->GetcSize().x << "   x-Felder:"<<curW->GetxStart();
 		oss4 << "Type:"<<curW->GetfCellType()<<"  use count tC:"<<resC.use_count()<<" ignoreMouse:"<< ignoreMouse;
 		resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 14, Colors::Red);

@@ -4,7 +4,7 @@ World::World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, 
 	:
 	resC(std::move(resC)),
 	c(camera),
-	cells(wSettings.wSize,wSettings.defType),
+	cells(wSettings.wSize.x, wSettings.wSize.y, wSettings.defType),
 	tC(&this->resC->tC),
 	fsC(&this->resC->fsC)
 {
@@ -15,6 +15,10 @@ World::World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, 
 bool World::CellIsInWorld(Vei2& v)const
 {
 	return v.x >= 0 && v.x < wSize.x && v.y >= 0 && v.y < wSize.y;
+}
+bool World::ChunkIsInWorld(Vei2& pos)const
+{
+	return pos.x >= 0 && pos.x < worldHasNChunks.x && pos.y >= 0 && pos.y < worldHasNChunks.y;
 }
 bool World::CellIsInWorldY(int y)const
 {
@@ -28,13 +32,18 @@ bool World::TileIsInWorld(Vei2& pos)const
 {
 	return pos.x >= 0 && pos.x < wSize.x * Settings::CellSplitUpIn && pos.y >= 0 && pos.y < wSize.y * Settings::CellSplitUpIn;
 }
+
+Vec2_<Vei2> World::Cell2ChunkLoc(Vei2 cellPos)const
+{
+	return Vec2_<Vei2>(cellPos / s.chunkHasNCells, cellPos % s.chunkHasNCells);
+}
+
 Vei2 World::PutCellInWorldX(Vei2 v)const
 {
 	return PutCellInWorldX(v.x, v.y);
 }
 Vei2 World::PutCellInWorldX(int x, int y)const
 {
-
 	if (x < 0)
 	{
 		x = -x;
@@ -55,6 +64,33 @@ Vei2 World::PutCellInWorldX(int x, int y)const
 		y = wSize.y - 1;
 	}
 	return Vei2(x,y);
+}
+Vei2 World::PutChunkInWorldX(Vei2 pos)const
+{
+	return PutChunkInWorldX(pos.x, pos.y);
+}
+Vei2 World::PutChunkInWorldX(int x, int y)const
+{
+	if (x < 0)
+	{
+		x = -x;
+		x %= worldHasNChunks.x;
+		x = worldHasNChunks.x - x;
+	}
+	if (x >= worldHasNChunks.x)
+	{
+		x = x % worldHasNChunks.x;
+	}
+
+	if (y < 0)
+	{
+		y = 0;
+	}
+	if (y >= worldHasNChunks.y)
+	{
+		y = worldHasNChunks.y - 1;
+	}
+	return Vei2(x, y);
 }
 Matrix<int> World::GetAroundMatrix(Vei2 cell) const
 {
@@ -117,13 +153,17 @@ void World::UpdateConMap()
 		{
 			for (int x = 0; x < wSize.x; x++)
 			{
+				auto ccP = Cell2ChunkLoc(Vei2(x, y));
+
 				if (type != cells(Vei2(x, y)).type && IsSurroundedBy(Vei2(x, y), type))
 				{
 					conMap[type][x][y] = 1;
+					chunks(ccP.x).SetConMapAt(ccP.y, type, 1);
 				}
 				else
 				{
 					conMap[type][x][y] = 0;
+					chunks(ccP.x).SetConMapAt(ccP.y, type, 0);
 				}
 			}
 		}
@@ -407,6 +447,7 @@ bool World::IsSurroundedBy(Vei2 pos, int type)
 	}
 	return false;
 }
+/*
 RectF World::GetCellRect(Vei2 cellP)const
 {
 	Vei2 d = cellP - mCell;
@@ -483,60 +524,62 @@ Vei2 World::GetTileHit(Vec2 mP)const
 
 	return hitTile;
 }
+*/
 void World::Zoom(Vei2 delta)
 {
-	float deltaX = c.x / cSize.x;
-	float deltaY = c.y / cSize.y;
-	if (delta.x + cSize.x > 0 && delta.x + cSize.x <= 600)
+	float deltaX = c.x / chunkSize.x;
+	float deltaY = c.y / chunkSize.y;
+	if (delta.x + chunkSize.x > 0 && delta.x + chunkSize.x <= 600)
 	{
-		cSize.x += delta.x;
-		c.x = cSize.x * deltaX;
+		chunkSize.x += delta.x;
+		c.x = chunkSize.x * deltaX;
 	}
-	if (delta.y + cSize.y > 0 && delta.y + cSize.y <= 600)
+	if (delta.y + chunkSize.y > 0 && delta.y + chunkSize.y <= 600)
 	{
-		cSize.y += delta.y;
+		chunkSize.y += delta.y;
 		c.y += delta.y / 2;
-		c.y = cSize.y * deltaY;
+		c.y = chunkSize.y * deltaY;
 	}
-	fsC->Update(cSize);
+	fsC->Update(chunkSize);
 }
 
 void World::ApplyCameraChanges(Vec2 cDelta)
 {
 	c.x += -cDelta.x;
 	c.y += cDelta.y;
-		
+	
 	if (c.x < 0)						//move Camera
 	{
-		mCell.x--;
-		c.x += GetcSize().x;
+		mChunk.x--;
+		c.x += chunkSize.x;
 	}
-	if (c.x > cSize.x)
+	if (c.x > chunkSize.x)
 	{
-		mCell.x++;
-		c.x -= GetcSize().x;
+		mChunk.x++;
+		c.x -= chunkSize.x;
 	}
 	if (c.y < 0)
 	{
-		mCell.y--;
-		c.y += GetcSize().y;
+		mChunk.y--;
+		c.y += chunkSize.y;
 	}
-	if (c.y > cSize.y)
+	if (c.y > chunkSize.y)
 	{
-		mCell.y++;
-		c.y -= GetcSize().y;
+		mChunk.y++;
+		c.y -= chunkSize.y;
 	}
 	
-	if (mCell.x < 0)
+	if (mChunk.x < 0)
 	{
-		mCell.x += wSize.x;
+		mChunk.x += worldHasNChunks.x;
 	}
-	if (mCell.x > wSize.x - 1)
+	if (mChunk.x > worldHasNChunks.x - 1)
 	{
-		mCell.x -= wSize.x;
+		mChunk.x -= worldHasNChunks.x;
 	}
 	Vec2 mos = (Vec2) Graphics::GetMidOfScreen();		//Move mCell
-	if (mCell.y < mos.y / cSize.y)
+	/*
+	if (mChunk.y < mos.y / cSize.y)
 	{
 		mCell.y =(int) mos.y / cSize.y;
 		c.y = 0;
@@ -546,16 +589,15 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 		mCell.y = (int)(wSize.y - (mos.y / cSize.y) - 1);
 		c.y = cSize.y-0.001f;
 	}
-
-
+	*/
 }
 void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 {
 	Vec2 mP = (Vec2)e.GetPos();
 	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLocked())
 	{
-		fCell = GetCellHit(mP);
-		fTile = GetTileHit(mP);
+		//fCell = GetCellHit(mP);
+		//fTile = GetTileHit(mP);
 
 		if (buildMode == true)
 		{
@@ -577,7 +619,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 	{
 		Zoom(Vei2(25, 25));
 	}
-	fTile = GetTileHit(mP);
+	//fTile = GetTileHit(mP);
 	posAllowed = ObstaclePosAllowed(fTile, placeObstacle);
 	Vec2 cDelta = gH.MoveCamera(e);
 	ApplyCameraChanges(cDelta);
@@ -610,12 +652,32 @@ void World::UpdateGameLogic(float dt)
 }
 void World::Draw(Graphics& gfx) const
 {
+	int xStart = -3;
+	int xStop = 3;
+	int yStart = -3;
+	int yStop = 3;
+
+	for (int y = yStart; y <= yStop; y++)
+	{
+		for (int x = xStart; x <= xStop; x++)
+		{
+			Vei2 curChunk = PutChunkInWorldX(mChunk + Vei2(x, y));
+
+			chunks(curChunk).DrawType(Vei2(x * chunkSize.x, - y * chunkSize.y) + Graphics::GetMidOfScreen() - Vei2(c.x, -c.y), chunkSize.x / s.chunkHasNCells, gfx);
+
+
+		}
+	}
+
 	/*			3x3
 	for (int y = 0; y <= 2; y++)
 	{
 		for (int x = -1; x <= 1; x++)
 		{
 	*/
+
+
+	/*
 	Vei2 mos = Graphics::GetMidOfScreen();
 	SpriteEffect::Transparent e = SpriteEffect::Transparent(0.6f);
 
@@ -718,7 +780,7 @@ void World::Draw(Graphics& gfx) const
 											{
 												gfx.DrawFilledRect(curP, Colors::Black, SpriteEffect::Transparent(0.5f));
 											}
-											*/
+											''''
 										}
 									}
 								}
@@ -762,11 +824,13 @@ void World::Draw(Graphics& gfx) const
 			}
 		}
 	}
+	*/
 }
 void World::DrawObstacle(Vei2 tilePos, int type, Graphics& gfx, Color color, int frame)const
 {
 	Vec2 tileSize = GetTileSize();
-	RectI dRect = (RectI)GetTileRect(tilePos);
+	//RectI dRect = (RectI)GetTileRect(tilePos);
+	RectI dRect = RectI(Vei2(100,100),100,100);
 	dRect.right += (tileSize.x * (Settings::obstacleSizes[placeObstacle].x - 1));
 	dRect.top -= (tileSize.y * (Settings::obstacleSizes[placeObstacle].y - 1));
 	
@@ -895,11 +959,11 @@ bool World::ObstaclePosAllowed(Vei2 tilePos, int type)
 }
 void World::Init(WorldSettings& s)
 {
+	this->s = s;
 	wSize = s.wSize;
 	cSize = s.cSize;
-	mCell = wSize / 2;
 	fCell = wSize / 2;
-	mCell.x = 0;
+	mChunk = Vei2(10, s.worldHasNChunks.y / 2);
 	for (int type = 1; type < tC->fields.size(); type++)		//Create connectionsmaps
 	{
 		conMap.push_back(Matrix<int>(wSize.x, wSize.y, 0));
@@ -909,7 +973,11 @@ void World::Init(WorldSettings& s)
 
 void World::Generate(WorldSettings& s)
 {
-	cells.Init(s.wSize,s.defType);						//Welt erstellen & default value setzen
+	chunks = Matrix<Chunk>(s.worldHasNChunks.x, s.worldHasNChunks.y, Chunk(s.chunkHasNCells, Cell(s.defType), resC)); //Welt erstellen & default value setzen
+	worldHasNChunks = s.worldHasNChunks;
+
+	cells = Matrix<Cell>(s.wSize.x, s.wSize.y, s.defType);		
+	
 	obstacleMap = Matrix<int>(s.wSize.x * Settings::CellSplitUpIn, s.wSize.y * Settings::CellSplitUpIn, -1);
 	
 	switch (s.defBlueprint)
@@ -1047,7 +1115,6 @@ void World::Generate(WorldSettings& s)
 				GenerateObstacleExplosion(spawnAt + Vei2(1, 1), 100, 4, 1, 15);
 			}
 		}
-
 		break;
 	}
 	
@@ -1115,11 +1182,7 @@ void World::GenerateLine(Vec2 p0, Vec2 p1, int type, int ontoType, int thickness
 				const int yi = (int)y;
 				Cell& curCell = cells(PutCellInWorldX(Vei2(x, yi)));
 				auto aMat = GetAroundMatrix(Vei2(x, yi));
-
-				if ((curCell.type == ontoType || -1 == ontoType) && (aMat.HasValue(surrBy) || surrBy == -1) && aMat[1][1] != surrBy)
-				{
-					curCell.type = type;
-				}
+				GenerateCell(Vei2(x, yi), type, ontoType, surrBy);
 			}
 		}
 		else
@@ -1140,11 +1203,7 @@ void World::GenerateLine(Vec2 p0, Vec2 p1, int type, int ontoType, int thickness
 				Cell& curCell = cells(PutCellInWorldX(Vei2(xi, y)));
 				
 				auto aMat = GetAroundMatrix(Vei2(xi, y));
-
-				if ((curCell.type == ontoType || -1 == ontoType) && (aMat.HasValue(surrBy) || surrBy == -1) && aMat[1][1] != surrBy)
-				{
-					curCell.type = type;
-				}
+				GenerateCell(Vei2(xi, y), type, ontoType, surrBy);
 			}
 		}
 	}
@@ -1251,6 +1310,19 @@ void World::GenerateExplosion(Vei2 pos, int maxLineLength, int type,int ontoType
 		Vei2 scaled = pos + Vei2(p1 * (maxLineLength*1/2+ rng.Calc(maxLineLength*1/2)));
 		GenerateLine(Vec2(pos), Vec2(scaled), type, ontoType,1, surrBy);
 	}
+}
+bool World::GenerateCell(Vei2 pos, int type, int ontoType, int surrBy)
+{
+	auto ccPos = Cell2ChunkLoc(PutCellInWorldX(pos));
+	Matrix<int> aMat = GetAroundMatrix(pos);
+	if ((surrBy == -1 || aMat.HasValue(type)) && (ontoType == -1 || chunks(ccPos.x).GetTypeAt(ccPos.y) == ontoType) && aMat[1][1] != surrBy)
+	{
+		cells(PutCellInWorldX(pos)).type = type;
+		auto ccPos = Cell2ChunkLoc(PutCellInWorldX(pos));
+		chunks(ccPos.x).SetValueAt(ccPos.y, type);
+		return true;
+	}
+	return false;
 }
 void World::GenerateObstaclesInCell(Vei2 cellPos, int type, int number, int ontoType, int surrBy)
 {

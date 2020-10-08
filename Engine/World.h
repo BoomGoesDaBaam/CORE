@@ -28,6 +28,8 @@ public:
 		int defType = 0;
 		Vei2 wSize = { 200, 200 };
 		Vei2 cSize = { 200, 200 };
+		int chunkHasNCells = 5;
+		Vei2 worldHasNChunks = Vei2(40,40);
 	};
 private:
 	class Obstacle
@@ -113,72 +115,72 @@ private:
 
 	class Cell
 	{
-	public:
+	public: 
+		Cell() = default;
 		Cell(int type):type(type){}
 		int type = 0;
+
+		explicit operator int() const 
+		{
+			return type; 
+		}
 	};
 
-	class CellCol
+	class Chunk
 	{
-		std::vector<Cell> cellsY;
+		sharedResC resC = nullptr;
+		int hasNCells = 0;
+		Matrix<Cell> cells;
+		std::vector<Matrix<int>> conMap;
+
 	public:
-		CellCol(int ySize,int type)
+		Chunk() = default;
+		Chunk(int hasNCells, Cell defVal, sharedResC resC) :hasNCells(hasNCells), resC(std::move(resC))
 		{
-			for (int y = 0; y < ySize; y++)
+			cells = Matrix<Cell>(hasNCells, hasNCells, defVal);
+			conMap.clear();
+			for (int i = 0; i < Settings::nDiffFieldTypes; i++)
 			{
-				cellsY.push_back(Cell(type));
+				conMap.push_back(Matrix<int>(hasNCells, hasNCells, 0));
 			}
 		}
-		const Cell& InWorldAT(int y)const
+		void DrawType(Vei2 pos, int cellSize, Graphics& gfx)const
 		{
-			return cellsY.at((y + cellsY.size()) % cellsY.size());
-		}
+			for (int y = 0; y < hasNCells; y++)
+			{
+				for (int x = 0; x < hasNCells; x++)
+				{
+					Vei2 curXY = Vei2(x, y);
+					const Cell& curCell = cells(curXY);
+					int cellType = curCell.type;
+					RectI curCellPos = RectI(Vei2(pos.x, pos.y), cellSize, cellSize) + Vei2(x, - y - 1) * cellSize;
 
-		const Cell& operator[](std::size_t i)const {
-			assert(i >= 0 && i < cellsY.size());
-			return cellsY[i]; }
-		Cell& operator[](std::size_t i) { return cellsY[i]; }
-	};
-
-	class Cells
-	{
-		std::vector<CellCol> cellsX;
-		int PutInWorld(int x)const
-		{
-			if (x < 0)
-			{
-				x = -x;
-				x %= cellsX.size();
-				x = (int)cellsX.size() - x;
-			}
-			if (x >= cellsX.size())
-			{
-				x = x % cellsX.size();
-			}
-			return x;
-		}
-	public:
-		Cells(Vei2 wSize, int defType)
-		{
-			Init(wSize, defType);
-		}
-		Cells() = delete;
-		void Init(Vei2 wSize, int defType)
-		{
-			cellsX.clear();
-			for (int x = 0; x < wSize.x; x++)
-			{
-				cellsX.push_back(CellCol(wSize.y, defType));
+					assert(cellType >= 0 && cellType < Settings::nDiffFieldTypes);
+					gfx.DrawSurface(curCellPos, RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(cellType).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+					
+					for (int i = 0; i < Settings::nDiffFieldTypes; i++)
+					{
+						int order = Settings::typeLayer[i];
+						if (conMap[order][curXY.x][curXY.y] == 1)
+						{
+							gfx.DrawConnections(order, Vei2(curCellPos.left, curCellPos.top), cells.GetAroundMatrix(curXY), resC->fsC.FieldCon, resC->tC.fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						}
+					}
+				}
 			}
 		}
 
-		const Cell& operator()(Vei2 pos)const { return cellsX[pos.x][pos.y]; }
-		Cell& operator()(Vei2 pos) { return cellsX[pos.x][pos.y]; }
-		const CellCol& operator[](std::size_t idx) const { 
-			assert (idx >= 0 && idx < cellsX.size()); return cellsX[idx];
+		void SetValueAt(Vei2 pos, int type)
+		{
+			cells(pos) = type;
 		}
-		CellCol& operator[](std::size_t idx) {
-			assert(idx >= 0 && idx < cellsX.size()); return cellsX[idx]; 
+		int GetTypeAt(Vei2 pos)
+		{
+			return cells(pos).type;
+		}
+		void SetConMapAt(Vei2 pos, int type, bool value)
+		{
+			conMap[type](pos) = value;
 		}
 	};
 	//Resourcen
@@ -186,17 +188,25 @@ private:
 	TexturesCollection* tC;
 	FramesizeCollection* fsC;
 	RandyRandom rng;
+	WorldSettings s;
 	//Gamevars
 	Vei2 wSize = { 0,0 };
 	Vei2 cSize = { 0,0 };
+	Vei2 chunkSize = {250, 250};
+	Vei2 worldHasNChunks;
 	Vei2 fCell = { 0,0 };					//angeklickte Zelle
+	Vei2 mChunk = { 0,0 };
 	Vei2 fTile = { 0,0 };
-	Vei2 mCell = { 0,0 };					//Zelle in der Mitte des Bildschirms auf dem Debugzeiger ist
-	Cells cells;
-	std::vector<Matrix<int>> conMap;		//Connectionmap	 (1 = needsConnections, 0 = doesn't, vectorindex for type)
+	
+	//Zelle in der Mitte des Bildschirms auf dem Debugzeiger ist
+	Vei2 mCunk = { 0,0 };
+	Matrix<Cell> cells;
+	Matrix<Chunk> chunks;
+	std::vector<Matrix<int>> conMap;		//Connectionmap	 (1 = needsConnections, 0 = does not		index for type)
 	Matrix<int> groundedMap;				// '0' = spot is not grounded, '1' = is grounded, '-1' = not identified yet (will be 0 if not changed)
 	Matrix<int> obstacleMap;				// '-1' = empty   < -1 index of obstacle in obstacleVec
 	std::vector<std::unique_ptr<Obstacle>> obstacles;
+	
 	//std::vector<Team> enemys;
 	//Team player;
 	
@@ -208,18 +218,26 @@ private:
 
 	Team player = Team("Die reinlich raeudigen Raucher");
 	//Private const Functions
-	RectF GetCellRect(Vei2 cellP)const;
-	RectF GetTileRect(Vei2 tileP)const;
-	Vei2 GetCellHit(Vec2 mP)const;
-	Vei2 GetTileHit(Vec2 mP)const;	
+	//RectF GetCellRect(Vei2 cellP)const;
+	//RectF GetTileRect(Vei2 tileP)const;
+	//Vei2 GetCellHit(Vec2 mP)const;
+	//Vei2 GetTileHit(Vec2 mP)const;	
 
 	bool CellIsInWorld(Vei2& pos)const;
 	bool TileIsInWorld(Vei2& pos)const;
 	bool CellIsInWorldY(int y)const;		
 	bool TileIsInWorldY(int y)const;
 
+	bool ChunkIsInWorld(Vei2& cellPos)const;
+
+	Vec2_<Vei2> Cell2ChunkLoc(Vei2 CellPos)const;			//'x' = chunkPos	'y' = cellPos in chunk
+
 	Vei2 PutCellInWorldX(Vei2 pos)const;		//Calculates coordinates when x negativ or > cSize.x  
 	Vei2 PutCellInWorldX(int x, int y)const;
+
+	Vei2 PutChunkInWorldX(Vei2 pos)const;	
+	Vei2 PutChunkInWorldX(int x, int y)const;
+
 	Vei2 PutTileInWorld(Vei2 pos)const;
 	Vei2 PutTileInWorld(int x, int y)const;
 	
@@ -244,6 +262,7 @@ private:
 	void GenerateCircle(Vei2 pos, int radius, int type, int ontoType = -1, int surrBy = -1); 
 	void GenerateLine(Vec2 p0, Vec2 p1, int type, int ontoType = -1, int thickness = 1, int surrBy = -1);
 	void GenerateExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 100, int surrBy = -1);
+	bool GenerateCell(Vei2 pos, int type, int ontoType = -1, int surrBy = -1);
 	bool FIDF(int first, int second)const;//First is drawn first
 	void CutHills(int replaceTo);
 	bool ObstaclePosAllowed(Vei2 tilePos, int type);
@@ -284,7 +303,7 @@ public:
 	Vei2 GetfCell()const { return fCell; }
 	Vei2 GetfTile()const { return fTile; }
 	int GetfCellType()const { return cells(fCell).type; }
-	Vei2 GetmCell()const { return mCell; }
+	Vei2 GetmChunk()const { return mChunk; }
 	Team& GetPlayer() { return player; }
 };
 

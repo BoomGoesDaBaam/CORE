@@ -89,7 +89,7 @@ public:
 	}
 	Matrix()
 	{
-		columns.push_back(Column(1, 0));
+		columns.push_back(Column(1, T()));
 	}
 	
 	const T& operator()(Vei2 pos)const { return columns[pos.x][pos.y]; }
@@ -254,7 +254,7 @@ public:
 		return x >= 0 && x < nColumns;
 	}
 	//Matrix<int> GetAroundMatrix(Vei2 cell)const;	//in bounds: type		outside bounds(y-wise): -1		
-	Matrix<int> GetAroundMatrix(Vei2 pos) const		
+	Matrix<int> GetAroundMatrix(Vei2 pos)const	
 	{
 		Matrix<int> m = Matrix<int>(3, 3, 0);
 
@@ -264,24 +264,14 @@ public:
 			{
 				Vei2 curP(x + pos.x - 1, y + pos.y - 1);
 
-				if (!InBoundsY(curP.y))
+				if (InBoundsY(curP.y) && InBoundsX(curP.x))
 				{
-					m[x][y] = -1;
-				}
-				else if (!InBoundsX(curP.x))
-				{
-					if (leftOutRightIn)
-					{
-
-					}
-					else
-					{
-						m[x][y] = -1;
-					}
+					T t = T(columns[curP.x][curP.y]);
+					m[x][y] = (int)t;
 				}
 				else
 				{
-					m[x][y] = this->operator()(curP);
+					m[x][y] = -1;
 				}
 			}
 		}
