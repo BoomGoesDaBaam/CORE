@@ -56,7 +56,7 @@ void Game::Go()
 void Game::UpdateModel()
 {
 	//OutputDebugStringW(L"I was here.");
-	
+	float dt = 0.01f;
 	passedTime += 0.01f;
 	//Set Up Things
 	if (t.CheckIfTimePassed(1.0f))//FPS
@@ -81,7 +81,7 @@ void Game::UpdateModel()
 			debugInfoOn = !debugInfoOn;
 		}
 	}
-
+	curW->UpdateGameLogic(dt);
 	//go.objects[0]->SetPos((Vec2)wnd.mouse.GetPos());
 	/*
 	PARTCONF pc(resC);

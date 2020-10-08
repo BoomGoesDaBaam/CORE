@@ -287,4 +287,15 @@ public:
 		}
 		return m;
 	}
+	void CombineWith(Matrix<int> rhs)
+	{
+		assert(rhs.GetColums() == GetColums() && rhs.GetRows() == GetRows());
+		for (int y = 0; y < GetRows(); y++)
+		{
+			for (int x = 0; x < GetColums(); x++)
+			{
+				columns[x][y] = columns[x][y] || rhs[x][y];
+			}
+		}
+	}
 };

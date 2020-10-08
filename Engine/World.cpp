@@ -237,6 +237,10 @@ Vei2 World::PutTileInWorld(int x, int y)const
 	}
 	return Vei2(x, y);
 }
+Vei2 World::TileIsInCell(Vei2 tilePos)
+{
+	return Vei2(tilePos / Settings::CellSplitUpIn);
+}
 void World::DestroyObstacleAt(Vei2 tilePos)
 {
 	if (obstacleMap(tilePos) != -1)
@@ -269,11 +273,44 @@ void World::PlaceTilesForMaskedField(Vei2 pos, int value, int valOfMixed, int va
 {
 	SubAnimation sa = SubAnimation(resC->tC.maskedFields[Settings::translateIntoMaskedType(type)],RectI(Vei2(0,0),50,50), RectI(Vei2(0, 0), 50, 50));
 
-	Matrix<int> chromaM = sa.chromaM;
-	chromaM.Sort(value, valueOfZero);
-	chromaM.HalfSize(chromaM, valOfMixed);
-	chromaM.MirrowVertical();
-	SetTilesAT(pos, chromaM);
+	Matrix<int> chromaM1 = sa.chromaM;
+	chromaM1.Sort(value, valueOfZero);
+	chromaM1.HalfSize(chromaM1, valOfMixed);
+	chromaM1.MirrowVertical();
+	//
+	auto a = GetAroundMatrix(pos);
+	std::vector<SubAnimation> sAVec;
+
+	for (int i = 0; i < Settings::ArrSize(Settings::groundedTypesARE); i++)
+	{
+		int curType = Settings::groundedTypesARE[i];
+		if (a.HasValue(curType))
+		{
+			if (conMap[curType][pos.x][pos.y] == 1)
+			{
+				std::vector<SubAnimation> newVecs;
+				if (Settings::anyMaskedType(curType))
+				{
+					newVecs = resC->fsC.GetConnectionAnimationVec(curType, pos, true, a);
+				}
+				else
+				{
+					newVecs = resC->fsC.GetConnectionAnimationVec(curType, pos, false, a);
+				}
+				for (int c = 0; c < newVecs.size(); c++)
+				{
+					sAVec.push_back(newVecs[c]);
+				}
+			}
+		}
+	}
+	Matrix<int> chromaM2 = SubAnimation::PutOnTopOfEachOther(sAVec, Vei2(50, 50), 1, 0);
+	chromaM2.Sort(value, valueOfZero);
+	chromaM2.HalfSize(chromaM2, valOfMixed);
+	chromaM2.MirrowVertical();
+	//
+//	chromaM1.CombineWith(chromaM2);			//HIER
+	SetTilesAT(pos, chromaM1);
 
 }
 void World::PlaceConnectionsIntoCelltiles(Vei2 pos, int value, int valOfMixed, int valueOfZero, const int* types)
@@ -524,7 +561,8 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		{
 			GenerateObstacle(fTile, placeObstacle);
 		}
-		GenerateObstacleExplosion(fTile, 100, 1, -1, 300);
+		
+		//GenerateObstacleExplosion(fTile, 50, 4);
 		/*
 		cells(fCell).type = 14;
 		UpdateConMap();
@@ -561,6 +599,14 @@ void World::HandleKeyboardEvents(Keyboard::Event& e)
 			break;
 		}
 	}
+}
+void World::UpdateGameLogic(float dt)
+{
+	std::for_each(obstacles.begin(), obstacles.end(), [&](auto& obst)
+	{
+		obst->Update(dt);
+	});
+	//obstacles[0]->Update(dt);
 }
 void World::Draw(Graphics& gfx) const
 {
@@ -643,7 +689,8 @@ void World::Draw(Graphics& gfx) const
 												}
 											}
 										}
-										if (grit || buildMode)
+
+										if (grit)
 										{
 											curP.PutInto(Graphics::GetScreenRect<float>());
 											if (groundedMap(v) == 0)
@@ -692,17 +739,17 @@ void World::Draw(Graphics& gfx) const
 									}
 								}
 							}
+
+							if (buildMode)
+							{
+								DrawObstacle(fTile, placeObstacle, gfx, Colors::Magenta, 0);
+								if (!posAllowed)
+								{
+									DrawObstacle(fTile, placeObstacle, gfx, Colors::Red, 0);
+								}
+								//gfx.DrawSurface(GetTileRect(fTile), Colors::Black, SpriteEffect::Rainbow());
+							}
 						}
-					if (buildMode)
-					{
-						DrawObstacle(fTile, placeObstacle, gfx, Colors::Magenta, 0);
-						if (!posAllowed)
-						{
-							DrawObstacle(fTile, placeObstacle, gfx, Colors::Red, 0);
-						}
-						//gfx.DrawSurface(GetTileRect(fTile), Colors::Black, SpriteEffect::Rainbow());
-					}
-					
 					break;
 				case 2:
 					if (curXY == fCell)
@@ -808,9 +855,12 @@ void World::CutHills(int replaceTo)
 		}
 	}
 }
-void World::GenerateObstacle(Vei2 tilePos, int type)
+bool World::GenerateObstacle(Vei2 tilePos, int type, int ontoType, int surrBy)
 {
-	if (ObstaclePosAllowed(tilePos, type))
+	tilePos = PutTileInWorld(tilePos);
+	Vei2 tileIsInCell = TileIsInCell(tilePos);
+	Matrix<int> aMat = GetAroundMatrix(tileIsInCell);
+	if (ObstaclePosAllowed(tilePos, type) && (ontoType == -1 || ontoType == cells(tileIsInCell).type) && (surrBy == -1 || aMat.HasValue(surrBy)))
 	{
 		int index = obstacles.size();
 		obstacles.emplace_back(std::make_unique<Obstacle>(tilePos, type, resC));
@@ -823,7 +873,9 @@ void World::GenerateObstacle(Vei2 tilePos, int type)
 				obstacleMap(cPos) = index;
 			}
 		}
+		return true;
 	}
+	return false;
 }
 bool World::ObstaclePosAllowed(Vei2 tilePos, int type)
 {
@@ -882,7 +934,7 @@ void World::Generate(WorldSettings& s)
 		}
 		for (int i = 0; i < (wSize.x * wSize.y) / 200; i++)	//coral reef
 		{
-			GenerateExplosion(Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20)), rng.GetNormalDist() * 3 + 3,6,0);
+			GenerateExplosion(Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20)), rng.GetNormalDist() * 3 + 3, 6, 0);
 		}
 		for (int i = 0; i < (wSize.x * wSize.y) / 6400; i++)	//candyland
 		{
@@ -893,7 +945,7 @@ void World::Generate(WorldSettings& s)
 			Vei2 pos = Vei2(rng.Calc(wSize.y), 10 + rng.Calc(wSize.y - 20));
 
 			GenerateCircle(pos, 7, 3, 1);
-			GenerateExplosion(pos, rng.GetNormalDist() * 6 + 10, 3,1);
+			GenerateExplosion(pos, rng.GetNormalDist() * 6 + 10, 3, 1);
 		}
 		for (int i = 0; i < (wSize.x * wSize.y) / 3200; i++)	//rocks
 		{
@@ -903,17 +955,17 @@ void World::Generate(WorldSettings& s)
 		{
 			Vei2 pos = Vei2(rng.Calc(wSize.x), 10 + rng.Calc(wSize.y - 20));
 			GenerateExplosion(pos, 6 + rng.GetNormalDist() * 6, 9, 1);
-			GenerateExplosion(pos, 4, 11,9);
+			GenerateExplosion(pos, 4, 11, 9);
 		}
 		for (int i = 0; i < (wSize.x * wSize.y) / 6400; i++)	//magma
 		{
 			Vei2 pos = Vei2(rng.Calc(wSize.x), 10 + rng.Calc(wSize.y - 20));
-			GenerateExplosion(pos,6, 12, -1);
-			GenerateExplosion(pos, 4,8,12);
+			GenerateExplosion(pos, 6, 12, -1);
+			GenerateExplosion(pos, 4, 8, 12);
 		}
 		for (int i = 0; i < (wSize.x * wSize.y) / 10; i++)	//nutritious plants
 		{
-			GenerateExplosion(Vei2(rng.Calc(wSize.x), 10 + rng.Calc(wSize.y - 20)), rng.GetNormalDist() * 3, 4, 1,20,0);
+			GenerateExplosion(Vei2(rng.Calc(wSize.x), 10 + rng.Calc(wSize.y - 20)), rng.GetNormalDist() * 3, 4, 1, 20, 0);
 		}
 		for (int i = 0; i < (wSize.x * wSize.y) / 10; i++)	//nutritious plants
 		{
@@ -929,16 +981,76 @@ void World::Generate(WorldSettings& s)
 		for (int i = 0; i < (wSize.x * wSize.y); i++)	//Trees
 		{
 			Vei2 spawnAt = Vei2(rng.Calc((wSize.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((wSize.y - 20) * Settings::CellSplitUpIn));
-			if(cells(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)).type == 1)
+			if (cells(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)).type == 1)
 			{
-				GenerateObstacle(spawnAt,1);
+				int rT = rng.Calc(3);
+				switch (rT)
+				{
+				case 0:
+					GenerateObstacle(spawnAt, 1);
+					break;
+				case 1:
+					GenerateObstacle(spawnAt, 4);
+					break;
+				case 2:
+					GenerateObstacle(spawnAt, 8);
+					break;
+				}
+			}
+		}
+		for (int i = 0; i < (wSize.x * wSize.y) * 2; i++)	//cactus
+		{
+			Vei2 spawnAt = Vei2(rng.Calc((wSize.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((wSize.y - 20) * Settings::CellSplitUpIn));
+			if (cells(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)).type == 1)
+			{
+				GenerateObstacle(spawnAt, 5);
+			}
+		}
+		for (int i = 0; i < (wSize.x * wSize.y) / 20; i++)	//boxes
+		{
+			Vei2 spawnAt = Vei2(rng.Calc((wSize.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((wSize.y - 20) * Settings::CellSplitUpIn));
+			if (cells(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)).type == 1)
+			{
+				GenerateObstacle(spawnAt, 6, 3);
+			}
+		}
+		for (int i = 0; i < (wSize.x * wSize.y) / 10; i++)	//stones
+		{
+			Vei2 spawnAt = Vei2(rng.Calc((wSize.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((wSize.y - 20) * Settings::CellSplitUpIn));
+			if (cells(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)).type == 1)
+			{
+				int rS = rng.Calc(2);
+				switch (rS)
+				{
+				case 0:
+					GenerateObstacle(spawnAt, 7);
+					break;
+				case 1:
+					GenerateObstacle(spawnAt, 9);
+					break;
+				}
+			}
+		}
+		for (int i = 0; i < (wSize.x * wSize.y) / 100; i++)	//other Trees
+		{
+			Vei2 spawnAt = Vei2(rng.Calc((wSize.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((wSize.y - 20) * Settings::CellSplitUpIn));
+			if (cells(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)).type == 1)
+			{
+				GenerateObstacleExplosion(spawnAt, 100, 1, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(0,1), 100, 1, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(1, 0), 100, 1, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(1, 1), 100, 1, 1, 15);
+
+				GenerateObstacleExplosion(spawnAt, 50, 4, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(0, 1), 100, 4, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(1, 0), 100, 4, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(1, 1), 100, 4, 1, 15);
 			}
 		}
 
 		break;
 	}
-	GenerateObstacleExplosion(Vei2(0, wSize.y * Settings::CellSplitUpIn / 2 - 200), 100, 1, -1, 300);
-	GenerateObstacleLine(Vec2(0,wSize.y * Settings::CellSplitUpIn/2 - 200),Vec2(100, wSize.y * Settings::CellSplitUpIn/2),1,-1,1);
+	
 	//CutHills(1);		//NICHT ZUENDE!!!!
 }
 void World::GenerateCircle(Vei2 pos, int radius,int type, int ontoType, int surrBy)
@@ -1127,8 +1239,7 @@ void World::GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, int
 		Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin<double>(1.0f, 0.0f, rad);
 		Vei2 scaled = pos + (Vei2)((p1 * maxLineLength) * GigaMath::GetRandomNormDistribution());
 
-		GenerateObstacle(scaled, 1);
-		//GenerateObstacleLine(Vec2(pos), Vec2(scaled), type, ontoType, 1, surrBy);
+		GenerateObstacle(scaled, type, ontoType, surrBy);
 	}
 }
 void World::GenerateExplosion(Vei2 pos, int maxLineLength, int type,int ontoType, int nRolls, int surrBy)//not
@@ -1139,8 +1250,19 @@ void World::GenerateExplosion(Vei2 pos, int maxLineLength, int type,int ontoType
 		Vec2 p1 = (Vec2) GigaMath::RotPointToOrigin<float>(1.0f,0.0f, rad);
 		Vei2 scaled = pos + Vei2(p1 * (maxLineLength*1/2+ rng.Calc(maxLineLength*1/2)));
 		GenerateLine(Vec2(pos), Vec2(scaled), type, ontoType,1, surrBy);
-
-
+	}
+}
+void World::GenerateObstaclesInCell(Vei2 cellPos, int type, int number, int ontoType, int surrBy)
+{
+	int counter = 0;
+	for (int i = 0; i < number && counter < number * 4;)
+	{
+		Vei2 obstPos = cellPos * Settings::CellSplitUpIn + Vei2(rng.Calc(Settings::CellSplitUpIn - 1), rng.Calc(Settings::CellSplitUpIn - 1));
+		if (ObstaclePosAllowed(obstPos, type) && GenerateObstacle(obstPos, type, ontoType, surrBy))
+		{
+			i++;
+		}
+		counter++;
 	}
 }
 /*

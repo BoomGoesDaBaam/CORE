@@ -27,7 +27,7 @@ public:
 		int defBlueprint = 0;
 		int defType = 0;
 		Vei2 wSize = { 200, 200 };
-		Vei2 cSize = { 50,50 };
+		Vei2 cSize = { 200, 200 };
 	};
 private:
 	class Obstacle
@@ -37,6 +37,8 @@ private:
 	public:
 		Vei2 tilePos;				//pos is bottomleft
 		int type, state = 0;
+		int n90rot = 0, curSurf = 0;
+		float timePassed = 0.0f;
 		Obstacle(Vei2 tilePos, int type, sharedResC resC)
 			:
 			tilePos(tilePos),
@@ -46,9 +48,15 @@ private:
 			switch (type)
 			{
 			case 1:
+			case 4:
 				state = 1;
 				break;
 
+			}
+			n90rot = (tilePos.x + tilePos.y) % 4;
+			if (this->resC->tC.obstacles.size() > 0)
+			{
+				timePassed = (float)((tilePos.x + tilePos.y) % 10) / 10 * this->resC->tC.obstacles[0].GetKeepTime();
 			}
 		}
 		void Draw(Graphics& gfx, RectF tilePos)const
@@ -58,7 +66,7 @@ private:
 				Vec2 tileSize = Vec2(tilePos.GetWidth(), tilePos.GetHeight());
 				tilePos.right += tileSize.x * (Settings::obstacleSizes[type].x - 1);
 				tilePos.top -= tileSize.y * (Settings::obstacleSizes[type].y - 1);
-				gfx.DrawSurface((RectI)tilePos, resC->tC.obstacles[type].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+				gfx.DrawSurface((RectI)tilePos, resC->tC.obstacles[type].GetSurfaceAt(curSurf), SpriteEffect::Chroma(Colors::Magenta),n90rot);
 			}
 			else
 			{
@@ -68,8 +76,38 @@ private:
 				Vei2 size = Settings::multiObstacleSize[multiObstIndex][(__int64)state - 1];
 				tilePos.right += tileSize.x * (size.x - 1);
 				tilePos.top -= tileSize.y * (size.y - 1);
-				gfx.DrawSurface((RectI)tilePos, resC->tC.multiObstacles[multiObstIndex].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+				gfx.DrawSurface((RectI)tilePos, resC->tC.multiObstacles[multiObstIndex].GetSurfaceAt(curSurf), SpriteEffect::Chroma(Colors::Magenta), n90rot);
 			}
+		}
+		void Update(float dt)
+		{
+			
+			timePassed += dt;
+			if (state == 0)
+			{
+				while (timePassed > resC->tC.obstacles[type].GetKeepTime())
+				{
+					curSurf++;
+					timePassed = 0;
+				}
+				if (curSurf >= resC->tC.obstacles[type].GetNumberOfFrames())
+				{
+					curSurf = 0;
+				}
+			}
+			if (state == 1)
+			{
+				while (timePassed > resC->tC.multiObstacles[Settings::Obstacle2MultiObstacle(type)].GetKeepTime())
+				{
+					curSurf++;
+					timePassed = 0;
+				}
+				if (curSurf >= resC->tC.multiObstacles[Settings::Obstacle2MultiObstacle(type)].GetNumberOfFrames())
+				{
+					curSurf = 0;
+				}
+			}
+			
 		}
 	};
 
@@ -159,7 +197,9 @@ private:
 	Matrix<int> groundedMap;				// '0' = spot is not grounded, '1' = is grounded, '-1' = not identified yet (will be 0 if not changed)
 	Matrix<int> obstacleMap;				// '-1' = empty   < -1 index of obstacle in obstacleVec
 	std::vector<std::unique_ptr<Obstacle>> obstacles;
-
+	//std::vector<Team> enemys;
+	//Team player;
+	
 	Vec2& c;								//Camera
 	bool grit=false;						//show grit
 	bool buildMode = false;					//place something
@@ -183,6 +223,8 @@ private:
 	Vei2 PutTileInWorld(Vei2 pos)const;
 	Vei2 PutTileInWorld(int x, int y)const;
 	
+	Vei2 TileIsInCell(Vei2 tilePos);
+
 	void DestroyObstacleAt(Vei2 tilePos);
 
 	Matrix<int> GetAroundMatrix(Vei2 cell)const;	//in bounds: type		outside bounds(y-wise): -1		
@@ -197,17 +239,19 @@ private:
 	void ApplyCameraChanges(Vec2 cDelta);
 
 
-	void Init(WorldSettings& s);
-	void Generate(WorldSettings& s);
+	void Init(WorldSettings& s);																									// 'ontoType' defines the required Celltype 
+	void Generate(WorldSettings& s);																								// 'surrBy' defines the required nearbyCell
 	void GenerateCircle(Vei2 pos, int radius, int type, int ontoType = -1, int surrBy = -1); 
 	void GenerateLine(Vec2 p0, Vec2 p1, int type, int ontoType = -1, int thickness = 1, int surrBy = -1);
 	void GenerateExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 100, int surrBy = -1);
 	bool FIDF(int first, int second)const;//First is drawn first
 	void CutHills(int replaceTo);
-	void GenerateObstacle(Vei2 tilePos, int type);
 	bool ObstaclePosAllowed(Vei2 tilePos, int type);
-	void GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 100, int surrBy = -1);
+	
+	bool GenerateObstacle(Vei2 tilePos, int type, int ontoType = -1, int surrBy = -1);
+	void GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 25, int surrBy = -1);
 	void GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, int ontoType = -1, int thickness = 1, int surrBy = -1);
+	void GenerateObstaclesInCell(Vei2 cellPos, int type, int number, int ontoType = -1, int surrBy = -1);
 
 public:
 																							//Konstruktor + Operatoren
@@ -220,6 +264,8 @@ public:
 	//Handles
 	void HandleMouseEvents(Mouse::Event& e, GrabHandle& gH);
 	void HandleKeyboardEvents(Keyboard::Event& e);
+	void UpdateGameLogic(float dt);
+
 	//Grafiken + Einbindung dieser in groundedMap
 	void Draw(Graphics& gfx)const;
 	void DrawObstacle(Vei2 tilePos, int type, Graphics& gfx, Color color = Colors::Magenta, int frame = -1)const;

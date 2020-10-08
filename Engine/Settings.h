@@ -10,11 +10,11 @@ namespace Settings
 			4 = nutritious dirt		9 = savanne				14 = swamp
 
 			### Obstacles ###		mo = multiobstacle
-			0 = tent
-			1 = tree		(mo #1)
-			2 = bonfire
-			3 = townhall
-
+			0 = tent				5 = cactus				10 = unit
+			1 = tree		(mo #1)	6 = box
+			2 = bonfire				7 = stone
+			3 = townhall			8 = fir
+			4= other tree			9 = big stone
 			### Masked Array ###
 			0 = swamp
 
@@ -40,10 +40,10 @@ namespace Settings
 	static constexpr int groundedTypesARE[] = { 13,1,2,3,4,5,7,9,-1 };				//Types where you can place normal Buildings	
 	static constexpr int CellSplitUpIn = 25;										//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
 	
-	static const int obstacleStats[] = { 1,2,1,1 };
-	static const Vei2 obstacleSizes[] = { Vei2(2,2), Vei2(1,1), Vei2(1,1), Vei2(4,4) };
-	static const std::vector<Vei2> multiObstacleSize[] = { {Vei2(5,5)} };					//sizes of hidden frames
-	static const Vei2 multiObstaclePos[] = { Vei2(-2,-2)};									//relativ pos of hidden frames in tiles
+	static const int obstacleStates[] = { 1,2,1,1,2,1,1,1,1,1,1 };
+	static const Vei2 obstacleSizes[] = { Vei2(2,2), Vei2(1,1), Vei2(1,1), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(2,2), Vei2(4,4), Vei2(1,1) };
+	static const std::vector<Vei2> multiObstacleSize[] = { {Vei2(5,5)}, {Vei2(5,5)} };					//sizes of hidden frames
+	static const Vei2 multiObstaclePos[] = { Vei2(-2,-2), Vei2(-2,-2) };									//relativ pos of hidden frames in tiles
 
 
 
@@ -182,6 +182,8 @@ namespace Settings
 		{
 		case 1:
 			return 0;
+		case 4:
+			return 1;
 		}
 		return -1;
 	}
