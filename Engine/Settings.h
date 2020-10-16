@@ -27,6 +27,9 @@ namespace Settings
 			### Multiframe Types ###
 			0 = empty
 
+			### Error returns ###
+			-1 = something happened
+			-2 = Matrix out of bounds
 	*/
 	//	'constexpr' = already generated in compiletime
 	//	'const'		= generated in runtime

@@ -18,12 +18,18 @@ class Matrix
 		}
 
 		const T& operator[](std::size_t i)const {
-			assert(i >= 0 && i < column.size());
-			return column[i];
+			if (column.size() == 0)
+			{
+				return column[0];
+			}
+			return column[i % column.size()];
 		}
 		T& operator[](std::size_t i) { 
-			assert(i >= 0 && i < column.size());
-			return column[i]; }
+			if (column.size() == 0)
+			{
+				return column[0];
+			}
+			return column[i % column.size()]; }
 
 
 		void SetValueOfALL(T value)
@@ -94,8 +100,8 @@ public:
 	
 	const T& operator()(Vei2 pos)const { return columns[pos.x][pos.y]; }
 	T& operator()(Vei2 pos) { return columns[pos.x][pos.y]; }
-	const Column& operator[](std::size_t idx) const { return columns[idx]; }
-	Column& operator[](std::size_t idx) { return columns[idx]; }
+	const Column& operator[](std::size_t idx) const { return columns[idx % columns.size()]; }
+	Column& operator[](std::size_t idx) { return columns[idx % columns.size()]; }
 
 	void ReInit(int nColumns, int nRows, int value)
 	{
@@ -123,6 +129,10 @@ public:
 	Vei2 GetSize()
 	{
 		return Vei2(nRows, nColumns);
+	}
+	bool IndexInBounds(Vei2 index)const
+	{
+		return index.x >= 0 && index.x < nColumns && index.y >= 0 && index.y < nRows;
 	}
 	int GetRows()const
 	{
@@ -240,7 +250,7 @@ public:
 		{
 			for (int y = 0; y < nRows; y++)
 			{
-				newM.columns[x+1].SetValue(y+1, columns[x][y]);
+				newM.columns[(__int64)x+1].SetValue(y+1, columns[x][y]);
 			}
 		}
 		return newM;
@@ -266,8 +276,7 @@ public:
 
 				if (InBoundsY(curP.y) && InBoundsX(curP.x))
 				{
-					T t = T(columns[curP.x][curP.y]);
-					m[x][y] = (int)t;
+					m[x][y] = (int)T(columns[curP.x][curP.y]);
 				}
 				else
 				{

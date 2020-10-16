@@ -43,7 +43,7 @@ namespace SpriteEffect
 	class Chroma
 	{
 	public:
-		Chroma(Color chroma)
+		Chroma(Color chroma = Colors::Magenta)
 			:
 			chroma(chroma)
 		{}

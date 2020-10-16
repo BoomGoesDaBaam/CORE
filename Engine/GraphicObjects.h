@@ -75,7 +75,7 @@ public:
 		void Draw(Graphics& gfx)override {
 			for (int i = 0; i < configs.body.size()-1; i++)
 			{
-				gfx.DrawLine(configs.body[i] + configs.pos, configs.body[i+1] + configs.pos,SpriteEffect::Rainbow());
+				gfx.DrawLine(configs.body[i] + configs.pos, configs.body[(__int64)i+1] + configs.pos,SpriteEffect::Rainbow());
 			}
 			gfx.DrawLine(configs.body[configs.body.size()-1] + configs.pos, configs.body[0] + configs.pos, SpriteEffect::Rainbow());
 		}

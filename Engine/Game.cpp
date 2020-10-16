@@ -55,6 +55,7 @@ void Game::Go()
 
 void Game::UpdateModel()
 {
+	
 	//OutputDebugStringW(L"I was here.");
 	float dt = 0.01f;
 	passedTime += 0.01f;
@@ -68,10 +69,12 @@ void Game::UpdateModel()
 	{
 		go.Update(0.001);
 	}
+	
 	while (!wnd.mouse.IsEmpty())
 	{
 		HandleMouseInput(wnd.mouse.Read());
 	}
+	
 	while (!wnd.kbd.KeyIsEmpty())
 	{
 		Keyboard::Event e = wnd.kbd.ReadKey();
@@ -81,7 +84,8 @@ void Game::UpdateModel()
 			debugInfoOn = !debugInfoOn;
 		}
 	}
-	curW->UpdateGameLogic(dt);
+	
+	//curW->UpdateGameLogic(dt);
 	//go.objects[0]->SetPos((Vec2)wnd.mouse.GetPos());
 	/*
 	PARTCONF pc(resC);
@@ -110,7 +114,7 @@ void Game::ComposeFrame()
 	if (debugInfoOn)
 	{
 		std::ostringstream oss1, oss2, oss4, oss5;
-		oss1 <<"World cords" << curW->GetmChunk().x << " Camera:(" << c.x << " | " << c.y << ")" << "mP: " << mP;
+		oss1 <<"World cords" << curW->GetmChunk().x << " Camera:(" << c.x << " | " << c.y << ")" << "mP: " << mP << "mChunk: " << curW->GetmChunk() << "chunks Drawn to left: " << curW->GetChunksDrawnToLeft();
 		oss2 <<"fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CSize:" << curW->GetcSize().x << "   x-Felder:"<<curW->GetxStart();
 		oss4 << "Type:"<<curW->GetfCellType()<<"  use count tC:"<<resC.use_count()<<" ignoreMouse:"<< ignoreMouse;
 		resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 14, Colors::Red);
@@ -134,8 +138,7 @@ void Game::ComposeFrame()
 //Handle
 void Game::HandleMouseInput(Mouse::Event& e)
 {
-	if (e.IsValid())
-	{
+	
 		if (ignoreMouse && e.GetType() == Mouse::Event::Type::LRelease)
 		{
 			ignoreMouse = false;
@@ -145,7 +148,7 @@ void Game::HandleMouseInput(Mouse::Event& e)
 		if (igwH.HandleMouseInput(e, *curW.get()) && e.GetType() == Mouse::Event::Type::LPress)
 		{
 			ignoreMouse = true;
-			gH.Unlock();
+			gH.Release();
 		}
 		else
 		{
@@ -153,7 +156,6 @@ void Game::HandleMouseInput(Mouse::Event& e)
 			World& w = *curW.get();
 			igwH.UpdateFieldinformation(w);
 		}
-	}
 }
 void Game::HandleKeyboardInput(Keyboard::Event& e)
 {

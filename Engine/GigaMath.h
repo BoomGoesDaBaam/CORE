@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include "RandyRandom.h"
+#include "Rect.h"
 namespace GigaMath
 {
 	template<typename T>
@@ -60,6 +61,16 @@ namespace GigaMath
 			dist = d(gen);
 		}
 		return dist;
+	}
+	static int NegMod(int x, int divisor)			//divisor has to be positiv
+	{
+		assert(divisor > 0);
+		return ((x % divisor) + divisor) % divisor;
+	}
+	template <typename T>
+	static Vec2_<T> NegMod(Vec2_<T> x, int divisor)			//divisor has to be positiv
+	{
+		return Vec2_<T>(NegMod(x.x, divisor), NegMod(x.y, divisor));
 	}
 }
 namespace GiMa = GigaMath;

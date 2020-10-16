@@ -67,6 +67,6 @@ private:
 	GrabHandle gH;
 	Vec2 c = { 0,0 };
 
-	int fps_c, fps_d;
+	int fps_c = 0, fps_d = 0;
 	/********************************/
 };

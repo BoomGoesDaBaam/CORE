@@ -5,8 +5,12 @@ class RandyRandom
 public:
 	int Calc(int bounce)
 	{
-		std::uniform_int_distribution<int> b = std::uniform_int_distribution<int>(0, bounce);
-		return b(rng);
+		if (bounce > 0)
+		{
+			std::uniform_int_distribution<int> b = std::uniform_int_distribution<int>(0, bounce);
+			return b(rng);
+		}
+		return 0;
 	}
 	float GetFaktor() //Returns number between 0.0f and 1.0f
 	{

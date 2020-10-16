@@ -6,6 +6,7 @@ Vec2 GrabHandle::MoveCamera(const Mouse::Event& e)
 	if (!e.IsValid())
 	{
 		grabbed = false; hold = false;
+		return Vec2(0, 0);
 	}
 	if (e.GetType() == Mouse::Event::Type::LPress)
 	{

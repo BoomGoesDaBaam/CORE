@@ -109,7 +109,7 @@ int Frame::GetExtendedHeight()
 	switch (type)
 	{
 	case 0:
-		return (pos.GetHeight() / 20) * 19;
+		return ((int)pos.GetHeight() / 20) * 19;
 		break;
 	}
 	return 0;

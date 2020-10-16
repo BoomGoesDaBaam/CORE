@@ -77,7 +77,7 @@ public:
 	}
 
 
-	bool operator==(const Vec2_& rhs)
+	bool operator==(const Vec2_& rhs)const
 	{
 		return x == rhs.x && y == rhs.y;
 	}
