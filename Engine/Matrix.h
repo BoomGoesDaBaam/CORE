@@ -29,9 +29,21 @@ class Matrix
 			{
 				return column[0];
 			}
-			return column[i % column.size()]; }
-
-
+			return column[i % column.size()]; 
+		}
+		template <typename T>
+		Vec2_<T>& operator=(const Vec2_<T>& other)
+		{
+			assert(column.size() > 0);
+			column[0].x = other.x;
+			column[0].y = other.y;
+			return column[0];
+		}
+		operator T& ()
+		{
+			assert(column.size() > 0);
+			return column[0];
+		}
 		void SetValueOfALL(T value)
 		{
 			for (int i = 0; i < raw.size(); i++)
@@ -43,7 +55,7 @@ class Matrix
 		{
 			column[i] = value;
 		}
-		bool HasValue(T value)
+		bool HasValue(T value) const
 		{
 			for (int x = 0; x < column.size(); x++)
 			{
@@ -68,7 +80,7 @@ class Matrix
 				}
 			}
 		}
-		std::vector<T> GetPosOfValue(T value)
+		std::vector<T> GetPosOfValue(T value) const
 		{
 			std::vector<T> pos;
 			for (int x = 0; x < column.size(); x++)
@@ -172,7 +184,7 @@ public:
 			columns[column].SetValue(i, value);
 		}
 	}
-	bool HasValue(T value)
+	bool HasValue(T value) const
 	{
 		for (int x = 0; x < nRows; x++)
 		{
@@ -183,14 +195,14 @@ public:
 		}
 		return false;
 	}
-	std::vector<Vec2_<T>> GetPosOfValue(T value)
+	std::vector<Vec2_<T>> GetPosOfValue(T value) const
 	{
 		std::vector<Vec2_<T>> v;
 		for (int x = 0; x < nRows; x++)
 		{
 			if (columns[x].HasValue(value))
 			{
-				std::vector<T> pos = columns[x].GetPosOfValue(value);
+				std::vector<T> pos = this->columns[x].GetPosOfValue(value);
 				for (int i = 0; i < pos.size(); i++)
 				{
 					v.push_back(Vec2_<T>(pos[i], x));
@@ -298,3 +310,7 @@ public:
 		}
 	}
 };
+typedef Matrix<Vei2> VecN;
+//for exemple a vector with 7 elements:			VecN vec = VecN(7, 1, defValue);
+//Can be accessed via:							Type t = vec[0];
+//changed via:									m[0] = 4;

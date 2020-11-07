@@ -38,7 +38,20 @@ Vec2_<Vei2> World::Cell2ChunkPos(Vei2 cellPos)const
 {
 	return Vec2_<Vei2>(cellPos / s.chunkHasNCells, cellPos % s.chunkHasNCells);
 }
+Matrix<Vei2> World::Tile2ChunkPos(Vei2 tilePos)const
+{
+	tilePos = PutTileInWorld(tilePos);
 
+	using namespace Settings;
+	VecN m = VecN(3, 1, Vei2(-1, -1));
+	m[0] = (tilePos / (CellSplitUpIn * s.chunkHasNCells));	//chunkPos
+	m[1] = (tilePos / CellSplitUpIn) % s.chunkHasNCells;		//cellPos in chunk
+	m[2] = tilePos % CellSplitUpIn;							//tilePos in cellPos 
+
+	//*(Vei2*)m[1] = Vei2(2, 2);
+	//return Vec2_<Vei2>(tilePos / CellSplitUpIn, tilePos % s.chunkHasNCells);
+	return m;
+}
 Vei2 World::PutCellInWorldX(Vei2 v)const
 {
 	return PutCellInWorldX(v.x, v.y);
@@ -686,6 +699,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		{
 			GenerateObstacle(fTile, placeObstacle);
 		}
+		//chunks(GetChunkHit(mP)).GenerateObstacleAt(chunks(GetChunkHit(mP)).getHitTile(, 3);
 		//GenerateObstacleExplosion(fTile, 50, 4);
 		/*
 		cells(fCell).type = 14;
@@ -742,10 +756,10 @@ void World::Draw(Graphics& gfx) const
 	int yStop = 1 + (mos.y / s.chunkSize.y) * 1.5f;
 
 #ifdef _DEBUG 
-	xStart = -1;
-	xStop = 1;
-	yStart = -1;
-	yStop = 1;
+	xStart = 0;
+	xStop = 0;
+	yStart = 0;
+	yStop = 0;
 #endif
 
 
@@ -757,10 +771,12 @@ void World::Draw(Graphics& gfx) const
 			{
 				Vei2 curChunk = PutChunkInWorld(mChunk + Vei2(x, y),s.worldHasNChunks);
 				Vei2 curChunkPos = Vei2(x * s.chunkSize.x, -y * s.chunkSize.y) + Graphics::GetMidOfScreen() - Vei2(c.x, -c.y);
+				RectI curChunkRect = RectI(curChunkPos, s.chunkSize.x, s.chunkSize.y);
+
 				switch (layer)
 				{
 				case 0:
-					chunks(curChunk).DrawType(curChunkPos, s.chunkSize.x / s.chunkHasNCells, gfx);
+					chunks(curChunk).DrawType(curChunkRect, gfx);
 					break;
 				case 1:
 					if (grit)
@@ -775,6 +791,7 @@ void World::Draw(Graphics& gfx) const
 					}
 					break;
 				case 3:
+					chunks(curChunk).DrawObstacles(curChunkRect, gfx);
 					if (fccPos.x == curChunk)
 					{
 						chunks(curChunk).DrawSurfaceAt(curChunkPos, fccPos.y, s.chunkSize.x / s.chunkHasNCells, 1.5f, resC->tC.frames.at(0).GetCurSurface(), gfx);
@@ -1043,10 +1060,11 @@ bool World::GenerateObstacle(Vei2 tilePos, int type, int ontoType, int surrBy)
 	tilePos = PutTileInWorld(tilePos);
 	Vei2 tileIsInCell = TileIsInCell(tilePos);
 	Matrix<int> aMat = GetAroundMatrix(tileIsInCell);
-	if (ObstaclePosAllowed(tilePos, type) && (ontoType == -1 || ontoType == cells(tileIsInCell).type) && (surrBy == -1 || aMat.HasValue(surrBy)))
-	{
-		auto ccP = Cell2ChunkPos(tilePos);
-		chunks(ccP.x).GenerateObstacleAt(ccP.y, type, ontoType, surrBy);
+	//if (ObstaclePosAllowed(tilePos, type) && (ontoType == -1 || ontoType == cells(tileIsInCell).type) && (surrBy == -1 || aMat.HasValue(surrBy)))
+	//{
+		VecN cctP = Tile2ChunkPos(tilePos);
+		
+		chunks(cctP[0]).GenerateObstacleAt((Vei2)cctP[1] * Settings::CellSplitUpIn + cctP[2], type, ontoType, surrBy,-1,-1,-1,-1);
 
 		int index = obstacles.size();
 		obstacles.emplace_back(std::make_unique<Obstacle>(tilePos, type, resC));
@@ -1056,12 +1074,13 @@ bool World::GenerateObstacle(Vei2 tilePos, int type, int ontoType, int surrBy)
 			for (int x = 0; x < Settings::obstacleSizes[type].x; x++)
 			{
 				Vei2 cPos = PutTileInWorld(tilePos + Vei2(x, y));
+				assert(obstacleMap(Vei2(x, y)) == -1);
 				obstacleMap(cPos) = index;
 			}
 		}
 		return true;
-	}
-	return false;
+	//}
+	//return false;
 }
 
 bool World::ObstaclePosAllowed(Vei2 tilePos, int type)
@@ -1072,12 +1091,12 @@ bool World::ObstaclePosAllowed(Vei2 tilePos, int type)
 		for (int x = 0; x < Settings::obstacleSizes[type].x; x++)
 		{
 			Vei2 tileInWorld = PutTileInWorld(tilePos + Vei2(x, y));
-			/*
+			
 			if (obstacleMap(tileInWorld) != -1 || groundedMap(tileInWorld) != 1 || y < 0 || y >= s.wSize.y)
 			{
 				posAllowed = false;
 			}
-			*/
+			
 		}
 	}
 	return posAllowed;
@@ -1085,7 +1104,6 @@ bool World::ObstaclePosAllowed(Vei2 tilePos, int type)
 void World::Init(WorldSettings& s)
 {
 	this->s = s;
-
 	fCell = s.wSize / 2;
 	mChunk = Vei2(10, s.worldHasNChunks.y / 2);
 	for (int type = 1; type < tC->fields.size(); type++)		//Create connectionsmaps
@@ -1107,7 +1125,6 @@ void World::Generate(WorldSettings& s)
 	}
 
 	cells = Matrix<Cell>(s.wSize.x, s.wSize.y, s.defType);		
-	
 	obstacleMap = Matrix<int>(s.wSize.x * Settings::CellSplitUpIn, s.wSize.y * Settings::CellSplitUpIn, -1);
 	
 	switch (s.defBlueprint)
@@ -1176,6 +1193,8 @@ void World::Generate(WorldSettings& s)
 		UpdateConMap();
 		UpdateGroundedMap();
 
+
+		/*
 		for (int i = 0; i < (s.wSize.x * s.wSize.y); i++)	//Trees
 		{
 			Vei2 spawnAt = Vei2(rng.Calc((s.wSize.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSize.y - 20) * Settings::CellSplitUpIn));
@@ -1245,6 +1264,7 @@ void World::Generate(WorldSettings& s)
 				GenerateObstacleExplosion(spawnAt + Vei2(1, 1), 100, 4, 1, 15);
 			}
 		}
+		*/
 		break;
 	}
 	
@@ -1449,7 +1469,7 @@ bool World::GenerateCell(Vei2 pos, int type, int ontoType, int surrBy)
 	{
 		auto ccPos = Cell2ChunkPos(curCellPos);
 		Matrix<int> aMat = GetAroundMatrix(pos);
-		if ((surrBy == -1 || aMat.HasValue(type)) && (ontoType == -1 || chunks(ccPos.x).GetTypeAt(ccPos.y) == ontoType) && aMat[1][1] != surrBy)
+		if ((surrBy == -1 || aMat.HasValue(type)) && (ontoType == -1 || chunks(ccPos.x).GetCellTypeAt(ccPos.y) == ontoType) && aMat[1][1] != surrBy)
 		{
 			cells(PutCellInWorldX(pos)).type = type;
 			chunks(ccPos.x).SetValueAt(ccPos.y, type);

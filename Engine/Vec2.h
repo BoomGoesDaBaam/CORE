@@ -67,6 +67,10 @@ public:
 	{
 		return Vec2_(x / rhs, y / rhs);
 	}
+	Vec2_ operator/(Vec2_ rhs) const
+	{
+		return Vec2_(x / rhs.x, y / rhs.y);
+	}
 	Vec2_ operator%(int rhs) const
 	{
 		return Vec2_(x % rhs, y % rhs);
