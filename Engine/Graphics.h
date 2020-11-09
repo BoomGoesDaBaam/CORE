@@ -347,6 +347,8 @@ public:
 						sPixelX = (int)(sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
 						sPixelY = (int)(sourceR.bottom - 1 - ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
 					}
+					assert(sPixelX >= 0);
+					assert(sPixelY >= 0);
 					Color sourceP = s.GetPixel(sPixelX, sPixelY);
 					effect(x + pos.left, y + pos.top, sourceP, *this);
 				}
