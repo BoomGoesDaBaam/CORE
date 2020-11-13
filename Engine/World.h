@@ -41,27 +41,25 @@ private:
 	public:
 		Vei2 tilePos;				//pos is bottomleft
 		int type, state = 0;
-		int n90rot = 0, curSurf = 0;
-		float timePassed = 0.0f;
+		int n90rot = 0;
+		std::vector<Animation> animations;	//index runs through states
 		Obstacle(Vei2 tilePos, int type, sharedResC resC)
 			:
 			tilePos(tilePos),
 			type(type),
 			resC(std::move(resC))
 		{
+			animations.emplace_back(this->resC->tC.obstacles[type]);
 			switch (type)
 			{
 			case 1:
 			case 4:
 				state = 1;
+				animations.push_back(Animation(this->resC->tC.multiObstacles[Settings::Obstacle2MultiObstacle(type)]));
 				break;
 
 			}
-			n90rot = (tilePos.x + tilePos.y) % 4;
-			if (this->resC->tC.obstacles.size() > 0)
-			{
-				timePassed = (float)((tilePos.x + tilePos.y) % 10) / 10 * this->resC->tC.obstacles[0].GetKeepTime();
-			}
+			n90rot = (tilePos.x + tilePos.y) % 4; 
 		}
 
 		void Draw(RectF tileRect, Vei2 tilePos, RectF chunkRect, Graphics& gfx)const			//	'tileRect' = Rect of tile where (Vei2(0, -1) && Vei2(-1, 0) != index) == true
@@ -71,7 +69,7 @@ private:
 				Vec2 tileSize = Vec2(tileRect.GetWidth(), tileRect.GetHeight());
 				tileRect.right += tileSize.x * (Settings::obstacleSizes[type].x - 1);
 				tileRect.top -= tileSize.y * (Settings::obstacleSizes[type].y - 1);
-				gfx.DrawSurface((RectI)tileRect, resC->tC.obstacles[type].GetSurfaceAt(curSurf), SpriteEffect::Chroma(Colors::Magenta), 0);
+				gfx.DrawSurface((RectI)tileRect, resC->tC.obstacles[type].GetSurfaceAt(0), SpriteEffect::Chroma(Colors::Magenta), 0);
 			}
 			else
 			{
@@ -81,38 +79,15 @@ private:
 				Vei2 size = Settings::multiObstacleSize[multiObstIndex][(__int64)state - 1];
 				tileRect.right += tileSize.x * (size.x - 1);
 				tileRect.top -= tileSize.y * (size.y - 1);
-				gfx.DrawSurface((RectI)tileRect, resC->tC.multiObstacles[multiObstIndex].GetSurfaceAt(curSurf), SpriteEffect::Chroma(Colors::Magenta), 0);
+				gfx.DrawSurface((RectI)tileRect, resC->tC.obstacles[Settings::Obstacle2MultiObstacle(type)].GetSurfaceAt(0), SpriteEffect::Chroma(Colors::Magenta), 0);
 			}
 		}
 		void Update(float dt)
 		{
-
-			timePassed += dt;
-			if (state == 0)
+			for (auto animation : animations)
 			{
-				while (timePassed > resC->tC.obstacles[type].GetKeepTime())
-				{
-					curSurf++;
-					timePassed = 0;
-				}
-				if (curSurf >= resC->tC.obstacles[type].GetNumberOfFrames())
-				{
-					curSurf = 0;
-				}
+				animation.Update(dt);
 			}
-			if (state == 1)
-			{
-				while (timePassed > resC->tC.multiObstacles[Settings::Obstacle2MultiObstacle(type)].GetKeepTime())
-				{
-					curSurf++;
-					timePassed = 0;
-				}
-				if (curSurf >= resC->tC.multiObstacles[Settings::Obstacle2MultiObstacle(type)].GetNumberOfFrames())
-				{
-					curSurf = 0;
-				}
-			}
-
 		}
 	};
 	class Cell
@@ -394,7 +369,14 @@ private:
 								{
 									if (obstacleMap(curTilePos) != -1 && obstacleMap(curTilePos) != GetObstacleOutOfBounds(curTilePos - Vei2(1,0)) && obstacleMap(curTilePos) != GetObstacleOutOfBounds(curTilePos - Vei2(0, 1)))
 									{
-										obstacles[obstacleMap(curTilePos)].Draw(curRect, curTilePos, chunkRect, gfx);
+										if (tileLayer == 0 && obstacles[obstacleMap(curTilePos)].state == 0)
+										{
+											obstacles[obstacleMap(curTilePos)].Draw(curRect, curTilePos, chunkRect, gfx);
+										}
+										if (tileLayer == 1 && obstacles[obstacleMap(curTilePos)].state == 1)
+										{
+											obstacles[obstacleMap(curTilePos)].Draw(curRect, curTilePos, chunkRect, gfx);
+										}
 									}
 								}
 							}
@@ -609,6 +591,14 @@ private:
 			}
 			ChangeGroundedVal(-1, 0);
 		}
+		void Update(float dt)
+		{
+			for (auto obstacle : obstacles)
+			{
+				obstacle.Update(dt);
+			}
+		}
+		
 		bool PlaceObstacle(Vei2 tilePos, int type)
 		{
 			assert(TileIsInChunk(tilePos));
@@ -759,7 +749,6 @@ private:
 	RandyRandom rng;
 	WorldSettings s;
 	//Gamevars
-	Vei2 fCell = { 0,0 };					//angeklickte Zelle
 	Vei2 mChunk = { 0,0 };
 	Vei2 fTile = { 0,0 };
 	Vec2_<Vei2> fccPos = { {0,0},{0,0} };
@@ -870,7 +859,7 @@ public:
 	Vei2 GetwSize()const { return s.wSize; }
 	Vei2 GetcSize()const { return s.chunkSize / s.chunkHasNCells; }
 	Vec2 GetTileSize()const { return (Vec2)GetcSize()/Settings::CellSplitUpIn; }
-	Vei2 GetfCell()const { return fCell; }
+	Vei2 GetfCell()const { return Vei2(-1,-1); }
 	Vei2 GetfTile()const { return fTile; }
 	int GetChunksDrawnToLeft()const { return -(Graphics::GetMidOfScreen().x / s.chunkSize.x) * 2 - 1; }
 	int GetfCellType()const { return chunks(fccPos.x).GetCellTypeAt(fccPos.y); }

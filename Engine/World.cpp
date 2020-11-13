@@ -791,9 +791,6 @@ void World::HandleKeyboardEvents(Keyboard::Event& e)
 		case 'B':
 			buildMode = !buildMode;
 			break;
-		case 0x1B:	//ERROR?
-			fCell = Vei2(0, 0);
-			break;
 		}
 	}
 }
@@ -1175,7 +1172,6 @@ bool World::ObstaclePosAllowed(Vei2 tilePos, int type)
 void World::Init(WorldSettings& s)
 {
 	this->s = s;
-	fCell = s.wSize / 2;
 	mChunk = Vei2(10, s.worldHasNChunks.y / 2);
 	for (int type = 1; type < tC->fields.size(); type++)		//Create connectionsmaps
 	{
