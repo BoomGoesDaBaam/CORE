@@ -21,3 +21,9 @@ public:
 
 	T z;
 };
+
+typedef Vec3_<float> Vec3;
+typedef Vec3_<int> Vei3;
+
+typedef Vec3_<Vei2> CctPos;
+

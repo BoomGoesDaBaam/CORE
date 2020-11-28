@@ -139,6 +139,7 @@
     <ClInclude Include="Animation.h" />
     <ClInclude Include="ChiliException.h" />
     <ClInclude Include="ChiliWin.h" />
+    <ClInclude Include="Chunk.h" />
     <ClInclude Include="Colors.h" />
     <ClInclude Include="DXErr.h" />
     <ClInclude Include="Font.h" />
@@ -168,6 +169,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="Chunk.cpp" />
     <ClCompile Include="DXErr.cpp" />
     <ClCompile Include="FieldOrganizer.h" />
     <ClCompile Include="Font.cpp" />

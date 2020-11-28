@@ -115,6 +115,16 @@ public:
 	const Column& operator[](std::size_t idx) const { return columns[idx % columns.size()]; }
 	Column& operator[](std::size_t idx) { return columns[idx % columns.size()]; }
 
+	template <typename T>
+	Matrix<T>& operator=(const Matrix<T>& other)
+	{
+		for (int x = 0; x < columns.size(); x++)
+		{
+			column[0] = other.column[0];
+		}
+		return *this;
+	}
+
 	void ReInit(int nColumns, int nRows, int value)
 	{
 		columns.clear();
