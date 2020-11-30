@@ -154,6 +154,7 @@ public:
 	}
 	bool IndexInBounds(Vei2 index)const
 	{
+		assert(index.x >= 0 && index.x < nColumns && index.y >= 0 && index.y < nRows);
 		return index.x >= 0 && index.x < nColumns && index.y >= 0 && index.y < nRows;
 	}
 	int GetRows()const
@@ -163,6 +164,10 @@ public:
 	int GetColums()const
 	{
 		return nColumns;
+	}
+	Vei2 GetSize()const
+	{
+		return Vei2(nColumns, nRows);
 	}
 	void SetValueOfALL(T value)
 	{

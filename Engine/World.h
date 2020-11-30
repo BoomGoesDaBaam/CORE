@@ -53,11 +53,13 @@ private:
 
 	//Zelle in der Mitte des Bildschirms auf dem Debugzeiger ist
 	Vei2 mCunk = { 0,0 };
-	Matrix<Cell> cells;
+	//Matrix<Cell> cells;
 	Matrix<Chunk> chunks;
+	
 	std::vector<Matrix<int>> conMap;		//Connectionmap	 (1 = needsConnections, 0 = does not		index for type)
 	Matrix<int> groundedMap;				// '0' = spot is not grounded, '1' = is grounded, '-1' = not identified yet (will be 0 if not changed), '2' = hill
 	Matrix<int> obstacleMap;				// '-1' = empty   < -1 index of obstacle in obstacleVec
+	
 	std::vector<std::unique_ptr<Obstacle>> obstacles;
 	
 	//std::vector<Team> enemys;
@@ -97,7 +99,6 @@ private:
 	Vei2 TileIsInCell(Vei2 tilePos);
 
 	void DestroyObstacleAt(Vei2 tilePos);
-	Matrix<int> GetAroundMatrix(Vei2 cell)const;
 	Matrix<int> GetObstacleAroundMatrix(Vei2 cell)const;
 	void UpdateConMap();							//
 	void UpdateGroundedMap(Vei2 pos=Vei2(0,0), Vei2 size = Vei2(-1,-1));						// VERY performance heavy - UpdateConMap must be called before UpdateGroundedMap
@@ -116,7 +117,6 @@ private:
 	void GenerateExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 100, int surrBy = -1);
 	bool GenerateCell(Vei2 pos, int type, int ontoType = -1, int surrBy = -1);
 	bool FIDF(int first, int second)const;//First is drawn first
-	void CutHills(int replaceTo);
 	bool ObstaclePosAllowed(Vei2 tilePos, int type);
 	
 	bool GenerateObstacle(Vei2 tilePos, int type, int ontoType = -1, int surrBy = -1);

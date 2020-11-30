@@ -651,7 +651,7 @@ public:
 		auto ctPos = GetTilePosOutOfBounds(tilePos);
 		return chunks->operator()(ctPos.x).obstacleMap(ctPos.y);
 	}
-	void SetValueAt(Vei2 pos, int type)
+	void SetTypeAt(Vei2 pos, int type)
 	{
 		cells(pos) = type;
 	}
@@ -697,7 +697,7 @@ public:
 	}
 	Matrix<int> GetAroundmatrix(Vei2 pos)const
 	{
-		if (aMats.IndexInBounds(pos))
+		if (aMats.GetSize() != Vei2(1, 1) && aMats.IndexInBounds(pos))
 		{
 			return aMats(pos);
 		}
@@ -711,6 +711,10 @@ public:
 		chunkPos = pos;
 	}
 	void PlaceLadderableTiles(int type);
+	Cell& GetCellAt(Vei2 cellPos)
+	{
+		return cells(cellPos);
+	}
 
 	static Vei2 PutChunkInWorld(Vei2 pos, Vei2 worldHasNChunks)
 	{
