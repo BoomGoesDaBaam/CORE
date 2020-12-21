@@ -13,9 +13,13 @@ public:
 	Animation(float keepTime = 1.0f): keepTime(keepTime) {}
 	Animation(std::vector<Surface> frames, float keepTime = 1.0f) :frames(frames),keepTime(keepTime)
 	{}
-	void Push(Surface newSurface)
+	Animation(Animation& a) : frames(a.frames), keepTime(a.keepTime) 
 	{
-		frames.push_back(newSurface);
+	
+	}
+	void Push(Surface newFrame)
+	{
+		frames.push_back(newFrame);
 	}
 	void Update(float dt)
 	{

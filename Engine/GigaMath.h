@@ -48,7 +48,7 @@ namespace GigaMath
 		}
 		return y1 - y0;
 	}
-	static float GetRandomNormDistribution()
+	static float GetRandomNormDistribution()		//returns a value between 0 and 1. More likely to be 0
 	{
 		std::random_device rd{};
 		std::mt19937 gen{ rd() };

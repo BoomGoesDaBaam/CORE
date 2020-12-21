@@ -34,7 +34,7 @@ bool World::TileIsInWorld(Vei2& pos)const
 
 Vec2_<Vei2> World::Cell2ChunkPos(Vei2 cellPos)const
 {
-	return Vec2_<Vei2>(cellPos / s.chunkHasNCells, cellPos % s.chunkHasNCells);
+	return Vec2_<Vei2>(cellPos / Settings::chunkHasNCells, cellPos % Settings::chunkHasNCells);
 }
 
 Vec3_<Vei2> World::Tile2ChunkPos(Vei2 tilePos)const
@@ -43,14 +43,30 @@ Vec3_<Vei2> World::Tile2ChunkPos(Vei2 tilePos)const
 
 	using namespace Settings;
 	Vec3_<Vei2> v3 = Vec3_<Vei2>(Vei2(-1, -1), Vei2(-1, -1), Vei2(-1, -1));
-	//VecN m = VecN(3, 1, Vei2(-1, -1));
-	v3.x = (tilePos / (CellSplitUpIn * s.chunkHasNCells));	//chunkPos
-	v3.y = (tilePos / CellSplitUpIn) % s.chunkHasNCells;		//cellPos in chunk
-	v3.z = tilePos % CellSplitUpIn;							//tilePos in cellPos 
 
-	//*(Vei2*)m[1] = Vei2(2, 2);
-	//return Vec2_<Vei2>(tilePos / CellSplitUpIn, tilePos % s.chunkHasNCells);
+	v3.x = (tilePos / (CellSplitUpIn * Settings::chunkHasNCells));		//chunkPos
+	v3.y = (tilePos / CellSplitUpIn) % Settings::chunkHasNCells;		//cellPos in chunk
+	v3.z = tilePos % CellSplitUpIn;								//tilePos in cellPos 
+
 	return v3;
+}
+int World::ObstacleMapAt(Vei2 tilePos)const
+{
+	auto tccPos = Tile2ChunkPos(tilePos);
+	return chunks(tccPos.x).GetObstacleMapAt(tccPos.y * Settings::CellSplitUpIn + tccPos.z);
+}
+int World::ObstacleMapAt(Vec3_<Vei2> cctPos)const
+{
+	return chunks(cctPos.x).GetObstacleMapAt(cctPos.y * Settings::CellSplitUpIn + cctPos.z);
+}
+int World::GroundedMapAt(Vei2 tilePos)const
+{
+	auto tccPos = Tile2ChunkPos(tilePos);
+	return chunks(tccPos.x).GetGrounedMapAt(tccPos.y * Settings::CellSplitUpIn + tccPos.z);
+}
+Obstacle* World::GetObstacleAt(Vec3_<Vei2> cctPos)
+{
+	return chunks(cctPos.x).GetObstacleAt(cctPos.y * Settings::CellSplitUpIn + cctPos.z);
 }
 Vei2 World::PutCellInWorldX(Vei2 v)const
 {
@@ -79,41 +95,10 @@ Vei2 World::PutCellInWorldX(int x, int y)const
 	}
 	return Vei2(x,y);
 }
-Matrix<int> World::GetObstacleAroundMatrix(Vei2 cell)const
-{
-	Matrix<int> m = Matrix<int>(3, 3, 0);
-
-	for (int y = 0; y < 3; y++)
-	{
-		for (int x = 0; x < 3; x++)
-		{
-			Vei2 tilePos = PutTileInWorld(Vei2(cell.x + x - 1, cell.y + y - 1));
-
-			if (!TileIsInWorldY(y))
-			{
-				m[x][y] = -1;
-			}
-			else
-			{
-				if (obstacleMap(tilePos) != -1)
-				{
-					m[x][y] = obstacles[obstacleMap(tilePos)]->type;
-				}
-				else
-				{
-					m[x][y] = -1;
-				}
-			}
-		}
-	}
-	return m;
-}
 void World::UpdateConMap()
 {
-	conMap.clear();
 	for (int type = 0; type < Settings::nDiffFieldTypes;type++)
 	{
-		conMap.push_back(Matrix<int>(s.wSize.x, s.wSize.y, 0));
 		for (int y = 0; y < s.wSize.y; y++)
 		{
 			for (int x = 0; x < s.wSize.x; x++)
@@ -123,12 +108,10 @@ void World::UpdateConMap()
 	
 				if (type != curCellType && IsSurroundedBy(Vei2(x, y), type))
 				{
-					conMap[type][x][y] = 1;
 					chunks(ccPos.x).SetConMapAt(ccPos.y, type, 1);
 				}
 				else
 				{
-					conMap[type][x][y] = 0;
 					chunks(ccPos.x).SetConMapAt(ccPos.y, type, 0);
 				}
 			}
@@ -138,12 +121,12 @@ void World::UpdateConMap()
 	{
 		for (int x = 0; x < s.worldHasNChunks.x; x++)
 		{
-			Matrix<int> mat = Matrix<int>(s.chunkHasNCells + 2, s.chunkHasNCells + 2, -1);
-			for (int yInner = 0; yInner < s.chunkHasNCells + 2; yInner++)
+			Matrix<int> mat = Matrix<int>(Settings::chunkHasNCells + 2, Settings::chunkHasNCells + 2, -1);
+			for (int yInner = 0; yInner < Settings::chunkHasNCells + 2; yInner++)
 			{
-				for (int xInner = 0; xInner < s.chunkHasNCells + 2; xInner++)
+				for (int xInner = 0; xInner < Settings::chunkHasNCells + 2; xInner++)
 				{
-					auto ccPos = Cell2ChunkPos(PutCellInWorldX(x * s.chunkHasNCells + xInner - 1, y * s.chunkHasNCells + yInner - 1));
+					auto ccPos = Cell2ChunkPos(PutCellInWorldX(x * Settings::chunkHasNCells + xInner - 1, y * Settings::chunkHasNCells + yInner - 1));
 
 					mat[xInner][yInner] = chunks(ccPos.x).GetCellTypeAt(ccPos.y);
 				}
@@ -155,77 +138,50 @@ void World::UpdateConMap()
 void World::UpdateGroundedMap(Vei2 pos, Vei2 size)
 {
 	using namespace Settings;
-	if (size == Vei2(-1, -1) || size == s.wSize)
+	if (obstaclesOn)
 	{
-		size = s.worldHasNChunks;
-		groundedMap = Matrix<int>(s.wSize.x * CellSplitUpIn, s.wSize.y * CellSplitUpIn, -1);
-	}
-
-	for (int y = 0; y < pos.y + size.y; y++)
-	{
-		for (int x = pos.x; x < pos.x + size.x; x++)
+		if (size == Vei2(-1, -1) || size == s.wSize)
 		{
-			chunks[x][y].UpdateGroundedMap();
+			size = s.worldHasNChunks;
 		}
-	}
-	for (int y = 0; y < pos.y + size.y; y++)
-	{
-		for (int x = pos.x; x < pos.x + size.x; x++)
+
+		for (int y = 0; y < pos.y + size.y; y++)
 		{
-			chunks[x][y].PlaceLadderableTiles(3);
+			for (int x = pos.x; x < pos.x + size.x; x++)
+			{
+				chunks[x][y].UpdateGroundedMap();
+			}
 		}
-	}
-
-	/*	
-	assert(pos.y >= 0 && pos.y < s.wSize.y);
-
-	using namespace Settings;
-	if (size == Vei2(-1, -1) || size == s.wSize)
-	{
-		size = s.wSize;
-		groundedMap = Matrix<int>(s.wSize.x * CellSplitUpIn, s.wSize.y * CellSplitUpIn, -1);
-	}
-
-	for (int y = pos.y; y < pos.y+size.y; y++)
-	{
-		for (int x = pos.x; x < pos.x+size.x; x++)
+		for (int y = 0; y < pos.y + size.y; y++)
 		{
-			Vei2 pos = PutCellInWorldX(Vei2(x, y));
-			assert(CellIsInWorld(pos));
-			SetTilesAT(pos, -1);
-
-			int curType = cells[pos.x][pos.y].type;
-			if (Settings::anyGroundedTypes(curType))				//grounded
+			for (int x = pos.x; x < pos.x + size.x; x++)
 			{
-				SetTilesAT(pos, 1);
-				PlaceConnectionsIntoCelltiles(pos, 2, 2, -1, hillTypesARE);
-			}
-			else if(Settings::anyOfHillTypes(curType))	//hills
-			{
-				SetTilesAT(pos, 2);
-			}
-			else if (Settings::anyLiquidType(curType))	//liqids
-			{
-				PlaceConnectionsIntoCelltiles(pos, 2,2,-1, hillTypesARE);
-
-				PlaceConnectionsIntoCelltiles(pos, 1,-1,-1, groundedTypesARE);
-				PlaceConnectionsIntoCelltiles(pos, 1, -1, -1, maskTypesARE);
-			}
-			else if (Settings::anyMaskedType(curType))	//swamp
-			{
-				PlaceTilesForMaskedField(pos,1, -1, -1, 14);
-
-				PlaceConnectionsIntoCelltiles(pos, 2, 2, -1, hillTypesARE);
-				PlaceConnectionsIntoCelltiles(pos, 1, -1, -1, groundedTypesARE);
+				chunks[x][y].PlaceLadderableTiles(3);
 			}
 		}
 	}
-	ChangeGroundedVal(-1, 0);
-	PlaceLadderableTiles(3);
-	*/
 }
+void World::SpawnUnits(int n, Team& inTeam, Vei2 tilePos)
+{
+	for (int i = 0; i < n; i++)
+	{
+		float rad = (float)rng.Calc(360) * 0.0174533f;
+		Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin<float>(1.0f, 0.0f, rad);
+		GenerateObstacle(tilePos + Vei2(p1 * 5), 10);
+	}
+}
+void World::SpawnPlayer()
+{
+	Vei2 spawnpoint = Vei2(0, s.wSize.y/2);
+	while (GroundedMapAt(spawnpoint) != 1)
+	{
+		spawnpoint.x++;
+	}
+	SpawnUnits(5, player, spawnpoint);
+	auto cctPos = Tile2ChunkPos(spawnpoint);
+	mChunk = cctPos.x;
 
-
+}
 Vei2 World::PutTileInWorld(Vei2 pos)const
 {
 	return PutTileInWorld(pos.x, pos.y);
@@ -263,10 +219,12 @@ Vei2 World::TileIsInCell(Vei2 tilePos)
 }
 void World::DestroyObstacleAt(Vei2 tilePos)
 {
-	if (obstacleMap(tilePos) != -1)
+
+	/*
+	if (ObstacleMapAt(tilePos) != -1)
 	{
-		int index = obstacleMap(tilePos);
-		Obstacle* curObst = obstacles[obstacleMap(tilePos)].get();
+		int index = ObstacleMapAt(tilePos);
+		Obstacle* curObst = obstacles[ObstacleMapAt(tilePos)].get();
 		Vei2 size = Settings::obstacleSizes[curObst->type];
 		for (int y = 0; y < size.y; y++)
 		{
@@ -277,6 +235,7 @@ void World::DestroyObstacleAt(Vei2 tilePos)
 		}
 		obstacles.erase(obstacles.begin() + index);
 	}
+	*/
 }
 std::vector<SubAnimation> World::GetConnectionsOfTypes(Vei2 pos, int* types)
 {
@@ -503,7 +462,7 @@ void World::Zoom(Vei2 delta)
 		c.y += delta.y / 2;
 		c.y = s.chunkSize.y * deltaY;
 	}
-	fsC->Update(s.chunkSize / s.chunkHasNCells);
+	fsC->Update(s.chunkSize / Settings::chunkHasNCells);
 }
 
 void World::ApplyCameraChanges(Vec2 cDelta)
@@ -567,33 +526,22 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 {
 	Vec2 mP = (Vec2)e.GetPos();
-	fcctPos = GetHitTile(mP);
-
+	fcctPosHover = GetHitTile(mP);
 	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLocked())
 	{
-		//fCell = GetCellHit(mP);
-		//fTile = GetTileHit(mP);
-
-		fccPos.x = GetChunkHit(mP);
-		RectF pos = GetChunkRect(fccPos.x);
-		Vei2 delta = Vei2(mP.x - pos.left, pos.bottom - mP.y);
-
-		fccPos.y = delta / (s.chunkSize.x / s.chunkHasNCells);
+		fcctPos = GetHitTile(mP);
+		if (ObstacleMapAt(fcctPos) != -1)
+		{
+			focusedObst = GetObstacleAt(fcctPos);
+		}
 
 		if (buildMode == true)
 		{
-			//GenerateObstacle(fTile, placeObstacle);
 			auto fcctPos = GetHitTile(mP);
 			chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, placeObstacle);
 		}
-		//chunks(GetChunkHit(mP)).GenerateObstacleAt(chunks(GetChunkHit(mP)).getHitTile(, 3);
-		//GenerateObstacleExplosion(fTile, 50, 4);
-		/*
-		cells(fCell).type = 14;
-		UpdateConMap();
-		UpdateGroundedMap(Vei2(fCell.x-1,fCell.y-1),Vei2(3,3));
-		*/
 	}
+
 	if (e.GetType() == Mouse::Event::WheelDown)
 	{
 		Zoom(Vei2(-50, -50));
@@ -602,11 +550,12 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 	{
 		Zoom(Vei2(50, 50));
 	}
-	//fTile = GetTileHit(mP);
+
 	posAllowed = ObstaclePosAllowed(fTile, placeObstacle);
 	Vec2 cDelta = gH.MoveCamera(e);
 
 	ApplyCameraChanges(cDelta);
+	
 }
 void World::HandleKeyboardEvents(Keyboard::Event& e)
 {
@@ -625,10 +574,6 @@ void World::HandleKeyboardEvents(Keyboard::Event& e)
 }
 void World::UpdateGameLogic(float dt)
 {
-	std::for_each(obstacles.begin(), obstacles.end(), [&](auto& obst)
-	{
-		obst->Update(dt);
-	});
 	auto renderRect = GetRenderRect();
 	int xStart = renderRect.left;
 	int xStop = renderRect.right;
@@ -661,13 +606,13 @@ void World::Draw(Graphics& gfx) const
 	int yStop = renderRect.bottom;
 
 #ifdef _DEBUG 
-	xStart = 0;
-	xStop = 0;
-	yStart = 0;
-	yStop = 0;
+	xStart = -1;
+	xStop = 1;
+	yStart = -1;
+	yStop = 1;
 #endif
-
-
+	
+	
 	for (int layer = 0; layer < 4; layer++)
 	{
 		for (int y = yStart; y <= yStop; y++)
@@ -686,21 +631,20 @@ void World::Draw(Graphics& gfx) const
 				case 1:
 					if (grit || buildMode)
 					{
-						chunks(curChunk).DrawGroundedMap(curChunkPos, s.chunkSize.x / s.chunkHasNCells, gfx);
+						chunks(curChunk).DrawGroundedMap(curChunkPos, s.chunkSize.x / Settings::chunkHasNCells, gfx);
 					}
 					break;
 				case 2:
 					if (grit || buildMode)
 					{
-						chunks(curChunk).DrawGrit(curChunkPos, s.chunkSize.x / s.chunkHasNCells, gfx);
-						//DrawObstacle(fTile, placeObstacle, gfx);
+						chunks(curChunk).DrawGrit(curChunkPos, s.chunkSize.x / Settings::chunkHasNCells, gfx);
 					}
 					break;
 				case 3:
 					chunks(curChunk).DrawObstacles(curChunkRect, gfx);
-					if (fccPos.x == curChunk)
+					if (fcctPos.x == curChunk)
 					{
-						chunks(curChunk).DrawSurfaceAt(curChunkPos, fccPos.y, s.chunkSize.x / s.chunkHasNCells, 1.5f, resC->tC.frames.at(0).GetCurSurface(), gfx);
+						chunks(curChunk).DrawSurfaceAt(curChunkPos, fcctPos.y, s.chunkSize.x / Settings::chunkHasNCells, 1.5f, resC->tC.frames.at(0).GetCurSurface(), gfx);
 					}
 					gfx.DrawRect(GetChunkRect(mChunk), Colors::Red);
 					break;
@@ -710,174 +654,21 @@ void World::Draw(Graphics& gfx) const
 	}
 	if (buildMode )
 	{
-		if (chunks(fcctPos.x).ObstaclePosAllowed(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, placeObstacle))
+		if (chunks(fcctPosHover.x).ObstaclePosAllowed(fcctPosHover.y * Settings::CellSplitUpIn + fcctPosHover.z, placeObstacle))
 		{
-			chunks(fcctPos.x).DrawObstacleOutlines(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, placeObstacle, GetChunkRect(fcctPos.x), Colors::Green, gfx);
+			chunks(fcctPosHover.x).DrawObstacleOutlines(fcctPosHover.y * Settings::CellSplitUpIn + fcctPosHover.z, placeObstacle, GetChunkRect(fcctPosHover.x), Colors::Green, gfx);
 		}
 		else
 		{
-			chunks(fcctPos.x).DrawObstacleOutlines(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, placeObstacle, GetChunkRect(fcctPos.x), Colors::Red, gfx);
+			chunks(fcctPosHover.x).DrawObstacleOutlines(fcctPosHover.y * Settings::CellSplitUpIn + fcctPosHover.z, placeObstacle, GetChunkRect(fcctPosHover.x), Colors::Red, gfx);
 		}
-		chunks(fcctPos.x).DrawObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, placeObstacle, GetChunkRect(fcctPos.x), gfx);
+		chunks(fcctPosHover.x).DrawObstacle(fcctPosHover.y * Settings::CellSplitUpIn + fcctPosHover.z, placeObstacle, GetChunkRect(fcctPosHover.x), gfx);
 	}
-
-
-	/*			3x3
-	for (int y = 0; y <= 2; y++)
+	if (focusedObst != nullptr)
 	{
-		for (int x = -1; x <= 1; x++)
-		{
-	*/
-
-
-	/*
-	Vei2 mos = Graphics::GetMidOfScreen();
-	SpriteEffect::Transparent e = SpriteEffect::Transparent(0.6f);
-
-	int xStart = -(mos.x / cSize.x) *2 - 1;
-	int xStop = 1 + (mos.x / cSize.x) * 2;
-	int yStart = -(mos.y / cSize.y) * 2;
-	int yStop = 2 + (mos.y / cSize.y) * 2;
-
-	#ifdef _DEBUG 
-	xStart = -1;
-	xStop = 1;
-	yStart = 0;
-	yStop = 2;
-	#endif
-
-	for (int layer = 0; layer <= 2; layer++)
-	{
-		for (int y = yStart; y <= yStop; y++)
-		{
-			for (int x = xStart; x <= xStop; x++)
-			{
-				Vei2 curXY = PutCellInWorldX(mCell + Vei2(x, y) + Vei2(0, -1));
-				const Cell& curCell = cells(curXY);
-				int cellType = curCell.type;
-				RectI curCellPos = (RectI)GetCellRect(Vei2(x, y) + mCell);
-
-				switch (layer)
-				{
-				case 0:
-					assert(cellType >= 0 && cellType < Settings::nDiffFieldTypes);
-					gfx.DrawSurface(curCellPos, RectI(Vei2(0, 0), 50, 50), tC->fields.at(cellType).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-					
-					for (int i = 0; i < Settings::nDiffFieldTypes; i++)
-					{
-						int order = Settings::typeLayer[i];
-						if (conMap[order][curXY.x][curXY.y] == 1)
-						{
-							gfx.DrawConnections(order, Vei2(curCellPos.left, curCellPos.top), GetAroundMatrix(curXY), fsC->FieldCon, tC->fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-						}
-					}
-					break;
-				case 1:
-						using namespace Settings;
-						for (int tileLayer = 0; tileLayer < 2; tileLayer++)
-						{
-							for (int xOnCell = 0; xOnCell < CellSplitUpIn; xOnCell++)
-							{
-								for (int yOnCell = 0; yOnCell < CellSplitUpIn; yOnCell++)
-								{
-									Vei2 v = (curXY * CellSplitUpIn + Vei2(xOnCell, yOnCell));
-									assert(v.x < 5000 && v.x >= 0);
-									assert(v.y < 5000 && v.y >= 0);
-
-
-									float xPos = curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth();
-									float yPos = curCellPos.bottom - ((float)(yOnCell + 1) / CellSplitUpIn) * curCellPos.GetHeight();
-									RectF curP = RectF(Vec2(xPos, yPos), (float)std::ceil((double)curCellPos.GetWidth() / CellSplitUpIn), (float)std::ceil((double)curCellPos.GetHeight() / CellSplitUpIn));
-									if (Graphics::GetScreenRect<float>().IsOverlappingWith(curP))
-									{
-										if (obstacleMap(v) != -1)
-										{
-											if (obstacleMap(PutTileInWorld(v - Vei2(1, 0))) != obstacleMap(v) && obstacleMap(PutTileInWorld(v - Vei2(0, 1))) != obstacleMap(v))
-											{
-												if (tileLayer == 1 && Settings::Obstacle2MultiObstacle(obstacles[obstacleMap(v)]->type) != -1)
-												{
-													obstacles[obstacleMap(v)]->Draw(gfx, GetTileRect(v));
-												}
-												if (tileLayer == 0 && Settings::Obstacle2MultiObstacle(obstacles[obstacleMap(v)]->type) == -1)
-												{
-													obstacles[obstacleMap(v)]->Draw(gfx, GetTileRect(v));
-												}
-											}
-										}
-
-										if (grit)
-										{
-											curP.PutInto(Graphics::GetScreenRect<float>());
-											if (groundedMap(v) == 0)
-											{
-												gfx.DrawFilledRect(curP, Colors::Red, e);
-											}
-											else if (groundedMap(v) == 1)
-											{
-												//gfx.DrawRect(curP, Colors::Green, e);
-											}
-											else if (groundedMap(v) == -1)
-											{
-												gfx.DrawFilledRect(curP, Colors::Magenta, e);
-											}
-											else if (groundedMap(v) == 2)
-											{
-												gfx.DrawFilledRect(curP, Colors::Blue, e);
-											}
-											else if (groundedMap(v) == 3)
-											{
-												gfx.DrawFilledRect(curP, Colors::Cyan, SpriteEffect::Transparent(0.5f));
-											}
-											/*
-											if (v == fTile)
-											{
-												gfx.DrawFilledRect(curP, Colors::Black, SpriteEffect::Transparent(0.5f));
-											}
-											''''
-										}
-									}
-								}
-							}
-							if (grit || buildMode)
-							{
-								for (int xOnCell = 0; xOnCell < Settings::CellSplitUpIn; xOnCell++)
-								{
-									if (xOnCell == 0 || xOnCell == CellSplitUpIn)
-									{
-										gfx.DrawLine(Vec2((float)curCellPos.left, (float)curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2((float)curCellPos.right, (float)curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black), 3);
-										gfx.DrawLine(Vec2((float)curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), (float)curCellPos.top), Vec2((float)curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), (float)curCellPos.bottom), SpriteEffect::OneColor(Colors::Black), 3);
-									}
-									else
-									{
-										gfx.DrawLine(Vec2((float)curCellPos.left, (float)curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2((float)curCellPos.right, (float)curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black));
-										gfx.DrawLine(Vec2((float)curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), (float)curCellPos.top), Vec2((float)curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), (float)curCellPos.bottom), SpriteEffect::OneColor(Colors::Black));
-									}
-								}
-							}
-
-							if (buildMode)
-							{
-								DrawObstacle(fTile, placeObstacle, gfx, Colors::Magenta, 0);
-								if (!posAllowed)
-								{
-									DrawObstacle(fTile, placeObstacle, gfx, Colors::Red, 0);
-								}
-								//gfx.DrawSurface(GetTileRect(fTile), Colors::Black, SpriteEffect::Rainbow());
-							}
-						}
-					break;
-				case 2:
-					if (curXY == fCell)
-					{
-						gfx.DrawSurface(curCellPos.GetExpanded(cSize.x / 5), tC->frames.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-					}
-					break;
-				}
-				
-			}
-		}
+		chunks(focusedObst->chunkPos).DrawObstacleOutlines(focusedObst->tilePos, focusedObst->type, GetChunkRect(focusedObst->chunkPos), Colors::Blue, gfx);
 	}
-	*/
+	
 }
 void World::DrawObstacle(Vei2 tilePos, int type, Graphics& gfx, Color color, int frame)const
 {
@@ -922,21 +713,6 @@ bool World::NeedsConnections(Vei2 curXY)const
 	}
 	return true;
 }
-bool World::FIDF(int first, int second)const
-{
-	if (first != second)
-	{
-		for (int i = 0; i < Settings::nDiffFieldTypes; i++)
-		{
-			if (Settings::typeLayer[i] == first || Settings::typeLayer[i] == second)
-			{
-				return Settings::typeLayer[i] == first;
-			}
-		}
-	}
-	return false;
-}
-
 bool World::GenerateObstacle(Vei2 tilePos, int type, int ontoType, int surrBy)
 {
 	tilePos = PutTileInWorld(tilePos);
@@ -967,14 +743,14 @@ void World::Init(WorldSettings& s)
 	mChunk = Vei2(10, s.worldHasNChunks.y / 2);
 	for (int type = 1; type < tC->fields.size(); type++)		//Create connectionsmaps
 	{
-		conMap.push_back(Matrix<int>(s.wSize.x, s.wSize.y, 0));
+		//conMap.push_back(Matrix<int>(s.wSize.x, s.wSize.y, 0));
 	}
 	Zoom(Vei2(0,0));
 }
 
 void World::Generate(WorldSettings& s)
 {
-	chunks = Matrix<Chunk>(s.worldHasNChunks.x, s.worldHasNChunks.y, Chunk(s.chunkHasNCells, Cell(s.defType), &chunks,  resC)); //Welt erstellen & default value setzen
+	chunks = Matrix<Chunk>(s.worldHasNChunks.x, s.worldHasNChunks.y, Chunk(Settings::chunkHasNCells, Cell(s.defType), &chunks,  resC)); //Welt erstellen & default value setzen
 	for (int y = 0; y < chunks.GetColums(); y++)
 	{
 		for (int x = 0; x < chunks.GetRows(); x++)
@@ -984,7 +760,7 @@ void World::Generate(WorldSettings& s)
 	}
 
 	//cells = Matrix<Cell>(s.wSize.x, s.wSize.y, Cell(s.defType));		
-	obstacleMap = Matrix<int>(s.wSize.x * Settings::CellSplitUpIn, s.wSize.y * Settings::CellSplitUpIn, -1);
+	//obstacleMap = Matrix<int>(s.wSize.x * Settings::CellSplitUpIn, s.wSize.y * Settings::CellSplitUpIn, -1);
 	
 	switch (s.defBlueprint)
 	{
@@ -1037,13 +813,18 @@ void World::Generate(WorldSettings& s)
 			GenerateExplosion(pos, 6, 12, -1);
 			GenerateExplosion(pos, 4, 8, 12);
 		}
+		UpdateConMap();
+		UpdateGroundedMap();
+
+
 		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 10; i++)	//nutritious plants
 		{
 			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), 10 + rng.Calc(s.wSize.y - 20)), rng.GetNormalDist() * 3, 4, 1, 20, 0);
 		}
-		UpdateConMap();
-		UpdateGroundedMap();
-
+		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 20; i++)	//swamp
+		{
+			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), 10 + rng.Calc(s.wSize.y - 20)), rng.GetNormalDist() * 6, 14, 0, 20);
+		}
 
 		
 		for (int i = 0; i < (s.wSize.x * s.wSize.y); i++)	//Trees
@@ -1128,6 +909,10 @@ void World::Generate(WorldSettings& s)
 		break;
 	}
 	
+	UpdateConMap();
+	UpdateGroundedMap();
+
+	SpawnPlayer();
 	//CutHills(1);		//NICHT ZUENDE!!!!
 }
 void World::GenerateCircle(Vei2 pos, int radius,int type, int ontoType, int surrBy)
@@ -1260,12 +1045,12 @@ void World::GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, int ontoType,
 				auto tccPos = Tile2ChunkPos(tilePos);
 				auto aMat = chunks(tccPos.x).GetAroundmatrix(tccPos.y);
 
-				int curObstacleIndex = obstacleMap(tilePos);
+				int curObstacleIndex = ObstacleMapAt(tilePos);
 				if (curObstacleIndex != -1 && obstacles[curObstacleIndex]->type == ontoType)
 				{
 					DestroyObstacleAt(tilePos);
 				}
-				if (obstacleMap(tilePos) == -1 && (aMat.HasValue(surrBy) || surrBy == -1) && aMat[1][1] != surrBy)
+				if (ObstacleMapAt(tilePos) == -1 && (aMat.HasValue(surrBy) || surrBy == -1) && aMat[1][1] != surrBy)
 				{
 					GenerateObstacle(tilePos, type);
 				}
@@ -1290,12 +1075,12 @@ void World::GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, int ontoType,
 				Vei2 tilePos = PutTileInWorld(Vei2(xi, y));
 				auto tccPos = Tile2ChunkPos(tilePos);
 				auto aMat = chunks(tccPos.x).GetAroundmatrix(tccPos.y);
-				int curObstacleIndex = obstacleMap(tilePos);
+				int curObstacleIndex = ObstacleMapAt(tilePos);
 				if (curObstacleIndex != -1 && obstacles[curObstacleIndex]->type == ontoType)
 				{
 					DestroyObstacleAt(tilePos);
 				}
-				if (obstacleMap(tilePos) == -1 && (aMat.HasValue(surrBy) || surrBy == -1) && aMat[1][1] != surrBy)
+				if (ObstacleMapAt(tilePos) == -1 && (aMat.HasValue(surrBy) || surrBy == -1) && aMat[1][1] != surrBy)
 				{
 					GenerateObstacle(tilePos, type);
 				}
@@ -1336,7 +1121,10 @@ bool World::GenerateCell(Vei2 pos, int type, int ontoType, int surrBy)
 		//Matrix<int> aMat = chunks(ccPos.x).GetAroundmatrix(ccPos.y);
 		
 		Matrix<int> aMat = chunks(ccPos.x).GetAroundmatrix(ccPos.y);
-
+		if (surrBy == 0)
+		{
+			int test = 0;
+		}
 		if ((surrBy == -1 || aMat.HasValue(surrBy)) && (ontoType == -1 || chunks(ccPos.x).GetCellTypeAt(ccPos.y) == ontoType))
 		{
 			chunks(ccPos.x).SetTypeAt(ccPos.y, type);

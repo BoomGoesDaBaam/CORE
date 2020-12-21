@@ -1,5 +1,6 @@
 #pragma once
 #include "Rect.h"
+#include <fstream>
 namespace Settings
 {
 	/*		### Types ###
@@ -35,6 +36,7 @@ namespace Settings
 	//	'const'		= generated in runtime
 
 	static constexpr int nDiffFieldTypes = 15;										//Array Nullterminator == -1
+	static constexpr int nDiffObstackes = 11;
 	static constexpr int nDiffWindows = 1;
 	static constexpr int typeLayer[] = { 6,0,8,14,4,3,9,1,5,7,2,13,12,10,11,-1 };		//Orden in wich the connections are drawn
 	static constexpr int hillTypesARE[] = { 11,10,12,-1 };
@@ -42,14 +44,20 @@ namespace Settings
 	static constexpr int maskTypesARE[] = { 14,-1 };							    //Types like swamp that need to copy watertexture behind
 	static constexpr int groundedTypesARE[] = { 13,1,2,3,4,5,7,9,-1 };				//Types where you can place normal Buildings	
 	static constexpr int CellSplitUpIn = 25;										//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
-	
+	static constexpr int chunkHasNCells = 5;
+
 	static const int obstacleStates[] = { 1,2,1,1,2,1,1,1,1,1,1 };
 	static const Vei2 obstacleSizes[] = { Vei2(2,2), Vei2(1,1), Vei2(1,1), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(2,2), Vei2(4,4), Vei2(1,1) };
 	static const std::vector<Vei2> multiObstacleSize[] = { {Vei2(5,5)}, {Vei2(5,5)} };					//sizes of hidden frames
 	static const Vei2 multiObstaclePos[] = { Vei2(-2,-2), Vei2(-2,-2) };									//relativ pos of hidden frames in tiles
 
+	//Graphic options
+	static bool displayObstacles = true;
 
+	//Game options
+	static bool obstaclesOn = true;
 
+	//
 	static int lang = 0;															//choosen language (0 = english, 1 = german)
 
 	const std::string lang_fieldInformation[] = { "Field information", "Feldinformationen" };
@@ -114,13 +122,20 @@ namespace Settings
 	const std::string lang_swamp[] = { "swamp", "Sumpf" };
 
 	const std::string lang_unknown[] = { "unbekannt", "unknown" };
-	const std::string lang_noInformations[] = { "no information", "Keine Informationen vorhanden" };
-	const std::string lang_flora[] = { "flora", "Flora" };			// Goettin
+	const std::string lang_noInformation[] = { "no information", "Keine Informationen vorhanden" };
+	const std::string lang_flora[] = { "Flora", "Flora" };			// Goettin
+	const std::string lang_Obstacle[] = { "Obstacle", "Hindernis" };			// Goettin
 	const std::string lang_kilogram[] = { "kg", "kg" };		
 
 	const std::string lang_tent[] = { "tent", "Zelt" };
 	const std::string lang_bonfire[] = { "bonfire", "Lagerfeuer" };
 	const std::string lang_townhall[] = { "townhall", "Rathaus" };
+
+	//Obstacles
+	const std::string lang_tree[] = { "tree", "Baum" };
+	const std::string lang_fir[] = { "fir", "Tanne" };
+	const std::string lang_box[] = { "box", "Box" };
+	const std::string lang_unit[] = { "unit", "Einheit" };
 
 
 	static constexpr float percentForGrab[] = { 0.05f, 0.05f };
@@ -230,6 +245,9 @@ namespace Settings
 	{
 		switch (type)
 		{
+		case -1:
+			return lang_noInformation[lang];
+			break;
 		case 0:
 			return lang_water[lang];
 			break;
@@ -274,6 +292,55 @@ namespace Settings
 			break;
 		case 14:
 			return lang_swamp[lang];
+			break;
+		case 15:
+			return "Settings::GetTypeString needs an update";
+			break;
+		}
+		return lang_unknown[lang];
+	}
+	static std::string GetObstacleString(int type)
+	{
+		switch (type)
+		{
+		case -1:
+			return lang_noInformation[lang];
+			break;
+		case 0:
+			return lang_tent[lang];
+			break;
+		case 1:
+			return lang_tree[lang];
+			break;
+		case 2:
+			return lang_bonfire[lang];
+			break;
+		case 3:
+			return lang_townhall[lang];
+			break;
+		case 4:
+			return lang_tree[lang];
+			break;
+		case 5:
+			return lang_cactus[lang];
+			break;
+		case 6:
+			return lang_box[lang];
+			break;
+		case 7:
+			return lang_stone[lang];
+			break;
+		case 8:
+			return lang_fir[lang];
+			break;
+		case 9:
+			return lang_stone[lang];
+			break;
+		case 10:
+			return lang_unit[lang];
+			break;
+		case 11:
+			return "Settings::GetObstacleString needs an update";
 			break;
 		}
 		return lang_unknown[lang];

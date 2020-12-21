@@ -31,7 +31,8 @@ Game::Game(MainWindow& wnd)
 	curW(std::make_unique<World>(World::WorldSettings(),resC,c)),
 	igwH(resC)
 {
-	
+	//Settings::ReloadFile();
+
 	//AddScrollWindow(RectF(Vec2(50, 50), 50, 50), RectF(Vec2(110, 50), 10, 50));
 	//AddText(RectF(Vec2(50, 100), 500, 500), "Yahhhhhhooooouuuu", 10, configs.resC->tC.fonts[0]);
 	//TILEFRAME p(pc, m);
@@ -85,7 +86,7 @@ void Game::UpdateModel()
 		}
 	}
 	
-	//curW->UpdateGameLogic(dt);
+	curW->UpdateGameLogic(dt);
 	//go.objects[0]->SetPos((Vec2)wnd.mouse.GetPos());
 	/*
 	PARTCONF pc(resC);
@@ -116,7 +117,7 @@ void Game::ComposeFrame()
 		std::ostringstream oss1, oss2, oss4, oss5;
 		oss1 <<"World cords" << curW->GetmChunk().x << " Camera:(" << c.x << " | " << c.y << ")" << "mP: " << mP << "mChunk: " << curW->GetmChunk() << "chunks Drawn to left: " << curW->GetChunksDrawnToLeft();
 		oss2 <<"fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CSize:" << curW->GetcSize().x << "   x-Felder:"<<curW->GetxStart();
-		oss4 << "Type:"<<curW->GetfCellType()<<"  use count tC:"<<resC.use_count()<<" ignoreMouse:"<< ignoreMouse;
+		oss4 << "Type:"<<curW->GetfCellType()<<"  use count tC:"<<resC.use_count()<<" ignoreMouse:"<< ignoreMouse << " opt1:" <<Settings::displayObstacles;
 		resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 14, Colors::Red);
 		resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 14, Colors::Red);
 		resC->tC.fonts.at(0).DrawText(oss4.str().c_str(), 25, 65, 14, Colors::Red);

@@ -136,7 +136,7 @@ void Chunk::SetTilesAT(Vei2 pos, Matrix<int> matrix)
 	for (int yInCell = 0; yInCell < Settings::CellSplitUpIn; yInCell++)
 	{
 		for (int xInCell = 0; xInCell < Settings::CellSplitUpIn; xInCell++)
-		{
+		{	
 			int curX = (__int64)pos.x * Settings::CellSplitUpIn + xInCell;
 			int curY = (__int64)pos.y * Settings::CellSplitUpIn + yInCell;
 

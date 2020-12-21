@@ -25,12 +25,11 @@ public:
 #ifdef _DEBUG 
 			worldHasNChunks = Vei2(3, 3);
 #endif
-			wSize = Vei2(worldHasNChunks.x * chunkHasNCells, worldHasNChunks.y * chunkHasNCells);
+			wSize = Vei2(worldHasNChunks.x * Settings::chunkHasNCells, worldHasNChunks.y * Settings::chunkHasNCells);
 		}
 		int defBlueprint = 0;
 		int defType = 0;
 		Vei2 wSize;
-		int chunkHasNCells = 5;
 		Vei2 worldHasNChunks = Vei2(25, 25);
 		Vei2 chunkSize = { 250, 250 };
 	};
@@ -45,9 +44,11 @@ private:
 	//Gamevars
 	Vei2 mChunk = { 0,0 };
 	Vei2 fTile = { 0,0 };
-	Vec2_<Vei2> fccPos = { {0,0},{0,0} };
 
 	Vec3_<Vei2> fcctPos = Vec3_<Vei2>(Vei2(10, 12), Vei2(1, 1), Vei2(1, 1));
+	Vec3_<Vei2> fcctPosHover = Vec3_<Vei2>(Vei2(10, 12), Vei2(1, 1), Vei2(1, 1));
+
+	Obstacle* focusedObst = nullptr;
 
 	Vec2& c;								//Camera
 
@@ -56,8 +57,6 @@ private:
 	//Matrix<Cell> cells;
 	Matrix<Chunk> chunks;
 	
-	std::vector<Matrix<int>> conMap;		//Connectionmap	 (1 = needsConnections, 0 = does not		index for type)
-	Matrix<int> groundedMap;				// '0' = spot is not grounded, '1' = is grounded, '-1' = not identified yet (will be 0 if not changed), '2' = hill
 	Matrix<int> obstacleMap;				// '-1' = empty   < -1 index of obstacle in obstacleVec
 	
 	std::vector<std::unique_ptr<Obstacle>> obstacles;
@@ -70,40 +69,50 @@ private:
 	int placeObstacle = 0;
 	bool posAllowed = true;
 
-	Team player = Team("Die reinlich raeudigen Raucher");
+	Team player = Team("Die reichlich raeudigen Raucher");
+	Team enemie1 = Team("In dem Sinne");
+	Team enemie2 = Team("Nichts wie Zeg");
+	Team enemie3 = Team("Was geht!");
 
+	//Mouse calculations
 	Vei2 GetChunkHit(Vec2 mP)const;
-	RectF GetChunkRect(Vei2 pos)const;
-
 	Vec3_<Vei2> GetHitTile(Vec2 mP)const;
 
+	//Graphic calculations
+	RectF GetChunkRect(Vei2 pos)const;
+
+	//Tests and corrections
 	bool CellIsInWorld(Vei2& pos)const;
 	bool TileIsInWorld(Vei2& pos)const;
-
 	bool CellIsInWorldY(int y)const;		
 	bool TileIsInWorldY(int y)const;
-
 	bool ChunkIsInWorld(Vei2& cellPos)const;
 
-
-	Vec2_<Vei2> Cell2ChunkPos(Vei2 CellPos)const;			//	'x' = chunkPos	'y' = cellPos in chunk
-	Vec3_<Vei2> Tile2ChunkPos(Vei2 tilePos)const;	//	1x3 Matrix		'0' = chunkPos		'1' = cellPos		'2' = tilePos
-
-
-	Vei2 PutCellInWorldX(Vei2 pos)const;		//Calculates coordinates when x negativ or > cSize.x  
+	Vei2 PutCellInWorldX(Vei2 pos)const;					//Calculates coordinates when x negativ or > cSize.x  
 	Vei2 PutCellInWorldX(int x, int y)const;
-
 	Vei2 PutTileInWorld(Vei2 pos)const;
 	Vei2 PutTileInWorld(int x, int y)const;
-	
-	Vei2 TileIsInCell(Vei2 tilePos);
 
+	//Transformation between chunk and flat
+	Vec2_<Vei2> Cell2ChunkPos(Vei2 CellPos)const;			//	'x' = chunkPos	'y' = cellPos in chunk
+	Vec3_<Vei2> Tile2ChunkPos(Vei2 tilePos)const;			//	1x3 Matrix		'0' = chunkPos		'1' = cellPos		'2' = tilePos
+	Vei2 chunkPos2Flat(Vec3_<Vei2> cctPos)
+	{
+		return cctPos.x * Settings::CellSplitUpIn * Settings::chunkHasNCells + cctPos.y * Settings::CellSplitUpIn + cctPos.z;
+	}
+	int ObstacleMapAt(Vei2 tilePos)const;
+	int ObstacleMapAt(Vec3_<Vei2> tilePos)const;
+	int GroundedMapAt(Vei2 tilePos)const;
+
+	Obstacle* GetObstacleAt(Vec3_<Vei2> tilePos);
+
+	Vei2 TileIsInCell(Vei2 tilePos);
+	//Init
 	void DestroyObstacleAt(Vei2 tilePos);
-	Matrix<int> GetObstacleAroundMatrix(Vei2 cell)const;
 	void UpdateConMap();							//
 	void UpdateGroundedMap(Vei2 pos=Vei2(0,0), Vei2 size = Vei2(-1,-1));						// VERY performance heavy - UpdateConMap must be called before UpdateGroundedMap
-	//void SetTilesAT(Vei2 pos, int value);
-	//void SetTilesAT(Vei2 pos, Matrix<int> matrix);	//sets tile(x0,y0) in Cell(x1,y1) to type when matrix at(x0,y0) != 0
+	void SpawnUnits(int n, Team& inTeam, Vei2 tilePos);
+	void SpawnPlayer();
 	bool IsSurroundedBy(Vei2 pos, int type);		//3x3 around pos
 	//Private not const Funktions
 	void Zoom(Vei2 delta);				//Delta == delta cSize
@@ -116,7 +125,6 @@ private:
 	void GenerateLine(Vec2 p0, Vec2 p1, int type, int ontoType = -1, int thickness = 1, int surrBy = -1);
 	void GenerateExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 100, int surrBy = -1);
 	bool GenerateCell(Vei2 pos, int type, int ontoType = -1, int surrBy = -1);
-	bool FIDF(int first, int second)const;//First is drawn first
 	bool ObstaclePosAllowed(Vei2 tilePos, int type);
 	
 	bool GenerateObstacle(Vei2 tilePos, int type, int ontoType = -1, int surrBy = -1);
@@ -146,16 +154,20 @@ public:
 	void SetBuildMode(int obstacle);
 	//
 	Vei2 GetwSize()const { return s.wSize; }
-	Vei2 GetcSize()const { return s.chunkSize / s.chunkHasNCells; }
+	Vei2 GetcSize()const { return s.chunkSize / Settings::chunkHasNCells; }
 	Vec2 GetTileSize()const { return (Vec2)GetcSize()/Settings::CellSplitUpIn; }
 	Vei2 GetfCell()const { return Vei2(-1,-1); }
 	Vei2 GetfTile()const { return fTile; }
 	int GetChunksDrawnToLeft()const { return -(Graphics::GetMidOfScreen().x / s.chunkSize.x) * 2 - 1; }
-	int GetfCellType()const { return chunks(fccPos.x).GetCellTypeAt(fccPos.y); }
+	int GetfCellType()const { return chunks(fcctPos.x).GetCellTypeAt(fcctPos.y); }
 	Vei2 GetmChunk()const { return mChunk; }
 	Team& GetPlayer() { return player; }
 	RectI GetRenderRect()const { 
 		auto mos = Graphics::GetMidOfScreen();
 		return RectI(-1 - (mos.x / s.chunkSize.x) * 1.5f, 1 + (mos.x / s.chunkSize.x) * 1.5f, -1 - (mos.y / s.chunkSize.y) * 1.5f, 1 + (mos.y / s.chunkSize.y) * 1.5f); };
+	Obstacle* GetFocusedObstacle()
+	{
+		return focusedObst;
+	}
 };
 

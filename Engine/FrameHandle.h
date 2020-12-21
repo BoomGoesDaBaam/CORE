@@ -270,7 +270,7 @@ public:
 	bool IsExtended();
 	std::vector<int> FillWith1WhenSize0(std::vector<int> activInStates, int nStages);
 
-	virtual Text* AddText(std::string text, RectF pos, int size, Font f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0)
+	virtual Text* AddText(std::string text, RectF pos, int size, Font f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0) 
 	{
 		activInStates = FillWith1WhenSize0(activInStates, nStates);
 		assert(activInStates.size() == nStates);
@@ -497,7 +497,10 @@ public:
 		// #1
     	f1->AddText(Settings::lang_fieldInformation[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, resC->tC.fonts[0], Colors::Black,"h_f1");
 
-		f1->AddText(Settings::lang_noInformations[Settings::lang], RectF(Vec2(20, 19), 50, 8), 7, resC->tC.fonts[0], Colors::Black,"t_cellType", a);
+		f1->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(60, 19), 50, 8), 7, resC->tC.fonts[0], Colors::Black,"t_cellType", a, 1);
+		f1->AddText(Settings::lang_flora[Settings::lang] + ":", RectF(Vec2(2, 19), 50, 8), 7, resC->tC.fonts[0], Colors::Black, "t_flora", a, 1);
+		f1->AddText(Settings::lang_Obstacle[Settings::lang] + ":", RectF(Vec2(2, 35), 50, 8), 7, resC->tC.fonts[0], Colors::Black, "t_obstacle", a, 1);
+		f1->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(60, 35), 50, 8), 7, resC->tC.fonts[0], Colors::Black, "t_obstacleInfo", a, 1);
 
 		// #2
 		p2->AddText(Settings::lang_buildmenu[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, resC->tC.fonts[0], Colors::Black, "h_f2");
@@ -604,6 +607,11 @@ public:
 		//#1
 		Frame* f1 = static_cast<Frame*>(m->GetFrame(0));			
 		f1->SetText(Settings::GetTypeString(curW.GetfCellType()), "t_cellType");
+		if(curW.GetFocusedObstacle() != nullptr)
+		{
+			f1->SetText(Settings::GetObstacleString(curW.GetFocusedObstacle()->type), "t_obstacleInfo");
+		}
+
 		//#2
 		PageFrame* p2 = static_cast<PageFrame*>(m->GetFrame(1));
 
