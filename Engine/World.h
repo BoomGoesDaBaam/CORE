@@ -68,6 +68,8 @@ private:
 	bool buildMode = false;					//place something
 	int placeObstacle = 0;
 	bool posAllowed = true;
+	bool moveMode = false;
+	int moveRange = 10;
 
 	Team player = Team("Die reichlich raeudigen Raucher");
 	Team enemie1 = Team("In dem Sinne");
@@ -77,6 +79,9 @@ private:
 	//Mouse calculations
 	Vei2 GetChunkHit(Vec2 mP)const;
 	Vec3_<Vei2> GetHitTile(Vec2 mP)const;
+
+	//Tile operations
+	bool TileIsInRange(CctPos tPos1, CctPos tPos2, float range);
 
 	//Graphic calculations
 	RectF GetChunkRect(Vei2 pos)const;
@@ -88,6 +93,7 @@ private:
 	bool TileIsInWorldY(int y)const;
 	bool ChunkIsInWorld(Vei2& cellPos)const;
 
+
 	Vei2 PutCellInWorldX(Vei2 pos)const;					//Calculates coordinates when x negativ or > cSize.x  
 	Vei2 PutCellInWorldX(int x, int y)const;
 	Vei2 PutTileInWorld(Vei2 pos)const;
@@ -96,10 +102,11 @@ private:
 	//Transformation between chunk and flat
 	Vec2_<Vei2> Cell2ChunkPos(Vei2 CellPos)const;			//	'x' = chunkPos	'y' = cellPos in chunk
 	Vec3_<Vei2> Tile2ChunkPos(Vei2 tilePos)const;			//	1x3 Matrix		'0' = chunkPos		'1' = cellPos		'2' = tilePos
-	Vei2 chunkPos2Flat(Vec3_<Vei2> cctPos)
+	Vei2 chunkPos2Flat(Vec3_<Vei2> cctPos)const
 	{
 		return cctPos.x * Settings::CellSplitUpIn * Settings::chunkHasNCells + cctPos.y * Settings::CellSplitUpIn + cctPos.z;
 	}
+	Vec3_<Vei2> PutCctPosInWorld(Vec3_<Vei2> cctPos)const;
 	int ObstacleMapAt(Vei2 tilePos)const;
 	int ObstacleMapAt(Vec3_<Vei2> tilePos)const;
 	int GroundedMapAt(Vei2 tilePos)const;
@@ -152,6 +159,13 @@ public:
 	std::vector<SubAnimation> GetConnectionsOfTypes(Vei2 pos, int* types);
 	bool NeedsConnections(Vei2 curXY)const;
 	void SetBuildMode(int obstacle);
+	void SetMoveMode(bool moveMode)
+	{
+		if (focusedObst != nullptr)
+		{
+			this->moveMode = moveMode;
+		}
+	}
 	//
 	Vei2 GetwSize()const { return s.wSize; }
 	Vei2 GetcSize()const { return s.chunkSize / Settings::chunkHasNCells; }

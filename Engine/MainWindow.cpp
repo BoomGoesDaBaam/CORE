@@ -141,10 +141,18 @@ LRESULT MainWindow::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam )
 		if( !(lParam & 0x40000000) || kbd.AutorepeatIsEnabled() ) // no thank you on the autorepeat
 		{
 			kbd.OnKeyPressed( static_cast<unsigned char>(wParam) );
+			if (wParam == VK_SHIFT)
+			{
+				mouse.shiftIsPressed = true;
+			}
 		}
 		break;
 	case WM_KEYUP:
 		kbd.OnKeyReleased( static_cast<unsigned char>(wParam) );
+		if (wParam == VK_SHIFT)
+		{
+			mouse.shiftIsPressed = false;
+		}
 		break;
 	case WM_CHAR:
 		kbd.OnChar( static_cast<unsigned char>(wParam) );

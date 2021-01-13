@@ -45,6 +45,7 @@ public:
 		bool rightIsPressed;
 		int x;
 		int y;
+		bool shiftIsPressed = false;
 	public:
 		Event()
 			:
@@ -60,8 +61,10 @@ public:
 			leftIsPressed( parent.leftIsPressed ),
 			rightIsPressed( parent.rightIsPressed ),
 			x( parent.x ),
-			y( parent.y )
-		{}
+			y( parent.y ),
+			shiftIsPressed(parent.shiftIsPressed)
+		{
+		}
 		bool IsValid() const
 		{
 			return type != Invalid;
@@ -90,6 +93,10 @@ public:
 		{
 			return rightIsPressed;
 		}
+		bool ShiftIsPressed() const
+		{
+			return shiftIsPressed;
+		}
 	};
 public:
 	Mouse() = default;
@@ -100,6 +107,7 @@ public:
 	int GetPosY() const;
 	bool LeftIsPressed() const;
 	bool RightIsPressed() const;
+	bool ShiftIsPressed()const { return shiftIsPressed; };
 	bool IsInWindow() const;
 	Mouse::Event Read();
 	bool IsEmpty() const
@@ -119,7 +127,10 @@ private:
 	void OnWheelUp( int x,int y );
 	void OnWheelDown( int x,int y );
 	void TrimBuffer();
+
+	void ShiftPressed() { shiftIsPressed = true; }
 private:
+	bool shiftIsPressed = false;
 	static constexpr unsigned int bufferSize = 4u;
 	int x;
 	int y;

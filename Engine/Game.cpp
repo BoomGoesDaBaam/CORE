@@ -87,6 +87,7 @@ void Game::UpdateModel()
 	}
 	
 	curW->UpdateGameLogic(dt);
+	curW->SetMoveMode(wnd.mouse.ShiftIsPressed());
 	//go.objects[0]->SetPos((Vec2)wnd.mouse.GetPos());
 	/*
 	PARTCONF pc(resC);

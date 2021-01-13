@@ -50,6 +50,11 @@ Vec3_<Vei2> World::Tile2ChunkPos(Vei2 tilePos)const
 
 	return v3;
 }
+Vec3_<Vei2> World::PutCctPosInWorld(CctPos cctPos)const
+{
+	Vei2 pos = chunkPos2Flat(cctPos);
+	return Tile2ChunkPos(pos);
+}
 int World::ObstacleMapAt(Vei2 tilePos)const
 {
 	auto tccPos = Tile2ChunkPos(tilePos);
@@ -432,6 +437,16 @@ Vec3_<Vei2> World::GetHitTile(Vec2 mP)const
 
 	return v;
 }
+
+bool World::TileIsInRange(CctPos tPos1, CctPos tPos2, float range)
+{
+	Vei2 delta = chunkPos2Flat(tPos1) - chunkPos2Flat(tPos2);
+	if (sqrt(pow(delta.x,2) + pow(delta.y,2)) <= range)
+	{
+		return true;
+	}
+	return false;
+}
 /*
 Vei2 World::GetTileHit(Vec2 mP)const
 {
@@ -525,6 +540,7 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 }
 void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 {
+	CctPos lastcctPos = fcctPos;
 	Vec2 mP = (Vec2)e.GetPos();
 	fcctPosHover = GetHitTile(mP);
 	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLocked())
@@ -534,11 +550,19 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		{
 			focusedObst = GetObstacleAt(fcctPos);
 		}
+		else
+		{
+			focusedObst = nullptr;
+		}
 
 		if (buildMode == true)
 		{
 			auto fcctPos = GetHitTile(mP);
-			chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, placeObstacle);
+			chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, 10);
+		}
+		if (moveMode && TileIsInRange(lastcctPos, fcctPos,moveRange))
+		{
+			buildMode = true;
 		}
 	}
 
@@ -553,7 +577,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 
 	posAllowed = ObstaclePosAllowed(fTile, placeObstacle);
 	Vec2 cDelta = gH.MoveCamera(e);
-
+	
 	ApplyCameraChanges(cDelta);
 	
 }
@@ -668,7 +692,23 @@ void World::Draw(Graphics& gfx) const
 	{
 		chunks(focusedObst->chunkPos).DrawObstacleOutlines(focusedObst->tilePos, focusedObst->type, GetChunkRect(focusedObst->chunkPos), Colors::Blue, gfx);
 	}
-	
+	if (moveMode)
+	{
+		Vei2 bottomLeft = chunkPos2Flat(fcctPos);
+		CctPos curcctPos = Tile2ChunkPos(bottomLeft);
+		for (int y = -moveRange; y <= moveRange; y++)
+		{
+			for (int x = -moveRange; x <= moveRange; x++)
+			{
+				CctPos cctDelta = { Vei2(0,0),Vei2(0,0),Vei2(x,y) };
+				CctPos cctPos = PutCctPosInWorld(curcctPos + cctDelta);
+				if (sqrt(pow(x, 2) + pow(y, 2)) <= moveRange)
+				{
+					chunks(cctPos.x).DrawTile(GetChunkRect(cctPos.x), cctPos.y * Settings::CellSplitUpIn + cctPos.z, Colors::Green, gfx);
+				}
+			}
+		}
+	}
 }
 void World::DrawObstacle(Vei2 tilePos, int type, Graphics& gfx, Color color, int frame)const
 {

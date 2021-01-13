@@ -18,6 +18,10 @@ public:
 		y((T)src.y),
 		z((T)src.z)
 	{}
+	Vec3_ operator+(const Vec3_& rhs) const
+	{
+		return Vec3_(x + rhs.x, y + rhs.y, z + rhs.z);
+	}
 
 	T z;
 };

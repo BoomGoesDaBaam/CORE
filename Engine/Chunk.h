@@ -461,6 +461,12 @@ public:
 	{
 		gfx.DrawSurface(RectI(drawPos, cellSize * scale, cellSize * scale) + cellPos * Vei2(cellSize, -cellSize) + Vei2(0, -cellSize) - Vei2((cellSize * scale - cellSize) / 2, (cellSize * scale - cellSize) / 2), s, SpriteEffect::Chroma());
 	}
+	void DrawTile(RectF chunkRect, Vei2 tilePos, Color c, Graphics& gfx)const
+	{
+		gfx.DrawFilledRect(GetTileRect(chunkRect, tilePos), c, SpriteEffect::Transparent());
+		gfx.DrawRect(GetTileRect(chunkRect, tilePos), c);
+	}
+
 
 	void UpdateAroundMatrix(Matrix<int> mat)
 	{
