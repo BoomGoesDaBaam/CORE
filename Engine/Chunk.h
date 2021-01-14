@@ -175,7 +175,16 @@ public:
 			}
 		}
 	}
-
+	void MoveObstacle(int index, Vei2 newPos)
+	{
+		//if (ObstaclePosAllowed(newPos, obstacles[index].type))
+		//{
+			MarkObstacleMap(obstacles[index].tilePos, Settings::obstacleSizes[obstacles[index].type], -1);
+			obstacles[index].tilePos = newPos;
+			MarkObstacleMap(newPos, Settings::obstacleSizes[obstacles[index].type], obstacles[index].type);
+			//PlaceObstacle(newPos, obstacles[index].type);
+		//}
+	}
 	bool SurrByCellType(int tilePos, int surrByCellType, int radius)
 	{
 		if (surrByCellType == -1)

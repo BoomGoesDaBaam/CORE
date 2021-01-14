@@ -218,6 +218,10 @@ Vei2 World::PutTileInWorld(int x, int y)const
 	}
 	return Vei2(x, y);
 }
+Vei2 World::AbstractTilePos(CctPos chunkPos)const
+{
+	return chunkPos.y * Settings::CellSplitUpIn + chunkPos.z;
+}
 Vei2 World::TileIsInCell(Vei2 tilePos)
 {
 	return Vei2(tilePos / Settings::CellSplitUpIn);
@@ -540,12 +544,18 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 }
 void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 {
-	CctPos lastcctPos = fcctPos;
+	CctPos oldCctPos = fcctPos;
 	Vec2 mP = (Vec2)e.GetPos();
 	fcctPosHover = GetHitTile(mP);
-	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLocked())
+	if (e.GetType() == Mouse::Event::LRelease)
 	{
 		fcctPos = GetHitTile(mP);
+		if (moveMode && TileIsInRange(oldCctPos, fcctPos, moveRange))
+		{
+			//GenerateObstacle(chunkPos2Flat(fcctPos),)
+			chunks(fcctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), AbstractTilePos(fcctPos));
+			fcctPos.z.x--;
+		}
 		if (ObstacleMapAt(fcctPos) != -1)
 		{
 			focusedObst = GetObstacleAt(fcctPos);
@@ -553,16 +563,13 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		else
 		{
 			focusedObst = nullptr;
+			moveMode = false;
 		}
 
 		if (buildMode == true)
 		{
 			auto fcctPos = GetHitTile(mP);
 			chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, 10);
-		}
-		if (moveMode && TileIsInRange(lastcctPos, fcctPos,moveRange))
-		{
-			buildMode = true;
 		}
 	}
 
