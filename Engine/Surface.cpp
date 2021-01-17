@@ -128,7 +128,6 @@ Surface Surface::GetSupSurface(RectI where)
 	}
 	return sup;
 }
-
 void Surface::PutPixel(int x, int y, Color c)
 {
 	pixels[y * width + x] = c;

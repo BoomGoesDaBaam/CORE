@@ -17,6 +17,51 @@ public:
 	Surface() = default;
 
 	Surface GetSupSurface(RectI where);
+	void AddLayer(RectI pos, RectI sourceR, const Surface& s, int n90rot = 0)
+	{
+		AddLayer(pos, sourceR, RectI(Vei2(0, 0), width, height), s, n90rot);
+	}
+	void AddLayer(RectI pos, RectI sourceR, RectI clip, const Surface& s, int n90rot = 0)
+	{
+		n90rot %= 4;
+		for (int y = 0; y < pos.GetHeight(); y++)
+		{
+			for (int x = 0; x < pos.GetWidth(); x++)
+			{
+				if (RectI(Vei2(0,0),width,height).Contains({ x + pos.left, y + pos.top }) && clip.top <= y && clip.bottom >= y && clip.left <= x && clip.right >= x)
+				{
+					int sPixelX = 0;
+					int sPixelY = 0;
+
+					if (n90rot == 0)
+					{
+						sPixelX = (int)(sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
+						sPixelY = (int)(sourceR.top + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
+					}
+					if (n90rot == 1)
+					{
+						sPixelX = (int)(sourceR.right - 1 - ((float)(y) / pos.GetWidth()) * sourceR.GetWidth());
+						sPixelY = (int)(sourceR.top + ((float)(x) / pos.GetHeight()) * sourceR.GetHeight());
+					}
+					if (n90rot == 2)
+					{
+						sPixelX = (int)(sourceR.right - 1 - ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
+						sPixelY = (int)(sourceR.bottom - 1 - ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
+					}
+					if (n90rot == 3)
+					{
+						sPixelX = (int)(sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
+						sPixelY = (int)(sourceR.bottom - 1 - ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
+					}
+					assert(sPixelX >= 0);
+					assert(sPixelY >= 0);
+					Color sourceP = s.GetPixel(sPixelX, sPixelY);
+					pixels[x + pos.left + (y + pos.top) * width] = sourceP;
+					//effect(x + pos.left, y + pos.top, sourceP, *this);
+				}
+			}
+		}
+	}
 	void PutPixel(int x, int y, Color c);
 	Color GetPixel(Vei2 pos) const;
 	Color GetPixel(int x, int y) const;

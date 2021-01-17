@@ -554,6 +554,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		{
 			//GenerateObstacle(chunkPos2Flat(fcctPos),)
 			chunks(fcctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), AbstractTilePos(fcctPos));
+			focusedObst = nullptr;
 			fcctPos.z.x--;
 		}
 		if (ObstacleMapAt(fcctPos) != -1)
@@ -603,6 +604,7 @@ void World::HandleKeyboardEvents(Keyboard::Event& e)
 		}
 	}
 }
+static int i = 0;
 void World::UpdateGameLogic(float dt)
 {
 	auto renderRect = GetRenderRect();
@@ -623,18 +625,33 @@ void World::UpdateGameLogic(float dt)
 			{
 				Vei2 curChunk = Chunk::PutChunkInWorld(mChunk + Vei2(x, y), s.worldHasNChunks);
 				chunks(curChunk).Update(dt);
+				if (i == 0)
+				{
+					chunks(curChunk).UpdateTypeSurface(GetChunkRect(curChunk));
+				}
 			}
+		}
+		if (i == 0)
+		{
+			i++;
 		}
 	//obstacles[0]->Update(dt);
 }
 void World::Draw(Graphics& gfx) const
 {
+
 	Vei2 mos = Graphics::GetMidOfScreen();
 	auto renderRect = GetRenderRect();
+	/*
 	int xStart = renderRect.left;
 	int xStop = renderRect.right;
 	int yStart = renderRect.top;
 	int yStop = renderRect.bottom;
+	*/
+	int xStart = 0;
+	int xStop = 0;
+	int yStart = 0;
+	int yStop = 0;
 
 #ifdef _DEBUG 
 	xStart = -1;
@@ -677,7 +694,7 @@ void World::Draw(Graphics& gfx) const
 					{
 						chunks(curChunk).DrawSurfaceAt(curChunkPos, fcctPos.y, s.chunkSize.x / Settings::chunkHasNCells, 1.5f, resC->tC.frames.at(0).GetCurSurface(), gfx);
 					}
-					gfx.DrawRect(GetChunkRect(mChunk), Colors::Red);
+					//gfx.DrawRect(GetChunkRect(mChunk), Colors::Red);
 					break;
 				}
 			}
@@ -709,7 +726,7 @@ void World::Draw(Graphics& gfx) const
 			{
 				CctPos cctDelta = { Vei2(0,0),Vei2(0,0),Vei2(x,y) };
 				CctPos cctPos = PutCctPosInWorld(curcctPos + cctDelta);
-				if (sqrt(pow(x, 2) + pow(y, 2)) <= moveRange)
+				if (sqrt(pow(x, 2) + pow(y, 2)) <= moveRange && chunks(cctPos.x).ObstaclePosAllowed(cctPos.y * Settings::CellSplitUpIn + cctPos.z, focusedObst->type))
 				{
 					chunks(cctPos.x).DrawTile(GetChunkRect(cctPos.x), cctPos.y * Settings::CellSplitUpIn + cctPos.z, Colors::Green, gfx);
 				}
