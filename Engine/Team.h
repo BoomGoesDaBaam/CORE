@@ -1,6 +1,5 @@
 #pragma once
 #include "Rect.h"
-#include "Obstacle.h"
 struct Materials
 {
 	//Resources
@@ -42,7 +41,6 @@ class Team
 {
 	std::string teamname = "kein Name";
 	Materials m;
-	std::vector<Obstacle> members;
 public:
 
 	Team(std::string teamname)

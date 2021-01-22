@@ -172,6 +172,7 @@ void Chunk::MarkObstacleMap(Vei2 tilePos, Vei2 size, int index)
 					continue;
 				}
 				//assert(obstacleMap.IndexInBounds(Vei2(x, y)));
+				assert(obstacleMap(Vei2(x, y)) == -1);
 				obstacleMap(Vei2(x, y)) = index;
 				//assert(obstacleMap(Vei2(x, y)) != -1);
 			}
@@ -180,11 +181,11 @@ void Chunk::MarkObstacleMap(Vei2 tilePos, Vei2 size, int index)
 }
 void Chunk::MoveObstacle(int index, Vei2 newPos)
 {
-	if (ObstaclePosAllowed(newPos, obstacles[index].type,index))
+	if (ObstaclePosAllowed(newPos, obstacles[index].type))
 	{
-		MarkObstacleMap(obstacles[index].tilePos, Settings::obstacleSizes[obstacles[index].type], -1);
-		obstacles[index].tilePos = newPos;
-		MarkObstacleMap(newPos, Settings::obstacleSizes[obstacles[index].type], index);
+	MarkObstacleMap(obstacles[index].tilePos, Settings::obstacleSizes[obstacles[index].type], -1);
+	obstacles[index].tilePos = newPos;
+	MarkObstacleMap(newPos, Settings::obstacleSizes[obstacles[index].type], index);
 	//PlaceObstacle(newPos, obstacles[index].type);
 	}
 }
@@ -227,12 +228,11 @@ VecN Chunk::ChunkSwitchIsNeeded(Vei2 tilePos) const				// -1 when not needed
 	}
 	return VecN(3, 1, Vei2(-1, -1));
 }
-bool Chunk::ObstaclePosAllowed(Vei2 tilePos, int type, int except) const
+bool Chunk::ObstaclePosAllowed(Vei2 tilePos, int type) const
 {
-	Vei2 size = Settings::obstacleSizes[type];
-	return ObstaclePosAllowed(tilePos, Settings::obstacleSizes[type],except);
+	return ObstaclePosAllowed(tilePos, Settings::obstacleSizes[type]);
 }
-bool Chunk::ObstaclePosAllowed(Vei2 tilePos, Vei2 size, int except) const
+bool Chunk::ObstaclePosAllowed(Vei2 tilePos, Vei2 size) const
 {
 	if (Settings::obstaclesOn)
 	{
@@ -259,7 +259,7 @@ bool Chunk::ObstaclePosAllowed(Vei2 tilePos, Vei2 size, int except) const
 					size.y = y - 1;
 					continue;
 				}
-				if (obstacleMap(curXY) != except && obstacleMap(curXY) != -1 || groundedMap(curXY) != 1)
+				if (obstacleMap(curXY) != -1 || groundedMap(curXY) != 1)
 				{
 					return false;
 				}
@@ -293,7 +293,7 @@ void Chunk::DrawObstacle(Vei2 tilePos, int type, RectF chunkRect, Graphics& gfx)
 		drawPos.right += (Settings::obstacleSizes[type].x - 1) * tileSize.x;
 		*/
 		Obstacle o = Obstacle(tilePos, chunkPos, type, resC);
-		o.Draw(GetTileRect(chunkRect, tilePos)/*,RectF(Vec2(0,0), tileSize.x, tileSize.y)*/, tilePos, gfx);
+		o.Draw(GetTileRect(chunkRect, tilePos)/*,RectF(Vec2(0,0), tileSize.x, tileSize.y)*/, tilePos, chunkRect, gfx);
 	}
 }
 void Chunk::DrawObstacles(RectF chunkRect, Graphics& gfx) const
@@ -301,6 +301,8 @@ void Chunk::DrawObstacles(RectF chunkRect, Graphics& gfx) const
 	if (Settings::obstaclesOn)
 	{
 		Vei2 mos = Graphics::GetMidOfScreen();
+		SpriteEffect::Transparent e = SpriteEffect::Transparent(0.6f);
+
 		Vec2 cellSize = GetCellSize(chunkRect);
 
 		for (int y = 0; y < hasNCells; y++)
@@ -326,11 +328,11 @@ void Chunk::DrawObstacles(RectF chunkRect, Graphics& gfx) const
 							{
 								if (tileLayer == 0 && obstacleMap(curTilePos) < obstacles.size() && obstacles[obstacleMap(curTilePos)].state == 0)
 								{
-									obstacles[obstacleMap(curTilePos)].Draw(curRect, curTilePos, gfx);
+									obstacles[obstacleMap(curTilePos)].Draw(curRect, curTilePos, chunkRect, gfx);
 								}
 								if (tileLayer == 1 && obstacles[obstacleMap(curTilePos)].state == 1)
 								{
-									obstacles[obstacleMap(curTilePos)].Draw(curRect, curTilePos, gfx);
+									obstacles[obstacleMap(curTilePos)].Draw(curRect, curTilePos, chunkRect, gfx);
 								}
 							}
 						}
@@ -344,7 +346,6 @@ void Chunk::DrawType(RectF chunkRect, Graphics& gfx)const
 {
 	//gfx.DrawSurface((RectI)chunkRect, surf_types, SpriteEffect::Nothing(), 0);
 	
-	
 	for (int y = 0; y < hasNCells; y++)
 	{
 		for (int x = 0; x < hasNCells; x++)
@@ -356,7 +357,7 @@ void Chunk::DrawType(RectF chunkRect, Graphics& gfx)const
 
 			assert(cells(curXY).type >= 0 && cells(curXY).type < Settings::nDiffFieldTypes);
 			gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			
+
 			for (int i = 0; i < Settings::nDiffFieldTypes; i++)
 			{
 				int order = Settings::typeLayer[i];
@@ -367,6 +368,7 @@ void Chunk::DrawType(RectF chunkRect, Graphics& gfx)const
 			}
 		}
 	}
+	
 }
 void Chunk::DrawGroundedMap(Vei2 pos, int cellSize, Graphics& gfx)const
 {
@@ -473,18 +475,9 @@ void Chunk::DrawTile(RectF chunkRect, Vei2 tilePos, Color c, Graphics& gfx)const
 	gfx.DrawFilledRect(GetTileRect(chunkRect, tilePos), c, SpriteEffect::Transparent());
 	gfx.DrawRect(GetTileRect(chunkRect, tilePos), c);
 }
-
 void Chunk::UpdateTypeSurface(RectF chunkRect)
 {
 	surf_types = Surface(chunkRect.GetWidth(), chunkRect.GetHeight());
-	for (int y = 0; y < chunkRect.GetWidth(); y++)
-	{
-		for (int x = 0; x < chunkRect.GetHeight(); x++)
-		{
-			surf_types.PutPixel(y, x, Colors::Blue);
-		}
-	}
-	
 	Vei2 cellSize = (Vei2)GetCellSize(chunkRect);
 
 	for (int y = 0; y < hasNCells; y++)
