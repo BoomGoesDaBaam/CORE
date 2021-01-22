@@ -22,6 +22,15 @@ public:
 	{
 		return Vec3_(x + rhs.x, y + rhs.y, z + rhs.z);
 	}
+	bool operator==(const Vec3_& rhs)const
+	{
+		return x == rhs.x && y == rhs.y && z == rhs.z;
+	}
+	bool operator!=(const Vec2_& rhs)
+	{
+		return !(*this == rhs);
+	}
+
 
 	T z;
 };

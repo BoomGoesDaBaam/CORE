@@ -89,7 +89,13 @@ public:
 	{
 		return !(*this==rhs);
 	}
-
+	/*
+	Vec2_& operator=(const Vec2_& rhs)
+	{
+		x = rhs.x; y = rhs.y;
+		return *this;
+	}
+	*/
 	
 	T GetLength() const
 	{

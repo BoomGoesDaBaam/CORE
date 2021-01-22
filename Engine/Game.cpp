@@ -103,21 +103,27 @@ void Game::UpdateModel()
 
 void Game::ComposeFrame()
 {
+	
+	//gfx.DrawSurface((RectI)Graphics::GetScreenRect<int>() - Vei2(50, 50), RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+	//gfx.DrawSurface((RectI)Graphics::GetScreenRect<int>() + Vei2(50,50), RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+	//gfx.DrawSurface((RectI)Graphics::GetScreenRect<int>() + Vei2(100, 100), RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+	//gfx.DrawSurface((RectI)Graphics::GetScreenRect<int>() + Vei2(150, 150), RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+	
 	Vec2 mP = (Vec2)wnd.mouse.GetPos();
-	fps_c++;
 	curW->Draw(gfx);
 	go.Draw();
 	resC->tC.Update(0.015f);
-
-	std::ostringstream oss3;
-	oss3 << "FPS: " << fps_d;
-	resC->tC.fonts.at(0).DrawText(oss3.str().c_str(), 5, 5, 13, Colors::Black);
-
+	
+	fps_c++;
+	std::ostringstream oss0;
+	oss0 << "FPS: " << fps_d;
+	resC->tC.fonts.at(0).DrawText(oss0.str().c_str(), 5, 5, 13, Colors::Black);
+	/*
 	if (debugInfoOn)
 	{
 		std::ostringstream oss1, oss2, oss4, oss5;
 		oss1 <<"World cords" << curW->GetmChunk().x << " Camera:(" << c.x << " | " << c.y << ")" << "mP: " << mP << "mChunk: " << curW->GetmChunk() << "chunks Drawn to left: " << curW->GetChunksDrawnToLeft();
-		oss2 <<"fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CSize:" << curW->GetcSize().x << "   x-Felder:"<<curW->GetxStart();
+		oss2 <<"fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CSize:" << curW->GetcSize().x << "   x-start:"<<curW->GetRenderRect().left;
 		oss4 << "Type:"<<curW->GetfCellType()<<"  use count tC:"<<resC.use_count()<<" ignoreMouse:"<< ignoreMouse << " opt1:" <<Settings::displayObstacles;
 		resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 14, Colors::Red);
 		resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 14, Colors::Red);
@@ -136,6 +142,8 @@ void Game::ComposeFrame()
 		gfx.PutPixel(mP.x, mP.y, Colors::Black);
 	}
 	igwH.Draw(gfx);
+
+	*/
 }
 //Handle
 void Game::HandleMouseInput(Mouse::Event& e)

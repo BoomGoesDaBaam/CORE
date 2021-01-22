@@ -45,8 +45,8 @@ private:
 	Vei2 mChunk = { 0,0 };
 	Vei2 fTile = { 0,0 };
 
-	Vec3_<Vei2> fcctPos = Vec3_<Vei2>(Vei2(10, 12), Vei2(1, 1), Vei2(1, 1));
-	Vec3_<Vei2> fcctPosHover = Vec3_<Vei2>(Vei2(10, 12), Vei2(1, 1), Vei2(1, 1));
+	Vec3_<Vei2> fcctPos = Vec3_<Vei2>(Vei2(0, 0), Vei2(0, 0), Vei2(0, 0));
+	Vec3_<Vei2> fcctPosHover = Vec3_<Vei2>(Vei2(0, 0), Vei2(0, 0), Vei2(0, 0));
 
 	Obstacle* focusedObst = nullptr;
 
@@ -69,7 +69,7 @@ private:
 	int placeObstacle = 0;
 	bool posAllowed = true;
 	bool moveMode = false;
-	int moveRange = 10;
+	int moveRange = 4;
 
 	Team player = Team("Die reichlich raeudigen Raucher");
 	Team enemie1 = Team("In dem Sinne");
@@ -98,6 +98,7 @@ private:
 	Vei2 PutCellInWorldX(int x, int y)const;
 	Vei2 PutTileInWorld(Vei2 pos)const;
 	Vei2 PutTileInWorld(int x, int y)const;
+	Vec3_<Vei2> PutCctPosInWorld(CctPos cctPos)const;
 
 	Vei2 AbstractTilePos(CctPos chunkPos)const;
 	//Transformation between chunk and flat
@@ -107,7 +108,6 @@ private:
 	{
 		return cctPos.x * Settings::CellSplitUpIn * Settings::chunkHasNCells + cctPos.y * Settings::CellSplitUpIn + cctPos.z;
 	}
-	Vec3_<Vei2> PutCctPosInWorld(Vec3_<Vei2> cctPos)const;
 	int ObstacleMapAt(Vei2 tilePos)const;
 	int ObstacleMapAt(Vec3_<Vei2> tilePos)const;
 	int GroundedMapAt(Vei2 tilePos)const;
@@ -143,11 +143,7 @@ private:
 public:
 																							//Konstruktor + Operatoren
 	World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera);
-	//change game values
-	int World::GetxStart() {
-		Vei2 mos = Graphics::GetMidOfScreen();
-		return -(mos.x / GetcSize().x) * 2;
-	};
+	
 	//Handles
 	void HandleMouseEvents(Mouse::Event& e, GrabHandle& gH);
 	void HandleKeyboardEvents(Keyboard::Event& e);
