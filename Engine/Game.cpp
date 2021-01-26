@@ -29,7 +29,9 @@ Game::Game(MainWindow& wnd)
 	resC(std::make_shared<ResourceCollection>(gfx)),
 	go(gfx, resC),
 	curW(std::make_unique<World>(World::WorldSettings(),resC,c)),
-	igwH(resC)
+	igwH(resC),
+	wD(gfx,resC)
+
 {
 	//Settings::ReloadFile();
 
@@ -88,6 +90,8 @@ void Game::UpdateModel()
 	
 	curW->UpdateGameLogic(dt);
 	curW->SetMoveMode(wnd.mouse.ShiftIsPressed());
+	wD.CalculateRects(curW.get());
+
 	//go.objects[0]->SetPos((Vec2)wnd.mouse.GetPos());
 	/*
 	PARTCONF pc(resC);
@@ -105,7 +109,9 @@ void Game::ComposeFrame()
 {
 	Vec2 mP = (Vec2)wnd.mouse.GetPos();
 	fps_c++;
-	curW->Draw(gfx);
+	//curW->Draw(gfx);
+	wD.Draw();
+
 	go.Draw();
 	resC->tC.Update(0.015f);
 

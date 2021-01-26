@@ -16,6 +16,7 @@
 
 class World
 {
+	friend class WorldDrawer;
 public:
 	class WorldSettings
 	{

@@ -547,7 +547,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 	CctPos oldCctPos = fcctPos;
 	Vec2 mP = (Vec2)e.GetPos();
 	fcctPosHover = GetHitTile(mP);
-	if (e.GetType() == Mouse::Event::LRelease)
+	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLocked())
 	{
 		fcctPos = GetHitTile(mP);
 		if (moveMode && TileIsInRange(oldCctPos, fcctPos, moveRange))
@@ -642,17 +642,17 @@ void World::Draw(Graphics& gfx) const
 
 	Vei2 mos = Graphics::GetMidOfScreen();
 	auto renderRect = GetRenderRect();
-	/*
+	
 	int xStart = renderRect.left;
 	int xStop = renderRect.right;
 	int yStart = renderRect.top;
 	int yStop = renderRect.bottom;
-	*/
+	/*
 	int xStart = 0;
 	int xStop = 0;
 	int yStart = 0;
 	int yStop = 0;
-
+	*/
 #ifdef _DEBUG 
 	xStart = -1;
 	xStop = 1;
