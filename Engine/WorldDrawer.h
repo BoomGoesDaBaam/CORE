@@ -11,14 +11,13 @@ class WorldDrawer
 	World* w = nullptr;
 	Graphics& gfx;
 	sharedResC resC;
+
+	int xStart = 0;
+	int xStop = 0;
+	int yStart = 0;
+	int yStop = 0;
 public:
-	WorldDrawer(Graphics& gfx, sharedResC resC)
-		:
-		gfx(gfx),
-		resC(std::move(resC))
-	{
-		
-	}
+	WorldDrawer(Graphics& gfx, sharedResC resC);
 	void CalculateRects(World* w);
 	void Draw();
 };

@@ -1,22 +1,44 @@
 #include "WorldDrawer.h"
+WorldDrawer::WorldDrawer(Graphics& gfx, sharedResC resC)
+	:
+	gfx(gfx),
+	resC(std::move(resC))
+{
+}
 void WorldDrawer::CalculateRects(World* w)
 {
-	/*
 	this->w = w;
+	/*
+xStart = 0;
+xStop = 0;
+yStart = 0;
+yStop = 0;
+*/
+	
+	auto renderRect = w->GetRenderRect();
+
+	xStart = renderRect.left;
+	xStop = renderRect.right;
+	yStart = renderRect.top;
+	yStop = renderRect.bottom;
+	
+
+#ifdef _DEBUG 
+	xStart = -1;
+	xStop = 1;
+	yStart = -1;
+	yStop = 1;
+#endif
 
 	Vei2 screenSize = Graphics::GetScreenVec2_<int>();
 	Vei2 mos = Graphics::GetMidOfScreen();
-
-	int xStart = 0;
-	int xStop = 0;
-	int yStart = 0;
-	int yStop = 0;
 
 	int indexX = 0;
 	int indexY = 0;
 
 	drawNCells = Vei2(xStop - xStart + 1, yStop - yStart + 1);
 	chunkRects = Matrix<RectF>(drawNCells.x, drawNCells.y,RectF(Vec2(0,0),0,0));
+	chunkPos = Matrix<Vei2>(drawNCells.x, drawNCells.y, Vei2(-1,-1));
 
 	for (int y = yStart; y <= yStop; y++)
 	{
@@ -29,9 +51,9 @@ void WorldDrawer::CalculateRects(World* w)
 			chunkPos[indexX][indexY] = curChunk;
 			indexX++;
 		}
+		indexX = 0;
 		indexY++;
 	}
-	*/
 }
 void WorldDrawer::Draw()
 {
@@ -39,29 +61,14 @@ void WorldDrawer::Draw()
 	//gfx.DrawSurface(RectI(Vei2(50, 50), 100, 100), resC->tC.fields[0].GetFrames()[0], SpriteEffect::Nothing(), 0);
 
 	Vei2 mos = Graphics::GetMidOfScreen();
-	auto renderRect = w->GetRenderRect();
-	/*
-	int xStart = renderRect.left;
-	int xStop = renderRect.right;
-	int yStart = renderRect.top;
-	int yStop = renderRect.bottom;
-	*/
-	int xStart = 0;
-	int xStop = 0;
-	int yStart = 0;
-	int yStop = 0;
-	
-#ifdef _DEBUG 
-	xStart = -1;
-	xStop = 1;
-	yStart = -1;
-	yStop = 1;
-#endif
+
 	int indexX = 0;
 	int indexY = 0;
 
 	for (int layer = 0; layer < 4; layer++)
 	{
+		indexX = 0;
+		indexY = 0;
 		for (int y = yStart; y <= yStop; y++)
 		{
 			for (int x = xStart; x <= xStop; x++)
@@ -71,13 +78,14 @@ void WorldDrawer::Draw()
 				case 0:
 					w->chunks(chunkPos[indexX][indexY]).DrawType(chunkRects[indexX][indexY], gfx);
 					break;
-					/*
+					
 				case 1:
-					if (grit || buildMode)
+					if (w->grit || w->buildMode)
 					{
-						chunks(curChunk).DrawGroundedMap(curChunkPos, s.chunkSize.x / Settings::chunkHasNCells, gfx);
+						w->chunks(chunkPos[indexX][indexY]).DrawGroundedMap(chunkRects[indexX][indexY].GetTopLeft<int>(), w->s.chunkSize.x / Settings::chunkHasNCells, gfx);
 					}
 					break;
+					/*
 				case 2:
 					if (grit || buildMode)
 					{
@@ -96,6 +104,7 @@ void WorldDrawer::Draw()
 				}
 				indexX++;
 			}
+			indexX = 0;
 			indexY++;
 		}
 	}

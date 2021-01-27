@@ -59,7 +59,7 @@ void Font::DrawText(std::string text, int x, int y, int size, Color c)
 			{
 				float ratio = (float)cRects[(__int64)text[i] - first].GetWidth() / cRects[(__int64)text[i] - first].GetHeight();
 				Vec2 charSize(ratio * size, size);
-				gfx.DrawSurface(RectI(Vei2(x + xM, y), charSize.x, charSize.y), cRects[(__int64)text[i] - first], Graphics::GetScreenRect<int>(), s, SpriteEffect::ChromaColor(Colors::Magenta, c));
+				gfx.DrawSurface(RectI(Vei2(x + xM, y), charSize.x, charSize.y), cRects[(__int64)text[i] - first], s, SpriteEffect::ChromaColor(Colors::Magenta, c));
 				xM += (__int64)size * 0.9f * ratio;
 			}
 			if (text[i] == ' ')
@@ -75,7 +75,7 @@ void Font::DrawText(std::string text, int x, int y, int size, Color c)
 		{
 			if (text[i] >= first && text[i] <= last)
 			{
-				gfx.DrawSurface(RectI(Vei2(x + xM, y), size * radio, size), cRects[(__int64)text[i] - first], Graphics::GetScreenRect<int>(), s, SpriteEffect::ChromaColor(Colors::Magenta, c));
+				gfx.DrawSurface(RectI(Vei2(x + xM, y), size * radio, size), cRects[(__int64)text[i] - first], s, SpriteEffect::ChromaColor(Colors::Magenta, c));
 				xM += size * radio;
 			}
 			if (text[i] == ' ')
@@ -114,7 +114,7 @@ void Font::DrawTextCentered(std::string text, Vei2 pos, int size, Color c)
 			{
 				float ratio = (float)cRects[(__int64)text[i] - first].GetWidth() / cRects[(__int64)text[i] - first].GetHeight();
 				Vec2 charSize(ratio * size, size);
-				gfx.DrawSurface(RectI(Vei2(x + xM, y), charSize.x, charSize.y), cRects[(__int64)text[i] - first], Graphics::GetScreenRect<int>(), s, SpriteEffect::ChromaColor(Colors::Magenta, c));
+				gfx.DrawSurface(RectI(Vei2(x + xM, y), charSize.x, charSize.y), cRects[(__int64)text[i] - first], s, SpriteEffect::ChromaColor(Colors::Magenta, c));
 				xM += (__int64)size * 0.9f * ratio;
 			}
 			if (text[i] == ' ')

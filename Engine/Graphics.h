@@ -64,7 +64,7 @@ public:
 	Color GetPixel(int x, int y);
 	void RainbowPutPixel(int x, int y);
 
-	bool PixelInFrame(Vei2 check) { return GetScreenRect<int>().Contains(check); }
+	bool PixelInFrame(Vei2 check) { return screenRect.Contains(check); }
 	void DrawCircle(int x, int y, float radius, Color c);
 	void DrawCircle(int x, int y, float outerRadius,float innerRadius, Color innerC, Color outerC);
 	void DrawLine(Vec2 p1, Vec2 p0, Color c, int thickness = 1);
@@ -306,23 +306,22 @@ public:
 	template<typename E>
 	void DrawSurface(RectI pos, const Surface& s, E effect, int n90rot = 0)
 	{
-		DrawSurface(pos, s.GetRect(), GetScreenRect<int>(), s, effect, n90rot);
-	}
-	
-	template<typename E>
-	void DrawSurface(RectI pos, RectI sourceR, const Surface& s, E effect, int n90rot = 0)
-	{
-		DrawSurface(pos, sourceR, GetScreenRect<int>(), s, effect, n90rot);
+		DrawSurface(pos, s.GetRect(), s, effect, n90rot);
 	}
 	template<typename E>
-	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect, int n90rot=0)
+	void DrawSurface(RectI pos, RectI sourceR, const Surface& s, E effect, int n90rot=0)
 	{
+		if (pos.right < screenRect.left && pos.left > screenRect.right && pos.bottom < screenRect.top && pos.top > screenRect.bottom)
+		{
+			return;
+		}
+
 		n90rot %= 4;
 		for (int y = 0; y < pos.GetHeight(); y++)
 		{
 			for (int x = 0; x < pos.GetWidth(); x++)
 			{
-				if (PixelInFrame({ x + pos.left, y + pos.top }) && clip.top <= y && clip.bottom >= y && clip.left <= x && clip.right >= x)
+				if (PixelInFrame({ x + pos.left, y + pos.top }))
 				{
 					int sPixelX=0;
 					int sPixelY=0;
@@ -332,17 +331,17 @@ public:
 						sPixelX = (int)(sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
 						sPixelY = (int)(sourceR.top + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
 					}
-					if (n90rot == 1)
+					else if (n90rot == 1)
 					{ 
 						sPixelX = (int)(sourceR.right - 1 - ((float)(y) / pos.GetWidth()) * sourceR.GetWidth());
 						sPixelY = (int)(sourceR.top + ((float)(x) / pos.GetHeight()) * sourceR.GetHeight());
 					} 
-					if (n90rot == 2)
+					else if (n90rot == 2)
 					{
 						sPixelX = (int)(sourceR.right - 1 - ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
 						sPixelY = (int)(sourceR.bottom - 1 - ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
 					}
-					if (n90rot == 3)
+					else if (n90rot == 3)
 					{
 						sPixelX = (int)(sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
 						sPixelY = (int)(sourceR.bottom - 1 - ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
@@ -382,5 +381,6 @@ public:
 	const static Rect_<T> GetScreenRect() { return Rect_<T>(Vec2_<T>(0, 0), ScreenWidth, ScreenHeight); };
 	template<typename T>
 	const static Vec2_<T> GetScreenVec2_() { return Vec2_<T>(ScreenWidth, ScreenHeight); };
+	RectI screenRect = GetScreenRect<int>();
 
 };
