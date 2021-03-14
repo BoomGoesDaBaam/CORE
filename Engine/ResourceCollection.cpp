@@ -112,13 +112,13 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 		fields.push_back(Animation(delay));
 		for (int f = 0; f < 5; f++)			//f diffent animations
 		{
-			fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 255, 122 + f * 51 + (i % 8) * 255), 254, 50)));
+			fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((int)((floor((float)i / 8)) * 255), 122 + f * 51 + (i % 8) * 255), 254, 50)));
 			
 			
 			if (Settings::anyMaskedType(i))
 			{
 				maskedFields.push_back(Animation(delay));
-				maskedFields[nMasked].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((floor((float)i / 8)) * 255, 122 + f * 51 + (i % 8) * 255), 254, 50)));
+				maskedFields[nMasked].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((int)((floor((float)i / 8)) * 255), 122 + f * 51 + (i % 8) * 255), 254, 50)));
 				
 				fields[i].SetKeepTime(fields[0].GetKeepTime());
 				for (int y = 0; y < 50; y++)
@@ -149,31 +149,31 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 }
 void TexturesCollection::Update(float dt)
 {
-	for (int i = 0; i < fields.size(); i++)
+	for (int i = 0; i < (int)fields.size(); i++)
 	{
 		fields.at(i).Update(dt);
 	}
-	for (int i = 0; i < maskedFields.size(); i++)
+	for (int i = 0; i < (int)maskedFields.size(); i++)
 	{
 		maskedFields.at(i).Update(dt);
 	}
-	for (int i = 0; i < frames.size(); i++)
+	for (int i = 0; i < (int)frames.size(); i++)
 	{
 		frames.at(i).Update(dt);
 	}
-	for (int i = 0; i < windowsFrame.size(); i++)
+	for (int i = 0; i < (int)windowsFrame.size(); i++)
 	{
 		windowsFrame.at(i).Update(dt);
 	}
-	for (int i = 0; i < buttons.size(); i++)
+	for (int i = 0; i < (int)buttons.size(); i++)
 	{
 		buttons.at(i).Update(dt);
 	}
-	for (int i = 0; i < obstacles.size(); i++)
+	for (int i = 0; i < (int)obstacles.size(); i++)
 	{
 		obstacles.at(i).Update(dt);
 	}
-	for (int i = 0; i < multiObstacles.size(); i++)
+	for (int i = 0; i < (int)multiObstacles.size(); i++)
 	{
 		multiObstacles.at(i).Update(dt);
 	}
@@ -192,23 +192,23 @@ std::vector<RectI> FramesizeCollection::GetConOffset(Vei2 cSize)const
 {
 	std::vector<RectI> v;
 	RectI cur = RectI(Vei2(0, 0), cSize.x, cSize.y);		// topleft
-	cur.bottom -= (25.f / 50.f) * cSize.y;
-	cur.right -= (25.f / 50.f) * cSize.y;
+	cur.bottom -= (int)((25.f / 50.f) * cSize.y);
+	cur.right -= (int)((25.f / 50.f) * cSize.y);
 	v.push_back(cur);
 
 	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);				// topright
-	cur.bottom -= (25.f / 50.f) * cSize.y;
-	cur.left += (25.f / 50.f) * cSize.y;
+	cur.bottom -= (int)((25.f / 50.f) * cSize.y);
+	cur.left += (int)((25.f / 50.f) * cSize.y);
 	v.push_back(cur);
 
 	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);				// bottomleft
-	cur.top += (25.f / 50.f) * cSize.y;
-	cur.right -= (25.f / 50.f) * cSize.y;
+	cur.top += (int)((25.f / 50.f) * cSize.y);
+	cur.right -= (int)((25.f / 50.f) * cSize.y);
 	v.push_back(cur);
 
 	cur = RectI(Vei2(0, 0), cSize.x, cSize.y);				// bottomright
-	cur.top += (25.f / 50.f) * cSize.y;
-	cur.left += (25.f / 50.f) * cSize.y;
+	cur.top += (int)((25.f / 50.f) * cSize.y);
+	cur.left += (int)((25.f / 50.f) * cSize.y);
 	v.push_back(cur);
 	//new elements need to be added in loop and in GetPositionsOfCon!!!!!!!!!!!!!
 	return v;

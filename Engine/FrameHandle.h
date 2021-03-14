@@ -425,7 +425,7 @@ public:
 				{
 					frames[i]->pos.top += yMove;
 					frames[i]->pos.bottom += yMove;
-					if (extended[i] != frames[i]->GetCurState())
+					if (extended[i] != (bool)frames[i]->GetCurState())
 					{
 						changed = i;
 						n = frames.size();

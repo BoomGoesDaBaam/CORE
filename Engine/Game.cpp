@@ -132,14 +132,14 @@ void Game::ComposeFrame()
 		gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
 		for (int y = 1; y <= 7; y++)
 		{
-			gfx.DrawLine(Vec2(y * 100, 0), Vec2(y * 100, 600), Colors::Red);
+			gfx.DrawLine(Vec2((float)(y * 100), 0.f), Vec2((float)(y * 100), 600.f), Colors::Red);
 		}
 		for (int x = 1; x <= 5; x++)
 		{
-			gfx.DrawLine(Vec2(0, x * 100), Vec2(800, x * 100), Colors::Red);
+			gfx.DrawLine(Vec2(0.f, (float)(x * 100)), Vec2(800.f, (float)(x * 100)), Colors::Red);
 		}
 		//gfx.DrawLine((Vec2)wnd.mouse.GetPos(), (Vec2)wnd.mouse.GetPos() + Vec2(curW->GetcSize().x, curW->GetcSize().y), Colors::Red);
-		gfx.PutPixel(mP.x, mP.y, Colors::Black);
+		gfx.PutPixel((int)mP.x, (int)mP.y, Colors::Black);
 	}
 	igwH.Draw(gfx);
 }

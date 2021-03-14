@@ -111,7 +111,7 @@ const Color* Surface::Data() const
 }
 bool Surface::IsInBounds(int x, int y)const
 {
-	return y * width + x < pixels.size();
+	return y * width + x < (int)pixels.size();
 }
 Surface Surface::GetSupSurface(RectI where)
 {
@@ -170,5 +170,5 @@ bool Surface::TestIfHitOnScreen(Vec2 mpRel)const
 {
 	Vei2 surSize = GetSize() + Vei2(-1,-1);
 	Matrix<int> chromaM = GetChromaMatrix(Colors::Magenta);
-	return Vec2::IsPositivFactor(Vec2((float)mpRel.x / width, (float)mpRel.y / height)) && chromaM(Vei2(((float)mpRel.x / width) * surSize.x, ((float)mpRel.y / height) * surSize.y)) == 1;
+	return Vec2::IsPositivFactor(Vec2((float)mpRel.x / width, (float)mpRel.y / height)) && chromaM(Vei2((int)(((float)mpRel.x / width) * surSize.x),(int)( ((float)mpRel.y / height) * surSize.y))) == 1;
 }

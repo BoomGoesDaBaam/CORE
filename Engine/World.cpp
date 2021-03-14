@@ -253,7 +253,7 @@ std::vector<SubAnimation> World::GetConnectionsOfTypes(Vei2 pos, int* types)
 	{
 		auto ccPos = Cell2ChunkPos(pos);
 		std::vector<SubAnimation> newC = resC->fsC.GetConnectionAnimationVec(types[i], pos, false, chunks(ccPos.x).GetAroundmatrix(ccPos.y));
-		for (int n = 0; n < newC.size(); n++)
+		for (int n = 0; n < (int)newC.size(); n++)
 		{
 			cons.push_back(newC[n]);
 		}
@@ -385,7 +385,7 @@ RectF World::GetChunkRect(Vei2 chunkPos)const
 
 	mos.x += d.x * s.chunkSize.x;
 	mos.y -= d.y * s.chunkSize.y;
-	return RectF(Vec2(mos) - Vec2(0, s.chunkSize.y), (float)s.chunkSize.x, (float)s.chunkSize.y) + Vec2(-(int)c.x, +(int)c.y);
+	return RectF(Vec2(mos) - Vec2(0.f, (float)s.chunkSize.y), (float)s.chunkSize.x, (float)s.chunkSize.y) + Vec2(-(float)c.x, +(float)c.y);
 }
 Vec3_<Vei2> World::GetHitTile(Vec2 mP)const
 {
@@ -429,10 +429,10 @@ Vec3_<Vei2> World::GetHitTile(Vec2 mP)const
 	deltaPixel += Vei2(deltaCells.x, -deltaCells.y) * GetcSize();
 	Vei2 deltaTiles = { 0,0 };
 
-	deltaTiles.y = (deltaPixel.y / GetTileSize().y);
+	deltaTiles.y = (int)(deltaPixel.y / GetTileSize().y);
 	if (deltaPixel.y < 0)
 		deltaTiles.y--;
-	deltaTiles.x = -(deltaPixel.x / GetTileSize().x);
+	deltaTiles.x = (int)-(deltaPixel.x / GetTileSize().x);
 	if (deltaPixel.x < 0)
 		deltaTiles.x++;
 
@@ -535,12 +535,12 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 	if (mos.y > (s.worldHasNChunks.y - 1 - mChunk.y) * s.chunkSize.y + (s.chunkSize.y - c.y))
 	{
 		mChunk.y = s.worldHasNChunks.y - 1 - ((int)mos.y / s.chunkSize.y);
-		c.y = s.chunkSize.y -((int)mos.y % (int)s.chunkSize.y);
+		c.y = (float)(s.chunkSize.y -((int)mos.y % (int)s.chunkSize.y));
 	}
 	if (mos.y > mChunk.y * s.chunkSize.y + c.y)
 	{
-		mChunk.y = mos.y / s.chunkSize.y;
-		c.y = (int)mos.y % (int)s.chunkSize.y;
+		mChunk.y =(int)( mos.y / s.chunkSize.y);
+		c.y = (float)((int)mos.y % (int)s.chunkSize.y);
 	}
 }
 void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
@@ -666,8 +666,8 @@ void World::Draw(Graphics& gfx) const
 			for (int x = xStart; x <= xStop; x++)
 			{
 				Vei2 curChunk = Chunk::PutChunkInWorld(mChunk + Vei2(x, y),s.worldHasNChunks);
-				Vei2 curChunkPos = Vei2(x * s.chunkSize.x, -y * s.chunkSize.y) + Graphics::GetMidOfScreen() - Vei2(c.x, -c.y);
-				RectF curChunkRect = RectF((Vec2)curChunkPos, s.chunkSize.x, s.chunkSize.y);
+				Vei2 curChunkPos = Vei2(x * s.chunkSize.x, -y * s.chunkSize.y) + Graphics::GetMidOfScreen() - Vei2((int)c.x, (int)-c.y);
+				RectF curChunkRect = RectF((Vec2)curChunkPos, (float)s.chunkSize.x, (float)s.chunkSize.y);
 
 				switch (layer)
 				{
@@ -737,8 +737,8 @@ void World::DrawObstacle(Vei2 tilePos, int type, Graphics& gfx, Color color, int
 	Vec2 tileSize = GetTileSize();
 	//RectI dRect = (RectI)GetTileRect(tilePos);
 	RectI dRect = RectI(Vei2(100,100),100,100);
-	dRect.right += (tileSize.x * (Settings::obstacleSizes[placeObstacle].x - 1));
-	dRect.top -= (tileSize.y * (Settings::obstacleSizes[placeObstacle].y - 1));
+	dRect.right += (int)(tileSize.x * (Settings::obstacleSizes[placeObstacle].x - 1));
+	dRect.top -= (int)(tileSize.y * (Settings::obstacleSizes[placeObstacle].y - 1));
 	
 	if (frame == -1)
 	{
@@ -803,7 +803,7 @@ void World::Init(WorldSettings& s)
 {
 	this->s = s;
 	mChunk = Vei2(10, s.worldHasNChunks.y / 2);
-	for (int type = 1; type < tC->fields.size(); type++)		//Create connectionsmaps
+	for (int type = 1; type < (int)tC->fields.size(); type++)		//Create connectionsmaps
 	{
 		//conMap.push_back(Matrix<int>(s.wSize.x, s.wSize.y, 0));
 	}
@@ -828,25 +828,25 @@ void World::Generate(WorldSettings& s)
 	{
 	case 0:
 		int arcticSize = (s.wSize.y / 40);
-		int subArcticSize = (s.wSize.y / 7.5f);
+		int subArcticSize = (int)(s.wSize.y / 7.5f);
 
 		for (int i = 0; i < s.wSize.y; i++)					//north & south ice
 		{
-			GenerateExplosion(Vei2(i, 0), rng.GetNormalDist() * arcticSize, 2);
-			GenerateExplosion(Vei2(i, s.wSize.y - 1), rng.GetNormalDist() * arcticSize, 2);
+			GenerateExplosion(Vei2(i, 0),(int)( rng.GetNormalDist() * arcticSize), 2);
+			GenerateExplosion(Vei2(i, s.wSize.y - 1), (int)(rng.GetNormalDist() * arcticSize), 2);
 		}
 		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 50; i++)	//plants
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20)), rng.GetNormalDist() * 3 + 5, 1);
+			GenerateExplosion(Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20)), (int)(rng.GetNormalDist() * 3) + 5, 1);
 		}
 		for (int i = 0; i < s.wSize.x * 5; i++)	//snow
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), rng.GetNormalDist() * subArcticSize), rng.GetNormalDist() * 3, 5, -1);
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), s.wSize.y - rng.GetNormalDist() * subArcticSize), rng.GetNormalDist() * 3, 5, -1);
+			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), (int)(rng.GetNormalDist() * subArcticSize)), rng.GetNormalDist() * 3, 5, -1);
+			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), s.wSize.y - (int)(rng.GetNormalDist() * subArcticSize)), (int)(rng.GetNormalDist() * 3), 5, -1);
 		}
 		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 200; i++)	//coral reef
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20)), rng.GetNormalDist() * 3 + 3, 6, 0);
+			GenerateExplosion(Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20)), (int)(rng.GetNormalDist() * 3) + 3, 6, 0);
 		}
 		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 6400; i++)	//candyland
 		{
@@ -857,16 +857,16 @@ void World::Generate(WorldSettings& s)
 			Vei2 pos = Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20));
 
 			GenerateCircle(pos, 7, 3, 1);
-			GenerateExplosion(pos, rng.GetNormalDist() * 6 + 10, 3, 1);
+			GenerateExplosion(pos, (int)(rng.GetNormalDist() * 6) + 10, 3, 1);
 		}
 		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 3200; i++)	//rocks
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20)), rng.GetNormalDist() * 6 + 5, 10, -1);
+			GenerateExplosion(Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20)), (int)(rng.GetNormalDist() * 6) + 5, 10, -1);
 		}
 		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 3200; i++)	//canjon + savanne
 		{
 			Vei2 pos = Vei2(rng.Calc(s.wSize.x), 10 + rng.Calc(s.wSize.y - 20));
-			GenerateExplosion(pos, 6 + rng.GetNormalDist() * 6, 9, 1);
+			GenerateExplosion(pos, 6 + (int)(rng.GetNormalDist() * 6), 9, 1);
 			GenerateExplosion(pos, 4, 11, 9);
 		}
 		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 6400; i++)	//magma
@@ -881,11 +881,11 @@ void World::Generate(WorldSettings& s)
 
 		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 10; i++)	//nutritious plants
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), 10 + rng.Calc(s.wSize.y - 20)), rng.GetNormalDist() * 3, 4, 1, 20, 0);
+			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), 10 + rng.Calc(s.wSize.y - 20)), (int)(rng.GetNormalDist() * 3), 4, 1, 20, 0);
 		}
 		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 20; i++)	//swamp
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), 10 + rng.Calc(s.wSize.y - 20)), rng.GetNormalDist() * 6, 14, 0, 20);
+			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), 10 + rng.Calc(s.wSize.y - 20)), (int)(rng.GetNormalDist() * 6), 14, 0, 20);
 		}
 
 		
@@ -1158,7 +1158,7 @@ void World::GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, int
 	{
 		float rad = (float)rng.Calc(360) * 0.0174533f;
 		Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin<double>(1.0f, 0.0f, rad);
-		Vei2 scaled = pos + (Vei2)((p1 * maxLineLength) * GigaMath::GetRandomNormDistribution());
+		Vei2 scaled = pos + (Vei2)((p1 * (float)maxLineLength) * GigaMath::GetRandomNormDistribution());
 
 		GenerateObstacle(scaled, type, ontoType, surrBy);
 	}
@@ -1169,7 +1169,7 @@ void World::GenerateExplosion(Vei2 pos, int maxLineLength, int type,int ontoType
 	{
 		float rad = (float)rng.Calc(360) * 0.0174533f;
 		Vec2 p1 = (Vec2) GigaMath::RotPointToOrigin<float>(1.0f,0.0f, rad);
-		Vei2 scaled = pos + Vei2(p1 * (maxLineLength*1/2+ rng.Calc(maxLineLength*1/2)));
+		Vei2 scaled = pos + Vei2(p1 * (int)(maxLineLength*1/2+ rng.Calc(maxLineLength*1/2)));
 		if (CellIsInWorld(scaled))
 		{
 			GenerateLine(Vec2(pos), Vec2(scaled), type, ontoType, 1, surrBy);

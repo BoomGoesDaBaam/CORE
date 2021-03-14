@@ -14,7 +14,7 @@ void GraphicObjects::Update(float dt)
 	{
 		obj->Update(dt);
 	}
-	for (int i = 0; i < objects.size(); i++)
+	for (int i = 0; i < (int)objects.size(); i++)
 	{
 		if (objects[i]->ChoosenToDie())
 		{
@@ -37,7 +37,7 @@ void GraphicObjects::Object::Update(float dt)
 {
 	configs.pos += configs.vel*dt;
 	configs.vel += configs.gravity*dt;
-	for (int i = 0; i < configs.body.size(); i++)
+	for (int i = 0; i < (int)configs.body.size(); i++)
 	{
 		configs.body[i] = (Vec2)GigaMath::RotPointToOrigin(configs.body[i].x, configs.body[i].y,(double)dt * configs.angleVel / 15);
 	}
