@@ -615,10 +615,10 @@ void World::UpdateGameLogic(float dt)
 	int yStop = renderRect.bottom;
 
 	#ifdef _DEBUG 
-		xStart = 0;
-		xStop = 0;
-		yStart = 0;
-		yStop = 0;
+	xStart = -1;
+	xStop = 1;
+	yStart = -1;
+	yStop = 1;
 	#endif
 		if (updateChunkGraphics)
 		{
@@ -628,7 +628,8 @@ void World::UpdateGameLogic(float dt)
 				{
 					Vei2 curChunk = Chunk::PutChunkInWorld(mChunk + Vei2(x, y), s.worldHasNChunks);
 					chunks(curChunk).Update(dt);
-					chunks(curChunk).UpdateTypeSurface(GetChunkRect(curChunk));
+					RectF curRect = GetChunkRect(curChunk);
+					chunks(curChunk).UpdateTypeSurface(curRect);
 				}
 			}
 			updateChunkGraphics = false;

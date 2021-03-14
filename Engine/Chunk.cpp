@@ -344,9 +344,9 @@ void Chunk::DrawObstacles(RectF chunkRect, Graphics& gfx) const
 }
 void Chunk::DrawType(RectF chunkRect, Graphics& gfx)const
 {
-	//gfx.DrawSurface((RectI)chunkRect, surf_types, SpriteEffect::Nothing(), 0);
+	gfx.DrawSurface((RectI)chunkRect, surf_types, SpriteEffect::Nothing(), 0);
 	
-	
+	/*
 	for (int y = 0; y < hasNCells; y++)
 	{
 		for (int x = 0; x < hasNCells; x++)
@@ -369,7 +369,7 @@ void Chunk::DrawType(RectF chunkRect, Graphics& gfx)const
 			}
 		}
 	}
-	
+	*/
 }
 void Chunk::DrawGroundedMap(Vei2 pos, int cellSize, Graphics& gfx)const
 {
@@ -480,22 +480,27 @@ void Chunk::UpdateTypeSurface(RectF chunkRect)
 {
 	surf_types = Surface((int)chunkRect.GetWidth(), (int)chunkRect.GetHeight());
 	Vei2 cellSize = (Vei2)GetCellSize(chunkRect);
+	Vei2 chunkSize = chunkRect.GetSize();
 
 	for (int y = 0; y < hasNCells; y++)
 	{
 		for (int x = 0; x < hasNCells; x++)
 		{
 			Vei2 curXY = Vei2(x, y);
-			//const Cell& curCell = cells(curXY);
-			//int cellType = curCell.type;
-			RectI curCellRect = RectI(Vei2(curXY.x, surf_types.GetHeight()-curXY.y - 1) * cellSize,cellSize.x, cellSize.y);
+			const Cell& curCell = cells(curXY);
+			int cellType = curCell.type;
+			//RectI curCellRect = RectI(Vei2(curXY.x, surf_types.GetHeight()-curXY.y - 1) * cellSize,cellSize.x, cellSize.y);
+			RectI curCellRect = RectI(Vei2(x * cellSize.x, chunkSize.y - cellSize.y - cellSize.y * y), cellSize.x, cellSize.y);
 
 			assert(cells(curXY).type >= 0 && cells(curXY).type < Settings::nDiffFieldTypes);
-			Color c = Colors::Magenta;
-			surf_types.AddRect((RectI)curCellRect, c);
+			Color c1 = Colors::Magenta;
+			Color c2 = Colors::Blue;
+			surf_types.AddLayer(curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields[cellType].GetCurSurface());
+
 			//surf_types.AddLayer((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(cells(curXY).type).GetCurSurface(),0);
 			/*
 			//surf_types.GetSupSurface  DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+			*/
 			/*
 			for (int i = 0; i < Settings::nDiffFieldTypes; i++)
 			{
