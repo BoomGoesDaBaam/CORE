@@ -19,16 +19,12 @@ public:
 	Surface GetSupSurface(RectI where);
 	void AddLayer(RectI pos, RectI sourceR, const Surface& s, int n90rot = 0)
 	{
-		AddLayer(pos, sourceR, RectI(Vei2(0, 0), width, height), s, n90rot);
-	}
-	void AddLayer(RectI pos, RectI sourceR, RectI clip, const Surface& s, int n90rot = 0)
-	{
 		n90rot %= 4;
 		for (int y = 0; y < pos.GetHeight(); y++)
 		{
 			for (int x = 0; x < pos.GetWidth(); x++)
 			{
-				if (RectI(Vei2(0,0),width,height).Contains({ x + pos.left, y + pos.top }) && clip.top <= y && clip.bottom >= y && clip.left <= x && clip.right >= x)
+				if (RectI(Vei2(0,0),width,height).Contains({ x + pos.left, y + pos.top }))
 				{
 					int sPixelX = 0;
 					int sPixelY = 0;
@@ -56,6 +52,7 @@ public:
 					assert(sPixelX >= 0);
 					assert(sPixelY >= 0);
 					Color sourceP = s.GetPixel(sPixelX, sPixelY);
+					if(sourceP != Colors::Magenta)
 					pixels[x + pos.left + (y + pos.top) * width] = sourceP;
 					//effect(x + pos.left, y + pos.top, sourceP, *this);
 				}

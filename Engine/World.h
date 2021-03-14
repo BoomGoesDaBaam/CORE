@@ -145,11 +145,7 @@ private:
 public:
 																							//Konstruktor + Operatoren
 	World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera);
-	//change game values
-	int World::GetxStart() {
-		Vei2 mos = Graphics::GetMidOfScreen();
-		return -(mos.x / GetcSize().x) * 2;
-	};
+	
 	//Handles
 	void HandleMouseEvents(Mouse::Event& e, GrabHandle& gH);
 	void HandleKeyboardEvents(Keyboard::Event& e);

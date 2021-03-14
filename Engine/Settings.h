@@ -56,7 +56,7 @@ namespace Settings
 
 	//Game options
 	static bool obstaclesOn = false;
-	static bool framesOn = false;
+	static bool framesOn = true;
 
 
 	//

@@ -35,7 +35,7 @@ public:
 	FramesizeCollection(TexturesCollection* tC);
 	void Update(Vei2 cellSize);
 	std::vector<RectI> GetConOffset(Vei2 cSize)const;	//gets the rects for every connection from the conSpritesheet
-	std::vector<SubAnimation> GetConnectionAnimationVec(int lookFor, Vei2 pos, bool masked = false, Matrix<int> aMat = Matrix<int>(3,3,0))const;
+	std::vector<SubAnimation> GetConnectionAnimationVec(int lookFor, bool masked = false, Matrix<int> aMat = Matrix<int>(3,3,0))const;
 	bool FIDF(int first, int second)const;
 };
 

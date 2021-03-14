@@ -252,7 +252,7 @@ std::vector<SubAnimation> World::GetConnectionsOfTypes(Vei2 pos, int* types)
 	for (int i = 0; i < Settings::ArrSize(types); i++)
 	{
 		auto ccPos = Cell2ChunkPos(pos);
-		std::vector<SubAnimation> newC = resC->fsC.GetConnectionAnimationVec(types[i], pos, false, chunks(ccPos.x).GetAroundmatrix(ccPos.y));
+		std::vector<SubAnimation> newC = resC->fsC.GetConnectionAnimationVec(types[i], false, chunks(ccPos.x).GetAroundmatrix(ccPos.y));
 		for (int n = 0; n < (int)newC.size(); n++)
 		{
 			cons.push_back(newC[n]);

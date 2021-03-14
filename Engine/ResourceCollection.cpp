@@ -218,13 +218,13 @@ void FramesizeCollection::Update(Vei2 cSize)
 	FieldCon = GetConOffset(cSize);
 
 }
-std::vector<SubAnimation> FramesizeCollection::GetConnectionAnimationVec(int lookFor, Vei2 pos, bool masked, Matrix<int> aMat)const
+std::vector<SubAnimation> FramesizeCollection::GetConnectionAnimationVec(int lookFor, bool masked, Matrix<int> aMat)const
 {
 	using namespace Settings;
 	std::vector<SubAnimation> vec;
 	std::vector<RectI> posInGrit = GetConOffset(Vei2(50, 50));
 	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
-	auto v = tC->fields.at(lookFor);
+	Animation& v = tC->fields.at(lookFor);
 	if (masked)
 	{
 		v = tC->maskedFields.at(translateIntoMaskedType(lookFor));
@@ -311,7 +311,7 @@ std::vector<SubAnimation> FramesizeCollection::GetConnectionAnimationVec(int loo
 	}
 	return vec;
 }
-bool FramesizeCollection::FIDF(int first, int second)const
+bool FramesizeCollection::FIDF(int first, int second)const	//FIRST IS DRAWN FIRST
 {
 	if (first != second)
 	{
