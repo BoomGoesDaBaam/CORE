@@ -62,6 +62,19 @@ public:
 			}
 		}
 	}
+	void AddRect(RectI pos, Color& c)
+	{
+		for (int y = 0; y < pos.GetHeight(); y++)
+		{
+			for (int x = 0; x < pos.GetWidth(); x++)
+			{
+				if (RectI(Vei2(0, 0), width, height).Contains({ x + pos.left, y + pos.top }))
+				{
+					pixels[x + pos.left + (y + pos.top) * width] = c;
+				}
+			}
+		}
+	}
 	void PutPixel(int x, int y, Color c);
 	Color GetPixel(Vei2 pos) const;
 	Color GetPixel(int x, int y) const;

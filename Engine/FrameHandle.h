@@ -66,7 +66,7 @@ public:
 		else if (textLoc == 1)
 		{
 			RectF drawPos = parentC->GetPos() + pos.GetTopLeft<float>();
-			f.DrawText(text, drawPos.left, drawPos.top, size, c);
+			f.DrawText(text, (int)(drawPos.left), (int)(drawPos.top), size, c);
 		}
 		//gfx.DrawRect(GetPos(), Colors::Red);
 	}
@@ -155,10 +155,10 @@ public:
 					switch (curState)
 					{
 					case 0:
-						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), (int)(pos.GetWidth()), (int)(pos.GetHeight() / 20)), resC->tC.windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 						break;
 					case 1:
-						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), (int)(pos.GetWidth()), (int)(pos.GetHeight() / 20)), resC->tC.windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 						gfx.DrawSurface((RectI)cPos, resC->tC.windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.9f));
 						break;
 					}
@@ -173,10 +173,10 @@ public:
 					switch (curState)
 					{
 					case 0:
-						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), (int)(pos.GetWidth()), (int)(pos.GetHeight() / 20)), resC->tC.windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 						break;
 					case 1:
-						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), pos.GetWidth(), pos.GetHeight() / 20), resC->tC.windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), (int)(pos.GetWidth()), (int)(pos.GetHeight() / 20)), resC->tC.windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 						gfx.DrawSurface((RectI)cPos, resC->tC.windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.8f));
 						break;
 					}
@@ -400,7 +400,7 @@ public:
 
 	void Draw(Graphics& gfx)override
 	{
-		for (int i = 0; i < frames.size(); i++)
+		for (int i = 0; i < (int)(frames.size()); i++)
 		{
 			frames[i]->Draw(gfx);
 		}
@@ -409,19 +409,19 @@ public:
 	{
 		bool hit = Frame::HandleMouseInput(e, interact, curW);
 		std::vector<bool> extended;
-		for (int i = 0; i < frames.size(); i++)
+		for (int i = 0; i < (int)(frames.size()); i++)
 		{
 			extended.push_back(frames[i]->GetCurState());
 		}
 		int changed = -1;
 		int yMove = 0;
-		for (int n = 0; n < frames.size(); n++)
+		for (int n = 0; n < (int)(frames.size()); n++)
 		{
 			bool hitFrame = frames[n]->HandleMouseInput(e, interact, curW);
 			hit = hit || hitFrame;
 			if (hitFrame)
 			{
-				for (int i = 0; i < frames.size(); i++)
+				for (int i = 0; i < (int)(frames.size()); i++)
 				{
 					frames[i]->pos.top += yMove;
 					frames[i]->pos.bottom += yMove;
@@ -444,7 +444,7 @@ public:
 		yMove = 0;
 		if (changed != -1)
 		{
-			for (int i = 0; i < frames.size(); i++)
+			for (int i = 0; i < (int)(frames.size()); i++)
 			{
 				frames[i]->pos.top += yMove;
 				frames[i]->pos.bottom += yMove;
@@ -463,7 +463,7 @@ public:
 	}
 	Frame* GetFrame(int index)
 	{
-		assert(index >= 0 && index < frames.size());
+		assert(index >= 0 && index < (int)(frames.size()));
 		return frames[index].get();
 	}
 };
@@ -600,57 +600,59 @@ public:
 	// ###### Update existing Frames ######
 	void UpdateFieldinformation(World& curW)				
 	{
-		
-		MultiFrame* m = static_cast<MultiFrame*>(windows[0].get());
-		Team& player = curW.GetPlayer();
-		Materials& playerM = player.GetMaterials();
-		//#1
-		Frame* f1 = static_cast<Frame*>(m->GetFrame(0));			
-		f1->SetText(Settings::GetTypeString(curW.GetfCellType()), "t_cellType");
-		if(curW.GetFocusedObstacle() != nullptr)
+		if (Settings::framesOn)
 		{
-			f1->SetText(Settings::GetObstacleString(curW.GetFocusedObstacle()->type), "t_obstacleInfo");
+			MultiFrame* m = static_cast<MultiFrame*>(windows[0].get());
+			Team& player = curW.GetPlayer();
+			Materials& playerM = player.GetMaterials();
+			//#1
+			Frame* f1 = static_cast<Frame*>(m->GetFrame(0));
+			f1->SetText(Settings::GetTypeString(curW.GetfCellType()), "t_cellType");
+			if (curW.GetFocusedObstacle() != nullptr)
+			{
+				f1->SetText(Settings::GetObstacleString(curW.GetFocusedObstacle()->type), "t_obstacleInfo");
+			}
+
+			//#2
+			PageFrame* p2 = static_cast<PageFrame*>(m->GetFrame(1));
+
+			//#3
+			PageFrame* p3 = static_cast<PageFrame*>(m->GetFrame(2));
+
+			// Page 1
+			p3->SetText(std::to_string(playerM.wood), "t_nWood");
+			p3->SetText(std::to_string(playerM.iron), "t_nIron");
+			p3->SetText(std::to_string(playerM.sand), "t_nSand");
+			p3->SetText(std::to_string(playerM.stone), "t_nStone");
+			p3->SetText(std::to_string(playerM.copper), "t_nCopper");
+			p3->SetText(std::to_string(playerM.gold), "t_nGold");
+			p3->SetText(std::to_string(playerM.aluminum), "t_nAluminum");
+			p3->SetText(std::to_string(playerM.emerald), "t_nEmerald");
+			p3->SetText(std::to_string(playerM.sapphire), "t_nSapphire");
+			p3->SetText(std::to_string(playerM.robin), "t_nRobin");
+			p3->SetText(std::to_string(playerM.diamond), "t_nDimond");
+			p3->SetText(std::to_string(playerM.amber), "t_nAmber");
+
+			//Page 2
+			p3->SetText(std::to_string(playerM.steel), "t_nSteel");
+			p3->SetText(std::to_string(playerM.plastic), "t_nPlastic");
+			p3->SetText(std::to_string(playerM.concrete), "t_nConcrete");
+			p3->SetText(std::to_string(playerM.glass), "t_nGlass");
+			p3->SetText(std::to_string(playerM.ceramics), "t_nCeramics");
+
+			//Page 3
+			p3->SetText(std::to_string(playerM.corals), "t_nCorals");
+			p3->SetText(std::to_string(playerM.sticks), "t_nSticks");
+			p3->SetText(std::to_string(playerM.leaves), "t_nLeaves");
+			p3->SetText(std::to_string(playerM.wool), "t_nWool");
+			p3->SetText(std::to_string(playerM.leather), "t_nLeather");
+			p3->SetText(std::to_string(playerM.fur), "t_nFur");
+			p3->SetText(std::to_string(playerM.meat), "t_nMeat");
+			p3->SetText(std::to_string(playerM.fish), "t_nFish");
+			p3->SetText(std::to_string(playerM.berrys), "t_nBerrys");
+			p3->SetText(std::to_string(playerM.apples), "t_nApples");
+			p3->SetText(std::to_string(playerM.cactus), "t_nCactus");
 		}
-
-		//#2
-		PageFrame* p2 = static_cast<PageFrame*>(m->GetFrame(1));
-
-		//#3
-		PageFrame* p3 = static_cast<PageFrame*>(m->GetFrame(2));
-
-		// Page 1
-		p3->SetText(std::to_string(playerM.wood), "t_nWood");
-		p3->SetText(std::to_string(playerM.iron), "t_nIron");
-		p3->SetText(std::to_string(playerM.sand), "t_nSand");
-		p3->SetText(std::to_string(playerM.stone), "t_nStone");
-		p3->SetText(std::to_string(playerM.copper), "t_nCopper");
-		p3->SetText(std::to_string(playerM.gold), "t_nGold");
-		p3->SetText(std::to_string(playerM.aluminum), "t_nAluminum");
-		p3->SetText(std::to_string(playerM.emerald), "t_nEmerald");
-		p3->SetText(std::to_string(playerM.sapphire), "t_nSapphire");
-		p3->SetText(std::to_string(playerM.robin), "t_nRobin");
-		p3->SetText(std::to_string(playerM.diamond), "t_nDimond");
-		p3->SetText(std::to_string(playerM.amber), "t_nAmber");
-		
-		//Page 2
-		p3->SetText(std::to_string(playerM.steel), "t_nSteel");
-		p3->SetText(std::to_string(playerM.plastic), "t_nPlastic");
-		p3->SetText(std::to_string(playerM.concrete), "t_nConcrete");
-		p3->SetText(std::to_string(playerM.glass), "t_nGlass");
-		p3->SetText(std::to_string(playerM.ceramics), "t_nCeramics");
-
-		//Page 3
-		p3->SetText(std::to_string(playerM.corals), "t_nCorals");
-		p3->SetText(std::to_string(playerM.sticks), "t_nSticks");
-		p3->SetText(std::to_string(playerM.leaves), "t_nLeaves");
-		p3->SetText(std::to_string(playerM.wool), "t_nWool");
-		p3->SetText(std::to_string(playerM.leather), "t_nLeather");
-		p3->SetText(std::to_string(playerM.fur), "t_nFur");
-		p3->SetText(std::to_string(playerM.meat), "t_nMeat");
-		p3->SetText(std::to_string(playerM.fish), "t_nFish");
-		p3->SetText(std::to_string(playerM.berrys), "t_nBerrys");
-		p3->SetText(std::to_string(playerM.apples), "t_nApples");
-		p3->SetText(std::to_string(playerM.cactus), "t_nCactus");
 	}
 
 	static constexpr float percentForGrab = 0.05;			

@@ -29,7 +29,7 @@ public:
 		std::vector<Vec2> body = { {-2,-2},{2,-2},{2,2},{-2,2},{3,5},{1,-7},{3,-5} };
 		void ScaleBody(float size)
 		{
-			for (int i = 0; i < body.size(); i++)
+			for (int i = 0; i < (int)(body.size()); i++)
 			{
 				body[i] *= size;
 			}
@@ -73,7 +73,7 @@ public:
 		Polygon(PartConf& configs) : Object(configs){}
 		Polygon() = default;
 		void Draw(Graphics& gfx)override {
-			for (int i = 0; i < configs.body.size()-1; i++)
+			for (int i = 0; i < (int)(configs.body.size())-1; i++)
 			{
 				gfx.DrawLine(configs.body[i] + configs.pos, configs.body[(__int64)i+1] + configs.pos,SpriteEffect::Rainbow());
 			}

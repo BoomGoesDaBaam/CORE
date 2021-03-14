@@ -71,6 +71,7 @@ private:
 	bool posAllowed = true;
 	bool moveMode = false;
 	int moveRange = 10;
+	bool updateChunkGraphics = true;
 
 	Team player = Team("Die reichlich raeudigen Raucher");
 	Team enemie1 = Team("In dem Sinne");
@@ -180,7 +181,7 @@ public:
 	Team& GetPlayer() { return player; }
 	RectI GetRenderRect()const { 
 		auto mos = Graphics::GetMidOfScreen();
-		return RectI(-1 - (mos.x / s.chunkSize.x) * 1.5f, 1 + (mos.x / s.chunkSize.x) * 1.5f, -1 - (mos.y / s.chunkSize.y) * 1.5f, 1 + (mos.y / s.chunkSize.y) * 1.5f); };
+		return RectI(-1 - (int)((mos.x / s.chunkSize.x) * 1.5f), 1 + (int)((mos.x / s.chunkSize.x) * 1.5f), -1 - (int)((mos.y / s.chunkSize.y) * 1.5f), 1 + (int)((mos.y / s.chunkSize.y) * 1.5f)); };
 	Obstacle* GetFocusedObstacle()
 	{
 		return focusedObst;

@@ -20,8 +20,8 @@ namespace GigaMath
 	std::pair<T, T> RotPointToOrigin(T x, T y, double radiant)
 	{
 		std::pair<T, T> p = { x,y };
-		float s = sin(radiant);
-		float c = cos(radiant);
+		float s = (float)sin(radiant);
+		float c = (float)cos(radiant);
 
 		float xnew = p.first * c - p.second * s;
 		float ynew = p.first * s + p.second * c;
@@ -55,10 +55,10 @@ namespace GigaMath
 
 		std::normal_distribution<> d{ 0,0.6f };
 
-		float dist = d(gen);
+		float dist = (float)d(gen);
 		while (!(dist >= 0 && dist <= 1))
 		{
-			dist = d(gen);
+			dist = (float)d(gen);
 		}
 		return dist;
 	}

@@ -60,7 +60,7 @@ public:
 	template <typename T>
 	Vec2_<T> GetTopLeft() const		
 	{
-		return Vec2_<T>(left, top);
+		return Vec2_<T>((const T)left, (const T)top);
 	}
 	Rect_ PutInto(const Rect_& other)
 	{
@@ -110,7 +110,7 @@ public:
 	}
 	Vei2 GetSize()
 	{
-		return Vei2(GetWidth(), GetHeight());
+		return Vei2((int)GetWidth(), (int)GetHeight());
 	}
 	Rect_<T> operator+(const Vec2_<T>& rhs) const
 	{

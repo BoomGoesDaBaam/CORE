@@ -468,6 +468,7 @@ Vei2 World::GetTileHit(Vec2 mP)const
 */
 void World::Zoom(Vei2 delta)
 {
+	updateChunkGraphics = true;
 	float deltaX = c.x / s.chunkSize.x;
 	float deltaY = c.y / s.chunkSize.y;
 	if (delta.x + s.chunkSize.x >= 50 && delta.x + s.chunkSize.x <= 1200)
@@ -619,21 +620,18 @@ void World::UpdateGameLogic(float dt)
 		yStart = 0;
 		yStop = 0;
 	#endif
-		for (int y = yStart; y <= yStop; y++)
+		if (updateChunkGraphics)
 		{
-			for (int x = xStart; x <= xStop; x++)
+			for (int y = yStart; y <= yStop; y++)
 			{
-				Vei2 curChunk = Chunk::PutChunkInWorld(mChunk + Vei2(x, y), s.worldHasNChunks);
-				chunks(curChunk).Update(dt);
-				if (i == 0)
+				for (int x = xStart; x <= xStop; x++)
 				{
+					Vei2 curChunk = Chunk::PutChunkInWorld(mChunk + Vei2(x, y), s.worldHasNChunks);
+					chunks(curChunk).Update(dt);
 					chunks(curChunk).UpdateTypeSurface(GetChunkRect(curChunk));
 				}
 			}
-		}
-		if (i == 0)
-		{
-			i++;
+			updateChunkGraphics = false;
 		}
 	//obstacles[0]->Update(dt);
 }
@@ -694,7 +692,7 @@ void World::Draw(Graphics& gfx) const
 					{
 						chunks(curChunk).DrawSurfaceAt(curChunkPos, fcctPos.y, s.chunkSize.x / Settings::chunkHasNCells, 1.5f, resC->tC.frames.at(0).GetCurSurface(), gfx);
 					}
-					//gfx.DrawRect(GetChunkRect(mChunk), Colors::Red);
+					gfx.DrawRect(GetChunkRect(mChunk), Colors::Red);
 					break;
 				}
 			}
@@ -716,7 +714,7 @@ void World::Draw(Graphics& gfx) const
 	{
 		chunks(focusedObst->chunkPos).DrawObstacleOutlines(focusedObst->tilePos, focusedObst->type, GetChunkRect(focusedObst->chunkPos), Colors::Blue, gfx);
 	}
-	if (moveMode)
+	if (moveMode && Settings::obstaclesOn && focusedObst != nullptr)
 	{
 		Vei2 bottomLeft = chunkPos2Flat(fcctPos);
 		CctPos curcctPos = Tile2ChunkPos(bottomLeft);
@@ -975,8 +973,10 @@ void World::Generate(WorldSettings& s)
 	
 	UpdateConMap();
 	UpdateGroundedMap();
-
-	SpawnPlayer();
+	if (Settings::obstaclesOn)
+	{
+		SpawnPlayer();
+	}
 	//CutHills(1);		//NICHT ZUENDE!!!!
 }
 void World::GenerateCircle(Vei2 pos, int radius,int type, int ontoType, int surrBy)

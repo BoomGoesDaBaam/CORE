@@ -187,16 +187,22 @@ PageFrame* MultiFrame::AddPageFrame(RectF pos, int type, sharedResC resC, Compon
 FrameHandle::FrameHandle(sharedResC resC)
 	:resC(std::move(resC))
 {
-	InitFrames();
+	if (Settings::framesOn)
+	{
+		InitFrames();
+	}
 }
 
 bool FrameHandle::HandleMouseInput(Mouse::Event& e, World& curW)
 {
-	for (auto& frame : windows)
+	if (Settings::framesOn)
 	{
-		if (frame->HandleMouseInput(e, true, curW))
+		for (auto& frame : windows)
 		{
-			return true;
+			if (frame->HandleMouseInput(e, true, curW))
+			{
+				return true;
+			}
 		}
 	}
 	return false;
@@ -204,24 +210,33 @@ bool FrameHandle::HandleMouseInput(Mouse::Event& e, World& curW)
 
 void FrameHandle::Draw(Graphics& gfx)
 {
-	for (int i = windows.size() - 1; i >= 0; i--)
+	if (Settings::framesOn)
 	{
-		windows[i]->Draw(gfx);
+		for (int i = windows.size() - 1; i >= 0; i--)
+		{
+			windows[i]->Draw(gfx);
+		}
 	}
 }
 void FrameHandle::AddFrame(RectF pos, int type, sharedResC resC)
 {
-	windows.push_back(std::make_unique<Frame>(pos, type, resC, nullptr));
+	if (Settings::framesOn)
+	{
+		windows.push_back(std::make_unique<Frame>(pos, type, resC, nullptr));
+	}
 }
 MultiFrame* FrameHandle::AddMultiFrame(RectF pos, int type, int nStates, sharedResC resC)
 {
-	std::vector<int> activInStates;
-	for (int i = 0; i < nStates; i++)
+	if (Settings::framesOn)
 	{
-		activInStates.push_back(1);
+		std::vector<int> activInStates;
+		for (int i = 0; i < nStates; i++)
+		{
+			activInStates.push_back(1);
+		}
+		windows.push_back(std::make_unique<MultiFrame>(pos, resC, nullptr));
+		return static_cast<MultiFrame*>(windows[windows.size() - 1].get());
 	}
-	windows.push_back(std::make_unique<MultiFrame>(pos, resC, nullptr));
-	return static_cast<MultiFrame*>(windows[windows.size() - 1].get());
 }
 
 

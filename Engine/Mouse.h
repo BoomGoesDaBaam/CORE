@@ -49,7 +49,7 @@ public:
 	public:
 		Event()
 			:
-			type( Invalid ),
+			type( Type::Invalid ),
 			leftIsPressed( false ),
 			rightIsPressed( false ),
 			x( 0 ),

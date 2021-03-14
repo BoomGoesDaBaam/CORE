@@ -57,7 +57,7 @@ class Matrix
 		}
 		bool HasValue(T value) const
 		{
-			for (int x = 0; x < column.size(); x++)
+			for (int x = 0; x < (int)(column.size()); x++)
 			{
 				if (column[x] == value)
 				{
@@ -68,7 +68,7 @@ class Matrix
 		}
 		void Sort(int nonZero, int zeros)
 		{
-			for (int i = 0; i < column.size(); i++)
+			for (int i = 0; i < (int)(column.size()); i++)
 			{
 				if (column[i] != 0)
 				{

@@ -109,8 +109,8 @@ void Game::ComposeFrame()
 {
 	Vec2 mP = (Vec2)wnd.mouse.GetPos();
 	fps_c++;
-	//curW->Draw(gfx);
-	wD.Draw();
+	curW->Draw(gfx);
+	//wD.Draw();
 
 	go.Draw();
 	resC->tC.Update(0.015f);
@@ -124,7 +124,7 @@ void Game::ComposeFrame()
 		std::ostringstream oss1, oss2, oss4, oss5;
 		oss1 <<"World cords" << curW->GetmChunk().x << " Camera:(" << c.x << " | " << c.y << ")" << "mP: " << mP << "mChunk: " << curW->GetmChunk() << "chunks Drawn to left: " << curW->GetChunksDrawnToLeft();
 		oss2 <<"fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CSize:" << curW->GetcSize().x << "   x-Felder:"<<curW->GetxStart();
-		oss4 << "Type:"<<curW->GetfCellType()<<"  use count tC:"<<resC.use_count()<<" ignoreMouse:"<< ignoreMouse << " opt1:" <<Settings::displayObstacles;
+		oss4 << "Type:"<<curW->GetfCellType()<<"  use count tC:"<<resC.use_count()<<" ignoreMouse:"<< ignoreMouse << " opt1:" <<Settings::obstaclesOn;
 		resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 14, Colors::Red);
 		resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 14, Colors::Red);
 		resC->tC.fonts.at(0).DrawText(oss4.str().c_str(), 25, 65, 14, Colors::Red);

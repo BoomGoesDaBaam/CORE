@@ -52,10 +52,12 @@ namespace Settings
 	static const Vei2 multiObstaclePos[] = { Vei2(-2,-2), Vei2(-2,-2) };									//relativ pos of hidden frames in tiles
 
 	//Graphic options
-	static bool displayObstacles = true;
+	//static bool displayObstacles = true;
 
 	//Game options
-	static bool obstaclesOn = true;
+	static bool obstaclesOn = false;
+	static bool framesOn = false;
+
 
 	//
 	static int lang = 0;															//choosen language (0 = english, 1 = german)

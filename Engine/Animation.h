@@ -29,7 +29,7 @@ public:
 			timePassed -= timePassed;
 			curF++;
 		}
-		if (curF >= frames.size())
+		if (curF >= (int)frames.size())
 		{
 			curF = 0;
 		}
@@ -40,7 +40,7 @@ public:
 	}
 	const Surface& GetSurfaceAt(int x) const
 	{
-		assert(x >= 0 && x < frames.size());
+		assert(x >= 0 && x < (int)frames.size());
 		return frames.at(x);
 	}
 	void SetKeepTime(float keepTime)
@@ -133,7 +133,7 @@ public:
 			for (int x = 0; x < dim.x; x++)
 			{
 				int value = other;
-				for (int i = 0; i < oldM.size(); i++)
+				for (int i = 0; i < (int)oldM.size(); i++)
 				{
 					int solid = 0;
 
