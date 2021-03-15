@@ -91,8 +91,10 @@ class Chunk
 	Matrix<Matrix<int>> aMats;
 	Matrix<int> obstacleMap;				// '-1' = empty   val > -1 = index of obstacle in obstacleVec
 	std::vector<Obstacle> obstacles;
-	Surface surf_types;
-	Surface surf_obstacles;
+	Surface surf_typesAndObstacles;
+	int graphicsWidth = 0;
+	int graphicsUpToDate = 0;				// 0 = nothing		1 = types drawn		2 = obstacles + types
+
 
 	void SetTilesAT(Vei2 pos, int value);
 	void SetTilesAT(Vei2 pos, Matrix<int> matrix);
@@ -150,7 +152,7 @@ public:
 	}
 	*/
 	void MarkObstacleMap(Vei2 tilePos, Vei2 size, int index);
-	void MoveObstacle(int index, Vei2 newPos);
+	bool MoveObstacle(int index, Vei2 newPos);
 	VecN AdjustTilePos(Vei2 tilePos) const;
 	VecN ChunkSwitchIsNeeded(Vei2 tilePos) const;
 	bool ObstaclePosAllowed(Vei2 tilePos, int type) const;
@@ -164,17 +166,22 @@ public:
 	void DrawObstacleOutlines(Vei2 tilePos, int type, RectF chunkRect, Color c, Graphics& gfx) const;
 	void DrawObstacle(Vei2 tilePos, int type, RectF chunkRect, Graphics& gfx) const;
 	void DrawObstacles(RectF chunkRect, Graphics& gfx) const;
-	void DrawType(RectF chunkRect, Graphics& gfx)const;
+	void DrawTypeAndObst(RectF chunkRect, Graphics& gfx)const;
 	void DrawGroundedMap(Vei2 pos, int cellSize, Graphics& gfx)const;
 	void DrawGrit(Vei2 pos, int cellSize, Graphics& gfx)const;
 	void DrawSurfaceAt(Vei2 drawPos, Vei2 cellPos, int cellSize, float scale, const Surface& s, Graphics& gfx)const;
 	void DrawTile(RectF chunkRect, Vei2 tilePos, Color c, Graphics& gfx)const;
 	
 	void UpdateTypeSurface(RectF chunkRect);
+	void UpdateObstacleSurface(RectF chunkRect);
+	void DrawObstacleProtrud(RectF curRect, Vec2 chunkSize, const Surface& s);
+	void DrawObstacleOnBuffer(RectF curRect,const Surface& s);
 
 	void UpdateAroundMatrix(Matrix<int> mat);
 	void UpdateGroundedMap();
 	void Update(float dt);
+	int NeedGraphicsUpdate(Vei2 chunkSize);
+	void UpdateGraphics();
 
 	bool PlaceObstacle(Vei2 tilePos, int type);
 	bool TileIsInChunk(Vei2& pos)const;

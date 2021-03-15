@@ -31,7 +31,7 @@ public:
 		int defBlueprint = 0;
 		int defType = 0;
 		Vei2 wSize;
-		Vei2 worldHasNChunks = Vei2(25, 25);
+		Vei2 worldHasNChunks = Vei2(10, 10);
 		Vei2 chunkSize = { 250, 250 };
 	};
 private:
@@ -43,8 +43,10 @@ private:
 	RandyRandom rng;
 	WorldSettings s;
 	//Gamevars
+	//Zelle in der Mitte des Bildschirms auf dem Debugzeiger ist
 	Vei2 mChunk = { 0,0 };
 	Vei2 fTile = { 0,0 };
+	Matrix<Chunk> chunks;
 
 	Vec3_<Vei2> fcctPos = Vec3_<Vei2>(Vei2(10, 12), Vei2(1, 1), Vei2(1, 1));
 	Vec3_<Vei2> fcctPosHover = Vec3_<Vei2>(Vei2(10, 12), Vei2(1, 1), Vei2(1, 1));
@@ -53,14 +55,7 @@ private:
 
 	Vec2& c;								//Camera
 
-	//Zelle in der Mitte des Bildschirms auf dem Debugzeiger ist
-	Vei2 mCunk = { 0,0 };
-	//Matrix<Cell> cells;
-	Matrix<Chunk> chunks;
 	
-	Matrix<int> obstacleMap;				// '-1' = empty   < -1 index of obstacle in obstacleVec
-	
-	std::vector<std::unique_ptr<Obstacle>> obstacles;
 	
 	//std::vector<Team> enemys;
 	//Team player;
@@ -166,12 +161,14 @@ public:
 		}
 	}
 	//
+
+
+	//
 	Vei2 GetwSize()const { return s.wSize; }
 	Vei2 GetcSize()const { return s.chunkSize / Settings::chunkHasNCells; }
 	Vec2 GetTileSize()const { return (Vec2)GetcSize()/Settings::CellSplitUpIn; }
 	Vei2 GetfCell()const { return Vei2(-1,-1); }
 	Vei2 GetfTile()const { return fTile; }
-	int GetChunksDrawnToLeft()const { return -(Graphics::GetMidOfScreen().x / s.chunkSize.x) * 2 - 1; }
 	int GetfCellType()const { return chunks(fcctPos.x).GetCellTypeAt(fcctPos.y); }
 	Vei2 GetmChunk()const { return mChunk; }
 	Team& GetPlayer() { return player; }

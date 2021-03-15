@@ -29,8 +29,7 @@ Game::Game(MainWindow& wnd)
 	resC(std::make_shared<ResourceCollection>(gfx)),
 	go(gfx, resC),
 	curW(std::make_unique<World>(World::WorldSettings(),resC,c)),
-	igwH(resC),
-	wD(gfx,resC)
+	igwH(resC)
 
 {
 	//Settings::ReloadFile();
@@ -90,7 +89,6 @@ void Game::UpdateModel()
 	
 	curW->UpdateGameLogic(dt);
 	curW->SetMoveMode(wnd.mouse.ShiftIsPressed());
-	wD.CalculateRects(curW.get());
 
 	//go.objects[0]->SetPos((Vec2)wnd.mouse.GetPos());
 	/*
@@ -122,7 +120,7 @@ void Game::ComposeFrame()
 	if (debugInfoOn)
 	{
 		std::ostringstream oss1, oss2, oss4, oss5;
-		oss1 <<"World cords" << curW->GetmChunk().x << " Camera:(" << c.x << " | " << c.y << ")" << "mP: " << mP << "mChunk: " << curW->GetmChunk() << "chunks Drawn to left: " << curW->GetChunksDrawnToLeft();
+		oss1 <<"World cords" << curW->GetmChunk().x << " Camera:(" << c.x << " | " << c.y << ")" << "mP: " << mP << "mChunk: " << curW->GetmChunk();
 		oss2 <<"fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CSize:" << curW->GetcSize().x << "   x-Felder:"<< curW->GetRenderRect().left;
 		oss4 << "Type:"<<curW->GetfCellType()<<"  use count tC:"<<resC.use_count()<<" ignoreMouse:"<< ignoreMouse << " opt1:" <<Settings::obstaclesOn;
 		resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 14, Colors::Red);

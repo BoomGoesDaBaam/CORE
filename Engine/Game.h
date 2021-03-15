@@ -32,7 +32,6 @@
 #include "ResourceCollection.h"
 #include "GrabHandle.h"
 #include "FrameHandle.h"
-#include "WorldDrawer.h"
 class Game
 {
 public:
@@ -63,7 +62,6 @@ private:
 	GraphicObjects go;
 	std::unique_ptr<World> curW;
 	FrameHandle igwH;
-	WorldDrawer wD;
 
 	GrabHandle gH;
 	Vec2 c = { 0,0 };

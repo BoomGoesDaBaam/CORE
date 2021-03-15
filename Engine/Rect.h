@@ -83,9 +83,25 @@ public:
 		}
 		return *this;
 	}
-	bool Contains(const Vec2_<T>& point) const
+	bool Contains(const Vec2_<T>& point) const		
 	{
 		return point.x >= left && point.x < right && point.y >= top && point.y < bottom;
+	}
+	bool HasLeftProtrud(const Rect_& other)				// other lays on the left line of "this" 
+	{
+		return IsOverlappingWith(other) && other.left < left && other.right > left;
+	}
+	bool HasRightProtrud(const Rect_& other)
+	{
+		return IsOverlappingWith(other) && other.right > right && other.left < right;
+	}
+	bool HasTopProtrud(const Rect_& other)
+	{
+		return IsOverlappingWith(other) && other.top < top && other.bottom > top;
+	}
+	bool HasBottomProtrud(const Rect_& other)
+	{
+		return IsOverlappingWith(other) && other.bottom > bottom && other.top < bottom;
 	}
 	Rect_ FromCenter(const Vec2_<T>& center, T halfWidth, T halfHeight)
 	{

@@ -55,8 +55,10 @@ namespace Settings
 	//static bool displayObstacles = true;
 
 	//Game options
-	static bool obstaclesOn = false;
-	static bool framesOn = true;
+	static bool obstaclesOn = true;
+	static bool spawnObstacles = true;
+
+	static bool framesOn = false;
 
 
 	//
