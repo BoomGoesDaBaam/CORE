@@ -445,6 +445,14 @@ Vec3_<Vei2> World::GetHitTile(Vec2 mP)const
 bool World::TileIsInRange(CctPos tPos1, CctPos tPos2, float range)
 {
 	Vei2 delta = chunkPos2Flat(tPos1) - chunkPos2Flat(tPos2);
+	if (delta.x > s.worldHasNChunks.x* Settings::chunkHasNTiles / 2)
+	{
+		delta.x -= s.worldHasNChunks.x * Settings::chunkHasNTiles;
+	}
+	if (delta.x < -s.worldHasNChunks.x* Settings::chunkHasNTiles / 2)
+	{
+		delta.x += s.worldHasNChunks.x * Settings::chunkHasNTiles;
+	}
 	if (sqrt(pow(delta.x,2) + pow(delta.y,2)) <= range)
 	{
 		return true;
@@ -563,8 +571,11 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		if (moveMode && TileIsInRange(oldCctPos, fcctPos, moveRange))
 		{
 			//GenerateObstacle(chunkPos2Flat(fcctPos),)
-			if (chunks(fcctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), AbstractTilePos(fcctPos)))
+			Vei2 d = AbstractTilePos(oldCctPos);
+
+			if (chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fcctPos))
 			{
+				chunks(oldCctPos.x).UpdateGraphics();
 				chunks(fcctPos.x).UpdateGraphics();
 				updateChunkGraphics = true;
 			}
@@ -754,9 +765,12 @@ void World::Draw(Graphics& gfx) const
 			{
 				CctPos cctDelta = { Vei2(0,0),Vei2(0,0),Vei2(x,y) };
 				CctPos cctPos = PutCctPosInWorld(curcctPos + cctDelta);
-				if (sqrt(pow(x, 2) + pow(y, 2)) <= moveRange && chunks(cctPos.x).ObstaclePosAllowed(cctPos.y * Settings::CellSplitUpIn + cctPos.z, focusedObst->type))
+
+				Vec2_<Vei2> ctPos = chunks(cctPos.x).GetTilePosOutOfBounds(cctPos.y * Settings::CellSplitUpIn + cctPos.z);
+				int index = chunks(ctPos.x).GetObstacleIndex(focusedObst->tilePos);
+				if (sqrt(pow(x, 2) + pow(y, 2)) <= moveRange && chunks(ctPos.x).ObstaclePosAllowed(ctPos.y,focusedObst->type, index))
 				{
-					chunks(cctPos.x).DrawTile(GetChunkRect(cctPos.x), cctPos.y * Settings::CellSplitUpIn + cctPos.z, Colors::Green, gfx);
+					chunks(ctPos.x).DrawTile(GetChunkRect(ctPos.x), ctPos.y, Colors::Green, gfx);
 				}
 			}
 		}

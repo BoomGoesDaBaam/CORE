@@ -45,6 +45,7 @@ namespace Settings
 	static constexpr int groundedTypesARE[] = { 13,1,2,3,4,5,7,9,-1 };				//Types where you can place normal Buildings	
 	static constexpr int CellSplitUpIn = 25;										//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
 	static constexpr int chunkHasNCells = 5;
+	static constexpr int chunkHasNTiles = chunkHasNCells * CellSplitUpIn;
 
 	static const int obstacleStates[] = { 1,2,1,1,2,1,1,1,1,1,1 };
 	static const Vei2 obstacleSizes[] = { Vei2(2,2), Vei2(1,1), Vei2(1,1), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(2,2), Vei2(4,4), Vei2(1,1) };

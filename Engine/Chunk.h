@@ -8,7 +8,7 @@ class Obstacle
 protected:
 	sharedResC resC;
 public:
-	Vei2 tilePos;						//pos in chunk
+	Vei2 tilePos;						//pos in chunk		Vei2(-1,-1) == disabled
 	Vei2 chunkPos;
 	int type, state = 0;
 	int n90rot = 0;
@@ -91,6 +91,7 @@ class Chunk
 	Matrix<Matrix<int>> aMats;
 	Matrix<int> obstacleMap;				// '-1' = empty   val > -1 = index of obstacle in obstacleVec
 	std::vector<Obstacle> obstacles;
+	std::vector<int> obstaclesIndexNotUsed;
 	Surface surf_typesAndObstacles;
 	int graphicsWidth = 0;
 	int graphicsUpToDate = 0;				// 0 = nothing		1 = types drawn		2 = obstacles + types
@@ -152,11 +153,12 @@ public:
 	}
 	*/
 	void MarkObstacleMap(Vei2 tilePos, Vei2 size, int index);
-	bool MoveObstacle(int index, Vei2 newPos);
-	VecN AdjustTilePos(Vei2 tilePos) const;
-	VecN ChunkSwitchIsNeeded(Vei2 tilePos) const;
-	bool ObstaclePosAllowed(Vei2 tilePos, int type) const;
-	bool ObstaclePosAllowed(Vei2 tilePos, Vei2 size) const;
+	bool MoveObstacle(int index, Vec3_<Vei2> newPos);
+	bool ObstaclePosAllowed(Vei2 tilePos, int type, int except = -1) const;
+	bool ObstaclePosAllowed(Vei2 tilePos, Vei2 size, int except = -1) const;
+	void DeleteObstacle(Vei2 tilePos);
+	bool CheckIfObstacleBaseTile(Vei2 tilePos);
+	int GetObstacleIndex(Vei2 tilePos)const;
 
 	Vec2 GetCellSize(RectF chunkRect) const;
 	Vec2 GetTileSize(RectF chunkRect) const;
@@ -184,6 +186,7 @@ public:
 	void UpdateGraphics();
 
 	bool PlaceObstacle(Vei2 tilePos, int type);
+	bool Chunk::PlaceObstacle(Vei2 tilePos, Obstacle o);
 	bool TileIsInChunk(Vei2& pos)const;
 	Vei2 PutTileInChunk(Vei2 pos)const;
 	Vei2 PutTileInChunk(int x, int y)const;

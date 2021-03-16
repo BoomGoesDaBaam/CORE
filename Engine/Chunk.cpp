@@ -179,14 +179,26 @@ void Chunk::MarkObstacleMap(Vei2 tilePos, Vei2 size, int index)
 		}
 	}
 }
-bool Chunk::MoveObstacle(int index, Vei2 newPos)
+bool Chunk::MoveObstacle(int index, Vec3_<Vei2> newPos)
 {
-	if (ObstaclePosAllowed(newPos, obstacles[index].type))
+	Vei2 onMap = newPos.y * Settings::CellSplitUpIn + newPos.z;
+	if (chunks->operator()(newPos.x).ObstaclePosAllowed(onMap, obstacles[index].type, index))
 	{
-	MarkObstacleMap(obstacles[index].tilePos, Settings::obstacleSizes[obstacles[index].type], -1);
-	obstacles[index].tilePos = newPos;
-	MarkObstacleMap(newPos, Settings::obstacleSizes[obstacles[index].type], index);
-	return true;
+		if (chunkPos == newPos.x)	//move inside a chunk
+		{
+			MarkObstacleMap(obstacles[index].tilePos, Settings::obstacleSizes[obstacles[index].type], -1);
+			obstacles[index].tilePos = onMap;
+			MarkObstacleMap(onMap, Settings::obstacleSizes[obstacles[index].type], index);
+		}
+		else     //jump into an other chunk
+		{
+			Obstacle o = obstacles[index];
+			DeleteObstacle(obstacles[index].tilePos);
+			o.chunkPos = newPos.x;
+			o.tilePos = onMap;
+			chunks->operator()(newPos.x).PlaceObstacle(onMap, o);
+		}
+		return true;
 	//PlaceObstacle(newPos, obstacles[index].type);
 	}
 	return false;
@@ -211,30 +223,11 @@ RectF Chunk::GetTileRect(RectF chunkRect, Vei2 tilePos) const		//not finished
 	tileRect += (Vec2)tilePos * Vec2(tileSize.x, -tileSize.y);
 	return tileRect;
 }
-VecN Chunk::AdjustTilePos(Vei2 tilePos) const						//Generate the overall chunk/cell/tile position
+bool Chunk::ObstaclePosAllowed(Vei2 tilePos, int type, int except) const
 {
-	tilePos = PutTileInChunk(tilePos);
-	using namespace Settings;
-	VecN m = VecN(3, 1, Vei2(-1, -1));
-	m[0] = (tilePos / (CellSplitUpIn * hasNCells));			//chunkPos
-	m[1] = (tilePos / CellSplitUpIn) % hasNCells;			//cellPos in chunkPos
-	m[2] = tilePos % CellSplitUpIn;							//tilePos in cellPos 
-	return m;
+	return ObstaclePosAllowed(tilePos, Settings::obstacleSizes[type], except);
 }
-VecN Chunk::ChunkSwitchIsNeeded(Vei2 tilePos) const				// -1 when not needed
-{
-	VecN pos = AdjustTilePos(tilePos);
-	if ((Vei2)pos[0] != chunkPos)
-	{
-		return pos;
-	}
-	return VecN(3, 1, Vei2(-1, -1));
-}
-bool Chunk::ObstaclePosAllowed(Vei2 tilePos, int type) const
-{
-	return ObstaclePosAllowed(tilePos, Settings::obstacleSizes[type]);
-}
-bool Chunk::ObstaclePosAllowed(Vei2 tilePos, Vei2 size) const
+bool Chunk::ObstaclePosAllowed(Vei2 tilePos, Vei2 size, int except) const
 {
 	if (this == nullptr)
 	{
@@ -247,6 +240,22 @@ bool Chunk::ObstaclePosAllowed(Vei2 tilePos, Vei2 size) const
 			for (int x = 0; x < size.x; x++)
 			{
 				Vei2 curXY = tilePos + Vei2(x, y);
+				using namespace Settings;
+				if (RectI(Vei2(0, 0), chunkHasNTiles, chunkHasNTiles).Contains(curXY) && ((obstacleMap(curXY) != except && obstacleMap(curXY) != -1) || groundedMap(curXY) != 1))
+				{
+					return false;
+				}
+				/*
+				else if (!RectI(Vei2(0, 0), chunkHasNTiles, chunkHasNTiles).Contains(curXY))
+				{
+					auto fcctPos = GetTilePosOutOfBounds(tilePos);
+					if (!chunks->operator()(fcctPos.x).ObstaclePosAllowed(curXY, Vei2(1, 1)))
+					{
+						return false;
+					}
+				}
+				*/
+				/*
 				if (curXY.x >= cells.GetColums() * Settings::CellSplitUpIn)
 				{
 					if (!chunks->operator()(chunkPos + Vei2(1, 0)).ObstaclePosAllowed(Vei2(0, curXY.y), Vei2(size.x - x, size.y)))
@@ -265,17 +274,37 @@ bool Chunk::ObstaclePosAllowed(Vei2 tilePos, Vei2 size) const
 					size.y = y - 1;
 					continue;
 				}
-				if (obstacleMap(curXY) != -1 || groundedMap(curXY) != 1)
-				{
-					return false;
-				}
-
+				*/
 			}
 		}
 	}
 	return true;
 }
-
+bool Chunk::CheckIfObstacleBaseTile(Vei2 tilePos)
+{
+	return obstacleMap(tilePos) != GetObstacleOutOfBounds(tilePos - Vei2(1, 0) ) && obstacleMap(tilePos) != GetObstacleOutOfBounds(tilePos - Vei2(0, 1));
+}
+int Chunk::GetObstacleIndex(Vei2 tilePos)const
+{
+	for (int i = 0; i < (int)obstacles.size(); i++)
+	{
+		if (obstacles[i].tilePos == tilePos)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+void Chunk::DeleteObstacle(Vei2 tilePos)
+{
+	if (CheckIfObstacleBaseTile(tilePos))
+	{
+		int index = obstacleMap(tilePos);
+		MarkObstacleMap(tilePos, Settings::obstacleSizes[obstacles[index].type], -1);
+		obstacles[index].tilePos = Vei2(-1, -1);
+		obstaclesIndexNotUsed.push_back(index);
+	}
+}
 void Chunk::DrawObstacleOutlines(Vei2 tilePos, int type, RectF chunkRect, Color c, Graphics& gfx) const
 {
 	if (Settings::obstaclesOn)
@@ -740,23 +769,51 @@ int Chunk::NeedGraphicsUpdate(Vei2 chunkSize)
 }
 void Chunk::UpdateGraphics()
 {
-	graphicsWidth = -1;
+	graphicsUpToDate = 0;
 }
 bool Chunk::PlaceObstacle(Vei2 tilePos, int type)
 {
-	if (Settings::obstaclesOn)
+	if (Settings::obstaclesOn && ObstaclePosAllowed(tilePos, type))
 	{
 		assert(TileIsInChunk(tilePos));
-		if (ObstaclePosAllowed(tilePos, type))
+		if (obstaclesIndexNotUsed.size() == 0)
 		{
 			int index = obstacles.size();
 			MarkObstacleMap(tilePos, Settings::obstacleSizes[type], index);
 			obstacles.push_back(Obstacle(tilePos, chunkPos, type, resC));
-			return true;
 		}
-		return false;
+		else
+		{
+			int index = obstaclesIndexNotUsed[0];
+			obstaclesIndexNotUsed.erase(obstaclesIndexNotUsed.begin());
+			MarkObstacleMap(tilePos, Settings::obstacleSizes[type], index);
+			obstacles[index] = Obstacle(tilePos, chunkPos, type, resC);
+		}
+		return true;
 	}
-	return true;
+	return false;
+}
+bool Chunk::PlaceObstacle(Vei2 tilePos, Obstacle o)
+{
+	if (Settings::obstaclesOn && ObstaclePosAllowed(tilePos, o.type))
+	{
+		assert(TileIsInChunk(tilePos));
+		if (obstaclesIndexNotUsed.size() == 0)
+		{
+			int index = obstacles.size();
+			MarkObstacleMap(tilePos, Settings::obstacleSizes[o.type], index);
+			obstacles.push_back(o);
+		}
+		else
+		{
+			int index = obstaclesIndexNotUsed[0];
+			obstaclesIndexNotUsed.erase(obstaclesIndexNotUsed.begin());
+			MarkObstacleMap(tilePos, Settings::obstacleSizes[o.type], index);
+			obstacles[index] = o;
+		}
+		return true;
+	}
+	return false;
 }
 bool Chunk::TileIsInChunk(Vei2& pos)const
 {
