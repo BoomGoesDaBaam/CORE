@@ -161,10 +161,24 @@ void Game::HandleMouseInput(Mouse::Event& e)
 			curW->HandleMouseEvents(e, gH);
 			World& w = *curW.get();
 			igwH.UpdateFieldinformation(w);
+			HandleFrameChanges();
 		}
 }
 void Game::HandleKeyboardInput(Keyboard::Event& e)
 {
 	curW->HandleKeyboardEvents(e);
+}
+void Game::HandleFrameChanges()
+{
+	Obstacle* obstacle = curW->GetFocusedObstacle();
+	if (curW->UpdateUnitInfo() && obstacle != nullptr)
+	{
+		igwH.UpdateUnitinformation(curW->GetFocusedObstacle());
+		curW->UnitUpdated();
+	}
+	if (obstacle == nullptr || !Settings::anyOfUnit(curW->GetFocusedObstacle()->type))
+	{
+		igwH.HideUnitInfo();
+	}
 }
 

@@ -168,16 +168,19 @@ void World::UpdateGroundedMap(Vei2 pos, Vei2 size)
 }
 void World::SpawnUnits(int n, Team& inTeam, Vei2 tilePos)
 {
-	for (int i = 0; i < n; i++)
+	for (int i = 0; i < n;)
 	{
 		float rad = (float)rng.Calc(360) * 0.0174533f;
 		Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin<float>(1.0f, 0.0f, rad);
-		GenerateObstacle(tilePos + Vei2(p1 * 5), 10);
+		if (GenerateObstacle(tilePos + Vei2(p1 * 5), 10))
+		{
+			i++;
+		}
 	}
 }
 void World::SpawnPlayer()
 {
-	Vei2 spawnpoint = Vei2(0, s.wSize.y/2);
+	Vei2 spawnpoint = Vei2(0, s.worldHasNChunks.y/2 * Settings::chunkHasNTiles);
 	while (GroundedMapAt(spawnpoint) != 1)
 	{
 		spawnpoint.x++;
@@ -585,6 +588,10 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		if (ObstacleMapAt(fcctPos) != -1)
 		{
 			focusedObst = GetObstacleAt(fcctPos);
+			if (Settings::anyOfUnit(focusedObst->type))
+			{
+				updateUnitInfo = true;
+			}
 		}
 		else
 		{
@@ -595,7 +602,9 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		if (buildMode == true)
 		{
 			auto fcctPos = GetHitTile(mP);
-			chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, 10);
+			chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, test++);
+			chunks(fcctPos.x).UpdateGraphics();
+			updateChunkGraphics = true;
 		}
 	}
 
@@ -834,7 +843,7 @@ bool World::GenerateObstacle(Vei2 tilePos, int type, int ontoType, int surrBy)
 		CctPos cctPos = Tile2ChunkPos(tilePos);
 		if (Settings::spawnObstacles)
 		{
-			chunks(cctPos.x).PlaceObstacle((Vei2)cctPos.y * Settings::CellSplitUpIn + cctPos.z, type);
+			return chunks(cctPos.x).PlaceObstacle((Vei2)cctPos.y * Settings::CellSplitUpIn + cctPos.z, type);
 		}
 		return true;
 	//}
@@ -899,7 +908,7 @@ void World::Generate(WorldSettings& s)
 		{
 			GenerateExplosion(Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20)), (int)(rng.GetNormalDist() * 3) + 3, 6, 0);
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 6400; i++)	//candyland
+		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 1600; i++)	//candyland
 		{
 			GenerateExplosion(Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20)), 3, 13, 1);
 		}
@@ -914,13 +923,13 @@ void World::Generate(WorldSettings& s)
 		{
 			GenerateExplosion(Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20)), (int)(rng.GetNormalDist() * 6) + 5, 10, -1);
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 3200; i++)	//canjon + savanne
+		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 400; i++)	//canjon + savanne
 		{
 			Vei2 pos = Vei2(rng.Calc(s.wSize.x), 10 + rng.Calc(s.wSize.y - 20));
 			GenerateExplosion(pos, 6 + (int)(rng.GetNormalDist() * 6), 9, 1);
 			GenerateExplosion(pos, 4, 11, 9);
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 6400; i++)	//magma
+		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 1600; i++)	//magma
 		{
 			Vei2 pos = Vei2(rng.Calc(s.wSize.x), 10 + rng.Calc(s.wSize.y - 20));
 			GenerateExplosion(pos, 6, 12, -1);
@@ -981,21 +990,21 @@ void World::Generate(WorldSettings& s)
 				GenerateObstacle(spawnAt, 6, 3);
 			}
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 10; i++)	//stones
+		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 5; i++)	//stones
 		{
 			Vei2 spawnAt = Vei2(rng.Calc((s.wSize.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSize.y - 20) * Settings::CellSplitUpIn));
 			auto ccPos = Cell2ChunkPos(PutCellInWorldX(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)));
 			
-			if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 1)
+			if (Settings::anyGroundedTypes(chunks(ccPos.x).GetCellTypeAt(ccPos.y)))
 			{
 				int rS = rng.Calc(2);
 				switch (rS)
 				{
 				case 0:
-					//GenerateObstacle(spawnAt, 7);
+					GenerateObstacle(spawnAt, 7);
 					break;
 				case 1:
-					//GenerateObstacle(spawnAt, 9);
+					GenerateObstacle(spawnAt, 9);
 					break;
 				}
 			}

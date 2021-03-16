@@ -32,7 +32,7 @@ public:
 		int defType = 0;
 		Vei2 wSize;
 		Vei2 worldHasNChunks = Vei2(10, 10);
-		Vei2 chunkSize = { 250, 250 };
+		Vei2 chunkSize = { 1000, 1000 };
 	};
 private:
 	
@@ -47,8 +47,8 @@ private:
 	Vei2 mChunk = { 0,0 };
 	Vei2 fTile = { 0,0 };
 	Matrix<Chunk> chunks;
-
-	Vec3_<Vei2> fcctPos = Vec3_<Vei2>(Vei2(10, 12), Vei2(1, 1), Vei2(1, 1));
+	int test = 11;
+	Vec3_<Vei2> fcctPos = Vec3_<Vei2>(Vei2(0, 0), Vei2(1, 1), Vei2(1, 1));
 	Vec3_<Vei2> fcctPosHover = Vec3_<Vei2>(Vei2(10, 12), Vei2(1, 1), Vei2(1, 1));
 
 	Obstacle* focusedObst = nullptr;
@@ -67,6 +67,7 @@ private:
 	bool moveMode = false;
 	int moveRange = 10;
 	bool updateChunkGraphics = true;
+	bool updateUnitInfo = false;
 
 	Team player = Team("Die reichlich raeudigen Raucher");
 	Team enemie1 = Team("In dem Sinne");
@@ -162,7 +163,8 @@ public:
 	}
 	//
 
-
+	bool UpdateUnitInfo()const{ return updateUnitInfo; }
+	void UnitUpdated() { updateUnitInfo = false; }
 	//
 	Vei2 GetwSize()const { return s.wSize; }
 	Vei2 GetcSize()const { return s.chunkSize / Settings::chunkHasNCells; }

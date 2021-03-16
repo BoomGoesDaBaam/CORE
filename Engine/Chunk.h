@@ -12,6 +12,7 @@ public:
 	Vei2 chunkPos;
 	int type, state = 0;
 	int n90rot = 0;
+	int hp=50;
 	std::vector<Animation> animations;	//index runs through states
 	Obstacle(Vei2 tilePos, Vei2 chunkPos, int type, sharedResC resC)
 		:
@@ -20,6 +21,7 @@ public:
 		type(type),
 		resC(std::move(resC))
 	{
+		hp = Settings::obstacleBaseHP[type];
 		animations.push_back(Animation(this->resC->tC.obstacles[type]));
 		switch (type)
 		{

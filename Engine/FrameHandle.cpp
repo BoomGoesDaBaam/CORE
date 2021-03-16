@@ -1,7 +1,7 @@
 #pragma once
 #include "FrameHandle.h"
 //		### Componente ###
-Text::Text(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc)
+Text::Text(std::string text, RectF pos, int size, Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc)
 	:
 	Component(pos, parentC),
 	f(f),
@@ -218,11 +218,12 @@ void FrameHandle::Draw(Graphics& gfx)
 		}
 	}
 }
-void FrameHandle::AddFrame(RectF pos, int type, sharedResC resC)
+Frame* FrameHandle::AddFrame(RectF pos, int type, sharedResC resC)
 {
 	if (Settings::framesOn)
 	{
 		windows.push_back(std::make_unique<Frame>(pos, type, resC, nullptr));
+		return static_cast<Frame*>(windows[windows.size() - 1].get());
 	}
 }
 MultiFrame* FrameHandle::AddMultiFrame(RectF pos, int type, int nStates, sharedResC resC)

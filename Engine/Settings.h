@@ -11,11 +11,27 @@ namespace Settings
 			4 = nutritious dirt		9 = savanne				14 = swamp
 
 			### Obstacles ###		mo = multiobstacle
-			0 = tent				5 = cactus				10 = unit
-			1 = tree		(mo #1)	6 = box
-			2 = bonfire				7 = stone
-			3 = townhall			8 = fir
-			4= other tree			9 = big stone
+			0 = tent								
+			1 = tree		(mo #1)					
+			2 = bonfire						
+			3 = townhall			
+			4= other tree			
+			5 = cactus
+			6 = box
+			7 = stone
+			8 = fir
+			9 = big stone
+			10 = worker
+			11 = deer
+			12 = cow
+			13 = horse
+			14 = billy goat
+			15 = sheep
+			16 = chicken
+			17 = pig
+			18 = penguin
+			19 = mouse
+			20 = snake
 			### Masked Array ###
 			0 = swamp
 
@@ -47,8 +63,9 @@ namespace Settings
 	static constexpr int chunkHasNCells = 5;
 	static constexpr int chunkHasNTiles = chunkHasNCells * CellSplitUpIn;
 
-	static const int obstacleStates[] = { 1,2,1,1,2,1,1,1,1,1,1 };
-	static const Vei2 obstacleSizes[] = { Vei2(2,2), Vei2(1,1), Vei2(1,1), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(2,2), Vei2(4,4), Vei2(1,1) };
+	static const int obstacleStates[] = { 1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
+	static const Vei2 obstacleSizes[] = { Vei2(2,2), Vei2(1,1), Vei2(1,1), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(2,2), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1) };
+	static const int obstacleBaseHP[] = { 20,20,20, 100, 20, 10, 5, 100, 20, 100, 50, 10,10,10,25,10,5,10,5,1,25 };
 	static const std::vector<Vei2> multiObstacleSize[] = { {Vei2(5,5)}, {Vei2(5,5)} };					//sizes of hidden frames
 	static const Vei2 multiObstaclePos[] = { Vei2(-2,-2), Vei2(-2,-2) };									//relativ pos of hidden frames in tiles
 
@@ -59,7 +76,7 @@ namespace Settings
 	static bool obstaclesOn = true;
 	static bool spawnObstacles = true;
 
-	static bool framesOn = false;
+	static bool framesOn = true;
 
 
 	//
@@ -67,6 +84,7 @@ namespace Settings
 
 	const std::string lang_fieldInformation[] = { "Field information", "Feldinformationen" };
 	const std::string lang_buildmenu[] = { "Build menue", "Baumenue" };
+	const std::string lang_unitInfo[] = { "Unit Information", "Einheitsinformationen" };
 	const std::string lang_buildings[] = { "Buildings", "Gebeaude" };
 	const std::string lang_housing[] = { "Housing", "Unterkuenfte" };
 	const std::string lang_productions[] = { "Productions", "Produktionen" };
@@ -137,14 +155,37 @@ namespace Settings
 	const std::string lang_townhall[] = { "townhall", "Rathaus" };
 
 	//Obstacles
+
 	const std::string lang_tree[] = { "tree", "Baum" };
 	const std::string lang_fir[] = { "fir", "Tanne" };
 	const std::string lang_box[] = { "box", "Box" };
 	const std::string lang_unit[] = { "unit", "Einheit" };
+	const std::string lang_worker[] = { "worker", "Arbeiter" };
 
+	const std::string lang_unitName[] = { "Unit name", "Name der Einheit" };
+	const std::string lang_hp[] = { "Health points", "Lebenspunkte" };
+
+	//Animals
+	const std::string lang_deer[] = { "deer", "Hirsch" };
+	const std::string lang_cow[] = { "cow", "Kuh" };
+	const std::string lang_horse[] = { "horse", "Pferd" };
+	const std::string lang_billygoat[] = { "billy goat", "Geissbock" };
+	const std::string lang_sheep[] = { "sheep", "Schaf" };
+	const std::string lang_chicken[] = { "chicken", "Huhn" };
+	const std::string lang_pig[] = { "pig", "Schwein" };
+	const std::string lang_penguin[] = { "penguin", "Pinguin" };
+	const std::string lang_mouse[] = { "mouse", "Maus" };
+	const std::string lang_snake[] = { "snake", "Schlange" };
 
 	static constexpr float percentForGrab[] = { 0.05f, 0.05f };
-
+	static bool anyOfUnit(int type)
+	{
+		if (type >= 10 && type <=20)
+		{
+			return true;
+		}
+		return false;
+	}
 	static bool anyOfHillTypes(int Type)
 	{
 		for (int i = 0; i < sizeof(hillTypesARE) / sizeof(hillTypesARE[0]); i++)
@@ -342,9 +383,39 @@ namespace Settings
 			return lang_stone[lang];
 			break;
 		case 10:
-			return lang_unit[lang];
+			return lang_worker[lang];
 			break;
 		case 11:
+			return lang_deer[lang];
+			break;
+		case 12:
+			return lang_cow[lang];
+			break;
+		case 13:
+			return lang_horse[lang];
+			break;
+		case 14:
+			return lang_billygoat[lang];
+			break;
+		case 15:
+			return lang_sheep[lang];
+			break;
+		case 16:
+			return lang_chicken[lang];
+			break;
+		case 17:
+			return lang_pig[lang];
+			break;
+		case 18:
+			return lang_penguin[lang];
+			break;
+		case 19:
+			return lang_mouse[lang];
+			break;
+		case 20:
+			return lang_snake[lang];
+			break;
+		default:
 			return "Settings::GetObstacleString needs an update";
 			break;
 		}
