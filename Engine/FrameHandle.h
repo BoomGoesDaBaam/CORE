@@ -130,6 +130,7 @@ protected:
 	Vec2 lastMouseP = Vec2(0, 0);
 	Vec2 posOfLastPress = Vec2(-1, -1);
 public:
+	bool(*bFunc)(PageFrame* pF, World& curW) = nullptr;
 	Frame(RectF pos, int type, sharedResC resC, Component* parentC);
 
 
@@ -145,7 +146,7 @@ public:
 	virtual void Draw(Graphics& gfx)override {
 		if (IsVisible())
 		{
-			assert(type == 0 || type == -1);
+			assert(type == 0 || type == 1 || type == -1);
 			RectF cPos = GetPos();
 			if (mouseHovers)
 			{
@@ -162,6 +163,9 @@ public:
 						gfx.DrawSurface((RectI)cPos, resC->tC.windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.9f));
 						break;
 					}
+					break;
+				case 1:
+					gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), 120,60), resC->tC.windowsFrame[3].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 					break;
 				}
 			}
@@ -180,6 +184,9 @@ public:
 						gfx.DrawSurface((RectI)cPos, resC->tC.windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.8f));
 						break;
 					}
+					break;
+				case 1:
+					gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), 120, 60), resC->tC.windowsFrame[3].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 					break;
 				}
 			}
@@ -231,6 +238,10 @@ public:
 			}
 			if (hit)
 			{
+				if (bFunc != nullptr)
+				{
+					bFunc(nullptr, curW);
+				}
 				mouseHovers = true;
 				if (type != -1)
 				{
@@ -388,6 +399,7 @@ bool B2(PageFrame* pF, World& curW);
 bool B3(PageFrame* pF, World& curW);
 bool B4(PageFrame* pF, World& curW);
 bool B5(PageFrame* pF, World& curW);
+bool BNextTurn(PageFrame* pF, World& curW);
 
 class MultiFrame : public Frame
 {
@@ -601,22 +613,28 @@ public:
 		fUnity->AddText(Settings::lang_unitName[Settings::lang] + ":", RectF(Vec2(2, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_unitName", a, 1);
 		fUnity->AddText(Settings::lang_hp[Settings::lang] + ":", RectF(Vec2(2, 35), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hp", a, 1);
 		fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 35), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hpIs", a, 1);
+		fUnity->AddText(Settings::lang_team[Settings::lang] + ":", RectF(Vec2(2, 51), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_team", a, 1);
+		fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 51), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_teamIs", a, 1);
+		fUnity->AddText(Settings::lang_stepsLeft[Settings::lang] + ":", RectF(Vec2(2, 67), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_steps", a, 1);
+		fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 67), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_stepsIs", a, 1);
 
 		fUnity->SetState(1);
 		fUnity->SetVisible(false);
 
-	}
+		Frame* fNextTurn = AddFrame(RectF(Vec2(620, 500), 120, 60), 1, resC);																			//NEXT TURN FRAME
+		fNextTurn->bFunc = BNextTurn;
+
+}
 	// ### Update components of existing Frames ###
 
 	// ###### Update existing Frames ######
-	void UpdateFieldinformation(World& curW)				
+	void UpdateFieldinformation(World& curW, Team* player)				
 	{
 		if (Settings::framesOn)
 		{
 			
 			MultiFrame* m = static_cast<MultiFrame*>(windows[0].get());
-			Team& player = curW.GetPlayer();
-			Materials& playerM = player.GetMaterials();
+			Materials& playerM = player->GetMaterials();
 			//#1
 			Frame* f1 = static_cast<Frame*>(m->GetFrame(0));
 			f1->SetText(Settings::GetTypeString(curW.GetfCellType()), "t_cellType");
@@ -675,7 +693,15 @@ public:
 
 		f->SetText(s1, "t_unitNameIs");
 		f->SetText(std::to_string(obst->hp), "t_hpIs");
-
+		f->SetText(std::to_string(obst->stepsLeft), "t_stepsIs");
+		if (obst->team != nullptr)
+		{
+			f->SetText(obst->team->GetTeamName(), "t_teamIs");
+		}
+		else
+		{
+			f->SetText(Settings::lang_noInformation[Settings::lang], "t_teamIs");
+		}
 	}
 	void HideUnitInfo()
 	{

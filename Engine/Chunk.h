@@ -3,6 +3,7 @@
 #include "Vec3.h"
 #include "Rect.h"
 #include "GigaMath.h"
+#include "Team.h"
 class Obstacle
 {
 protected:
@@ -13,13 +14,17 @@ public:
 	int type, state = 0;
 	int n90rot = 0;
 	int hp=50;
+	int stepsLeft = 0;
+	Team* team = nullptr;
 	std::vector<Animation> animations;	//index runs through states
-	Obstacle(Vei2 tilePos, Vei2 chunkPos, int type, sharedResC resC)
+	Obstacle(Vei2 tilePos, Vei2 chunkPos, int type, sharedResC resC, Team* team = nullptr)
 		:
 		tilePos(tilePos),
 		chunkPos(chunkPos),
 		type(type),
-		resC(std::move(resC))
+		resC(std::move(resC)),
+		team(team),
+		stepsLeft(Settings::obstacleMovesPerTurn[type])
 	{
 		hp = Settings::obstacleBaseHP[type];
 		animations.push_back(Animation(this->resC->tC.obstacles[type]));
@@ -166,7 +171,23 @@ public:
 	Vec2 GetTileSize(RectF chunkRect) const;
 	RectF GetCellRect(RectF chunkRect, Vei2 cellPos) const;
 	RectF GetTileRect(RectF chunkRect, Vei2 tilePos) const;
-
+	static Vei2 chunkPos2Flat(Vec3_<Vei2> cctPos)
+	{
+		return cctPos.x * Settings::CellSplitUpIn * Settings::chunkHasNCells + cctPos.y * Settings::CellSplitUpIn + cctPos.z;
+	}
+	static double GetDistBetween2tiles(Vei2 tilePos1, Vei2 tilePos2, int worldWidth)
+	{
+		Vec2 delta = (Vec2)tilePos1 - (Vec2)tilePos2;
+		if (delta.x > worldWidth / 2)
+		{
+			delta.x -= worldWidth;
+		}
+		if (delta.x < -worldWidth / 2)
+		{
+			delta.x += worldWidth;
+		}
+		return (double)std::abs(sqrt(pow(delta.x, 2) + pow(delta.y, 2)));
+	}
 	void DrawObstacleOutlines(Vei2 tilePos, int type, RectF chunkRect, Color c, Graphics& gfx) const;
 	void DrawObstacle(Vei2 tilePos, int type, RectF chunkRect, Graphics& gfx) const;
 	void DrawObstacles(RectF chunkRect, Graphics& gfx) const;
@@ -186,8 +207,11 @@ public:
 	void Update(float dt);
 	int NeedGraphicsUpdate(Vei2 chunkSize);
 	void UpdateGraphics();
+	void UpdateWhenMoved();
+	bool UnitIsAround(Vei2 tilePos, int range);
+	CtPos PutCtPosInWorld(CtPos ctPos, Vei2 worldHasNChunks);
 
-	bool PlaceObstacle(Vei2 tilePos, int type);
+	bool PlaceObstacle(Vei2 tilePos, int type, Team* team = nullptr);
 	bool Chunk::PlaceObstacle(Vei2 tilePos, Obstacle o);
 	bool TileIsInChunk(Vei2& pos)const;
 	Vei2 PutTileInChunk(Vei2 pos)const;
@@ -198,6 +222,7 @@ public:
 	int GetGroundedOutOfBounds(Vei2 tilePos) const;
 	int GetObstacleOutOfBounds(Vei2 tilePos) const;
 	void SetTypeAt(Vei2 pos, int type);
+	void NextTurn();
 
 	void SetConMapAt(Vei2 pos, int type, bool value);
 	int GetCellTypeAt(Vei2 pos)const;

@@ -181,8 +181,11 @@ void Chunk::MarkObstacleMap(Vei2 tilePos, Vei2 size, int index)
 }
 bool Chunk::MoveObstacle(int index, Vec3_<Vei2> newPos)
 {
+	Vei2 oldPos = chunkPos2Flat(Vec3_<Vei2>(chunkPos, Vei2(obstacles[index].tilePos.x / Settings::CellSplitUpIn, obstacles[index].tilePos.y / Settings::CellSplitUpIn), Vei2(obstacles[index].tilePos.x % Settings::CellSplitUpIn, obstacles[index].tilePos.y % Settings::CellSplitUpIn)));
+	int dist = (int)std::ceil(GetDistBetween2tiles(chunkPos2Flat(newPos), oldPos, chunks->GetColums() * Settings::chunkHasNTiles));
+
 	Vei2 onMap = newPos.y * Settings::CellSplitUpIn + newPos.z;
-	if (chunks->operator()(newPos.x).ObstaclePosAllowed(onMap, obstacles[index].type, index))
+	if (dist > 0 && chunks->operator()(newPos.x).ObstaclePosAllowed(onMap, obstacles[index].type, index))
 	{
 		if (chunkPos == newPos.x)	//move inside a chunk
 		{
@@ -198,6 +201,7 @@ bool Chunk::MoveObstacle(int index, Vec3_<Vei2> newPos)
 			o.tilePos = onMap;
 			chunks->operator()(newPos.x).PlaceObstacle(onMap, o);
 		}
+		obstacles[index].stepsLeft -= dist;
 		return true;
 	//PlaceObstacle(newPos, obstacles[index].type);
 	}
@@ -763,7 +767,6 @@ int Chunk::NeedGraphicsUpdate(Vei2 chunkSize)
 	if (!(chunkSize.x == graphicsWidth))
 	{
 		graphicsUpToDate = 0;
-		return 0;
 	}
 	return graphicsUpToDate;
 }
@@ -771,7 +774,85 @@ void Chunk::UpdateGraphics()
 {
 	graphicsUpToDate = 0;
 }
-bool Chunk::PlaceObstacle(Vei2 tilePos, int type)
+void Chunk::UpdateWhenMoved()
+{
+	for (int i = 0; i < obstacles.size(); i++)
+	{
+		
+		if (Settings::anyOfChangeSizeWhenNear(obstacles[i].type) && UnitIsAround(obstacles[i].tilePos, 15))
+		{
+			obstacles[i].state = 0;
+		}
+		else if(Settings::anyOfChangeSizeWhenNear(obstacles[i].type))
+		{
+			obstacles[i].state = 1;
+		}
+	}
+}
+bool Chunk::UnitIsAround(Vei2 tilePos, int range)
+{
+	CtPos ctPos = CtPos(chunkPos, tilePos);
+	for (int y = -range; y <= range; y++)
+	{
+		for (int x = -range; x <= range; x++)
+		{
+			CtPos ctDelta = { Vei2(0,0),Vei2(x,y) };
+			CtPos curctPos = PutCtPosInWorld(ctPos + ctDelta, Vei2(chunks->GetColums(), chunks->GetRows()));
+			if (chunks->operator()(curctPos.x).GetObstacleMapAt(curctPos.y) != -1)
+			{
+				Obstacle* obst = chunks->operator()(curctPos.x).GetObstacleAt(curctPos.y);
+				if (sqrt(pow(x, 2) + pow(y, 2)) <= range && obst != nullptr && Settings::anyOfUnit(obst->type))
+				{
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+CtPos Chunk::PutCtPosInWorld(CtPos ctPos, Vei2 worldHasNChunks)
+{
+	//	tiles
+	while (ctPos.y.x < 0)
+	{
+		ctPos.y.x += Settings::chunkHasNTiles;
+		ctPos.x.x--;
+	}
+	while (ctPos.y.x >= Settings::chunkHasNTiles)
+	{
+		ctPos.y.x -= Settings::chunkHasNTiles;
+		ctPos.x.x++;
+	}
+	while (ctPos.y.y < 0)
+	{
+		ctPos.y.y += Settings::chunkHasNTiles;
+		ctPos.x.y--;
+	}
+	while (ctPos.y.y >= Settings::chunkHasNTiles)
+	{
+		ctPos.y.y -= Settings::chunkHasNTiles;
+		ctPos.x.y++;
+	}
+	//	chunks
+	while (ctPos.x.x < 0)
+	{
+		ctPos.x.x += worldHasNChunks.x;
+	}
+	while (ctPos.x.x >= worldHasNChunks.x)
+	{
+		ctPos.x.x -= worldHasNChunks.x;
+	}
+	while (ctPos.x.y < 0)
+	{
+		ctPos.x.y = 0;
+	}
+	while (ctPos.x.y >= worldHasNChunks.y)
+	{
+		ctPos.x.y = worldHasNChunks.y - 1;
+	}
+	return ctPos;
+}
+bool Chunk::PlaceObstacle(Vei2 tilePos, int type, Team* team)
 {
 	if (Settings::obstaclesOn && ObstaclePosAllowed(tilePos, type))
 	{
@@ -780,7 +861,7 @@ bool Chunk::PlaceObstacle(Vei2 tilePos, int type)
 		{
 			int index = obstacles.size();
 			MarkObstacleMap(tilePos, Settings::obstacleSizes[type], index);
-			obstacles.push_back(Obstacle(tilePos, chunkPos, type, resC));
+			obstacles.push_back(Obstacle(tilePos, chunkPos, type, resC,team));
 		}
 		else
 		{
@@ -898,7 +979,13 @@ void Chunk::SetTypeAt(Vei2 pos, int type)
 {
 	cells(pos) = type;
 }
-
+void Chunk::NextTurn()
+{
+	for (int i = 0; i < obstacles.size(); i++)
+	{
+		obstacles[i].stepsLeft = Settings::obstacleMovesPerTurn[obstacles[i].type];
+	}
+}
 void Chunk::SetConMapAt(Vei2 pos, int type, bool value)
 {
 	conMap[type](pos) = value;

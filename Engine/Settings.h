@@ -37,10 +37,11 @@ namespace Settings
 
 			### Windows ###
 			1 = Fieldinformaion
-
+			2 = Unit Info
+			3 = Next Turn 
 			### Frame Types ###		
 			0 = frame with bar to open
-
+			1 = frame with custom pix
 			### Multiframe Types ###
 			0 = empty
 
@@ -66,6 +67,7 @@ namespace Settings
 	static const int obstacleStates[] = { 1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
 	static const Vei2 obstacleSizes[] = { Vei2(2,2), Vei2(1,1), Vei2(1,1), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(2,2), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1) };
 	static const int obstacleBaseHP[] = { 20,20,20, 100, 20, 10, 5, 100, 20, 100, 50, 10,10,10,25,10,5,10,5,1,25 };
+	static const int obstacleMovesPerTurn[] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,10,10,10,10,10,10,5,10,10,30,15 };
 	static const std::vector<Vei2> multiObstacleSize[] = { {Vei2(5,5)}, {Vei2(5,5)} };					//sizes of hidden frames
 	static const Vei2 multiObstaclePos[] = { Vei2(-2,-2), Vei2(-2,-2) };									//relativ pos of hidden frames in tiles
 
@@ -149,6 +151,7 @@ namespace Settings
 	const std::string lang_flora[] = { "Flora", "Flora" };			// Goettin
 	const std::string lang_Obstacle[] = { "Obstacle", "Hindernis" };			// Goettin
 	const std::string lang_kilogram[] = { "kg", "kg" };		
+	const std::string lang_stepsLeft[] = { "steps left", "Schritte ueber" };
 
 	const std::string lang_tent[] = { "tent", "Zelt" };
 	const std::string lang_bonfire[] = { "bonfire", "Lagerfeuer" };
@@ -164,6 +167,7 @@ namespace Settings
 
 	const std::string lang_unitName[] = { "Unit name", "Name der Einheit" };
 	const std::string lang_hp[] = { "Health points", "Lebenspunkte" };
+	const std::string lang_team[] = { "Team", "Team" };
 
 	//Animals
 	const std::string lang_deer[] = { "deer", "Hirsch" };
@@ -181,6 +185,14 @@ namespace Settings
 	static bool anyOfUnit(int type)
 	{
 		if (type >= 10 && type <=20)
+		{
+			return true;
+		}
+		return false;
+	}
+	static bool anyOfChangeSizeWhenNear(int type)		//trees that have a diffrent look when unit is nearby
+	{
+		if (type == 1 || type == 4)
 		{
 			return true;
 		}

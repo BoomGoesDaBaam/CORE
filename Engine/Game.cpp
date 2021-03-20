@@ -28,7 +28,7 @@ Game::Game(MainWindow& wnd)
 	gfx(wnd),
 	resC(std::make_shared<ResourceCollection>(gfx)),
 	go(gfx, resC),
-	curW(std::make_unique<World>(World::WorldSettings(),resC,c)),
+	curW(std::make_unique<World>(World::WorldSettings(),resC,c, &player)),
 	igwH(resC)
 
 {
@@ -160,7 +160,7 @@ void Game::HandleMouseInput(Mouse::Event& e)
 		{
 			curW->HandleMouseEvents(e, gH);
 			World& w = *curW.get();
-			igwH.UpdateFieldinformation(w);
+			igwH.UpdateFieldinformation(w, &player);
 			HandleFrameChanges();
 		}
 }

@@ -30,6 +30,9 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 
 	windowsFrame.push_back(Animation(delay));
 	windowsFrame[2].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(651, 1412), 140, 14)));
+
+	windowsFrame.push_back(Animation(delay));
+	windowsFrame[3].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(284, 61), 120, 60)));
 	//Obstacles
 
 

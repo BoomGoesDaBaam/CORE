@@ -38,12 +38,13 @@ Frame::Frame(RectF pos, int type, sharedResC resC, Component* parentC)
 	type(type),
 	resC(std::move(resC))
 {
-	assert(type == 0 || type == -1);
+	assert(type == 0 || type == 1 || type == -1);
 	if (type == 0)
 	{
 		nStates = 2;
 		activInStates = { 1, 0 };
 	}
+
 }
 
 PageFrame::PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages)
@@ -70,7 +71,7 @@ bool Frame::Hit(Vec2 mP)
 {
 	if (IsVisible())
 	{
-		assert(type == 0 || type == -1);
+		assert(type == 0 || type == 1 || type == -1);
 		Vei2 mpRel = (Vei2)(mP - GetPos().GetTopLeft<float>());
 		switch (type)
 		{
@@ -85,6 +86,9 @@ bool Frame::Hit(Vec2 mP)
 				break;
 			}
 			break;
+		case 1:
+			return resC->tC.windowsFrame[3].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
+			break;
 		case -1:
 			return resC->tC.windowsFrame[1].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
 			break;
@@ -94,7 +98,7 @@ bool Frame::Hit(Vec2 mP)
 }
 bool Frame::IsExtended() 
 { 
-	assert(type == 0 || type == -1);
+	assert(type == 0  || type == 1 || type == -1);
 	switch (type)
 	{
 	case 0:
@@ -105,7 +109,7 @@ bool Frame::IsExtended()
 }
 int Frame::GetExtendedHeight()
 {
-	assert(type == 0 || type == -1);
+	assert(type == 0 || type == 1 || type == -1);
 	switch (type)
 	{
 	case 0:
@@ -148,7 +152,11 @@ bool B5(PageFrame* pF, World& curW)
 	curW.SetBuildMode(3);
 	return true;
 }
-
+bool BNextTurn(PageFrame* pF, World& curW)
+{
+	curW.NextTurn();
+	return true;
+}
 void Frame::Move(Vec2 mP)
 {
 	Vec2 deltaMove = lastMouseP - mP;

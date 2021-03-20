@@ -1,11 +1,12 @@
 #include "World.h"
 
-World::World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera) 
+World::World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera, Team* player)
 	:
 	resC(std::move(resC)),
 	c(camera),
 	tC(&this->resC->tC),
-	fsC(&this->resC->fsC)
+	fsC(&this->resC->fsC),
+	player(player)
 {
 	Init(wSettings);
 	Generate(wSettings);
@@ -13,7 +14,7 @@ World::World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, 
 //conMap(Matrix<int>(s.wSize.x, s.wSize.y, 0))
 bool World::CellIsInWorld(Vei2& v)const
 {
-	return v.x >= 0 && v.x < s.wSize.x && v.y >= 0 && v.y < s.wSize.y;
+	return v.x >= 0 && v.x < s.wSizeInCells.x && v.y >= 0 && v.y < s.wSizeInCells.y;
 }
 bool World::ChunkIsInWorld(Vei2& pos)const
 {
@@ -21,15 +22,15 @@ bool World::ChunkIsInWorld(Vei2& pos)const
 }
 bool World::CellIsInWorldY(int y)const
 {
-	return y >= 0 && y < s.wSize.y;
+	return y >= 0 && y < s.wSizeInCells.y;
 }
 bool World::TileIsInWorldY(int y)const
 {
-	return y >= 0 && y < s.wSize.y * Settings::CellSplitUpIn;
+	return y >= 0 && y < s.wSizeInCells.y * Settings::CellSplitUpIn;
 }
 bool World::TileIsInWorld(Vei2& pos)const
 {
-	return pos.x >= 0 && pos.x < s.wSize.x * Settings::CellSplitUpIn && pos.y >= 0 && pos.y < s.wSize.y * Settings::CellSplitUpIn;
+	return pos.x >= 0 && pos.x < s.wSizeInCells.x * Settings::CellSplitUpIn && pos.y >= 0 && pos.y < s.wSizeInCells.y * Settings::CellSplitUpIn;
 }
 
 Vec2_<Vei2> World::Cell2ChunkPos(Vei2 cellPos)const
@@ -52,7 +53,7 @@ Vec3_<Vei2> World::Tile2ChunkPos(Vei2 tilePos)const
 }
 Vec3_<Vei2> World::PutCctPosInWorld(CctPos cctPos)const
 {
-	Vei2 pos = chunkPos2Flat(cctPos);
+	Vei2 pos = Chunk::chunkPos2Flat(cctPos);
 	return Tile2ChunkPos(pos);
 }
 int World::ObstacleMapAt(Vei2 tilePos)const
@@ -82,21 +83,21 @@ Vei2 World::PutCellInWorldX(int x, int y)const
 	if (x < 0)
 	{
 		x = -x;
-		x %= s.wSize.x;
-		x = s.wSize.x - x;
+		x %= s.wSizeInCells.x;
+		x = s.wSizeInCells.x - x;
 	}
-	if (x >= s.wSize.x)
+	if (x >= s.wSizeInCells.x)
 	{
-		x = x % s.wSize.x;
+		x = x % s.wSizeInCells.x;
 	}
 
 	if (y < 0)
 	{
 		y = 0;
 	}
-	if (y >= s.wSize.y)
+	if (y >= s.wSizeInCells.y)
 	{
-		y = s.wSize.y - 1;
+		y = s.wSizeInCells.y - 1;
 	}
 	return Vei2(x,y);
 }
@@ -104,9 +105,9 @@ void World::UpdateConMap()
 {
 	for (int type = 0; type < Settings::nDiffFieldTypes;type++)
 	{
-		for (int y = 0; y < s.wSize.y; y++)
+		for (int y = 0; y < s.wSizeInCells.y; y++)
 		{
-			for (int x = 0; x < s.wSize.x; x++)
+			for (int x = 0; x < s.wSizeInCells.x; x++)
 			{
 				auto ccPos = Cell2ChunkPos(Vei2(x, y));
 				int curCellType = chunks(ccPos.x).GetCellTypeAt(ccPos.y);
@@ -145,7 +146,7 @@ void World::UpdateGroundedMap(Vei2 pos, Vei2 size)
 	using namespace Settings;
 	if (obstaclesOn)
 	{
-		if (size == Vei2(-1, -1) || size == s.wSize)
+		if (size == Vei2(-1, -1) || size == s.wSizeInCells)
 		{
 			size = s.worldHasNChunks;
 		}
@@ -166,13 +167,13 @@ void World::UpdateGroundedMap(Vei2 pos, Vei2 size)
 		}
 	}
 }
-void World::SpawnUnits(int n, Team& inTeam, Vei2 tilePos)
+void World::SpawnUnits(int n, int type, Team* team, Vei2 tilePos)
 {
 	for (int i = 0; i < n;)
 	{
 		float rad = (float)rng.Calc(360) * 0.0174533f;
 		Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin<float>(1.0f, 0.0f, rad);
-		if (GenerateObstacle(tilePos + Vei2(p1 * 5), 10))
+		if (GenerateObstacle(tilePos + Vei2(p1 * rng.Calc(10)), type, team))
 		{
 			i++;
 		}
@@ -185,10 +186,17 @@ void World::SpawnPlayer()
 	{
 		spawnpoint.x++;
 	}
-	SpawnUnits(5, player, spawnpoint);
+	SpawnUnits(5,10, player, spawnpoint);
 	auto cctPos = Tile2ChunkPos(spawnpoint);
 	mChunk = cctPos.x;
-
+}
+void World::SpawnUnitGroup(Vei2 circaTilePos, int type, Team* team, int n)
+{
+	while (GroundedMapAt(circaTilePos) != 1)
+	{
+		circaTilePos.x++;
+	}
+	SpawnUnits(n, type, team, circaTilePos);
 }
 Vei2 World::PutTileInWorld(Vei2 pos)const
 {
@@ -200,24 +208,33 @@ void World::SetBuildMode(int obstacle)
 	buildMode = true;
 	placeObstacle = obstacle;
 }
-
+void World::NextTurn()
+{
+	for (int y = 0; y < chunks.GetColums(); y++)
+	{
+		for (int x = 0; x < chunks.GetColums(); x++)
+		{
+			chunks(Vei2(x, y)).NextTurn();
+		}
+	}
+}
 Vei2 World::PutTileInWorld(int x, int y)const
 {
 	if (y < 0)
 	{
 		y = 0;
 	}
-	if (y >= s.wSize.y * Settings::CellSplitUpIn)
+	if (y >= s.wSizeInCells.y * Settings::CellSplitUpIn)
 	{
-		y = s.wSize.y * Settings::CellSplitUpIn - 1;
+		y = s.wSizeInCells.y * Settings::CellSplitUpIn - 1;
 	}
 	while (x < 0)
 	{
-		x += s.wSize.x * Settings::CellSplitUpIn;
+		x += s.wSizeInCells.x * Settings::CellSplitUpIn;
 	}
-	while (x >= s.wSize.x * Settings::CellSplitUpIn)
+	while (x >= s.wSizeInCells.x * Settings::CellSplitUpIn)
 	{
-		x -= s.wSize.x * Settings::CellSplitUpIn;
+		x -= s.wSizeInCells.x * Settings::CellSplitUpIn;
 	}
 	return Vei2(x, y);
 }
@@ -447,7 +464,7 @@ Vec3_<Vei2> World::GetHitTile(Vec2 mP)const
 
 bool World::TileIsInRange(CctPos tPos1, CctPos tPos2, float range)
 {
-	Vei2 delta = chunkPos2Flat(tPos1) - chunkPos2Flat(tPos2);
+	Vei2 delta = Chunk::chunkPos2Flat(tPos1) - Chunk::chunkPos2Flat(tPos2);
 	if (delta.x > s.worldHasNChunks.x* Settings::chunkHasNTiles / 2)
 	{
 		delta.x -= s.worldHasNChunks.x * Settings::chunkHasNTiles;
@@ -571,15 +588,16 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLocked())
 	{
 		fcctPos = GetHitTile(mP);
-		if (moveMode && TileIsInRange(oldCctPos, fcctPos, moveRange))
+		if (moveMode && focusedObst != nullptr && TileIsInRange(oldCctPos, fcctPos, focusedObst->stepsLeft))
 		{
-			//GenerateObstacle(chunkPos2Flat(fcctPos),)
+			//GenerateObstacle(Chunk::chunkPos2Flat(fcctPos),)
 			Vei2 d = AbstractTilePos(oldCctPos);
 
 			if (chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fcctPos))
 			{
 				chunks(oldCctPos.x).UpdateGraphics();
 				chunks(fcctPos.x).UpdateGraphics();
+				chunks(fcctPos.x).UpdateWhenMoved();
 				updateChunkGraphics = true;
 			}
 			focusedObst = nullptr;
@@ -602,10 +620,11 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		if (buildMode == true)
 		{
 			auto fcctPos = GetHitTile(mP);
-			chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, test++);
+			chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, placeObstacle);
 			chunks(fcctPos.x).UpdateGraphics();
 			updateChunkGraphics = true;
 		}
+		//SpawnUnitGroup(Chunk::chunkPos2Flat(fcctPos), 12, animals, 10);
 	}
 
 	if (e.GetType() == Mouse::Event::WheelDown)
@@ -679,7 +698,6 @@ void World::UpdateGameLogic(float dt)
 						}
 					}
 				}
-				int k = 23;
 			}
 			updateChunkGraphics = false;
 		}
@@ -766,8 +784,9 @@ void World::Draw(Graphics& gfx) const
 	}
 	if (moveMode && Settings::obstaclesOn && focusedObst != nullptr)
 	{
-		Vei2 bottomLeft = chunkPos2Flat(fcctPos);
+		Vei2 bottomLeft = Chunk::chunkPos2Flat(fcctPos);
 		CctPos curcctPos = Tile2ChunkPos(bottomLeft);
+		int moveRange = focusedObst->stepsLeft;
 		for (int y = -moveRange; y <= moveRange; y++)
 		{
 			for (int x = -moveRange; x <= moveRange; x++)
@@ -777,7 +796,7 @@ void World::Draw(Graphics& gfx) const
 
 				Vec2_<Vei2> ctPos = chunks(cctPos.x).GetTilePosOutOfBounds(cctPos.y * Settings::CellSplitUpIn + cctPos.z);
 				int index = chunks(ctPos.x).GetObstacleIndex(focusedObst->tilePos);
-				if (sqrt(pow(x, 2) + pow(y, 2)) <= moveRange && chunks(ctPos.x).ObstaclePosAllowed(ctPos.y,focusedObst->type, index))
+				if (moveRange > 0 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= moveRange && chunks(ctPos.x).ObstaclePosAllowed(ctPos.y,focusedObst->type, index))
 				{
 					chunks(ctPos.x).DrawTile(GetChunkRect(ctPos.x), ctPos.y, Colors::Green, gfx);
 				}
@@ -832,7 +851,7 @@ bool World::NeedsConnections(Vei2 curXY)const
 	}
 	return true;
 }
-bool World::GenerateObstacle(Vei2 tilePos, int type, int ontoType, int surrBy)
+bool World::GenerateObstacle(Vei2 tilePos, int type, Team* team, int ontoType, int surrBy)
 {
 	tilePos = PutTileInWorld(tilePos);
 	Vei2 tileIsInCell = TileIsInCell(tilePos);
@@ -843,7 +862,7 @@ bool World::GenerateObstacle(Vei2 tilePos, int type, int ontoType, int surrBy)
 		CctPos cctPos = Tile2ChunkPos(tilePos);
 		if (Settings::spawnObstacles)
 		{
-			return chunks(cctPos.x).PlaceObstacle((Vei2)cctPos.y * Settings::CellSplitUpIn + cctPos.z, type);
+			return chunks(cctPos.x).PlaceObstacle((Vei2)cctPos.y * Settings::CellSplitUpIn + cctPos.z, type,team);
 		}
 		return true;
 	//}
@@ -887,51 +906,51 @@ void World::Generate(WorldSettings& s)
 	switch (s.defBlueprint)
 	{
 	case 0:
-		int arcticSize = (s.wSize.y / 40);
-		int subArcticSize = (int)(s.wSize.y / 7.5f);
+		int arcticSize = (s.wSizeInCells.y / 40);
+		int subArcticSize = (int)(s.wSizeInCells.y / 7.5f);
 
-		for (int i = 0; i < s.wSize.y; i++)					//north & south ice
+		for (int i = 0; i < s.wSizeInCells.y; i++)					//north & south ice
 		{
 			GenerateExplosion(Vei2(i, 0),(int)( rng.GetNormalDist() * arcticSize), 2);
-			GenerateExplosion(Vei2(i, s.wSize.y - 1), (int)(rng.GetNormalDist() * arcticSize), 2);
+			GenerateExplosion(Vei2(i, s.wSizeInCells.y - 1), (int)(rng.GetNormalDist() * arcticSize), 2);
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 50; i++)	//plants
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 50; i++)	//plants
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20)), (int)(rng.GetNormalDist() * 3) + 5, 1);
+			GenerateExplosion(Vei2(rng.Calc(s.wSizeInCells.y), 10 + rng.Calc(s.wSizeInCells.y - 20)), (int)(rng.GetNormalDist() * 3) + 5, 1);
 		}
-		for (int i = 0; i < s.wSize.x * 5; i++)	//snow
+		for (int i = 0; i < s.wSizeInCells.x * 5; i++)	//snow
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), (int)(rng.GetNormalDist() * subArcticSize)), rng.GetNormalDist() * 3, 5, -1);
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), s.wSize.y - (int)(rng.GetNormalDist() * subArcticSize)), (int)(rng.GetNormalDist() * 3), 5, -1);
+			GenerateExplosion(Vei2(rng.Calc(s.wSizeInCells.x), (int)(rng.GetNormalDist() * subArcticSize)), rng.GetNormalDist() * 3, 5, -1);
+			GenerateExplosion(Vei2(rng.Calc(s.wSizeInCells.x), s.wSizeInCells.y - (int)(rng.GetNormalDist() * subArcticSize)), (int)(rng.GetNormalDist() * 3), 5, -1);
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 200; i++)	//coral reef
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 200; i++)	//coral reef
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20)), (int)(rng.GetNormalDist() * 3) + 3, 6, 0);
+			GenerateExplosion(Vei2(rng.Calc(s.wSizeInCells.y), 10 + rng.Calc(s.wSizeInCells.y - 20)), (int)(rng.GetNormalDist() * 3) + 3, 6, 0);
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 1600; i++)	//candyland
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 1600; i++)	//candyland
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20)), 3, 13, 1);
+			GenerateExplosion(Vei2(rng.Calc(s.wSizeInCells.y), 10 + rng.Calc(s.wSizeInCells.y - 20)), 3, 13, 1);
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 1600; i++)	//desert
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 1600; i++)	//desert
 		{
-			Vei2 pos = Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20));
+			Vei2 pos = Vei2(rng.Calc(s.wSizeInCells.y), 10 + rng.Calc(s.wSizeInCells.y - 20));
 
 			GenerateCircle(pos, 7, 3, 1);
 			GenerateExplosion(pos, (int)(rng.GetNormalDist() * 6) + 10, 3, 1);
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 3200; i++)	//rocks
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 3200; i++)	//rocks
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.y), 10 + rng.Calc(s.wSize.y - 20)), (int)(rng.GetNormalDist() * 6) + 5, 10, -1);
+			GenerateExplosion(Vei2(rng.Calc(s.wSizeInCells.y), 10 + rng.Calc(s.wSizeInCells.y - 20)), (int)(rng.GetNormalDist() * 6) + 5, 10, -1);
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 400; i++)	//canjon + savanne
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 400; i++)	//canjon + savanne
 		{
-			Vei2 pos = Vei2(rng.Calc(s.wSize.x), 10 + rng.Calc(s.wSize.y - 20));
+			Vei2 pos = Vei2(rng.Calc(s.wSizeInCells.x), 10 + rng.Calc(s.wSizeInCells.y - 20));
 			GenerateExplosion(pos, 6 + (int)(rng.GetNormalDist() * 6), 9, 1);
 			GenerateExplosion(pos, 4, 11, 9);
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 1600; i++)	//magma
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 1600; i++)	//magma
 		{
-			Vei2 pos = Vei2(rng.Calc(s.wSize.x), 10 + rng.Calc(s.wSize.y - 20));
+			Vei2 pos = Vei2(rng.Calc(s.wSizeInCells.x), 10 + rng.Calc(s.wSizeInCells.y - 20));
 			GenerateExplosion(pos, 6, 12, -1);
 			GenerateExplosion(pos, 4, 8, 12);
 		}
@@ -939,19 +958,19 @@ void World::Generate(WorldSettings& s)
 		UpdateGroundedMap();
 
 
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 10; i++)	//nutritious plants
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 10; i++)	//nutritious plants
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), 10 + rng.Calc(s.wSize.y - 20)), (int)(rng.GetNormalDist() * 3), 4, 1, 20, 0);
+			GenerateExplosion(Vei2(rng.Calc(s.wSizeInCells.x), 10 + rng.Calc(s.wSizeInCells.y - 20)), (int)(rng.GetNormalDist() * 3), 4, 1, 20, 0);
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 20; i++)	//swamp
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 20; i++)	//swamp
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSize.x), 10 + rng.Calc(s.wSize.y - 20)), (int)(rng.GetNormalDist() * 6), 14, 0, 20);
+			GenerateExplosion(Vei2(rng.Calc(s.wSizeInCells.x), 10 + rng.Calc(s.wSizeInCells.y - 20)), (int)(rng.GetNormalDist() * 6), 14, 0, 20);
 		}
 
 		
-		for (int i = 0; i < (s.wSize.x * s.wSize.y); i++)	//Trees
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y); i++)	//Trees
 		{
-			Vei2 spawnAt = Vei2(rng.Calc((s.wSize.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSize.y - 20) * Settings::CellSplitUpIn));
+			Vei2 spawnAt = Vei2(rng.Calc((s.wSizeInCells.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSizeInCells.y - 20) * Settings::CellSplitUpIn));
 			auto ccPos = Cell2ChunkPos(PutCellInWorldX(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)));
 			if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 1)
 				{
@@ -970,9 +989,9 @@ void World::Generate(WorldSettings& s)
 				}
 			}
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) * 2; i++)	//cactus
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) * 2; i++)	//cactus
 		{
-			Vei2 spawnAt = Vei2(rng.Calc((s.wSize.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSize.y - 20) * Settings::CellSplitUpIn));
+			Vei2 spawnAt = Vei2(rng.Calc((s.wSizeInCells.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSizeInCells.y - 20) * Settings::CellSplitUpIn));
 			auto ccPos = Cell2ChunkPos(PutCellInWorldX(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)));
 			
 			if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 1)
@@ -980,19 +999,19 @@ void World::Generate(WorldSettings& s)
 				GenerateObstacle(spawnAt, 5);
 			}
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 20; i++)	//boxes
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 20; i++)	//boxes
 		{
-			Vei2 spawnAt = Vei2(rng.Calc((s.wSize.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSize.y - 20) * Settings::CellSplitUpIn));
+			Vei2 spawnAt = Vei2(rng.Calc((s.wSizeInCells.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSizeInCells.y - 20) * Settings::CellSplitUpIn));
 			auto ccPos = Cell2ChunkPos(PutCellInWorldX(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)));
 			
 			if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 1)
 			{
-				GenerateObstacle(spawnAt, 6, 3);
+				GenerateObstacle(spawnAt, 6, nullptr, 3);
 			}
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 5; i++)	//stones
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 5; i++)	//stones
 		{
-			Vei2 spawnAt = Vei2(rng.Calc((s.wSize.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSize.y - 20) * Settings::CellSplitUpIn));
+			Vei2 spawnAt = Vei2(rng.Calc((s.wSizeInCells.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSizeInCells.y - 20) * Settings::CellSplitUpIn));
 			auto ccPos = Cell2ChunkPos(PutCellInWorldX(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)));
 			
 			if (Settings::anyGroundedTypes(chunks(ccPos.x).GetCellTypeAt(ccPos.y)))
@@ -1009,25 +1028,67 @@ void World::Generate(WorldSettings& s)
 				}
 			}
 		}
-		for (int i = 0; i < (s.wSize.x * s.wSize.y) / 100; i++)	//other Trees
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 100; i++)	//other Trees
 		{
-			Vei2 spawnAt = Vei2(rng.Calc((s.wSize.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSize.y - 20) * Settings::CellSplitUpIn));
+			Vei2 spawnAt = Vei2(rng.Calc((s.wSizeInCells.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSizeInCells.y - 20) * Settings::CellSplitUpIn));
 			auto ccPos = Cell2ChunkPos(PutCellInWorldX(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)));
 			
 			if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 1)
 			{
-				GenerateObstacleExplosion(spawnAt, 100, 1, 1, 15);
-				GenerateObstacleExplosion(spawnAt + Vei2(0,1), 100, 1, 1, 15);
-				GenerateObstacleExplosion(spawnAt + Vei2(1, 0), 100, 1, 1, 15);
-				GenerateObstacleExplosion(spawnAt + Vei2(1, 1), 100, 1, 1, 15);
+				GenerateObstacleExplosion(spawnAt, 100, 1, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(0,1), 100, 1, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(1, 0), 100, 1, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(1, 1), 100, 1, nullptr, 1, 15);
 
-				GenerateObstacleExplosion(spawnAt, 50, 4, 1, 15);
-				GenerateObstacleExplosion(spawnAt + Vei2(0, 1), 100, 4, 1, 15);
-				GenerateObstacleExplosion(spawnAt + Vei2(1, 0), 100, 4, 1, 15);
-				GenerateObstacleExplosion(spawnAt + Vei2(1, 1), 100, 4, 1, 15);
+				GenerateObstacleExplosion(spawnAt, 50, 4, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(0, 1), 100, 4, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(1, 0), 100, 4, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(1, 1), 100, 4, nullptr, 1, 15);
 			}
 		}
-		
+		for (int n = 0; n < 7; n++)
+		{
+			for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 100; i++)	//normal animals
+			{
+				Vei2 spawnAt = Vei2(rng.Calc((s.wSizeInCells.x - 1) * Settings::CellSplitUpIn), subArcticSize * Settings::CellSplitUpIn + rng.Calc((s.wSizeInCells.y - subArcticSize * 2) * Settings::CellSplitUpIn));
+				auto ccPos = Cell2ChunkPos(PutCellInWorldX(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)));
+
+				if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 1)
+				{
+					SpawnUnitGroup(spawnAt, 11+n, &animals, rng.Calc(10) + 5);
+				}
+			}
+		}
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 20; i++)	//penguins
+		{
+			Vei2 spawnAtArctis = Vei2(rng.Calc((s.wSizeInCells.x - 1) * Settings::CellSplitUpIn),rng.Calc(subArcticSize * Settings::CellSplitUpIn));
+			Vei2 spawnAtTopAntarktis = Vei2(rng.Calc((s.wSizeInCells.x - 1) * Settings::CellSplitUpIn), Settings::chunkHasNTiles * s.worldHasNChunks.y - rng.Calc(subArcticSize * Settings::CellSplitUpIn));
+
+			auto ccPos1 = Cell2ChunkPos(PutCellInWorldX(Vei2(spawnAtArctis.x / Settings::CellSplitUpIn, spawnAtArctis.y / Settings::CellSplitUpIn)));
+			auto ccPos2 = Cell2ChunkPos(PutCellInWorldX(Vei2(spawnAtTopAntarktis.x / Settings::CellSplitUpIn, spawnAtTopAntarktis.y / Settings::CellSplitUpIn)));
+
+			if (chunks(ccPos1.x).GetCellTypeAt(ccPos1.y) != 0)
+			{
+				SpawnUnitGroup(spawnAtArctis, 18, &animals, rng.Calc(10) + 5);
+			}
+			if (chunks(ccPos2.x).GetCellTypeAt(ccPos2.y) != 0)
+			{
+				SpawnUnitGroup(spawnAtTopAntarktis, 18, &animals, rng.Calc(10) + 5);
+			}
+		}
+		for (int n = 0; n < 2; n++)
+		{
+			for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 20; i++)	//mouses and snakes
+			{
+				Vei2 spawnAt = Vei2(rng.Calc((s.wSizeInCells.x - 1) * Settings::CellSplitUpIn), subArcticSize * Settings::CellSplitUpIn + rng.Calc((s.wSizeInCells.y - subArcticSize * 2) * Settings::CellSplitUpIn));
+				auto ccPos = Cell2ChunkPos(PutCellInWorldX(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)));
+
+				if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 1)
+				{
+					SpawnUnitGroup(spawnAt, 19 + n, &animals, 1);
+				}
+			}
+		}
 		break;
 	}
 	
@@ -1127,7 +1188,7 @@ void World::GenerateLine(Vec2 p0, Vec2 p1, int type, int ontoType, int thickness
 		}
 	}
 }
-void World::GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, int ontoType, int thickness, int surrBy) //bnot
+void World::GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, Team* team, int ontoType, int thickness, int surrBy) //bnot
 {
 	if (tile0 != tile1) {
 		float m = 0.0f;
@@ -1141,11 +1202,11 @@ void World::GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, int ontoType,
 			{
 				if (std::abs(m) <= 1.0f)
 				{
-					GenerateLine(Vec2(tile1.x, tile1.y + i), Vec2(tile0.x, tile0.y + i), type, ontoType, 1, surrBy);
+					GenerateObstacleLine(Vec2(tile1.x, tile1.y + i), Vec2(tile0.x, tile0.y + i), type, team, ontoType, 1, surrBy);
 				}
 				else
 				{
-					GenerateLine(Vec2(tile1.x + i, tile1.y), Vec2(tile0.x + i, tile0.y), type, ontoType, 1, surrBy);
+					GenerateObstacleLine(Vec2(tile1.x + i, tile1.y), Vec2(tile0.x + i, tile0.y), type, team, ontoType, 1, surrBy);
 				}
 			}
 		}
@@ -1210,13 +1271,13 @@ void World::GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, int ontoType,
 				*/
 				if (ObstacleMapAt(tilePos) == -1 && (aMat.HasValue(surrBy) || surrBy == -1) && aMat[1][1] != surrBy)
 				{
-					GenerateObstacle(tilePos, type);
+					GenerateObstacle(tilePos, type, team);
 				}
 			}
 		}
 	}
 }
-void World::GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, int ontoType, int nRolls, int surrBy)
+void World::GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, Team* team, int ontoType, int nRolls, int surrBy)
 {
 	for (int i = 0; i < nRolls; i++)
 	{
@@ -1224,7 +1285,7 @@ void World::GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, int
 		Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin<double>(1.0f, 0.0f, rad);
 		Vei2 scaled = pos + (Vei2)((p1 * (float)maxLineLength) * GigaMath::GetRandomNormDistribution());
 
-		GenerateObstacle(scaled, type, ontoType, surrBy);
+		GenerateObstacle(scaled, type, team, ontoType, surrBy);
 	}
 }
 void World::GenerateExplosion(Vei2 pos, int maxLineLength, int type,int ontoType, int nRolls, int surrBy)//not
@@ -1261,13 +1322,13 @@ bool World::GenerateCell(Vei2 pos, int type, int ontoType, int surrBy)
 	}
 	return false;
 }
-void World::GenerateObstaclesInCell(Vei2 cellPos, int type, int number, int ontoType, int surrBy)
+void World::GenerateObstaclesInCell(Vei2 cellPos, int type, int number, Team* team, int ontoType, int surrBy)
 {
 	int counter = 0;
 	for (int i = 0; i < number && counter < number * 4;)
 	{
 		Vei2 obstPos = cellPos * Settings::CellSplitUpIn + Vei2(rng.Calc(Settings::CellSplitUpIn - 1), rng.Calc(Settings::CellSplitUpIn - 1));
-		if (ObstaclePosAllowed(obstPos, type) && GenerateObstacle(obstPos, type, ontoType, surrBy))
+		if (ObstaclePosAllowed(obstPos, type) && GenerateObstacle(obstPos, type,team, ontoType, surrBy))
 		{
 			i++;
 		}

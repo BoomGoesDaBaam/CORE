@@ -26,11 +26,13 @@ public:
 #ifdef _DEBUG 
 			worldHasNChunks = Vei2(3, 3);
 #endif
-			wSize = Vei2(worldHasNChunks.x * Settings::chunkHasNCells, worldHasNChunks.y * Settings::chunkHasNCells);
+			wSizeInCells = Vei2(worldHasNChunks.x * Settings::chunkHasNCells, worldHasNChunks.y * Settings::chunkHasNCells);
+			wSizeInTiles = Vei2(worldHasNChunks.x * Settings::chunkHasNCells * Settings::CellSplitUpIn, worldHasNChunks.y * Settings::chunkHasNCells * Settings::CellSplitUpIn);
 		}
 		int defBlueprint = 0;
 		int defType = 0;
-		Vei2 wSize;
+		Vei2 wSizeInCells;
+		Vei2 wSizeInTiles;
 		Vei2 worldHasNChunks = Vei2(10, 10);
 		Vei2 chunkSize = { 1000, 1000 };
 	};
@@ -47,7 +49,6 @@ private:
 	Vei2 mChunk = { 0,0 };
 	Vei2 fTile = { 0,0 };
 	Matrix<Chunk> chunks;
-	int test = 11;
 	Vec3_<Vei2> fcctPos = Vec3_<Vei2>(Vei2(0, 0), Vei2(1, 1), Vei2(1, 1));
 	Vec3_<Vei2> fcctPosHover = Vec3_<Vei2>(Vei2(10, 12), Vei2(1, 1), Vei2(1, 1));
 
@@ -65,11 +66,11 @@ private:
 	int placeObstacle = 0;
 	bool posAllowed = true;
 	bool moveMode = false;
-	int moveRange = 10;
 	bool updateChunkGraphics = true;
 	bool updateUnitInfo = false;
 
-	Team player = Team("Die reichlich raeudigen Raucher");
+	Team* player;
+	Team animals = Team("Fuer die Natur");
 	Team enemie1 = Team("In dem Sinne");
 	Team enemie2 = Team("Nichts wie Zeg");
 	Team enemie3 = Team("Was geht!");
@@ -101,10 +102,7 @@ private:
 	//Transformation between chunk and flat
 	Vec2_<Vei2> Cell2ChunkPos(Vei2 CellPos)const;			//	'x' = chunkPos	'y' = cellPos in chunk
 	Vec3_<Vei2> Tile2ChunkPos(Vei2 tilePos)const;			//	1x3 Matrix		'0' = chunkPos		'1' = cellPos		'2' = tilePos
-	Vei2 chunkPos2Flat(Vec3_<Vei2> cctPos)const
-	{
-		return cctPos.x * Settings::CellSplitUpIn * Settings::chunkHasNCells + cctPos.y * Settings::CellSplitUpIn + cctPos.z;
-	}
+
 	Vec3_<Vei2> PutCctPosInWorld(Vec3_<Vei2> cctPos)const;
 	int ObstacleMapAt(Vei2 tilePos)const;
 	int ObstacleMapAt(Vec3_<Vei2> tilePos)const;
@@ -117,8 +115,9 @@ private:
 	void DestroyObstacleAt(Vei2 tilePos);
 	void UpdateConMap();							//
 	void UpdateGroundedMap(Vei2 pos=Vei2(0,0), Vei2 size = Vei2(-1,-1));						// VERY performance heavy - UpdateConMap must be called before UpdateGroundedMap
-	void SpawnUnits(int n, Team& inTeam, Vei2 tilePos);
+	void SpawnUnits(int n, int type, Team* inTeam, Vei2 tilePos);
 	void SpawnPlayer();
+	void SpawnUnitGroup(Vei2 circaTilePos, int type, Team* team, int n);
 	bool IsSurroundedBy(Vei2 pos, int type);		//3x3 around pos
 	//Private not const Funktions
 	void Zoom(Vei2 delta);				//Delta == delta cSize
@@ -133,20 +132,20 @@ private:
 	bool GenerateCell(Vei2 pos, int type, int ontoType = -1, int surrBy = -1);
 	bool ObstaclePosAllowed(Vei2 tilePos, int type);
 	
-	bool GenerateObstacle(Vei2 tilePos, int type, int ontoType = -1, int surrBy = -1);
-	void GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 25, int surrBy = -1);
-	void GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, int ontoType = -1, int thickness = 1, int surrBy = -1);
-	void GenerateObstaclesInCell(Vei2 cellPos, int type, int number, int ontoType = -1, int surrBy = -1);
+	bool GenerateObstacle(Vei2 tilePos, int type, Team* team = nullptr, int ontoType = -1, int surrBy = -1);
+	void GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, Team* team = nullptr, int ontoType = -1, int nRolls = 25, int surrBy = -1);
+	void GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, Team* team = nullptr, int ontoType = -1, int thickness = 1, int surrBy = -1);
+	void GenerateObstaclesInCell(Vei2 cellPos, int type, int number, Team* team = nullptr, int ontoType = -1, int surrBy = -1);
 
 public:
 																							//Konstruktor + Operatoren
-	World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera);
+	World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera, Team* player);
 	
 	//Handles
 	void HandleMouseEvents(Mouse::Event& e, GrabHandle& gH);
 	void HandleKeyboardEvents(Keyboard::Event& e);
 	void UpdateGameLogic(float dt);
-
+	
 	//Grafiken + Einbindung dieser in groundedMap
 	void Draw(Graphics& gfx)const;
 	void DrawObstacle(Vei2 tilePos, int type, Graphics& gfx, Color color = Colors::Magenta, int frame = -1)const;
@@ -161,19 +160,20 @@ public:
 			this->moveMode = moveMode;
 		}
 	}
+	void NextTurn();
 	//
 
 	bool UpdateUnitInfo()const{ return updateUnitInfo; }
 	void UnitUpdated() { updateUnitInfo = false; }
 	//
-	Vei2 GetwSize()const { return s.wSize; }
+	Vei2 GetwSize()const { return s.wSizeInCells; }
 	Vei2 GetcSize()const { return s.chunkSize / Settings::chunkHasNCells; }
 	Vec2 GetTileSize()const { return (Vec2)GetcSize()/Settings::CellSplitUpIn; }
 	Vei2 GetfCell()const { return Vei2(-1,-1); }
 	Vei2 GetfTile()const { return fTile; }
 	int GetfCellType()const { return chunks(fcctPos.x).GetCellTypeAt(fcctPos.y); }
 	Vei2 GetmChunk()const { return mChunk; }
-	Team& GetPlayer() { return player; }
+	void SetPlayer(Team* player) { this->player = player; }
 	RectI GetRenderRect()const { 
 		auto mos = Graphics::GetMidOfScreen();
 		return RectI(-1 - (int)((mos.x / s.chunkSize.x) * 1.5f), 1 + (int)((mos.x / s.chunkSize.x) * 1.5f), -1 - (int)((mos.y / s.chunkSize.y) * 1.5f), 1 + (int)((mos.y / s.chunkSize.y) * 1.5f)); };

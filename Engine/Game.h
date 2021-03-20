@@ -66,7 +66,7 @@ private:
 
 	GrabHandle gH;
 	Vec2 c = { 0,0 };
-
+	Team player = Team("Die reichlich raeudigen Raucher");;
 	int fps_c = 0, fps_d = 0;
 	/********************************/
 };

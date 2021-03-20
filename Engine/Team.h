@@ -3,38 +3,38 @@
 struct Materials
 {
 	//Resources
-	int wood = 10;
-	int iron = 20;
-	int sand = 30;
-	int stone = 20;
-	int copper = 20;
-	int gold = 20;
-	int aluminum = 30;
-	int emerald = 20;
-	int sapphire = 20;
-	int robin = 30;
-	int diamond = 20;
-	int amber = 30;
+	float wood = 5.f;
+	float iron = 0;
+	float sand = 0;
+	float stone = 0;
+	float copper = 0;
+	float gold = 0;
+	float aluminum = 0;
+	float emerald = 0;
+	float sapphire = 0;
+	float robin = 0;
+	float diamond = 0;
+	float amber = 0;
 
 	//Materials
-	int steel = 20;
-	int plastic = 20;
-	int concrete = 30;
-	int glass = 30;
-	int ceramics = 20;
+	float steel = 0;
+	float plastic = 0;
+	float concrete = 0;
+	float glass = 0;
+	float ceramics = 0;
 
 	//Organics
-	int corals = 20; 
-	int sticks = 30;
-	int leaves = 20;
-	int wool = 20;
-	int leather = 30;
-	int fur = 20;
-	int meat = 20;
-	int fish = 30;
-	int berrys = 20;
-	int apples = 20;
-	int cactus = 30;
+	float corals = 0; 
+	float sticks = 2.5f;
+	float leaves = 0;
+	float wool = 0;
+	float leather = 5;
+	float fur = 0;
+	float meat = 5;
+	float fish = 5;
+	float berrys = 5;
+	float apples = 0;
+	float cactus = 0;
 };
 
 class Team
@@ -48,5 +48,6 @@ public:
 		this->teamname = teamname;
 	}
 	Materials& GetMaterials() { return m; }
+	std::string GetTeamName() { return teamname; }
 };
 

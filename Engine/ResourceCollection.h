@@ -17,8 +17,8 @@ public:
 	//Surface s_Items[1];
 	std::vector<Animation>	fields;			//new vectors need to be added in update function
 	std::vector<Animation>	maskedFields;	//types that need speacial masking (smurpf for example)
-	std::vector<Animation>	frames;
-	std::vector<Animation>	windowsFrame;
+	std::vector<Animation>	frames;			//focused Cell 
+	std::vector<Animation>	windowsFrame;	//Frames
 	std::vector<Animation>	buttons;
 	std::vector<Animation>	obstacles;
 	std::vector<Animation>	multiObstacles;
