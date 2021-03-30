@@ -65,6 +65,7 @@ private:
 	int placeObstacle = 0;
 	bool posAllowed = true;
 	bool moveMode = false;
+	bool attackMode = false;
 	bool updateChunkGraphics = true;
 
 	bool updateUnitInfo = false;
@@ -122,6 +123,7 @@ private:
 	void SpawnPlayer();
 	void SpawnUnitGroup(Vei2 circaTilePos, int type, Team* team, int n);
 	bool IsSurroundedBy(Vei2 pos, int type);		//3x3 around pos
+	void UnitKilled(CctPos killerPos, CctPos victimPos);
 	//Private not const Funktions
 	void Zoom(Vei2 delta);				//Delta == delta cSize
 	void ApplyCameraChanges(Vec2 cDelta);
@@ -164,6 +166,11 @@ public:
 			this->moveMode = moveMode;
 		}
 	}
+	void SetAttackMode(bool val)
+	{
+		attackMode = val;
+		grit = true;
+	}
 	void NextTurn();
 	//Frames Update
 	bool UpdateUnitInfo()const{ return updateUnitInfo; }
@@ -195,6 +202,9 @@ public:
 	int GetfCellType()const { return chunks(fcctPos.x).GetCellTypeAt(fcctPos.y); }
 	Vei2 GetmChunk()const { return mChunk; }
 	void SetPlayer(Team* player) { this->player = player; }
+	bool GetBuildMode() { return buildMode; }
+	void SetBuildMode(bool val) { buildMode = val; }
+	int GetPlaceObstacle() { return placeObstacle; }
 	Team* GetPlayer() { return player; }
 	RectI GetRenderRect()const { 
 		auto mos = Graphics::GetMidOfScreen();

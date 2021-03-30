@@ -33,7 +33,7 @@ struct Materials
 		//Organics
 		values["corals"] = 0;
 		values["sticks"] = 205.f;
-		values["leaves"] = 0;
+		values["leafes"] = 0;
 		values["wool"] = 0;
 		values["leather"] = 120.f;
 		values["fur"] = 0;
@@ -59,6 +59,21 @@ struct Materials
 				*/
 		}
 		return true;
+	}
+	void Remove(std::map<std::string, float> remove)
+	{
+		for (auto const& x : remove)
+		{
+			assert(values[x.first] > remove[x.first]);
+			values[x.first] -= remove[x.first];
+		}
+	}
+	void Add(std::map<std::string, float> add)
+	{
+		for (auto const& x : add)
+		{
+			values[x.first] += add[x.first];
+		}
 	}
 };
 

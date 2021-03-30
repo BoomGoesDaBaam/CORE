@@ -72,6 +72,10 @@ public:
 		Vei2 tileSize = chunkSize / Settings::chunkHasNCells * Settings::CellSplitUpIn;
 
 	}
+	int GetDmg()
+	{
+		return Settings::obstacleAttackDmg[type];
+	}
 };
 class Cell
 {
@@ -223,6 +227,7 @@ public:
 	int GetObstacleOutOfBounds(Vei2 tilePos) const;
 	void SetTypeAt(Vei2 pos, int type);
 	void NextTurn();
+	void AttackTile(CctPos pos, Obstacle* attacker);
 
 	void SetConMapAt(Vei2 pos, int type, bool value);
 	int GetCellTypeAt(Vei2 pos)const;

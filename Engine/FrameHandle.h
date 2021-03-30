@@ -162,7 +162,7 @@ protected:
 		Component::HandleMouseInputFrame(e, interact);
 		if (GetPos().Contains((Vec2)e.GetPos()) && e.GetType() == Mouse::Event::LRelease && interact)
 		{
-			if (ppF != nullptr && bFunc != nullptr)
+			if (bFunc != nullptr)
 			{
 				return bFunc(buffer, this);
 			}
@@ -381,14 +381,14 @@ public:
 	virtual Text* AddText(std::string text, RectF pos, int size, Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0) 
 	{
 		activInStates = FillWith1WhenSize0(activInStates, nStates);
-		assert(activInStates.size() == nStates);
+		//assert(activInStates.size() == nStates);
 		comps[key] = std::make_unique<Text>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
 		return static_cast<Text*>(comps[key].get());
 	}
 	virtual Button* AddButton(RectF pos, Animation* a, Animation* aHover, std::string key, std::vector<int> activInStates = {})
 	{
 		activInStates = FillWith1WhenSize0(activInStates, nStates);
-		assert(activInStates.size() == nStates);
+		//assert(activInStates.size() == nStates);
 		comps[key] = std::make_unique<Button>(pos, a, aHover, activInStates, this, buffer);
 		return static_cast<Button*>(comps[key].get());
 	}
@@ -561,6 +561,7 @@ bool BBuildMode26(std::queue<FrameEvent>* buffer, Component* caller);
 bool BNextTurn(std::queue<FrameEvent>* buffer, Component* caller);
 bool BBuildMenu(std::queue<FrameEvent>* buffer, Component* caller);
 bool BOpenGamefield(std::queue<FrameEvent>* buffer, Component* caller);
+bool BSetAttackMode(std::queue<FrameEvent>* buffer, Component* caller);
 
 class MultiFrame : public Frame
 {
@@ -700,6 +701,7 @@ public:
 	// ###### Init Frames #####
 	void InitFrames()
 	{
+		using namespace Settings;
 		std::vector<int> a = { 0,1 };	
 
 		MultiFrame* m = AddMultiFrame(RectF(Vec2(540, 110), 140, 280), 0, 1);			//Size of frames is hardcoded
@@ -816,7 +818,7 @@ public:
 		p3->AddText("24", RectF(Vec2(100, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCactus", { 0,1 }, { 0, 0, 1 }, 1);
 
 
-		Frame* fUnity = AddFrame(RectF(Vec2(100, 150), 140, 280), 0);																			//SECOND FRAME
+		Frame* fUnity = AddFrame(RectF(Vec2(100, 150), 140, 280), 0);																			//Unit Frame
 		fUnity->AddText(Settings::lang_unitInfo[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_h");
 		fUnity->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(80, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_unitNameIs", a, 1);
 		fUnity->AddText(Settings::lang_unitName[Settings::lang] + ":", RectF(Vec2(2, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_unitName", a, 1);
@@ -826,9 +828,12 @@ public:
 		fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 51), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_teamIs", a, 1);
 		fUnity->AddText(Settings::lang_stepsLeft[Settings::lang] + ":", RectF(Vec2(2, 67), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_steps", a, 1);
 		fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 67), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_stepsIs", a, 1);
-
 		fUnity->SetState(1);
 		fUnity->SetVisible(false);
+
+		Button* b_setAttack = fUnity->AddButton(RectF(Vec2(30, 80), 60, 60), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_setAttack", a);
+		b_setAttack->bFunc = BSetAttackMode;
+		b_setAttack->hitable = true;
 
 		Frame* fNextTurn = AddFrame(RectF(Vec2(620, 500), 120, 60), 1);																			//NEXT TURN FRAME
 		fNextTurn->s = &resC->tC.windowsFrame[3].GetCurSurface();
@@ -849,32 +854,45 @@ public:
 		//Composition* comp_Tent = fBuildSelection->AddComposition(RectF(Vec2(60, 120), 180, 60), resC, "comp_tent", a, { 1,0,0,0 });
 		Button* bg_Tent = fBuildSelection->AddButton(RectF(Vec2(60, 120), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildtent", a, { 1,0,0,0 });
 		bg_Tent->bFunc = BBuildMode0;
-		fBuildSelection->AddText(Settings::lang_tent[Settings::lang], RectF(Vec2(132, 127), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hTent", a, { 1,0,0,0 });
-		fBuildSelection->AddText(Settings::lang_leather[Settings::lang], RectF(Vec2(132, 157), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_TentR1", a, { 1,0,0,0 });
+		fBuildSelection->AddText(lang_tent[lang], RectF(Vec2(132, 127), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hTent", a, { 1,0,0,0 });
+		fBuildSelection->AddText("- "+lang_leather[lang]+": x"+std::to_string((int)neededRes[0].at("leather"))+" "+lang_kilogram[lang], RectF(Vec2(102, 140), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_TentR1", a, { 1,0,0,0 },1);
+		fBuildSelection->AddText("- " + lang_sticks[lang] + ": x" + std::to_string((int)neededRes[0].at("sticks")) + " " + lang_kilogram[lang], RectF(Vec2(102, 150), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_TentR2", a, { 1,0,0,0 }, 1);
 
 		Button* bg_igloo = fBuildSelection->AddButton(RectF(Vec2(60, 200), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildigloo", a, { 1,0,0,0 });
 		bg_igloo->bFunc = BBuildMode21;
-		fBuildSelection->AddText(Settings::lang_igloo[Settings::lang], RectF(Vec2(132, 207), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hIgloo", a, { 1,0,0,0 });
+		fBuildSelection->AddText(lang_igloo[lang], RectF(Vec2(132, 207), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hIgloo", a, { 1,0,0,0 });
+		fBuildSelection->AddText("- " + lang_snow[lang] + ": x" + std::to_string((int)neededRes[21].at("snow")) + " " + lang_kilogram[lang], RectF(Vec2(102, 220), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_IglooR1", a, { 1,0,0,0 }, 1);
+		fBuildSelection->AddText("- " + lang_wood[lang] + ": x" + std::to_string((int)neededRes[21].at("wood")) + " " + lang_kilogram[lang], RectF(Vec2(102, 230), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_IglooR2", a, { 1,0,0,0 }, 1);
 
 		Button* bg_woodHouse = fBuildSelection->AddButton(RectF(Vec2(60, 280), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildwoodenHouse", a, { 1,0,0,0 });
 		bg_woodHouse->bFunc = BBuildMode22;
-		fBuildSelection->AddText(Settings::lang_woodenHouse[Settings::lang], RectF(Vec2(132, 287), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hWoodenhouse", a, { 1,0,0,0 });
+		fBuildSelection->AddText(lang_woodenHouse[lang], RectF(Vec2(132, 287), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hWoodenhouse", a, { 1,0,0,0 });
+		fBuildSelection->AddText("- " + lang_wood[lang] + ": x" + std::to_string((int)neededRes[22].at("wood")) + " " + lang_kilogram[lang], RectF(Vec2(102, 300), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_woodenHouseR1", a, { 1,0,0,0 }, 1);
 
 		Button* bg_stoneHouse = fBuildSelection->AddButton(RectF(Vec2(60, 360), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildstoneHouse", a, { 1,0,0,0 });
 		bg_stoneHouse->bFunc = BBuildMode23;
-		fBuildSelection->AddText(Settings::lang_stoneHouse[Settings::lang], RectF(Vec2(132, 367), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hStoneHouse", a, { 1,0,0,0 });
+		fBuildSelection->AddText(lang_stoneHouse[lang], RectF(Vec2(132, 367), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hStoneHouse", a, { 1,0,0,0 });
+		fBuildSelection->AddText("- " + lang_stone[lang] + ": x" + std::to_string((int)neededRes[23].at("stone")) + " " + lang_kilogram[lang], RectF(Vec2(102, 380), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_stoneHouseR1", a, { 1,0,0,0 }, 1);
+		fBuildSelection->AddText("- " + lang_wood[lang] + ": x" + std::to_string((int)neededRes[23].at("wood")) + " " + lang_kilogram[lang], RectF(Vec2(102, 390), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_stoneHouseR2", a, { 1,0,0,0 }, 1);
 
 		Button* bg_brickHouse = fBuildSelection->AddButton(RectF(Vec2(60, 440), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildbrickhouse", a, { 1,0,0,0 });
 		bg_brickHouse->bFunc = BBuildMode24;
-		fBuildSelection->AddText(Settings::lang_brickhouse[Settings::lang], RectF(Vec2(132, 447), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hBrickhouse", a, { 1,0,0,0 });
+		fBuildSelection->AddText(lang_brickhouse[lang], RectF(Vec2(132, 447), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hBrickhouse", a, { 1,0,0,0 });
+		fBuildSelection->AddText("- " + lang_stone[lang] + ": x" + std::to_string((int)neededRes[24].at("stone")) + " " + lang_kilogram[lang], RectF(Vec2(102, 460), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_brickHouseR1", a, { 1,0,0,0 }, 1);
+		fBuildSelection->AddText("- " + lang_wood[lang] + ": x" + std::to_string((int)neededRes[24].at("wood")) + " " + lang_kilogram[lang], RectF(Vec2(102, 470), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_brickHouseR2", a, { 1,0,0,0 }, 1);
+		fBuildSelection->AddText("- " + lang_bricks[lang] + ": x" + std::to_string((int)neededRes[24].at("bricks")) + " " + lang_kilogram[lang], RectF(Vec2(102, 480), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_brickHouseR3", a, { 1,0,0,0 }, 1);
 
 		Button* bg_skyscraper = fBuildSelection->AddButton(RectF(Vec2(60, 520), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildskyscraper", a, { 1,0,0,0 });
 		bg_skyscraper->bFunc = BBuildMode25;
-		fBuildSelection->AddText(Settings::lang_skyscraper[Settings::lang], RectF(Vec2(132, 527), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hSkyscraper", a, { 1,0,0,0 });
+		fBuildSelection->AddText(lang_skyscraper[lang], RectF(Vec2(132, 527), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hSkyscraper", a, { 1,0,0,0 });
+		fBuildSelection->AddText("- " + lang_concrete[lang] + ": x" + std::to_string((int)neededRes[25].at("concrete")) + " " + lang_kilogram[lang], RectF(Vec2(102, 540), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_skyscraperR1", a, { 1,0,0,0 }, 1);
 
 		Button* bg_villa = fBuildSelection->AddButton(RectF(Vec2(260, 120), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildVilla", a, { 1,0,0,0 });
 		bg_villa->bFunc = BBuildMode26;
-		fBuildSelection->AddText(Settings::lang_villa[Settings::lang], RectF(Vec2(332, 127), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hVilla", a, { 1,0,0,0 });
+		fBuildSelection->AddText(lang_villa[lang], RectF(Vec2(332, 127), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hVilla", a, { 1,0,0,0 });
+		fBuildSelection->AddText("- " + lang_slate[lang] + ": x" + std::to_string((int)neededRes[26].at("slate")) + " " + lang_kilogram[lang], RectF(Vec2(302, 140), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_VillaR1", a, { 1,0,0,0 }, 1);
+		fBuildSelection->AddText("- " + lang_bricks[lang] + ": x" + std::to_string((int)neededRes[26].at("bricks")) + " " + lang_kilogram[lang], RectF(Vec2(302, 150), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_VillaR2", a, { 1,0,0,0 }, 1);
+		fBuildSelection->AddText("- " + lang_concrete[lang] + ": x" + std::to_string((int)neededRes[26].at("concrete")) + " " + lang_kilogram[lang], RectF(Vec2(302, 160), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_VillaR3", a, { 1,0,0,0 }, 1);
 
 		//Button* bg_Tent = fBuildSelection->AddButton(RectF(Vec2(60, 120), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildtent", a, { 1,0,0,0 });
 
@@ -930,7 +948,7 @@ public:
 			//Page 3
 			p3->SetText(std::to_string(playerM.values["corals"]), "t_nCorals");
 			p3->SetText(std::to_string(playerM.values["sticks"]), "t_nSticks");
-			p3->SetText(std::to_string(playerM.values["leaves"]), "t_nLeaves");
+			p3->SetText(std::to_string(playerM.values["leafes"]), "t_nLeaves");
 			p3->SetText(std::to_string(playerM.values["wool"]), "t_nWool");
 			p3->SetText(std::to_string(playerM.values["leather"]), "t_nLeather");
 			p3->SetText(std::to_string(playerM.values["fur"]), "t_nFur");

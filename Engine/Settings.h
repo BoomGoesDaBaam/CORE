@@ -82,16 +82,24 @@ namespace Settings
 										Vei2(3,3),Vei2(3,3), Vei2(4,4), Vei2(4,4), Vei2(4,4), Vei2(5,5)};
 	static const int obstacleBaseHP[] = { 20,20,20, 100, 20, 10, 5, 100, 20, 100, 50, 10,10,10,25,10,5,10,5,1,25, 
 										10,30,200,150,100,80};
-	static const int obstacleMovesPerTurn[] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,10,10,10,10,10,10,5,10,10,30,15 
+	static const int obstacleMovesPerTurn[] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,100,10,10,10,10,10,5,10,10,30,15 
 												-1,-1,-1,-1,-1,-1};
-	static const std::map<std::string, float> neededRes[] = { {{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
+	static const std::map<std::string, float> neededRes[] = { {{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"wood",10},{"sticks",5}},		{{"concrete",300},{"wood",200}},		{{"leather",50},{"sticks",30}},
 															{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
 															{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
 															{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
 															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},
 															{{"concrete",500}},		{{"slate",100},{"bricks",200},{"concrete",200}},
 	};
-
+	static const std::map<std::string, float> lootForDestroying[] = { {{"leather",25},{"sticks",15}},		{{"wood",200},{"sticks",50},{"leafes",2},{"apples",5}},		{{"wood",5},{"sticks",15}},		{{"concrete",150},{"wood",100}},		{{"wood",200},{"sticks",50},{"leafes",2},{"apples",5}},
+															{{"cactus",3}},		{{"iron",3},{"gold",0.1}},		{{"stone",20},{"iron",0.5}},		{{"wood",150},{"sticks",30},{"leafes",2}},		{{"stone",40},{"iron",2},{"copper",1}},
+															{{"",50},{"",30}},		{{"leather",25},{"meat",20}},		{{"leather",25},{"meat",25}},		{{"leather",25},{"meat",10}},		{{"fur",25},{"meat",10}},
+															{{"wool",3},{"meat",10}},		{{"",50},{"meat",3}},		{{"meat",30},{"",30}},		{{"meat",20},{"",30}},		{{"meat",1},{"",30}},
+															{{"meat",1},{"",30}},		{{"snow",25},{"wood",10}},		{{"wood",350}},		{{"stone",200},{"wood",100}},		{{"bricks",100},{"wood",50},{"stone",50}},
+															{{"concrete",250}},		{{"slate",50},{"bricks",100},{"concrete",100}},
+	};
+	static const int obstacleAttackRange[] = { 0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0 };
+	static const int obstacleAttackDmg[] = { 0,0,0,0,0,0,0,0,0,0,100,20,0,15,30,00,0,20,0,40,0,0,0,0,0,0 };
 	static const std::vector<Vei2> multiObstacleSize[] = { {Vei2(5,5)}, {Vei2(5,5)} };					//sizes of hidden frames
 	static const Vei2 multiObstaclePos[] = { Vei2(-2,-2), Vei2(-2,-2) };									//relativ pos of hidden frames in tiles
 

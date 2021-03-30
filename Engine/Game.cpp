@@ -91,21 +91,13 @@ void Game::UpdateModel()
 		HandleFrameLogic(igwH.Read());
 	}
 
-
 	curW->UpdateGameLogic(dt);
 	curW->SetMoveMode(wnd.mouse.ShiftIsPressed());
 
-	//go.objects[0]->SetPos((Vec2)wnd.mouse.GetPos());
-	/*
-	PARTCONF pc(resC);
-	pc.pos = (Vec2) wnd.mouse.GetPos();
-	
-	PARTICLE p = PARTICLE(pc);
-	*/
-
-	//go.AddVoc(&p, &pc, 20, 70);
-
-
+	if (curW->GetBuildMode() &&!curW->GetPlayer()->GetMaterials().Has(Settings::neededRes[curW->GetPlaceObstacle()]))
+	{
+		curW->SetBuildMode(false);
+	}
 }
 
 void Game::ComposeFrame()
@@ -222,6 +214,10 @@ void Game::HandleFrameLogic(FrameEvent& e)
 		if (e.GetAction() == "next turn")
 		{
 			curW->NextTurn();
+			if (curW->GetFocusedObstacle() != nullptr && Settings::anyOfUnit(curW->GetFocusedObstacle()->type))
+			{
+				igwH.UpdateUnitinformation(curW->GetFocusedObstacle());
+			}
 		}
 		if (e.GetAction() == "load buildmenu")
 		{
@@ -230,6 +226,10 @@ void Game::HandleFrameLogic(FrameEvent& e)
 		if (e.GetAction() == "exit currentView")
 		{
 			igwH.OpenGamefield();
+		}
+		if (e.GetAction() == "set attackMode")
+		{
+			curW->SetAttackMode(true);
 		}
 	}
 }

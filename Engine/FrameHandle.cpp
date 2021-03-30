@@ -230,6 +230,11 @@ bool BOpenGamefield(std::queue<FrameEvent>* buffer, Component* caller)
 	//curW.LoadBuildMenu();
 	return true;
 }
+bool BSetAttackMode(std::queue<FrameEvent>* buffer, Component* caller)
+{
+	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "set attackMode", -1, caller));
+	return true;
+}
 void Frame::Move(Vec2 mP)
 {
 	Vec2 deltaMove = lastMouseP - mP;
@@ -246,6 +251,13 @@ std::vector<int> Frame::FillWith1WhenSize0(std::vector<int> activInStates, int n
 	{
 		std::vector<int> activInStates(nStages, 1);
 		return std::vector<int>(nStages, 1);
+	}
+	else
+	{
+		for (int i = 0; i < nStates - (int)activInStates.size(); i++)
+		{
+			activInStates.push_back(1);
+		}
 	}
 	return activInStates;
 }

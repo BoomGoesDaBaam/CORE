@@ -297,6 +297,14 @@ bool World::IsSurroundedBy(Vei2 pos, int type)
 	}
 	return false;
 }
+void World::UnitKilled(CctPos killerPos, CctPos victimPos)
+{
+	Obstacle* killer = chunks(killerPos.x).GetObstacleAt(killerPos.y * Settings::CellSplitUpIn + killerPos.z);
+	Obstacle* victim = chunks(victimPos.x).GetObstacleAt(victimPos.y * Settings::CellSplitUpIn + victimPos.z);
+	assert(killer != nullptr && victim != nullptr);
+	killer->team->GetMaterials().Add(Settings::lootForDestroying[victim->type]);
+	chunks(victimPos.x).DeleteObstacle(victim->tilePos);
+}
 /*
 RectF World::GetCellRect(Vei2 cellP)const
 {
@@ -588,6 +596,25 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLocked())
 	{
 		fcctPos = GetHitTile(mP);
+		Vei2 dist2lastclick = Chunk::chunkPos2Flat(fcctPos) - Chunk::chunkPos2Flat(oldCctPos);
+		if(attackMode && fcctPos != oldCctPos && chunks(fcctPos.x).GetObstacleMapAt(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z) != -1 && sqrt(pow(dist2lastclick.x, 2) + pow(dist2lastclick.y, 2)) <= Settings::obstacleAttackRange[focusedObst->type])
+		{
+			chunks(fcctPos.x).AttackTile(fcctPos, focusedObst);
+			grit = false;
+			attackMode = false;
+			if (chunks(fcctPos.x).GetObstacleAt(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z)->hp < 0)
+			{
+				UnitKilled(oldCctPos, fcctPos);
+				chunks(fcctPos.x).UpdateGraphics();
+				updateChunkGraphics = true;
+			}
+			fcctPos = oldCctPos;
+		}
+		else if (attackMode && fcctPos != oldCctPos)
+		{
+			attackMode = false;
+			grit = false;
+		}
 		if (moveMode && focusedObst != nullptr && TileIsInRange(oldCctPos, fcctPos, focusedObst->stepsLeft))
 		{
 			//GenerateObstacle(Chunk::chunkPos2Flat(fcctPos),)
@@ -617,10 +644,11 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 			moveMode = false;
 		}
 
-		if (buildMode == true)
+		if (buildMode == true && player->GetMaterials().Has((Settings::neededRes[placeObstacle])))
 		{
 			auto fcctPos = GetHitTile(mP);
-			chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, placeObstacle);
+			chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, placeObstacle, player);
+			player->GetMaterials().Remove(Settings::neededRes[placeObstacle]);
 			chunks(fcctPos.x).UpdateGraphics();
 			updateChunkGraphics = true;
 		}
@@ -653,6 +681,11 @@ void World::HandleKeyboardEvents(Keyboard::Event& e)
 			break;
 		case 'B':
 			buildMode = !buildMode;
+			break;
+		case VK_ESCAPE:
+			buildMode = false;
+			grit = false;
+			attackMode = false;
 			break;
 		}
 	}
@@ -805,6 +838,25 @@ void World::Draw(Graphics& gfx) const
 				if (moveRange > 0 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= moveRange && chunks(ctPos.x).ObstaclePosAllowed(ctPos.y,focusedObst->type, index))
 				{
 					chunks(ctPos.x).DrawTile(GetChunkRect(ctPos.x), ctPos.y, Colors::Green, gfx);
+				}
+			}
+		}
+	}
+	if (attackMode)
+	{
+		Vei2 bottomLeft = Chunk::chunkPos2Flat(fcctPos);
+		CctPos curcctPos = Tile2ChunkPos(bottomLeft);
+		int moveRange = Settings::obstacleAttackRange[focusedObst->type];
+		for (int y = -moveRange; y <= moveRange; y++)
+		{
+			for (int x = -moveRange; x <= moveRange; x++)
+			{
+				CctPos cctDelta = { Vei2(0,0),Vei2(0,0),Vei2(x,y) };
+				CctPos cctPos = PutCctPosInWorld(curcctPos + cctDelta);
+				Vec2_<Vei2> ctPos = chunks(cctPos.x).GetTilePosOutOfBounds(cctPos.y * Settings::CellSplitUpIn + cctPos.z);
+				if (moveRange > 0 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= moveRange && chunks(ctPos.x).GetObstacleMapAt(ctPos.y) != -1)
+				{
+					chunks(ctPos.x).DrawTile(GetChunkRect(ctPos.x), ctPos.y, Colors::White, gfx);
 				}
 			}
 		}
@@ -1015,7 +1067,7 @@ void World::Generate(WorldSettings& s)
 				GenerateObstacle(spawnAt, 6, nullptr, 3);
 			}
 		}
-		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 5; i++)	//stones
+		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y); i++)	//stones
 		{
 			Vei2 spawnAt = Vei2(rng.Calc((s.wSizeInCells.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSizeInCells.y - 20) * Settings::CellSplitUpIn));
 			auto ccPos = Cell2ChunkPos(PutCellInWorldX(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)));

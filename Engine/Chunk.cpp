@@ -199,6 +199,7 @@ bool Chunk::MoveObstacle(int index, Vec3_<Vei2> newPos)
 			DeleteObstacle(obstacles[index].tilePos);
 			o.chunkPos = newPos.x;
 			o.tilePos = onMap;
+			o.stepsLeft -= dist;
 			chunks->operator()(newPos.x).PlaceObstacle(onMap, o);
 		}
 		obstacles[index].stepsLeft -= dist;
@@ -986,6 +987,18 @@ void Chunk::NextTurn()
 		obstacles[i].stepsLeft = Settings::obstacleMovesPerTurn[obstacles[i].type];
 	}
 }
+void Chunk::AttackTile(CctPos pos, Obstacle* attacker)
+{
+	if (pos.x != chunkPos)
+	{
+		chunks->operator()(pos.x).AttackTile(pos, attacker);
+	}
+	Vei2 tilePos = pos.y * Settings::CellSplitUpIn + pos.z;
+	if (obstacleMap(tilePos) != -1)
+	{
+		obstacles[obstacleMap(tilePos)].hp -= attacker->GetDmg();
+	}
+}
 void Chunk::SetConMapAt(Vei2 pos, int type, bool value)
 {
 	conMap[type](pos) = value;
@@ -1061,7 +1074,8 @@ int Chunk::GetObstacleMapAt(Vei2 pos)const
 }
 Obstacle* Chunk::GetObstacleAt(Vei2 pos)
 {
-	assert(obstacleMap(pos) != -1 && obstacleMap(pos) < (int)obstacles.size());
+	assert(obstacleMap(pos) != -1);
+	assert(obstacleMap(pos) < (int)obstacles.size());
 	return &obstacles[obstacleMap(pos)];
 }
 Matrix<int> Chunk::GetAroundmatrix(Vei2 pos)const
