@@ -1,40 +1,65 @@
 #pragma once
 #include "Rect.h"
+#include <map>
 struct Materials
 {
-	//Resources
-	float wood = 5.f;
-	float iron = 0;
-	float sand = 0;
-	float stone = 0;
-	float copper = 0;
-	float gold = 0;
-	float aluminum = 0;
-	float emerald = 0;
-	float sapphire = 0;
-	float robin = 0;
-	float diamond = 0;
-	float amber = 0;
+	std::map<std::string, float> values;
+	Materials()
+	{
+		//Ressources
+		values["wood"] = 25.f;
+		values["iron"] = 0;
+		values["sand"] = 0;
+		values["stone"] = 0;
+		values["copper"] = 0;
+		values["gold"] = 0;
+		values["aluminum"] = 0;
+		values["emerald"] = 0;
+		values["sapphire"] = 0;
+		values["robin"] = 0;
+		values["diamond"] = 0;
+		values["amber"] = 0;
 
-	//Materials
-	float steel = 0;
-	float plastic = 0;
-	float concrete = 0;
-	float glass = 0;
-	float ceramics = 0;
+		//Materials
+		values["steel"] = 0;
+		values["plastic"] = 0;
+		values["concrete"] = 0;
+		values["glass"] = 0;
+		values["ceramics"] = 0;
+		values["snow"] = 55;
+		values["bricks"] = 20; 
+		values["slate"] = 10; 
 
-	//Organics
-	float corals = 0; 
-	float sticks = 2.5f;
-	float leaves = 0;
-	float wool = 0;
-	float leather = 5;
-	float fur = 0;
-	float meat = 5;
-	float fish = 5;
-	float berrys = 5;
-	float apples = 0;
-	float cactus = 0;
+		//Organics
+		values["corals"] = 0;
+		values["sticks"] = 205.f;
+		values["leaves"] = 0;
+		values["wool"] = 0;
+		values["leather"] = 120.f;
+		values["fur"] = 0;
+		values["meat"] = 5;
+		values["fish"] = 5;
+		values["berrys"] = 5;
+		values["apples"] = 0;
+		values["cactus"] = 0;
+	}
+	bool Has(std::map<std::string, float> lookFor)
+	{
+		for (auto const& x : lookFor)
+		{
+			if (values[x.first] < lookFor[x.first])
+			{
+				return false;
+			}
+			/*
+			std::cout << x.first  // string (key)
+				<< ':'
+				<< x.second // string's value 
+				<< std::endl;
+				*/
+		}
+		return true;
+	}
 };
 
 class Team

@@ -46,6 +46,7 @@ private:
 	/*  User Functions              */
 	void Game::HandleMouseInput(Mouse::Event& e);
 	void Game::HandleKeyboardInput(Keyboard::Event& e);
+	void Game::HandleFrameLogic(FrameEvent& e);
 	void Game::HandleFrameChanges();
 	/********************************/
 private:

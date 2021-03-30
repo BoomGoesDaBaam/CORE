@@ -166,9 +166,16 @@ Matrix<int> Surface::GetChromaMatrix(Color chroma)const
 	}
 	return matrix;
 }
-bool Surface::TestIfHitOnScreen(Vec2 mpRel)const
+bool Surface::TestIfHitOnScreen(Vec2 mpRel, Vei2 size)const
 {
 	Vei2 surSize = GetSize() + Vei2(-1,-1);
+	/*
+	if (size != Vei2(-1, -1))
+	{
+		mpRel.x *= surSize.x / size.x;
+		mpRel.y *= surSize.y / size.y;
+	}
+	*/
 	Matrix<int> chromaM = GetChromaMatrix(Colors::Magenta);
 	return Vec2::IsPositivFactor(Vec2((float)mpRel.x / width, (float)mpRel.y / height)) && chromaM(Vei2((int)(((float)mpRel.x / width) * surSize.x),(int)( ((float)mpRel.y / height) * surSize.y))) == 1;
 }

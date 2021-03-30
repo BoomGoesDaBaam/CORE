@@ -316,6 +316,7 @@ public:
 			return;
 		}
 
+
 		n90rot %= 4;
 		for (int y = 0; y < pos.GetHeight(); y++)
 		{

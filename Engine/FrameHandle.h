@@ -5,10 +5,87 @@
 #include <algorithm>
 class ButtonFunctions;
 class PageFrame;
+class FrameHandle;
+class Component;
+
+class FrameEvent
+{
+public:
+	enum Type
+	{
+		ButtonPressed,
+		Invalid
+	};
+private:
+	Type type;
+	int extra = -1;
+	std::string action = "";
+	Component* caller = nullptr;
+public:
+	FrameEvent()
+		:
+		type(Type::Invalid)
+	{}
+	FrameEvent(Type type, std::string action, int extra, Component* caller)
+		:
+		type(type),
+		action(action),
+		extra(extra),
+		caller(caller)
+	{
+	}
+	bool IsValid() const
+	{
+		return type != Invalid;
+	}
+	Type GetType() const
+	{
+		return type;
+	}
+	Component* GetCaller()
+	{
+		return caller;
+	}
+	std::string GetAction()
+	{
+		return action;
+	}
+	int GetExtra()
+	{
+		return extra;
+	}
+};
 
 class Component
 {
 	bool visible = true;
+protected:
+	std::queue<FrameEvent>* buffer;
+	std::map<std::string, std::unique_ptr<Component>> comps;
+	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)
+	{
+		if (interact && GetPos().Contains((Vec2)e.GetPos()))
+		{
+			mouseHovers = true;
+			return true;
+		}
+		mouseHovers = false;
+		return false;
+	}
+	virtual bool HandleMouseInputComps(Mouse::Event& e, bool interact)
+	{
+		bool hitComp = false;
+		std::for_each(comps.begin(), comps.end(), [&](auto& comp)
+			{
+				hitComp = comp.second->IsVisible() && comp.second->HandleMouseInput(e, interact && !hitComp) || hitComp;
+			});
+
+		if (hitComp && interact)
+		{
+			return true;
+		}
+		return false;
+	}
 public:
 	Component* parentC;
 	RectF GetPos() {
@@ -21,20 +98,23 @@ public:
 	Color c = Colors::Black;
 	std::vector<int> activInStates;
 	std::string text = "no title";
-	bool mouseHovers = false;
-	Component(RectF pos, Component* parentC) :pos(pos), parentC(parentC){}
+	bool mouseHovers = false, hitable = false;
+
+	Component(RectF pos, Component* parentC, std::queue<FrameEvent>* buffer, int type = 0) :pos(pos), parentC(parentC),buffer(buffer){}
 	virtual void Draw(Graphics& gfx)
 	{
 		gfx.DrawFilledRect(GetPos(), c, SpriteEffect::Nothing());
 	}
-	virtual bool HandleMouseInput(Mouse::Event& e, bool interact, World& curW)
+	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
-		if (interact && GetPos().Contains((Vec2)e.GetPos()))
+		if (IsVisible())
 		{
-			mouseHovers = true;
-			return true;
+			if (HandleMouseInputComps(e, interact))
+			{
+				return true;
+			}
+			return HandleMouseInputFrame(e, interact);
 		}
-		mouseHovers = false;
 		return false;
 	}
 	void SetVisible(bool visible)
@@ -55,7 +135,7 @@ class Text: public Component
 public:
 	Font* f;
 	int size, textLoc;			//		'0' = centered			 '1' = left
-	Text(std::string text, RectF pos, int size, Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc);
+	Text(std::string text, RectF pos, int size, Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer);
 	void Draw(Graphics& gfx) override
 	{
 		if (textLoc == 0)
@@ -70,46 +150,21 @@ public:
 		}
 		//gfx.DrawRect(GetPos(), Colors::Red);
 	}
-	virtual bool HandleMouseInput(Mouse::Event& e, bool interact, World& curW)override
-	{
-		if (interact && GetPos().Contains((Vec2)e.GetPos()))
-		{
-			mouseHovers = true;
-			return false;
-		}
-		mouseHovers = false;
-		return false;
-	}
 };
 class Button : public Component
 {
-	Animation& a;
-	Animation& aHover;
-public:
-	bool(*bFunc)(PageFrame* pF, World& curW) = nullptr;
-	PageFrame* ppF = nullptr;
-	//Frame* pF = nullptr;
+protected:
+	Animation* a = nullptr;
+	Animation* aHover = nullptr;
 
-	Button(RectF pos, Animation& a, Animation& aHover, std::vector<int> activInStates, Component* parentC); 
-	void Draw(Graphics& gfx) override
+	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)override
 	{
-		if (mouseHovers)
-		{
-			gfx.DrawSurface((RectI)GetPos(), aHover.GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.6f));
-		}
-		else
-		{
-			gfx.DrawSurface((RectI)GetPos(), a.GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta,0.6));
-		}
-	}
-	virtual bool HandleMouseInput(Mouse::Event& e, bool interact, World& curW)
-	{
-		Component::HandleMouseInput(e, interact, curW);
+		Component::HandleMouseInputFrame(e, interact);
 		if (GetPos().Contains((Vec2)e.GetPos()) && e.GetType() == Mouse::Event::LRelease && interact)
 		{
 			if (ppF != nullptr && bFunc != nullptr)
 			{
-				return bFunc(ppF, curW);
+				return bFunc(buffer, this);
 			}
 			else if (ppF != nullptr)
 			{
@@ -118,21 +173,54 @@ public:
 		}
 		return false;
 	}
-};
+public:
+	bool(*bFunc)(std::queue<FrameEvent>* buffer, Component* caller) = nullptr;
+	PageFrame* ppF = nullptr;
+	//Frame* pF = nullptr;
 
+	Button(RectF pos, Animation* a, Animation* aHover, std::vector<int> activInStates, Component* parentC, std::queue<FrameEvent>* buffer);
+	void Draw(Graphics& gfx) override
+	{
+		if (mouseHovers)
+		{
+			gfx.DrawSurface((RectI)GetPos(), aHover->GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.6f));
+		}
+		else
+		{
+			gfx.DrawSurface((RectI)GetPos(), a->GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta,0.6));
+		}
+	}
+	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
+	{
+		if (IsVisible())
+		{
+			if (HandleMouseInputComps(e, interact))
+			{
+				return true;
+			}
+			return HandleMouseInputFrame(e, interact);
+		}
+		return false;
+	}
+};
 class Frame : public Component
 {
 protected:
 	sharedResC resC;
 	bool grabbed = false;
-	int type, curState = 0, nStates = 1;								//'curState' = 0 is minimized in every type
-	std::map<std::string, std::unique_ptr<Component>> comps;
+	bool moveable = true;
 	Vec2 lastMouseP = Vec2(0, 0);
 	Vec2 posOfLastPress = Vec2(-1, -1);
+	int type = 0, curState = 0, nStates = 1;
 public:
-	bool(*bFunc)(PageFrame* pF, World& curW) = nullptr;
-	Frame(RectF pos, int type, sharedResC resC, Component* parentC);
+	const Surface* s = nullptr;
+	Frame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer);
+	bool(*bFunc)(std::queue<FrameEvent>* buffer, Component* caller) = nullptr;
 
+	void SetMoveable(bool moveable)
+	{
+		this->moveable = moveable;
+	}
 
 	virtual void DrawComps(Graphics& gfx)
 	{
@@ -165,7 +253,7 @@ public:
 					}
 					break;
 				case 1:
-					gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), 120,60), resC->tC.windowsFrame[3].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+					gfx.DrawSurface(RectI(pos), *s, SpriteEffect::Chroma(Colors::Magenta));
 					break;
 				}
 			}
@@ -186,36 +274,31 @@ public:
 					}
 					break;
 				case 1:
-					gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), 120, 60), resC->tC.windowsFrame[3].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+					gfx.DrawSurface(RectI(pos), *s, SpriteEffect::Chroma(Colors::Magenta));
 					break;
 				}
 			}
 			DrawComps(gfx);
 		}
 	}
-
-	bool HandleMouseInput(Mouse::Event& e, bool interact, World& curW)override
+	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
 		if (IsVisible())
 		{
-			bool hitComp = false;
-			std::for_each(comps.begin(), comps.end(), [&](auto& comp)
-			{
-				hitComp = comp.second->activInStates[curState] == 1 && comp.second->IsVisible() && comp.second->HandleMouseInput(e, interact && !hitComp, curW) || hitComp;
-			});
-
-			if (hitComp && interact)
+			if (HandleMouseInputComps(e, interact))
 			{
 				return true;
 			}
-			if (hitComp)
-			{
-				return false;
-			}
+			return HandleMouseInputFrame(e, interact);
+		}
+		return false;
+	}
+	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)
+	{
 			Vec2 mP = (Vec2)e.GetPos();
 			bool hit = Hit(mP);
 
-			if (grabbed)
+			if (grabbed && moveable)
 			{
 				if (e.GetType() == Mouse::Event::LRelease)
 				{
@@ -226,7 +309,7 @@ public:
 					Move(mP);
 				}
 			}
-			if (e.GetType() == Mouse::Event::LPress && hit)
+			if (e.GetType() == Mouse::Event::LPress && hit && moveable)
 			{
 				Grab(mP);
 				posOfLastPress = mP;
@@ -238,9 +321,9 @@ public:
 			}
 			if (hit)
 			{
-				if (bFunc != nullptr)
+				if (bFunc != nullptr && e.GetType() == Mouse::Event::LRelease)
 				{
-					bFunc(nullptr, curW);
+					bFunc(buffer, this);
 				}
 				mouseHovers = true;
 				if (type != -1)
@@ -252,9 +335,23 @@ public:
 			{
 				mouseHovers = false;
 			}
+		return false;
+	}
+	virtual bool HandleMouseInputComps(Mouse::Event& e, bool interact)
+	{
+		bool hitComp = false;
+		std::for_each(comps.begin(), comps.end(), [&](auto& comp)
+			{
+				hitComp = comp.second->hitable && comp.second->activInStates[curState] == 1 && comp.second->IsVisible() && comp.second->HandleMouseInput(e, interact && !hitComp) || hitComp;
+			});
+
+		if (hitComp && interact)
+		{
+			return true;
 		}
 		return false;
 	}
+
 	bool Hit(Vec2 mP);
 
 	void SetText(std::string text, std::string key);
@@ -285,18 +382,27 @@ public:
 	{
 		activInStates = FillWith1WhenSize0(activInStates, nStates);
 		assert(activInStates.size() == nStates);
-		comps[key] = std::make_unique<Text>(text, pos, size, f, c, activInStates, this, textLoc);
+		comps[key] = std::make_unique<Text>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
 		return static_cast<Text*>(comps[key].get());
 	}
-	virtual Button* AddButton(RectF pos, Animation& a, Animation& aHover, std::string key, std::vector<int> activInStates = {})
+	virtual Button* AddButton(RectF pos, Animation* a, Animation* aHover, std::string key, std::vector<int> activInStates = {})
 	{
 		activInStates = FillWith1WhenSize0(activInStates, nStates);
 		assert(activInStates.size() == nStates);
-		comps[key] = std::make_unique<Button>(pos, a, aHover, activInStates, this);
+		comps[key] = std::make_unique<Button>(pos, a, aHover, activInStates, this, buffer);
 		return static_cast<Button*>(comps[key].get());
 	}
-
-
+	
+	/*
+	virtual Composition* AddComposition(RectF pos, sharedResC resC, std::string key, std::vector<int> activInStates = {}, int type = 0)
+	{
+		activInStates = FillWith1WhenSize0(activInStates, nStates);
+		assert(activInStates.size() == nStates);
+		comps[key] = std::make_unique<Composition>(pos, resC, activInStates, this, buffer, type);
+		return static_cast<Composition*>(comps[key].get());
+	}
+	*/
+	
 	void Grab(Vec2 mP);
 	void Move(Vec2 mP);
 	void Release();
@@ -313,7 +419,7 @@ class PageFrame : public Frame
 	int curPage = 0;
 	std::map<std::string, std::vector<int>> compActivOnPages;
 public:
-	PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages);
+	PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages, std::queue<FrameEvent>* buffer);
 
 	template<typename T = bool>
 	void AddText(std::string text, RectF pos, int size, Font f, Color c, std::vector<int> activInStates = {})
@@ -321,7 +427,7 @@ public:
 		static_assert (fail<T>::value, "Do not use!");
 	}
 	template<typename T = bool>
-	void AddButton(RectF pos, Animation& a, Animation& aHover, std::vector<int> activInStates = {})
+	void AddButton(RectF pos, Animation* a, Animation* aHover, std::vector<int> activInStates = {})
 	{
 		static_assert (fail<T>::value, "Do not use!");
 	}
@@ -333,13 +439,31 @@ public:
 		compActivOnPages[key] = activOnPages;
 		return Frame::AddText(text, pos, size, f, c, key, activInStates, textLoc);
 	}
-	Button* AddButton(RectF pos, Animation& a, Animation& aHover, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
+	Button* AddButton(RectF pos, Animation* a, Animation* aHover, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
 	{
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
 		compActivOnPages[key] = activOnPages;
 		return Frame::AddButton(pos, a, aHover, key, activInStates);
 	}
+	/*
+	Composition* AddComposition(RectF pos, sharedResC resC, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
+	{
+		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
+		assert(activOnPages.size() == nPages);
+		compActivOnPages[key] = activOnPages;
+		return Frame::AddComposition(pos, resC , key, activInStates);
+	}
+	*/
+	/*
+	virtual Composition* AddComposition(RectF pos, sharedResC resC, std::string key, int type = 0, std::vector<int> activInStates = {})
+	{
+		activInStates = FillWith1WhenSize0(activInStates, nStates);
+		assert(activInStates.size() == nStates);
+		comps[key] = std::make_unique<Composition>(pos, resC, activInStates, this, buffer, type);
+		return static_cast<Composition*>(comps[key].get());
+	}
+	*/
 	void DrawComps(Graphics& gfx) override
 	{
 		std::for_each(comps.begin(), comps.end(), [&](auto& comp)
@@ -350,38 +474,43 @@ public:
 			}
 		});
 	}
-	bool HandleMouseInput(Mouse::Event& e, bool interact, World& curW)override
+	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
 		if (IsVisible())
 		{
-			bool hit = Frame::HandleMouseInput(e, interact, curW);
-			if (curPage == 0)
+			if (HandleMouseInputComps(e, interact))
 			{
-				comps["b_left"]->SetVisible(false);
+				return true;
 			}
-			else
-			{
-				comps["b_left"]->SetVisible(true);
-			}
-
-			if (curPage == nPages - 1)
-			{
-				comps["b_right"]->SetVisible(false);
-			}
-			else
-			{
-				comps["b_right"]->SetVisible(true);
-			}
-			return hit;
+			return HandleMouseInputFrame(e, interact);
 		}
 		return false;
 	}
+	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)
+	{
+		return Frame::HandleMouseInputFrame(e, interact);
+	}
+	virtual bool HandleMouseInputComps(Mouse::Event& e, bool interact)
+	{
+		bool hitComp = false;
+		std::for_each(comps.begin(), comps.end(), [&](auto& comp)
+			{
+				hitComp = comp.second->hitable && compActivOnPages[comp.first][curPage] == 1 && comp.second->activInStates[curState] == 1 && comp.second->IsVisible() && comp.second->HandleMouseInput(e, interact && !hitComp) || hitComp;
+			});
 
+		if (hitComp && interact)
+		{
+			return true;
+		}
+		return false;
+	}
+	
 	void NextPage()
 	{
 		if (curPage + 1 < nPages)
 		{
 			curPage ++;
+			AdjustArrowButtons();
 		}
 	}
 	void PriviousPage()
@@ -389,90 +518,152 @@ public:
 		if (curPage - 1 >= 0)
 		{
 			curPage--;
+			AdjustArrowButtons();
+		}
+	}
+	void AdjustArrowButtons()
+	{
+		if (curPage == 0)
+		{
+			comps["b_left"]->SetVisible(false);
+		}
+		else
+		{
+			comps["b_left"]->SetVisible(true);
+		}
+
+		if (curPage == nPages - 1)
+		{
+			comps["b_right"]->SetVisible(false);
+		}
+		else
+		{
+			comps["b_right"]->SetVisible(true);
 		}
 	}
 };
 
 
-bool B1(PageFrame* pF, World& curW);
-bool B2(PageFrame* pF, World& curW);
-bool B3(PageFrame* pF, World& curW);
-bool B4(PageFrame* pF, World& curW);
-bool B5(PageFrame* pF, World& curW);
-bool BNextTurn(PageFrame* pF, World& curW);
+bool B1(std::queue<FrameEvent>* buffer, Component* caller);
+bool B2(std::queue<FrameEvent>* buffer, Component* caller);
+bool BBuildMode0(std::queue<FrameEvent>* buffer, Component* caller);
+bool BBuildMode2(std::queue<FrameEvent>* buffer, Component* caller);
+bool BBuildMode3(std::queue<FrameEvent>* buffer, Component* caller);
+bool BBuildMode21(std::queue<FrameEvent>* buffer, Component* caller);
+bool BBuildMode22(std::queue<FrameEvent>* buffer, Component* caller);
+bool BBuildMode23(std::queue<FrameEvent>* buffer, Component* caller);
+bool BBuildMode24(std::queue<FrameEvent>* buffer, Component* caller);
+bool BBuildMode25(std::queue<FrameEvent>* buffer, Component* caller);
+bool BBuildMode26(std::queue<FrameEvent>* buffer, Component* caller);
+
+
+
+bool BNextTurn(std::queue<FrameEvent>* buffer, Component* caller);
+bool BBuildMenu(std::queue<FrameEvent>* buffer, Component* caller);
+bool BOpenGamefield(std::queue<FrameEvent>* buffer, Component* caller);
 
 class MultiFrame : public Frame
 {
 	std::vector<std::unique_ptr<Frame>> frames;
 public:
-	MultiFrame(RectF pos, sharedResC resC, Component* parentC) :Frame(pos, -1, resC, parentC) {}
+	MultiFrame(RectF pos, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer) :Frame(pos, -1, resC, parentC, buffer) {}
 
 	Frame* AddFrame(RectF pos, int type, sharedResC resC, Component* parentC);
 	PageFrame* AddPageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages);
 
 	void Draw(Graphics& gfx)override
 	{
-		for (int i = 0; i < (int)(frames.size()); i++)
+		if (IsVisible())
 		{
-			frames[i]->Draw(gfx);
+			for (int i = 0; i < (int)(frames.size()); i++)
+			{
+				frames[i]->Draw(gfx);
+			}
 		}
 	}
-	bool HandleMouseInput(Mouse::Event& e, bool interact, World& curW)override
+	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
-		bool hit = Frame::HandleMouseInput(e, interact, curW);
-		std::vector<bool> extended;
-		for (int i = 0; i < (int)(frames.size()); i++)
+		if (e.GetType() == Mouse::Event::LRelease)
 		{
-			extended.push_back(frames[i]->GetCurState());
+			int k = 23;
 		}
-		int changed = -1;
-		int yMove = 0;
-		for (int n = 0; n < (int)(frames.size()); n++)
+		if (IsVisible())
 		{
-			bool hitFrame = frames[n]->HandleMouseInput(e, interact, curW);
-			hit = hit || hitFrame;
-			if (hitFrame)
+			return HandleMouseInputFrame(e, interact);
+		}
+		return false;
+	}
+	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)
+	{
+			bool hit = Frame::HandleMouseInputFrame(e, interact);
+			std::vector<bool> extended;
+			for (int i = 0; i < (int)(frames.size()); i++)
+			{
+				extended.push_back(frames[i]->GetCurState());
+			}
+			int changed = -1;
+			int yMove = 0;
+			for (int n = 0; n < (int)(frames.size()); n++)
+			{
+				bool hitFrame = frames[n]->HandleMouseInput(e, interact);
+				hit = hit || hitFrame;
+				if (hitFrame)
+				{
+					for (int i = 0; i < (int)(frames.size()); i++)
+					{
+						frames[i]->pos.top += yMove;
+						frames[i]->pos.bottom += yMove;
+						if (extended[i] != (bool)frames[i]->GetCurState())
+						{
+							changed = i;
+							n = frames.size();
+							if (extended[i])
+							{
+								yMove -= frames[i]->GetExtendedHeight();
+							}
+							if (!extended[i])
+							{
+								yMove += frames[i]->GetExtendedHeight();
+							}
+						}
+					}
+				}
+			}
+			yMove = 0;
+			if (changed != -1)
 			{
 				for (int i = 0; i < (int)(frames.size()); i++)
 				{
 					frames[i]->pos.top += yMove;
 					frames[i]->pos.bottom += yMove;
-					if (extended[i] != (bool)frames[i]->GetCurState())
+					if (frames[i]->IsExtended() && i != changed)
 					{
-						changed = i;
-						n = frames.size();
-						if (extended[i])
-						{
-							yMove -= frames[i]->GetExtendedHeight();
-						}
-						if (!extended[i])
-						{
-							yMove += frames[i]->GetExtendedHeight();
-						}
+						frames[i]->SetState(0);
+						yMove -= frames[i]->GetExtendedHeight();
 					}
 				}
 			}
-		}
-		yMove = 0;
-		if (changed != -1)
-		{
-			for (int i = 0; i < (int)(frames.size()); i++)
+			if (hit)
 			{
-				frames[i]->pos.top += yMove;
-				frames[i]->pos.bottom += yMove;
-				if (frames[i]->IsExtended() && i != changed)
-				{
-					frames[i]->SetState(0);
-					yMove -= frames[i]->GetExtendedHeight();
-				}
+				return true;
 			}
-		}
-		if (hit)
+			return changed != -1;
+	}
+	virtual bool HandleMouseInputComps(Mouse::Event& e, bool interact)
+	{
+		bool hitComp = false;
+		std::for_each(comps.begin(), comps.end(), [&](auto& comp)
+			{
+				hitComp = comp.second->activInStates[curState] == 1 && comp.second->IsVisible() && comp.second->HandleMouseInput(e, interact && !hitComp) || hitComp;
+			});
+
+		if (hitComp && interact)
 		{
 			return true;
 		}
-		return changed != -1;
+		return false;
 	}
+
 	Frame* GetFrame(int index)
 	{
 		assert(index >= 0 && index < (int)(frames.size()));
@@ -481,26 +672,37 @@ public:
 };
 class FrameHandle
 {
+private:
 	std::vector<std::unique_ptr<Frame>> windows;
 	sharedResC resC;
 	RectF overallParent = Graphics::GetScreenRect<float>();
+
+	std::queue<FrameEvent> buffer;
+	static constexpr unsigned int bufferSize = 4u;
 public:
+	bool BufferIsEmpty() const
+	{
+		return buffer.empty();
+	}
+	FrameEvent Read();
+
 	const Frame& operator[](std::size_t idx) const { return *windows[idx].get(); }
 	Frame& operator[](std::size_t idx) { return *windows[idx].get();  }
 
 	FrameHandle(sharedResC resC);
-	bool HandleMouseInput(Mouse::Event& e, World& curW);
+	bool HandleMouseInput(Mouse::Event& e);
 	void Draw(Graphics& gfx);
 	
-	Frame* AddFrame(RectF pos, int type, sharedResC resC);
-	MultiFrame* AddMultiFrame(RectF pos, int type, int nStates, sharedResC resC);
+	Frame* AddFrame(RectF pos, int type);
+	PageFrame* AddPageFrame(RectF pos, int type, int nPages);
+	MultiFrame* AddMultiFrame(RectF pos, int type, int nStates);
 	
 	// ###### Init Frames #####
 	void InitFrames()
 	{
 		std::vector<int> a = { 0,1 };	
 
-		MultiFrame* m = AddMultiFrame(RectF(Vec2(540, 110), 140, 280), 0, 1, resC);			//Size of frames is hardcoded
+		MultiFrame* m = AddMultiFrame(RectF(Vec2(540, 110), 140, 280), 0, 1);			//Size of frames is hardcoded
 																							//FIRST FRAME
 		Frame* f1 = m->AddFrame(RectF(Vec2(0, 0), 140, 280), 0, resC, m);	
 		PageFrame* p2 = m->AddPageFrame(RectF(Vec2(0, 12), 140, 280), 0, resC, m, 4);
@@ -523,16 +725,17 @@ public:
 		p2->AddText(Settings::lang_agility[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_agility", { 0,1 }, { 0, 0, 0, 1 });
 
 		p2->AddText(Settings::lang_tent[Settings::lang], RectF(Vec2(5, 40), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_tent", { 0,1 }, { 1, 0, 0, 0 }, 1);
-		Button* b3 = p2->AddButton(RectF(Vec2(99, 40), 34, 9), resC->tC.buttons[2], resC->tC.buttons[3], "b_buildTent", a, { 1,0,0,0 });
-		b3->bFunc = B3;
+		Button* b3 = p2->AddButton(RectF(Vec2(99, 40), 34, 9), &resC->tC.buttons[2], &resC->tC.buttons[3], "b_buildTent", a, { 1,0,0,0 });
+		b3->bFunc = BBuildMode0;
 
 		p2->AddText(Settings::lang_bonfire[Settings::lang], RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_bonfire", { 0,1 }, { 1, 0, 0, 0 }, 1);
-		Button* b4 = p2->AddButton(RectF(Vec2(99, 50), 34, 9), resC->tC.buttons[2], resC->tC.buttons[3], "b_buildBonfire", a, { 1,0,0,0 });
-		b4->bFunc = B4;
+		Button* b4 = p2->AddButton(RectF(Vec2(99, 50), 34, 9), &resC->tC.buttons[2], &resC->tC.buttons[3], "b_buildBonfire", a, { 1,0,0,0 });
+		b4->bFunc = BBuildMode2;
 
 		p2->AddText(Settings::lang_townhall[Settings::lang], RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_townhall", { 0,1 }, { 1, 0, 0, 0 }, 1);
-		Button* b5 = p2->AddButton(RectF(Vec2(99, 60), 34, 9), resC->tC.buttons[2], resC->tC.buttons[3], "b_buildTownhall", a, { 1,0,0,0 });
-		b5->bFunc = B5;
+		Button* b5 = p2->AddButton(RectF(Vec2(99, 60), 34, 9), &resC->tC.buttons[2], &resC->tC.buttons[3], "b_buildTownhall", a, { 1,0,0,0 });
+		b5->bFunc = BBuildMode3;
+
 		// #3
 		// Page 1
 		p3->AddText(Settings::lang_constructionMaterials[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "h_f3");
@@ -574,12 +777,18 @@ public:
 		p3->AddText(Settings::lang_concrete[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_concrete", { 0,1 }, { 0, 1, 0 }, 1);
 		p3->AddText(Settings::lang_glass[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_glass", { 0,1 }, { 0, 1, 0 }, 1);
 		p3->AddText(Settings::lang_ceramics[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_ceramics", { 0,1 }, { 0, 1, 0 }, 1);
+		p3->AddText(Settings::lang_snow[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_snow", { 0,1 }, { 0, 1, 0 }, 1);
+		p3->AddText(Settings::lang_bricks[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_bricks", { 0,1 }, { 0, 1, 0 }, 1);
+		p3->AddText(Settings::lang_slate[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_slate", { 0,1 }, { 0, 1, 0 }, 1);
 
 		p3->AddText("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSteel", { 0,1 }, { 0, 1, 0 }, 1);
 		p3->AddText("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nPlastic", { 0,1 }, { 0, 1, 0 }, 1);
 		p3->AddText("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nConcrete", { 0,1 }, { 0, 1, 0 }, 1);
 		p3->AddText("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nGlass", { 0,1 }, { 0, 1, 0 }, 1);
 		p3->AddText("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCeramics", { 0,1 }, { 0, 1, 0 }, 1);
+		p3->AddText("2", RectF(Vec2(100, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSnow", { 0,1 }, { 0, 1, 0 }, 1);
+		p3->AddText("2", RectF(Vec2(100, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nBricks", { 0,1 }, { 0, 1, 0 }, 1);
+		p3->AddText("2", RectF(Vec2(100, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSlate", { 0,1 }, { 0, 1, 0 }, 1);
 
 		//Page 3
 		p3->AddText(Settings::lang_corals[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_corals", { 0,1 }, { 0, 0, 1 }, 1);
@@ -607,7 +816,7 @@ public:
 		p3->AddText("24", RectF(Vec2(100, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCactus", { 0,1 }, { 0, 0, 1 }, 1);
 
 
-		Frame* fUnity = AddFrame(RectF(Vec2(100, 150), 140, 280), 0, resC);																			//SECOND FRAME
+		Frame* fUnity = AddFrame(RectF(Vec2(100, 150), 140, 280), 0);																			//SECOND FRAME
 		fUnity->AddText(Settings::lang_unitInfo[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_h");
 		fUnity->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(80, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_unitNameIs", a, 1);
 		fUnity->AddText(Settings::lang_unitName[Settings::lang] + ":", RectF(Vec2(2, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_unitName", a, 1);
@@ -621,8 +830,53 @@ public:
 		fUnity->SetState(1);
 		fUnity->SetVisible(false);
 
-		Frame* fNextTurn = AddFrame(RectF(Vec2(620, 500), 120, 60), 1, resC);																			//NEXT TURN FRAME
+		Frame* fNextTurn = AddFrame(RectF(Vec2(620, 500), 120, 60), 1);																			//NEXT TURN FRAME
+		fNextTurn->s = &resC->tC.windowsFrame[3].GetCurSurface();
 		fNextTurn->bFunc = BNextTurn;
+
+		Frame* fButtonBuild = AddFrame(RectF(Vec2(30, 30), 60, 60), 1);																			//BUILD MENU BUTTON
+		fButtonBuild->s = &resC->tC.windowsFrame[4].GetCurSurface();
+		fButtonBuild->bFunc = BBuildMenu;
+
+		PageFrame* fBuildSelection = AddPageFrame(RectF(Vec2(0, 0), 800, 600), 1, 4);															//build selection menu
+		fBuildSelection->s = &resC->tC.windowsFrame[5].GetCurSurface();
+		fBuildSelection->SetVisible(false);
+		fBuildSelection->SetMoveable(false);
+		fBuildSelection->GetComp("b_left")->pos = RectF(Vec2(25, 25), 100, 25);
+		fBuildSelection->GetComp("b_right")->pos = RectF(Vec2(675, 25), 100, 25);
+		Button* b_back = fBuildSelection->AddButton(RectF(Vec2(30, 30), 60, 60), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_buildback", a, { 1,0,0,0 });
+		b_back->bFunc = BOpenGamefield;
+		//Composition* comp_Tent = fBuildSelection->AddComposition(RectF(Vec2(60, 120), 180, 60), resC, "comp_tent", a, { 1,0,0,0 });
+		Button* bg_Tent = fBuildSelection->AddButton(RectF(Vec2(60, 120), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildtent", a, { 1,0,0,0 });
+		bg_Tent->bFunc = BBuildMode0;
+		fBuildSelection->AddText(Settings::lang_tent[Settings::lang], RectF(Vec2(132, 127), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hTent", a, { 1,0,0,0 });
+		fBuildSelection->AddText(Settings::lang_leather[Settings::lang], RectF(Vec2(132, 157), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_TentR1", a, { 1,0,0,0 });
+
+		Button* bg_igloo = fBuildSelection->AddButton(RectF(Vec2(60, 200), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildigloo", a, { 1,0,0,0 });
+		bg_igloo->bFunc = BBuildMode21;
+		fBuildSelection->AddText(Settings::lang_igloo[Settings::lang], RectF(Vec2(132, 207), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hIgloo", a, { 1,0,0,0 });
+
+		Button* bg_woodHouse = fBuildSelection->AddButton(RectF(Vec2(60, 280), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildwoodenHouse", a, { 1,0,0,0 });
+		bg_woodHouse->bFunc = BBuildMode22;
+		fBuildSelection->AddText(Settings::lang_woodenHouse[Settings::lang], RectF(Vec2(132, 287), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hWoodenhouse", a, { 1,0,0,0 });
+
+		Button* bg_stoneHouse = fBuildSelection->AddButton(RectF(Vec2(60, 360), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildstoneHouse", a, { 1,0,0,0 });
+		bg_stoneHouse->bFunc = BBuildMode23;
+		fBuildSelection->AddText(Settings::lang_stoneHouse[Settings::lang], RectF(Vec2(132, 367), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hStoneHouse", a, { 1,0,0,0 });
+
+		Button* bg_brickHouse = fBuildSelection->AddButton(RectF(Vec2(60, 440), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildbrickhouse", a, { 1,0,0,0 });
+		bg_brickHouse->bFunc = BBuildMode24;
+		fBuildSelection->AddText(Settings::lang_brickhouse[Settings::lang], RectF(Vec2(132, 447), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hBrickhouse", a, { 1,0,0,0 });
+
+		Button* bg_skyscraper = fBuildSelection->AddButton(RectF(Vec2(60, 520), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildskyscraper", a, { 1,0,0,0 });
+		bg_skyscraper->bFunc = BBuildMode25;
+		fBuildSelection->AddText(Settings::lang_skyscraper[Settings::lang], RectF(Vec2(132, 527), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hSkyscraper", a, { 1,0,0,0 });
+
+		Button* bg_villa = fBuildSelection->AddButton(RectF(Vec2(260, 120), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildVilla", a, { 1,0,0,0 });
+		bg_villa->bFunc = BBuildMode26;
+		fBuildSelection->AddText(Settings::lang_villa[Settings::lang], RectF(Vec2(332, 127), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hVilla", a, { 1,0,0,0 });
+
+		//Button* bg_Tent = fBuildSelection->AddButton(RectF(Vec2(60, 120), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildtent", a, { 1,0,0,0 });
 
 }
 	// ### Update components of existing Frames ###
@@ -650,38 +904,41 @@ public:
 			PageFrame* p3 = static_cast<PageFrame*>(m->GetFrame(2));
 			
 			// Page 1
-			p3->SetText(std::to_string(playerM.wood), "t_nWood");
-			p3->SetText(std::to_string(playerM.iron), "t_nIron");
-			p3->SetText(std::to_string(playerM.sand), "t_nSand");
-			p3->SetText(std::to_string(playerM.stone), "t_nStone");
-			p3->SetText(std::to_string(playerM.copper), "t_nCopper");
-			p3->SetText(std::to_string(playerM.gold), "t_nGold");
-			p3->SetText(std::to_string(playerM.aluminum), "t_nAluminum");
-			p3->SetText(std::to_string(playerM.emerald), "t_nEmerald");
-			p3->SetText(std::to_string(playerM.sapphire), "t_nSapphire");
-			p3->SetText(std::to_string(playerM.robin), "t_nRobin");
-			p3->SetText(std::to_string(playerM.diamond), "t_nDimond");
-			p3->SetText(std::to_string(playerM.amber), "t_nAmber");
+			p3->SetText(std::to_string(playerM.values["wood"]), "t_nWood");
+			p3->SetText(std::to_string(playerM.values["iron"]), "t_nIron");
+			p3->SetText(std::to_string(playerM.values["sand"]), "t_nSand");
+			p3->SetText(std::to_string(playerM.values["stone"]), "t_nStone");
+			p3->SetText(std::to_string(playerM.values["copper"]), "t_nCopper");
+			p3->SetText(std::to_string(playerM.values["gold"]), "t_nGold");
+			p3->SetText(std::to_string(playerM.values["aluminum"]), "t_nAluminum");
+			p3->SetText(std::to_string(playerM.values["emerald"]), "t_nEmerald");
+			p3->SetText(std::to_string(playerM.values["sapphire"]), "t_nSapphire");
+			p3->SetText(std::to_string(playerM.values["robin"]), "t_nRobin");
+			p3->SetText(std::to_string(playerM.values["diamond"]), "t_nDimond");
+			p3->SetText(std::to_string(playerM.values["amber"]), "t_nAmber");
 
 			//Page 2
-			p3->SetText(std::to_string(playerM.steel), "t_nSteel");
-			p3->SetText(std::to_string(playerM.plastic), "t_nPlastic");
-			p3->SetText(std::to_string(playerM.concrete), "t_nConcrete");
-			p3->SetText(std::to_string(playerM.glass), "t_nGlass");
-			p3->SetText(std::to_string(playerM.ceramics), "t_nCeramics");
+			p3->SetText(std::to_string(playerM.values["steel"]), "t_nSteel");
+			p3->SetText(std::to_string(playerM.values["plastic"]), "t_nPlastic");
+			p3->SetText(std::to_string(playerM.values["concrete"]), "t_nConcrete");
+			p3->SetText(std::to_string(playerM.values["glass"]), "t_nGlass");
+			p3->SetText(std::to_string(playerM.values["ceramics"]), "t_nCeramics");
+			p3->SetText(std::to_string(playerM.values["snow"]), "t_nSnow");
+			p3->SetText(std::to_string(playerM.values["bricks"]), "t_nBricks");
+			p3->SetText(std::to_string(playerM.values["slate"]), "t_nSlate");
 
 			//Page 3
-			p3->SetText(std::to_string(playerM.corals), "t_nCorals");
-			p3->SetText(std::to_string(playerM.sticks), "t_nSticks");
-			p3->SetText(std::to_string(playerM.leaves), "t_nLeaves");
-			p3->SetText(std::to_string(playerM.wool), "t_nWool");
-			p3->SetText(std::to_string(playerM.leather), "t_nLeather");
-			p3->SetText(std::to_string(playerM.fur), "t_nFur");
-			p3->SetText(std::to_string(playerM.meat), "t_nMeat");
-			p3->SetText(std::to_string(playerM.fish), "t_nFish");
-			p3->SetText(std::to_string(playerM.berrys), "t_nBerrys");
-			p3->SetText(std::to_string(playerM.apples), "t_nApples");
-			p3->SetText(std::to_string(playerM.cactus), "t_nCactus");
+			p3->SetText(std::to_string(playerM.values["corals"]), "t_nCorals");
+			p3->SetText(std::to_string(playerM.values["sticks"]), "t_nSticks");
+			p3->SetText(std::to_string(playerM.values["leaves"]), "t_nLeaves");
+			p3->SetText(std::to_string(playerM.values["wool"]), "t_nWool");
+			p3->SetText(std::to_string(playerM.values["leather"]), "t_nLeather");
+			p3->SetText(std::to_string(playerM.values["fur"]), "t_nFur");
+			p3->SetText(std::to_string(playerM.values["meat"]), "t_nMeat");
+			p3->SetText(std::to_string(playerM.values["fish"]), "t_nFish");
+			p3->SetText(std::to_string(playerM.values["berrys"]), "t_nBerrys");
+			p3->SetText(std::to_string(playerM.values["apples"]), "t_nApples");
+			p3->SetText(std::to_string(playerM.values["cactus"]), "t_nCactus");
 			
 		}
 	}
@@ -707,6 +964,39 @@ public:
 	{
 		Frame* f = static_cast<Frame*>(windows[1].get());
 		f->SetVisible(false);
+	}
+	void BuildSelectionStarted()
+	{
+		MultiFrame* m = static_cast<MultiFrame*>(windows[0].get());
+		m->SetVisible(false);
+	
+		Frame* f1 = static_cast<Frame*>(windows[1].get());
+		Frame* f2 = static_cast<Frame*>(windows[2].get());
+		Frame* f3 = static_cast<Frame*>(windows[3].get());
+
+		f1->SetVisible(false);
+		f2->SetVisible(false);
+		f3->SetVisible(false);
+
+		PageFrame* f4 = static_cast<PageFrame*>(windows[4].get());
+		f4->SetVisible(true);
+		f4->AdjustArrowButtons();
+	}
+	void OpenGamefield()
+	{
+		MultiFrame* m = static_cast<MultiFrame*>(windows[0].get());
+		m->SetVisible(true);
+
+		Frame* f1 = static_cast<Frame*>(windows[1].get());
+		Frame* f2 = static_cast<Frame*>(windows[2].get());
+		Frame* f3 = static_cast<Frame*>(windows[3].get());
+
+		f2->SetVisible(true);
+		f3->SetVisible(true);
+
+		Frame* f4 = static_cast<Frame*>(windows[4].get());
+		f4->SetVisible(false);
+
 	}
 	static constexpr float percentForGrab = 0.05;			
 };

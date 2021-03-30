@@ -499,12 +499,12 @@ void World::Zoom(Vei2 delta)
 	updateChunkGraphics = true;
 	float deltaX = c.x / s.chunkSize.x;
 	float deltaY = c.y / s.chunkSize.y;
-	if (delta.x + s.chunkSize.x >= 50 && delta.x + s.chunkSize.x <= 1200)
+	if (delta.x + s.chunkSize.x >= 50 && delta.x + s.chunkSize.x <= 2500)
 	{
 		s.chunkSize.x += delta.x;
 		c.x = s.chunkSize.x * deltaX;
 	}
-	if (delta.y + s.chunkSize.y >= 50 && delta.y + s.chunkSize.y <= 1200)
+	if (delta.y + s.chunkSize.y >= 50 && delta.y + s.chunkSize.y <= 2500)
 	{
 		s.chunkSize.y += delta.y;
 		c.y += delta.y / 2;
@@ -674,31 +674,37 @@ void World::UpdateGameLogic(float dt)
 	yStart = -1;
 	yStop = 1;
 	#endif
-		if (updateChunkGraphics)
+	bool any = false;
+	if (updateChunkGraphics)
+	{
+		for (int layer = 0; layer < 2; layer++)
 		{
-			for (int layer = 0; layer < 2; layer++)
+			for (int y = yStart; y <= yStop; y++)
 			{
-				for (int y = yStart; y <= yStop; y++)
+				for (int x = xStart; x <= xStop; x++)
 				{
-					for (int x = xStart; x <= xStop; x++)
+					Vei2 curChunk = Chunk::PutChunkInWorld(mChunk + Vei2(x, y), s.worldHasNChunks);
+					//chunks(curChunk).Update(dt);
+					if (chunks(curChunk).NeedGraphicsUpdate(chunkSize) < 2)
 					{
-						Vei2 curChunk = Chunk::PutChunkInWorld(mChunk + Vei2(x, y), s.worldHasNChunks);
-						//chunks(curChunk).Update(dt);
-						if (chunks(curChunk).NeedGraphicsUpdate(chunkSize) < 2)
+						any = true;
+						RectF curRect = GetChunkRect(curChunk);
+						if (layer == 0)
 						{
-							RectF curRect = GetChunkRect(curChunk);
-							if (layer == 0)
-							{
-								chunks(curChunk).UpdateTypeSurface(curRect);
-							}
-							if (layer == 1)
-							{
-								chunks(curChunk).UpdateObstacleSurface(curRect);
-							}
+							chunks(curChunk).UpdateTypeSurface(curRect);
+						}
+						if (layer == 1)
+						{
+							chunks(curChunk).UpdateObstacleSurface(curRect);
 						}
 					}
 				}
 			}
+		}
+		if (any)
+		{
+			updatedGraphics++;
+		}
 			updateChunkGraphics = false;
 		}
 	//obstacles[0]->Update(dt);

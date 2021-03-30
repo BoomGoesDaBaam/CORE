@@ -56,8 +56,7 @@ private:
 
 	Vec2& c;								//Camera
 
-	
-	
+
 	//std::vector<Team> enemys;
 	//Team player;
 
@@ -67,7 +66,11 @@ private:
 	bool posAllowed = true;
 	bool moveMode = false;
 	bool updateChunkGraphics = true;
+
 	bool updateUnitInfo = false;
+	bool showBuildMenu = false;
+	bool loadBuildMenu = false;
+	bool buildMenuShown = false;
 
 	Team* player;
 	Team animals = Team("Fuer die Natur");
@@ -138,7 +141,8 @@ private:
 	void GenerateObstaclesInCell(Vei2 cellPos, int type, int number, Team* team = nullptr, int ontoType = -1, int surrBy = -1);
 
 public:
-																							//Konstruktor + Operatoren
+
+	int updatedGraphics = 0;																						//Konstruktor + Operatoren
 	World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera, Team* player);
 	
 	//Handles
@@ -161,10 +165,27 @@ public:
 		}
 	}
 	void NextTurn();
-	//
-
+	//Frames Update
 	bool UpdateUnitInfo()const{ return updateUnitInfo; }
 	void UnitUpdated() { updateUnitInfo = false; }
+
+	void LoadBuildMenu()
+	{
+		loadBuildMenu = true;
+	}
+	bool NeedToLoadBuildMenu()
+	{
+		return loadBuildMenu;
+	}
+	void BuildMenuLoaded()
+	{
+		buildMenuShown = true;
+		loadBuildMenu = false;
+	}
+	bool BuildMenuShown()
+	{
+		return buildMenuShown;
+	}
 	//
 	Vei2 GetwSize()const { return s.wSizeInCells; }
 	Vei2 GetcSize()const { return s.chunkSize / Settings::chunkHasNCells; }
@@ -174,6 +195,7 @@ public:
 	int GetfCellType()const { return chunks(fcctPos.x).GetCellTypeAt(fcctPos.y); }
 	Vei2 GetmChunk()const { return mChunk; }
 	void SetPlayer(Team* player) { this->player = player; }
+	Team* GetPlayer() { return player; }
 	RectI GetRenderRect()const { 
 		auto mos = Graphics::GetMidOfScreen();
 		return RectI(-1 - (int)((mos.x / s.chunkSize.x) * 1.5f), 1 + (int)((mos.x / s.chunkSize.x) * 1.5f), -1 - (int)((mos.y / s.chunkSize.y) * 1.5f), 1 + (int)((mos.y / s.chunkSize.y) * 1.5f)); };

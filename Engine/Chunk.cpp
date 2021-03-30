@@ -159,15 +159,15 @@ void Chunk::MarkObstacleMap(Vei2 tilePos, Vei2 size, int index)
 		{
 			for (int x = tilePos.x; x < tilePos.x + size.x; x++)
 			{
-				if (x == Settings::CellSplitUpIn * hasNCells)
+				if (x >= Settings::CellSplitUpIn * hasNCells)
 				{
-					chunks->operator()(chunkPos + Vei2(1, 0)).MarkObstacleMap(Vei2(0, tilePos.y), Vei2(size.x - (x - tilePos.x), size.y), index);
+					chunks->operator()(PutChunkInWorld(chunkPos + Vei2(1, 0), chunks->GetSize())).MarkObstacleMap(Vei2(0, tilePos.y), Vei2(size.x - (x - tilePos.x), size.y), index);
 					size.x = x - tilePos.x;
 					continue;
 				}
-				if (y == Settings::CellSplitUpIn * hasNCells)
+				if (y >= Settings::CellSplitUpIn * hasNCells)
 				{
-					chunks->operator()(chunkPos + Vei2(0, 1)).MarkObstacleMap(Vei2(tilePos.x, 0), Vei2(size.x, size.y - (y - tilePos.y)), index);
+					chunks->operator()(PutChunkInWorld(chunkPos + Vei2(0, 1), chunks->GetSize())).MarkObstacleMap(Vei2(tilePos.x, 0), Vei2(size.x, size.y - (y - tilePos.y)), index);
 					size.y = y - tilePos.y;
 					continue;
 				}

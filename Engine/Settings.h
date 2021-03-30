@@ -1,6 +1,7 @@
 #pragma once
 #include "Rect.h"
 #include <fstream>
+#include <map>
 namespace Settings
 {
 	/*		### Types ###
@@ -32,18 +33,29 @@ namespace Settings
 			18 = penguin
 			19 = mouse
 			20 = snake
+			21 = iglu
+			22 = wood house
+			23 = stone house
+			24 = brick house
+			25 = skyscraper
+			26 = villa
 			### Masked Array ###
 			0 = swamp
 
 			### Windows ###
-			1 = Fieldinformaion
-			2 = Unit Info
-			3 = Next Turn 
+			0 = Fieldinformaion
+			1 = Unit Info
+			2 = Next Turn 
+			3 = Buildselection button
+			4 = Build selection screen
+			5 = Load Gamefield
+
 			### Frame Types ###		
 			0 = frame with bar to open
-			1 = frame with custom pix
-			### Multiframe Types ###
-			0 = empty
+			1 = frame with custom pixel offset
+			
+			### Object Display ###
+			0 = build menu like
 
 			### Error returns ###
 			-1 = something happened
@@ -64,10 +76,22 @@ namespace Settings
 	static constexpr int chunkHasNCells = 5;
 	static constexpr int chunkHasNTiles = chunkHasNCells * CellSplitUpIn;
 
-	static const int obstacleStates[] = { 1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
-	static const Vei2 obstacleSizes[] = { Vei2(2,2), Vei2(1,1), Vei2(1,1), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(2,2), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1) };
-	static const int obstacleBaseHP[] = { 20,20,20, 100, 20, 10, 5, 100, 20, 100, 50, 10,10,10,25,10,5,10,5,1,25 };
-	static const int obstacleMovesPerTurn[] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,10,10,10,10,10,10,5,10,10,30,15 };
+	static const int obstacleStates[] = { 1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+										1,1,1,1,1,1 };
+	static const Vei2 obstacleSizes[] = { Vei2(2,2), Vei2(1,1), Vei2(1,1), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(2,2), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1),
+										Vei2(3,3),Vei2(3,3), Vei2(4,4), Vei2(4,4), Vei2(4,4), Vei2(5,5)};
+	static const int obstacleBaseHP[] = { 20,20,20, 100, 20, 10, 5, 100, 20, 100, 50, 10,10,10,25,10,5,10,5,1,25, 
+										10,30,200,150,100,80};
+	static const int obstacleMovesPerTurn[] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,10,10,10,10,10,10,5,10,10,30,15 
+												-1,-1,-1,-1,-1,-1};
+	static const std::map<std::string, float> neededRes[] = { {{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
+															{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
+															{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
+															{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
+															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},
+															{{"concrete",500}},		{{"slate",100},{"bricks",200},{"concrete",200}},
+	};
+
 	static const std::vector<Vei2> multiObstacleSize[] = { {Vei2(5,5)}, {Vei2(5,5)} };					//sizes of hidden frames
 	static const Vei2 multiObstaclePos[] = { Vei2(-2,-2), Vei2(-2,-2) };									//relativ pos of hidden frames in tiles
 
@@ -116,6 +140,8 @@ namespace Settings
 	const std::string lang_concrete[] = { "concrete", "Beton" };
 	const std::string lang_glass[] = { "glass", "Glas" };
 	const std::string lang_ceramics[] = { "ceramics", "Keramik" };
+	const std::string lang_bricks[] = { "bricks", "Ziegeln" };
+	const std::string lang_slate[] = { "slate", "schiefer" };
 
 	const std::string lang_corals[] = { "corals", "Korallen" };
 	const std::string lang_sticks[] = { "sticks", "Stoecke" };
@@ -153,9 +179,6 @@ namespace Settings
 	const std::string lang_kilogram[] = { "kg", "kg" };		
 	const std::string lang_stepsLeft[] = { "steps left", "Schritte ueber" };
 
-	const std::string lang_tent[] = { "tent", "Zelt" };
-	const std::string lang_bonfire[] = { "bonfire", "Lagerfeuer" };
-	const std::string lang_townhall[] = { "townhall", "Rathaus" };
 
 	//Obstacles
 
@@ -180,6 +203,19 @@ namespace Settings
 	const std::string lang_penguin[] = { "penguin", "Pinguin" };
 	const std::string lang_mouse[] = { "mouse", "Maus" };
 	const std::string lang_snake[] = { "snake", "Schlange" };
+
+	//Building
+	const std::string lang_tent[] = { "tent", "Zelt" };
+	const std::string lang_bonfire[] = { "bonfire", "Lagerfeuer" };
+	const std::string lang_townhall[] = { "townhall", "Rathaus" };
+	const std::string lang_igloo[] = { "igloo", "iglu" };
+	const std::string lang_woodenHouse[] = { "wooden house", "Holzhaus" };
+	const std::string lang_stoneHouse[] = { "stone house", "Steinhaus" };
+	const std::string lang_brickhouse[] = { "brickhouse", "Ziegelhaus" };
+	const std::string lang_skyscraper[] = { "skyscraper", "Hochhaus" };
+	const std::string lang_villa[] = { "villa", "Villa" };
+
+
 
 	static constexpr float percentForGrab[] = { 0.05f, 0.05f };
 	static bool anyOfUnit(int type)
@@ -426,6 +462,24 @@ namespace Settings
 			break;
 		case 20:
 			return lang_snake[lang];
+			break;
+		case 21:
+			return lang_igloo[lang];
+			break;
+		case 22:
+			return lang_woodenHouse[lang];
+			break;
+		case 23:
+			return lang_stoneHouse[lang];
+			break;
+		case 24:
+			return lang_brickhouse[lang];
+			break;
+		case 25:
+			return lang_skyscraper[lang];
+			break;
+		case 26:
+			return lang_villa[lang];
 			break;
 		default:
 			return "Settings::GetObstacleString needs an update";
