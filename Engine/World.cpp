@@ -602,7 +602,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 			chunks(fcctPos.x).AttackTile(fcctPos, focusedObst);
 			grit = false;
 			attackMode = false;
-			if (chunks(fcctPos.x).GetObstacleAt(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z)->hp < 0)
+			if (chunks(fcctPos.x).GetObstacleAt(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z)->hp <= 0)
 			{
 				UnitKilled(oldCctPos, fcctPos);
 				chunks(fcctPos.x).UpdateGraphics();

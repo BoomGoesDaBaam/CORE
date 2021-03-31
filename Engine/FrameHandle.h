@@ -707,8 +707,7 @@ public:
 		MultiFrame* m = AddMultiFrame(RectF(Vec2(540, 110), 140, 280), 0, 1);			//Size of frames is hardcoded
 																							//FIRST FRAME
 		Frame* f1 = m->AddFrame(RectF(Vec2(0, 0), 140, 280), 0, resC, m);	
-		PageFrame* p2 = m->AddPageFrame(RectF(Vec2(0, 12), 140, 280), 0, resC, m, 4);
-		PageFrame* p3 = m->AddPageFrame(RectF(Vec2(0, 24), 140, 280), 0, resC, m, 3);
+		PageFrame* p3 = m->AddPageFrame(RectF(Vec2(0, 12), 140, 280), 0, resC, m, 3);
 		
 		// #1
     	f1->AddText(Settings::lang_fieldInformation[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black,"h_f1");
@@ -717,27 +716,10 @@ public:
 		f1->AddText(Settings::lang_flora[Settings::lang] + ":", RectF(Vec2(2, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_flora", a, 1);
 		f1->AddText(Settings::lang_Obstacle[Settings::lang] + ":", RectF(Vec2(2, 35), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_obstacle", a, 1);
 		f1->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(60, 35), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_obstacleInfo", a, 1);
+		f1->AddText(Settings::lang_hp[Settings::lang] + ":", RectF(Vec2(2, 46), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_obstacleHp", a, 1);
+		f1->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(60, 46), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_obstacleHpIs", a, 1);
 
 		// #2
-		p2->AddText(Settings::lang_buildmenu[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "h_f2");
-
-		p2->AddText(Settings::lang_housing[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_housing", { 0,1 }, { 1, 0, 0, 0 });
-		p2->AddText(Settings::lang_productions[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_productions", { 0,1 }, { 0, 1, 0, 0 });
-		p2->AddText(Settings::lang_decoration[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_decoration", { 0,1 }, { 0, 0, 1, 0 });
-		p2->AddText(Settings::lang_agility[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_agility", { 0,1 }, { 0, 0, 0, 1 });
-
-		p2->AddText(Settings::lang_tent[Settings::lang], RectF(Vec2(5, 40), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_tent", { 0,1 }, { 1, 0, 0, 0 }, 1);
-		Button* b3 = p2->AddButton(RectF(Vec2(99, 40), 34, 9), &resC->tC.buttons[2], &resC->tC.buttons[3], "b_buildTent", a, { 1,0,0,0 });
-		b3->bFunc = BBuildMode0;
-
-		p2->AddText(Settings::lang_bonfire[Settings::lang], RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_bonfire", { 0,1 }, { 1, 0, 0, 0 }, 1);
-		Button* b4 = p2->AddButton(RectF(Vec2(99, 50), 34, 9), &resC->tC.buttons[2], &resC->tC.buttons[3], "b_buildBonfire", a, { 1,0,0,0 });
-		b4->bFunc = BBuildMode2;
-
-		p2->AddText(Settings::lang_townhall[Settings::lang], RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_townhall", { 0,1 }, { 1, 0, 0, 0 }, 1);
-		Button* b5 = p2->AddButton(RectF(Vec2(99, 60), 34, 9), &resC->tC.buttons[2], &resC->tC.buttons[3], "b_buildTownhall", a, { 1,0,0,0 });
-		b5->bFunc = BBuildMode3;
-
 		// #3
 		// Page 1
 		p3->AddText(Settings::lang_constructionMaterials[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "h_f3");
@@ -913,13 +895,13 @@ public:
 			if (curW.GetFocusedObstacle() != nullptr)
 			{
 				f1->SetText(Settings::GetObstacleString(curW.GetFocusedObstacle()->type), "t_obstacleInfo");
+				f1->SetText(std::to_string(curW.GetFocusedObstacle()->hp), "t_obstacleHpIs");
 			}
 
 			//#2
-			PageFrame* p2 = static_cast<PageFrame*>(m->GetFrame(1));
 
 			//#3
-			PageFrame* p3 = static_cast<PageFrame*>(m->GetFrame(2));
+			PageFrame* p3 = static_cast<PageFrame*>(m->GetFrame(1));
 			
 			// Page 1
 			p3->SetText(std::to_string(playerM.values["wood"]), "t_nWood");
