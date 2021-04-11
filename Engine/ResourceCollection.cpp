@@ -167,6 +167,7 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 			if (Settings::anyMaskedType(i))
 			{
 				maskedFields.push_back(Animation(delay));
+
 				maskedFields[nMasked].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((int)((floor((float)i / 8)) * 255), 122 + f * 51 + (i % 8) * 255), 254, 50)));
 				
 				fields[i].SetKeepTime(fields[0].GetKeepTime());

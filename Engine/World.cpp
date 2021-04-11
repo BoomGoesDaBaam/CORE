@@ -504,7 +504,7 @@ Vei2 World::GetTileHit(Vec2 mP)const
 */
 void World::Zoom(Vei2 delta)
 {
-	updateChunkGraphics = true;
+	//updateChunkGraphics = true;
 	float deltaX = c.x / s.chunkSize.x;
 	float deltaY = c.y / s.chunkSize.y;
 	if (delta.x + s.chunkSize.x >= 50 && delta.x + s.chunkSize.x <= 3000)
@@ -585,7 +585,7 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 	}
 	if (moved)
 	{
-		updateChunkGraphics = true;
+		//updateChunkGraphics = true;
 	}
 }
 void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
@@ -605,8 +605,8 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 			if (chunks(fcctPos.x).GetObstacleAt(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z)->hp <= 0)
 			{
 				UnitKilled(oldCctPos, fcctPos);
-				chunks(fcctPos.x).UpdateGraphics();
-				updateChunkGraphics = true;
+				//chunks(fcctPos.x).UpdateGraphics();
+				//updateChunkGraphics = true;
 			}
 			fcctPos = oldCctPos;
 		}
@@ -619,8 +619,10 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		{
 			//GenerateObstacle(Chunk::chunkPos2Flat(fcctPos),)
 			Vei2 d = AbstractTilePos(oldCctPos);
-
-			if (chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fcctPos))
+			chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fcctPos);
+			focusedObst = nullptr;
+			/*
+				if (chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fcctPos))
 			{
 				RectF chunkRect = GetChunkRect(oldCctPos.x);
 				Vec2 chunkSize = (Vec2)chunkRect.GetSize();
@@ -647,7 +649,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 				}
 				updateChunkGraphics = true;
 			}
-			focusedObst = nullptr;
+		*/
 		}
 		if (ObstacleMapAt(fcctPos) != -1)
 		{
@@ -668,8 +670,8 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 			auto fcctPos = GetHitTile(mP);
 			chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, placeObstacle, player);
 			player->GetMaterials().Remove(Settings::neededRes[placeObstacle]);
-			chunks(fcctPos.x).UpdateGraphics();
-			updateChunkGraphics = true;
+			//chunks(fcctPos.x).UpdateGraphics();
+			//updateChunkGraphics = true;
 		}
 		//SpawnUnitGroup(Chunk::chunkPos2Flat(fcctPos), 12, animals, 10);
 	}
@@ -726,6 +728,7 @@ void World::UpdateGameLogic(float dt)
 	yStop = 1;
 	#endif
 	bool any = false;
+	/*
 	if (updateChunkGraphics)
 	{
 		for (int layer = 0; layer < 2; layer++)
@@ -758,6 +761,7 @@ void World::UpdateGameLogic(float dt)
 		}
 			updateChunkGraphics = false;
 		}
+		*/
 	//obstacles[0]->Update(dt);
 }
 void World::Draw(Graphics& gfx) const

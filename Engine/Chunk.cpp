@@ -341,7 +341,7 @@ void Chunk::DrawObstacles(RectF chunkRect, Graphics& gfx) const
 	//chunkRect = chunkRect - Vec2(0, chunkRect.GetSize().y);
 	//chunkRect -= GetTileSize(chunkRect) * nTilesOver;
 	//gfx.DrawSurface((RectI)chunkRect, surf_obstacles, SpriteEffect::Chroma(), 0);
-	/*
+	
 	if (Settings::obstaclesOn)
 	{
 		Vei2 mos = Graphics::GetMidOfScreen();
@@ -385,14 +385,14 @@ void Chunk::DrawObstacles(RectF chunkRect, Graphics& gfx) const
 			}
 		}
 	}
-	*/
+	
 }
 void Chunk::DrawTypeAndObst(RectF chunkRect, Graphics& gfx)const
 {
-	chunkRect = chunkRect - Vec2(0, chunkRect.GetSize().y);
-	gfx.DrawSurface((RectI)chunkRect, surf_typesAndObstacles, SpriteEffect::Nothing(), 0);
+	//chunkRect = chunkRect - Vec2(0, chunkRect.GetSize().y);
+	//gfx.DrawSurface((RectI)chunkRect, surf_typesAndObstacles, SpriteEffect::Nothing(), 0);
 	
-	/*
+	//Type
 	for (int y = 0; y < hasNCells; y++)
 	{
 		for (int x = 0; x < hasNCells; x++)
@@ -415,7 +415,9 @@ void Chunk::DrawTypeAndObst(RectF chunkRect, Graphics& gfx)const
 			}
 		}
 	}
-	*/
+	//Obstacle
+	DrawObstacles(chunkRect, gfx);
+
 }
 void Chunk::DrawGroundedMap(Vei2 pos, int cellSize, Graphics& gfx)const
 {
