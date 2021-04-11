@@ -7,10 +7,10 @@ struct Materials
 	Materials()
 	{
 		//Ressources
-		values["wood"] = 25.f;
+		values["wood"] = 2500.f;
 		values["iron"] = 0;
 		values["sand"] = 0;
-		values["stone"] = 0;
+		values["stone"] = 2000;
 		values["copper"] = 0;
 		values["gold"] = 0;
 		values["aluminum"] = 0;
@@ -23,12 +23,12 @@ struct Materials
 		//Materials
 		values["steel"] = 0;
 		values["plastic"] = 0;
-		values["concrete"] = 0;
+		values["concrete"] = 2000;
 		values["glass"] = 0;
 		values["ceramics"] = 0;
-		values["snow"] = 55;
-		values["bricks"] = 20; 
-		values["slate"] = 10; 
+		values["snow"] = 5005;
+		values["bricks"] = 2000; 
+		values["slate"] = 1011; 
 
 		//Organics
 		values["corals"] = 0;

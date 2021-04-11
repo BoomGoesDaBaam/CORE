@@ -202,7 +202,9 @@ public:
 	void DrawTile(RectF chunkRect, Vei2 tilePos, Color c, Graphics& gfx)const;
 	
 	void UpdateTypeSurface(RectF chunkRect);
+	void UpdateTypeSurfaceCell(RectF chunkRect, Vei2 curXY, Vec2 cellSize, Vec2 chunkSize);
 	void UpdateObstacleSurface(RectF chunkRect);
+	void UpdateObstacleSurfaceCell(RectF chunkRect, Vei2 curXY, Vec2 cellSize, Vec2 chunkSize, Vec2 tileSize);
 	void DrawObstacleProtrud(RectF curRect, Vec2 chunkSize, const Surface& s);
 	void DrawObstacleOnBuffer(RectF curRect,const Surface& s);
 
@@ -211,7 +213,7 @@ public:
 	void Update(float dt);
 	int NeedGraphicsUpdate(Vei2 chunkSize);
 	void UpdateGraphics();
-	void UpdateWhenMoved();
+	void UpdateWhenMoved(RectF chunkRect);
 	bool UnitIsAround(Vei2 tilePos, int range);
 	CtPos PutCtPosInWorld(CtPos ctPos, Vei2 worldHasNChunks);
 

@@ -34,7 +34,7 @@ public:
 		Vei2 wSizeInCells;
 		Vei2 wSizeInTiles;
 		Vei2 worldHasNChunks = Vei2(10, 10);
-		Vei2 chunkSize = { 1000, 1000 };
+		Vei2 chunkSize = { 3000, 3000 };
 	};
 private:
 	

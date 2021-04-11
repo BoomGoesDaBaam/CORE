@@ -316,21 +316,46 @@ public:
 			return;
 		}
 
+		RectI inFpos = pos;
+		int skippedLeft = 0, skippedRight = 0, skippedTop = 0, skippedBottom = 0;
+		if (inFpos.left < 0)
+		{
+			skippedLeft = std::abs(inFpos.left);
+			inFpos.left = 0;
+		}
+		if (inFpos.right >= ScreenWidth)
+		{
+			skippedRight = inFpos.right - ScreenWidth;
+			inFpos.right = ScreenWidth - 1;
+		}
+		if (inFpos.top < 0)
+		{
+			skippedTop = std::abs(inFpos.top);
+			inFpos.top = 0;
+		}
+		if (inFpos.bottom >= ScreenHeight)
+		{
+			skippedBottom = inFpos.bottom - ScreenHeight;
+			inFpos.bottom = ScreenHeight - 1;
+		}
 
 		n90rot %= 4;
-		for (int y = 0; y < pos.GetHeight(); y++)
+		int width = inFpos.GetWidth();
+		int height = inFpos.GetHeight();
+
+		for (int y = 0; y < height; y++)
 		{
-			for (int x = 0; x < pos.GetWidth(); x++)
+			for (int x = 0; x < width; x++)
 			{
-				if (PixelInFrame({ x + pos.left, y + pos.top }))
+				if (PixelInFrame({ x + inFpos.left, y + inFpos.top }))
 				{
 					int sPixelX=0;
 					int sPixelY=0;
 
 					if (n90rot == 0)
 					{
-						sPixelX = (int)(sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
-						sPixelY = (int)(sourceR.top + ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
+						sPixelX = (int)(sourceR.left + ((float)(x + skippedLeft) / pos.GetWidth()) * sourceR.GetWidth());
+						sPixelY = (int)(sourceR.top + ((float)(y + skippedTop) / pos.GetHeight()) * sourceR.GetHeight());
 					}
 					else if (n90rot == 1)
 					{ 
@@ -349,8 +374,11 @@ public:
 					}
 					assert(sPixelX >= 0);
 					assert(sPixelY >= 0);
+					assert(sPixelX < s.GetRect().GetWidth());
+					assert(sPixelY < s.GetRect().GetHeight());
+
 					Color sourceP = s.GetPixel(sPixelX, sPixelY);
-					effect(x + pos.left, y + pos.top, sourceP, *this);
+					effect(x + inFpos.left, y + inFpos.top, sourceP, *this);
 				}
 			}
 		}

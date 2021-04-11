@@ -507,12 +507,12 @@ void World::Zoom(Vei2 delta)
 	updateChunkGraphics = true;
 	float deltaX = c.x / s.chunkSize.x;
 	float deltaY = c.y / s.chunkSize.y;
-	if (delta.x + s.chunkSize.x >= 50 && delta.x + s.chunkSize.x <= 2500)
+	if (delta.x + s.chunkSize.x >= 50 && delta.x + s.chunkSize.x <= 3000)
 	{
 		s.chunkSize.x += delta.x;
 		c.x = s.chunkSize.x * deltaX;
 	}
-	if (delta.y + s.chunkSize.y >= 50 && delta.y + s.chunkSize.y <= 2500)
+	if (delta.y + s.chunkSize.y >= 50 && delta.y + s.chunkSize.y <= 3000)
 	{
 		s.chunkSize.y += delta.y;
 		c.y += delta.y / 2;
@@ -622,13 +622,32 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 
 			if (chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fcctPos))
 			{
-				chunks(oldCctPos.x).UpdateGraphics();
-				chunks(fcctPos.x).UpdateGraphics();
-				chunks(fcctPos.x).UpdateWhenMoved();
+				RectF chunkRect = GetChunkRect(oldCctPos.x);
+				Vec2 chunkSize = (Vec2)chunkRect.GetSize();
+				Vec2 cellSize = chunks[0][0].GetCellSize(chunkRect);
+				Vec2 tileSize = chunks[0][0].GetTileSize(chunkRect);
+
+				//auto pos = oldCctPos + Vec3_<Vei2>(Vei2(0, 0), Vei2(x, y), Vei2(0, 0));
+
+				chunks(oldCctPos.x).UpdateTypeSurfaceCell(chunkRect, oldCctPos.y, cellSize, chunkSize);
+				chunks(oldCctPos.x).UpdateObstacleSurfaceCell(chunkRect, oldCctPos.y, cellSize, chunkSize, tileSize);
+
+				chunks(fcctPos.x).UpdateTypeSurfaceCell(chunkRect, fcctPos.y, cellSize, chunkSize);
+				chunks(fcctPos.x).UpdateObstacleSurfaceCell(chunkRect, fcctPos.y, cellSize, chunkSize, tileSize);
+
+				//chunks((PutCctPosInWorld(oldCctPos+Vec3_<Vei2>(Vei2(x, y), Vei2(0, 0), Vei2(0, 0)))).x).UpdateGraphics();
+				//chunks((PutCctPosInWorld(fcctPos + Vec3_<Vei2>(Vei2(x, y), Vei2(0, 0), Vei2(0, 0)))).x).UpdateGraphics();
+				for (int y = -1; y < 2; y++)
+				{
+					for (int x = -1; x < 2; x++)
+					{
+						auto curChunk = PutCctPosInWorld(fcctPos + Vec3_<Vei2>(Vei2(x, y), Vei2(0, 0), Vei2(0, 0)));
+						chunks(curChunk.x).UpdateWhenMoved(GetChunkRect(curChunk.x));
+					}
+				}
 				updateChunkGraphics = true;
 			}
 			focusedObst = nullptr;
-			fcctPos.z.x--;
 		}
 		if (ObstacleMapAt(fcctPos) != -1)
 		{
@@ -657,11 +676,11 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 
 	if (e.GetType() == Mouse::Event::WheelDown)
 	{
-		Zoom(Vei2(-50, -50));
+		Zoom(Vei2(-500, -500));
 	}
 	if (e.GetType() == Mouse::Event::WheelUp)
 	{
-		Zoom(Vei2(50, 50));
+		Zoom(Vei2(500, 500));
 	}
 
 	posAllowed = ObstaclePosAllowed(fTile, placeObstacle);
@@ -690,7 +709,6 @@ void World::HandleKeyboardEvents(Keyboard::Event& e)
 		}
 	}
 }
-static int i = 0;
 void World::UpdateGameLogic(float dt)
 {
 	auto renderRect = GetRenderRect();

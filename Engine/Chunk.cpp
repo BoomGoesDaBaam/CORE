@@ -535,43 +535,52 @@ void Chunk::UpdateTypeSurface(RectF chunkRect)
 		for (int x = 0; x < hasNCells; x++)
 		{
 			Vei2 curXY = Vei2(x, y);
-			const Cell& curCell = cells(curXY);
-			int cellType = curCell.type;
-			//RectI curCellRect = RectI(Vei2(curXY.x, surf_types.GetHeight()-curXY.y - 1) * cellSize,cellSize.x, cellSize.y);
-			RectI curCellRect = RectI(Vei2(x * cellSize.x, chunkSize.y - cellSize.y - cellSize.y * y), cellSize.x, cellSize.y);
-			curCellRect.right += 1;
-			curCellRect.bottom += 1;
-			if (Settings::anyMaskedType(cellType))
-			{
-				surf_typesAndObstacles.AddLayer(curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields[0].GetCurSurface());
-				surf_typesAndObstacles.AddLayer(curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields[cellType].GetCurSurface());
-			}
-			surf_typesAndObstacles.AddLayer(curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields[cellType].GetCurSurface());
-
-			for (int i = 0; i < Settings::nDiffFieldTypes; i++)
-			{
-				int order = Settings::typeLayer[i];
-				if (conMap[order][curXY.x][curXY.y] == 1)
-				{
-					//surf_types.AddLayer(curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields[cellType].GetCurSurface());
-					std::vector<SubAnimation> a = resC->fsC.GetConnectionAnimationVec(order, Settings::anyMaskedType(order), aMats(curXY));
-					//Surface s = resC->fsC.GetConnectionAnimationVec(order, Settings::anyMaskedType(order), aMats(curXY))[0].a.GetFrames()[0];
-					for (int n = 0; n < a.size(); n++)
-					{
-						int xStart = ((float)a[n].posIn50x50grit.left / 50) * (float)curCellRect.GetWidth();
-						int yStart = ((float)a[n].posIn50x50grit.top / 50) * (float)curCellRect.GetHeight();
-
-						surf_typesAndObstacles.AddLayer(RectI(Vei2(xStart, yStart) + curCellRect.GetTopLeft<int>(),curCellRect.GetWidth()/2 + 1, curCellRect.GetHeight() / 2 + 1), a[n].sourceR, a[n].a.GetCurSurface());
-					}
-
-					//gfx.DrawConnections(order, Vei2(curCellRect.left, curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-				}
-			}
-			
+			UpdateTypeSurfaceCell(chunkRect, curXY, cellSize, chunkSize);
 		}
 	}
 	graphicsUpToDate = 1;
 }
+
+void Chunk::UpdateTypeSurfaceCell(RectF chunkRect, Vei2 curXY, Vec2 cellSize, Vec2 chunkSize)
+{
+	int x = curXY.x;
+	int y = curXY.y;
+
+	const Cell& curCell = cells(curXY);
+	int cellType = curCell.type;
+	//RectI curCellRect = RectI(Vei2(curXY.x, surf_types.GetHeight()-curXY.y - 1) * cellSize,cellSize.x, cellSize.y);
+	RectI curCellRect = RectI(Vei2(x * cellSize.x, chunkSize.y - cellSize.y - cellSize.y * y), cellSize.x, cellSize.y);
+	curCellRect.right += 1;
+	curCellRect.bottom += 1;
+	if (Settings::anyMaskedType(cellType))
+	{
+		surf_typesAndObstacles.AddLayer(curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields[0].GetCurSurface());
+		surf_typesAndObstacles.AddLayer(curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields[cellType].GetCurSurface());
+	}
+	surf_typesAndObstacles.AddLayer(curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields[cellType].GetCurSurface());
+
+	for (int i = 0; i < Settings::nDiffFieldTypes; i++)
+	{
+		int order = Settings::typeLayer[i];
+		if (conMap[order][curXY.x][curXY.y] == 1)
+		{
+			//surf_types.AddLayer(curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields[cellType].GetCurSurface());
+			std::vector<SubAnimation> a = resC->fsC.GetConnectionAnimationVec(order, Settings::anyMaskedType(order), aMats(curXY));
+			//Surface s = resC->fsC.GetConnectionAnimationVec(order, Settings::anyMaskedType(order), aMats(curXY))[0].a.GetFrames()[0];
+			for (int n = 0; n < a.size(); n++)
+			{
+				int xStart = ((float)a[n].posIn50x50grit.left / 50) * (float)curCellRect.GetWidth();
+				int yStart = ((float)a[n].posIn50x50grit.top / 50) * (float)curCellRect.GetHeight();
+
+				surf_typesAndObstacles.AddLayer(RectI(Vei2(xStart, yStart) + curCellRect.GetTopLeft<int>(), curCellRect.GetWidth() / 2 + 1, curCellRect.GetHeight() / 2 + 1), a[n].sourceR, a[n].a.GetCurSurface());
+			}
+
+			//gfx.DrawConnections(order, Vei2(curCellRect.left, curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+		}
+	}
+
+}
+
 void Chunk::UpdateObstacleSurface(RectF chunkRect)
 {
 	Vec2 chunkSize = (Vec2)chunkRect.GetSize();
@@ -598,55 +607,62 @@ void Chunk::UpdateObstacleSurface(RectF chunkRect)
 			for (int x = 0; x < hasNCells; x++)
 			{
 				Vei2 curXY = Vei2(x, y);
-				RectI curCellRect = RectI(Vei2(x * cellSize.x, chunkSize.y - cellSize.y - cellSize.y * y), cellSize.x, cellSize.y);
+				UpdateObstacleSurfaceCell(chunkRect, curXY, cellSize, (Vec2)chunkRect.GetSize(), tileSize);
+			}
+		}
+	}
+	graphicsUpToDate = 2;
+}
+void Chunk::UpdateObstacleSurfaceCell(RectF chunkRect, Vei2 curXY, Vec2 cellSize, Vec2 chunkSize, Vec2 tileSize)
+{
+	int x = curXY.x;
+	int y = curXY.y;
 
-				using namespace Settings;
-				for (int tileLayer = 0; tileLayer < 2; tileLayer++)
+	RectI curCellRect = RectI(Vei2(x * cellSize.x, chunkSize.y - cellSize.y - cellSize.y * y), cellSize.x, cellSize.y);
+
+	using namespace Settings;
+	for (int tileLayer = 0; tileLayer < 2; tileLayer++)
+	{
+		for (int tilePosX = 0; tilePosX < CellSplitUpIn; tilePosX++)
+		{
+			for (int tilePosY = 0; tilePosY < CellSplitUpIn; tilePosY++)
+			{
+				Vei2 curTilePos = Vei2(tilePosX, tilePosY) + curXY * Settings::CellSplitUpIn;
+				//UpdateObstacleSurfaceTile(curTilePos.x, curTilePos.y, chunkRect);
+
+				float xPos = curCellRect.left + ((float)tilePosX / CellSplitUpIn) * curCellRect.GetWidth();
+				float yPos = curCellRect.bottom - ((float)(tilePosY + 1) / CellSplitUpIn) * curCellRect.GetHeight();
+
+				RectF curRect = RectF(Vec2(xPos, yPos), (float)std::ceil((double)curCellRect.GetWidth() / CellSplitUpIn), (float)std::ceil((double)curCellRect.GetHeight() / CellSplitUpIn));
+
+				if (obstacleMap(curTilePos) != -1 && obstacleMap(curTilePos) != GetObstacleOutOfBounds(curTilePos - Vei2(1, 0)) && obstacleMap(curTilePos) != GetObstacleOutOfBounds(curTilePos - Vei2(0, 1)))
 				{
-					for (int tilePosX = 0; tilePosX < CellSplitUpIn; tilePosX++)
+					Obstacle* obst = &obstacles[obstacleMap(curTilePos)];
+					RectF surfSize = RectF(Vec2(0, 0), chunkSize.x, chunkSize.y);
+					if (tileLayer == 0 && obstacleMap(curTilePos) < (int)obstacles.size() && obstacles[obstacleMap(curTilePos)].state == 0)
 					{
-						for (int tilePosY = 0; tilePosY < CellSplitUpIn; tilePosY++)
-						{
-							Vei2 curTilePos = Vei2(tilePosX, tilePosY) + curXY * Settings::CellSplitUpIn;
-							//UpdateObstacleSurfaceTile(curTilePos.x, curTilePos.y, chunkRect);
-							
-							float xPos = curCellRect.left + ((float)tilePosX / CellSplitUpIn) * curCellRect.GetWidth();
-							float yPos = curCellRect.bottom - ((float)(tilePosY + 1) / CellSplitUpIn) * curCellRect.GetHeight();
+						curRect.right += tileSize.x * (Settings::obstacleSizes[obst->type].x - 1);
+						curRect.top -= tileSize.y * (Settings::obstacleSizes[obst->type].y - 1);
+						surf_typesAndObstacles.AddLayer((RectI)curRect, obst->animations[0].GetCurSurface().GetRect(), obst->animations[0].GetCurSurface());
+						DrawObstacleProtrud(curRect, chunkSize, obst->animations[0].GetCurSurface());
+					}
+					if (tileLayer == 1 && obstacles[obstacleMap(curTilePos)].state == 1)
+					{
+						int multiObstIndex = Settings::Obstacle2MultiObstacle(obst->type);
+						curRect += Vec2(Settings::multiObstaclePos[multiObstIndex].x * tileSize.x, -Settings::multiObstaclePos[multiObstIndex].y * tileSize.y);
+						Vei2 size = Settings::multiObstacleSize[multiObstIndex][(__int64)obst->state - 1];
+						curRect.right += tileSize.x * (size.x - 1);
+						curRect.top -= tileSize.y * (size.y - 1);
+						surf_typesAndObstacles.AddLayer((RectI)curRect, obst->animations[1].GetCurSurface().GetRect(), obst->animations[1].GetCurSurface());
+						//gfx.DrawSurface((RectI)tileRect, animations[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
+						//DrawObstacleProtrud(curRect,chunkSize, obst->animations[1].GetCurSurface());
 
-							RectF curRect = RectF(Vec2(xPos, yPos), (float)std::ceil((double)curCellRect.GetWidth() / CellSplitUpIn), (float)std::ceil((double)curCellRect.GetHeight() / CellSplitUpIn));
-
-							if (obstacleMap(curTilePos) != -1 && obstacleMap(curTilePos) != GetObstacleOutOfBounds(curTilePos - Vei2(1, 0)) && obstacleMap(curTilePos) != GetObstacleOutOfBounds(curTilePos - Vei2(0, 1)))
-							{
-								Obstacle* obst = &obstacles[obstacleMap(curTilePos)];
-								RectF surfSize = RectF(Vec2(0, 0), chunkSize.x, chunkSize.y);
-								if (tileLayer == 0 && obstacleMap(curTilePos) < (int)obstacles.size() && obstacles[obstacleMap(curTilePos)].state == 0)
-								{
-									curRect.right += tileSize.x * (Settings::obstacleSizes[obst->type].x - 1);
-									curRect.top -= tileSize.y * (Settings::obstacleSizes[obst->type].y - 1);
-									surf_typesAndObstacles.AddLayer((RectI)curRect, obst->animations[0].GetCurSurface().GetRect(), obst->animations[0].GetCurSurface());
-									DrawObstacleProtrud(curRect, chunkSize, obst->animations[0].GetCurSurface());
-								}
-								if (tileLayer == 1 && obstacles[obstacleMap(curTilePos)].state == 1)
-								{
-									int multiObstIndex = Settings::Obstacle2MultiObstacle(obst->type);
-									curRect += Vec2(Settings::multiObstaclePos[multiObstIndex].x * tileSize.x, -Settings::multiObstaclePos[multiObstIndex].y * tileSize.y);
-									Vei2 size = Settings::multiObstacleSize[multiObstIndex][(__int64)obst->state - 1];
-									curRect.right += tileSize.x * (size.x - 1);
-									curRect.top -= tileSize.y * (size.y - 1);
-									surf_typesAndObstacles.AddLayer((RectI)curRect, obst->animations[1].GetCurSurface().GetRect(), obst->animations[1].GetCurSurface());
-									//gfx.DrawSurface((RectI)tileRect, animations[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
-									//DrawObstacleProtrud(curRect,chunkSize, obst->animations[1].GetCurSurface());
-									
-									DrawObstacleProtrud(curRect, chunkSize, obst->animations[1].GetCurSurface());
-								}
-							}
-						}
+						DrawObstacleProtrud(curRect, chunkSize, obst->animations[1].GetCurSurface());
 					}
 				}
 			}
 		}
 	}
-	graphicsUpToDate = 2;
 }
 void Chunk::DrawObstacleProtrud(RectF curRect, Vec2 chunkSize,const Surface& s)
 {
@@ -775,18 +791,24 @@ void Chunk::UpdateGraphics()
 {
 	graphicsUpToDate = 0;
 }
-void Chunk::UpdateWhenMoved()
+void Chunk::UpdateWhenMoved(RectF chunkRect)
 {
 	for (int i = 0; i < obstacles.size(); i++)
 	{
 		
-		if (Settings::anyOfChangeSizeWhenNear(obstacles[i].type) && UnitIsAround(obstacles[i].tilePos, 15))
+		if (Settings::anyOfChangeSizeWhenNear(obstacles[i].type) && UnitIsAround(obstacles[i].tilePos, 5))
 		{
 			obstacles[i].state = 0;
 		}
 		else if(Settings::anyOfChangeSizeWhenNear(obstacles[i].type))
 		{
+			Vec2 chunkSize = (Vec2)chunkRect.GetSize();
+			Vec2 cellSize = GetCellSize(chunkRect);
+			Vec2 tileSize = GetTileSize(chunkRect);
 			obstacles[i].state = 1;
+			UpdateTypeSurfaceCell(chunkRect, obstacles[i].tilePos / Settings::CellSplitUpIn, cellSize, chunkSize);
+			UpdateObstacleSurfaceCell(chunkRect, obstacles[i].tilePos / Settings::CellSplitUpIn, cellSize, chunkSize, tileSize);
+
 		}
 	}
 }
