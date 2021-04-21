@@ -95,6 +95,7 @@ class Chunk
 	sharedResC resC = nullptr;
 	int hasNCells = 0;
 	Matrix<Cell> cells;
+	Matrix<RectF> cellsRect;
 	Matrix<Chunk>* chunks = nullptr;
 	Vei2 chunkPos = Vei2(-1, -1);
 	std::vector<Matrix<int>> conMap;		//Connectionmap	 (1 = needsConnections, 0 = does not		index for type)
@@ -195,7 +196,7 @@ public:
 	void DrawObstacleOutlines(Vei2 tilePos, int type, RectF chunkRect, Color c, Graphics& gfx) const;
 	void DrawObstacle(Vei2 tilePos, int type, RectF chunkRect, Graphics& gfx) const;
 	void DrawObstacles(RectF chunkRect, Graphics& gfx) const;
-	void DrawTypeAndObst(RectF chunkRect, Graphics& gfx)const;
+	void DrawType(RectF chunkRect, Graphics& gfx)const;
 	void DrawGroundedMap(Vei2 pos, int cellSize, Graphics& gfx)const;
 	void DrawGrit(Vei2 pos, int cellSize, Graphics& gfx)const;
 	void DrawSurfaceAt(Vei2 drawPos, Vei2 cellPos, int cellSize, float scale, const Surface& s, Graphics& gfx)const;
@@ -207,6 +208,8 @@ public:
 	void UpdateObstacleSurfaceCell(RectF chunkRect, Vei2 curXY, Vec2 cellSize, Vec2 chunkSize, Vec2 tileSize);
 	void DrawObstacleProtrud(RectF curRect, Vec2 chunkSize, const Surface& s);
 	void DrawObstacleOnBuffer(RectF curRect,const Surface& s);
+
+	void UpdateRects(RectF curRect);
 
 	void UpdateAroundMatrix(Matrix<int> mat);
 	void UpdateGroundedMap();

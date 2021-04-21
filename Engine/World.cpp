@@ -51,7 +51,7 @@ Vec3_<Vei2> World::Tile2ChunkPos(Vei2 tilePos)const
 
 	return v3;
 }
-Vec3_<Vei2> World::PutCctPosInWorld(CctPos cctPos)const
+CctPos World::PutCctPosInWorld(CctPos cctPos)const
 {
 	Vei2 pos = Chunk::chunkPos2Flat(cctPos);
 	return Tile2ChunkPos(pos);
@@ -415,6 +415,39 @@ RectF World::GetChunkRect(Vei2 chunkPos)const
 	mos.y -= d.y * s.chunkSize.y;
 	return RectF(Vec2(mos) - Vec2(0.f, (float)s.chunkSize.y), (float)s.chunkSize.x, (float)s.chunkSize.y) + Vec2(-(float)c.x, +(float)c.y);
 }
+void World::UpdateChunkRects()
+{
+	Vei2 mos = Graphics::GetMidOfScreen();
+	auto renderRect = GetRenderRect();
+
+	int xStart = renderRect.left;
+	int xStop = renderRect.right;
+	int yStart = renderRect.top;
+	int yStop = renderRect.bottom;
+	/*
+	int xStart = 0;
+	int xStop = 0;
+	int yStart = 0;
+	int yStop = 0;
+	*/
+#ifdef _DEBUG 
+	xStart = 0;
+	xStop = 0;
+	yStart = 0;
+	yStop = 0;
+#endif
+
+
+	for (int y = yStart; y <= yStop; y++)
+	{
+		for (int x = xStart; x <= xStop; x++)
+		{
+			Vei2 curChunk = Chunk::PutChunkInWorld(mChunk + Vei2(x, y), s.worldHasNChunks);
+
+			//chunks(curChunk).UpdateRects(GetCurChunk)
+		}
+	}
+}
 Vec3_<Vei2> World::GetHitTile(Vec2 mP)const
 {
 	Vec3_<Vei2> v = Vec3_<Vei2>(Vei2(0, 0), Vei2(0, 0), Vei2(0, 0));
@@ -679,6 +712,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 	if (e.GetType() == Mouse::Event::WheelDown)
 	{
 		Zoom(Vei2(-500, -500));
+		UpdateChunkRects();
 	}
 	if (e.GetType() == Mouse::Event::WheelUp)
 	{
@@ -796,12 +830,12 @@ void World::Draw(Graphics& gfx) const
 			{
 				Vei2 curChunk = Chunk::PutChunkInWorld(mChunk + Vei2(x, y),s.worldHasNChunks);
 				Vei2 curChunkPos = Vei2(x * s.chunkSize.x, -y * s.chunkSize.y) + Graphics::GetMidOfScreen() - Vei2((int)c.x, (int)-c.y);
-				RectF curChunkRect = RectF((Vec2)curChunkPos, (float)s.chunkSize.x, (float)s.chunkSize.y);
+				RectF curChunkRect = GetChunkRect(curChunk);//RectF((Vec2)curChunkPos, (float)s.chunkSize.x, (float)s.chunkSize.y);
 
 				switch (layer)
 				{
 				case 0:
-					chunks(curChunk).DrawTypeAndObst(curChunkRect, gfx);
+					chunks(curChunk).DrawType(curChunkRect, gfx);
 					break;
 				case 1:
 					if (grit || buildMode)

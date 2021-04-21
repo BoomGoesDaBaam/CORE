@@ -387,7 +387,7 @@ void Chunk::DrawObstacles(RectF chunkRect, Graphics& gfx) const
 	}
 	
 }
-void Chunk::DrawTypeAndObst(RectF chunkRect, Graphics& gfx)const
+void Chunk::DrawType(RectF chunkRect, Graphics& gfx)const
 {
 	//chunkRect = chunkRect - Vec2(0, chunkRect.GetSize().y);
 	//gfx.DrawSurface((RectI)chunkRect, surf_typesAndObstacles, SpriteEffect::Nothing(), 0);
@@ -400,7 +400,7 @@ void Chunk::DrawTypeAndObst(RectF chunkRect, Graphics& gfx)const
 			Vei2 curXY = Vei2(x, y);
 			//const Cell& curCell = cells(curXY);
 			//int cellType = curCell.type;
-			RectF curCellRect = GetCellRect(chunkRect, curXY);
+			RectF curCellRect = cellsRect(curXY);
 
 			assert(cells(curXY).type >= 0 && cells(curXY).type < Settings::nDiffFieldTypes);
 			gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
@@ -415,8 +415,6 @@ void Chunk::DrawTypeAndObst(RectF chunkRect, Graphics& gfx)const
 			}
 		}
 	}
-	//Obstacle
-	DrawObstacles(chunkRect, gfx);
 
 }
 void Chunk::DrawGroundedMap(Vei2 pos, int cellSize, Graphics& gfx)const
@@ -719,6 +717,38 @@ void Chunk::DrawObstacleProtrud(RectF curRect, Vec2 chunkSize,const Surface& s)
 void Chunk::DrawObstacleOnBuffer(RectF curRect,const Surface& s)
 {
 	surf_typesAndObstacles.AddLayer((RectI)curRect, s.GetRect(), s);
+}
+void Chunk::UpdateRects(RectF curRect)
+{
+	cellsRect = Matrix<RectF>(cells.GetColums(),cells.GetRows(),RectF(Vec2(0,0),0,0));
+
+	for (int y = 0; y < hasNCells; y++)
+	{
+		for (int x = 0; x < hasNCells; x++)
+		{
+			Vei2 curXY = Vei2(x, y);
+			//const Cell& curCell = cells(curXY);
+			//int cellType = curCell.type;
+			RectF curCellRect = GetCellRect(curRect, curXY);
+
+			assert(cells(curXY).type >= 0 && cells(curXY).type < Settings::nDiffFieldTypes);
+			//gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+			cellsRect(curXY) = curCellRect;
+			/*
+			for (int i = 0; i < Settings::nDiffFieldTypes; i++)
+			{
+				int order = Settings::typeLayer[i];
+				if (conMap[order][curXY.x][curXY.y] == 1)
+				{
+					gfx.DrawConnections(order, Vei2((int)curCellRect.left, (int)curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+				}
+			}
+			*/
+		}
+	}
+
+
+
 }
 void Chunk::UpdateAroundMatrix(Matrix<int> mat)
 {

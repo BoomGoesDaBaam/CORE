@@ -88,6 +88,7 @@ private:
 
 	//Graphic calculations
 	RectF GetChunkRect(Vei2 pos)const;
+	void UpdateChunkRects();
 
 	//Tests and corrections
 	bool CellIsInWorld(Vei2& pos)const;
@@ -107,7 +108,7 @@ private:
 	Vec2_<Vei2> Cell2ChunkPos(Vei2 CellPos)const;			//	'x' = chunkPos	'y' = cellPos in chunk
 	Vec3_<Vei2> Tile2ChunkPos(Vei2 tilePos)const;			//	1x3 Matrix		'0' = chunkPos		'1' = cellPos		'2' = tilePos
 
-	Vec3_<Vei2> PutCctPosInWorld(Vec3_<Vei2> cctPos)const;
+	CctPos PutCctPosInWorld(CctPos cctPos)const;
 	int ObstacleMapAt(Vei2 tilePos)const;
 	int ObstacleMapAt(Vec3_<Vei2> tilePos)const;
 	int GroundedMapAt(Vei2 tilePos)const;

@@ -97,12 +97,12 @@ class Matrix
 	int nRows = 1, nColumns = 1;
 	bool leftOutRightIn = false;
 public:
-	Matrix(int nColums, int nRaws, T value):nRows(nRaws),nColumns(nColums)
+	Matrix(int nColums, int nRows, T value):nRows(nRows),nColumns(nColums)
 	{
-		assert(nRaws >= 1 && nColumns >= 1);
+		assert(nRow >= 1 && nColumns >= 1);
 		for (int i = 0; i < nColums; i++)
 		{
-			columns.push_back(Column(nRaws,value));
+			columns.push_back(Column(nRows,value));
 		}
 	}
 	Matrix()
