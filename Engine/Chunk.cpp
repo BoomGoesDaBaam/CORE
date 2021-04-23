@@ -400,7 +400,7 @@ void Chunk::DrawType(RectF chunkRect, Graphics& gfx)const
 			Vei2 curXY = Vei2(x, y);
 			//const Cell& curCell = cells(curXY);
 			//int cellType = curCell.type;
-			RectF curCellRect = cellsRect(curXY);
+			RectF curCellRect = cellsRect(curXY); //GetCellRect(chunkRect, curXY); 
 
 			assert(cells(curXY).type >= 0 && cells(curXY).type < Settings::nDiffFieldTypes);
 			gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
@@ -718,7 +718,7 @@ void Chunk::DrawObstacleOnBuffer(RectF curRect,const Surface& s)
 {
 	surf_typesAndObstacles.AddLayer((RectI)curRect, s.GetRect(), s);
 }
-void Chunk::UpdateRects(RectF curRect)
+void Chunk::UpdateRects(RectF chunkRect)
 {
 	cellsRect = Matrix<RectF>(cells.GetColums(),cells.GetRows(),RectF(Vec2(0,0),0,0));
 
@@ -727,28 +727,14 @@ void Chunk::UpdateRects(RectF curRect)
 		for (int x = 0; x < hasNCells; x++)
 		{
 			Vei2 curXY = Vei2(x, y);
-			//const Cell& curCell = cells(curXY);
-			//int cellType = curCell.type;
-			RectF curCellRect = GetCellRect(curRect, curXY);
-
-			assert(cells(curXY).type >= 0 && cells(curXY).type < Settings::nDiffFieldTypes);
-			//gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			cellsRect(curXY) = curCellRect;
-			/*
-			for (int i = 0; i < Settings::nDiffFieldTypes; i++)
-			{
-				int order = Settings::typeLayer[i];
-				if (conMap[order][curXY.x][curXY.y] == 1)
-				{
-					gfx.DrawConnections(order, Vei2((int)curCellRect.left, (int)curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-				}
-			}
-			*/
+			cellsRect(curXY) = GetCellRect(chunkRect, curXY);
 		}
 	}
-
-
-
+	for (int i = 0; i < obstacles.size(); i++)
+	{
+		Vei2 pos = obstacles[i].tilePos;
+		obstacles[i].UpdateRect(GetTileRect(chunkRect, pos)-Vec2(0,chunkRect.GetWidth()),pos,chunkRect);
+	}
 }
 void Chunk::UpdateAroundMatrix(Matrix<int> mat)
 {

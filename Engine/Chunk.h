@@ -16,6 +16,7 @@ public:
 	int hp=50;
 	int stepsLeft = 0;
 	Team* team = nullptr;
+	RectF rect = RectF(Vec2(0,0),0,0);
 	std::vector<Animation> animations;	//index runs through states
 	Obstacle(Vei2 tilePos, Vei2 chunkPos, int type, sharedResC resC, Team* team = nullptr)
 		:
@@ -43,10 +44,21 @@ public:
 	{
 		if (state == 0)
 		{
+			gfx.DrawSurface((RectI)rect, animations[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+		}
+		else
+		{
+			gfx.DrawSurface((RectI)rect, animations[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
+		}
+	}
+	void UpdateRect(RectF tileRect, Vei2 tilePos, RectF chunkRect)
+	{
+		if (state == 0)
+		{
 			Vec2 tileSize = Vec2(tileRect.GetWidth(), tileRect.GetHeight());
 			tileRect.right += tileSize.x * (Settings::obstacleSizes[type].x - 1);
 			tileRect.top -= tileSize.y * (Settings::obstacleSizes[type].y - 1);
-			gfx.DrawSurface((RectI)tileRect, animations[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+			rect = tileRect;
 		}
 		else
 		{
@@ -56,7 +68,7 @@ public:
 			Vei2 size = Settings::multiObstacleSize[multiObstIndex][(__int64)state - 1];
 			tileRect.right += tileSize.x * (size.x - 1);
 			tileRect.top -= tileSize.y * (size.y - 1);
-			gfx.DrawSurface((RectI)tileRect, animations[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
+			rect = tileRect;
 		}
 	}
 	void Update(float dt)

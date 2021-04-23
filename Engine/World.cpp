@@ -388,10 +388,18 @@ Vei2 World::GetChunkHit(Vec2 mP)const
 
 	return Chunk::PutChunkInWorld(deltaChunks + mChunk, s.worldHasNChunks);
 }
+RectF World::GetChunkRectDelta(Vei2 chunkPos)const
+{
+	Vei2 curChunkPos = Vei2(chunkPos.x * s.chunkSize.x, -chunkPos.y * s.chunkSize.y) + Graphics::GetMidOfScreen() - Vei2((int)c.x, (int)-c.y);
+	return RectF((Vec2)curChunkPos, (float)s.chunkSize.x, (float)s.chunkSize.y);
+}
 RectF World::GetChunkRect(Vei2 chunkPos)const
 {
+	/*
+	Vei2 curChunkPos = Vei2(chunkPos.x * s.chunkSize.x, -chunkPos.y * s.chunkSize.y) + Graphics::GetMidOfScreen() - Vei2((int)c.x, (int)-c.y);
+	return RectF((Vec2)curChunkPos, (float)s.chunkSize.x, (float)s.chunkSize.y);
+	*/
 	Vei2 d = chunkPos - mChunk;
-
 	if (d.x > s.worldHasNChunks.x / 2)
 	{
 		d.x -= s.worldHasNChunks.x;
@@ -409,11 +417,12 @@ RectF World::GetChunkRect(Vei2 chunkPos)const
 		d.y += s.worldHasNChunks.y;
 	}
 
-	Vei2 mos = Graphics::GetMidOfScreen();
+	Vec2 mos = (Vec2)Graphics::GetMidOfScreen();
 
-	mos.x += d.x * s.chunkSize.x;
-	mos.y -= d.y * s.chunkSize.y;
+	mos.x += (float)d.x * s.chunkSize.x;
+	mos.y -= (float)d.y * s.chunkSize.y;
 	return RectF(Vec2(mos) - Vec2(0.f, (float)s.chunkSize.y), (float)s.chunkSize.x, (float)s.chunkSize.y) + Vec2(-(float)c.x, +(float)c.y);
+
 }
 void World::UpdateChunkRects()
 {
@@ -443,8 +452,9 @@ void World::UpdateChunkRects()
 		for (int x = xStart; x <= xStop; x++)
 		{
 			Vei2 curChunk = Chunk::PutChunkInWorld(mChunk + Vei2(x, y), s.worldHasNChunks);
-
-			//chunks(curChunk).UpdateRects(GetCurChunk)
+			
+			chunks(curChunk).UpdateRects(GetChunkRectDelta(Vei2(x, y)));
+			
 		}
 	}
 }
@@ -711,19 +721,18 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 
 	if (e.GetType() == Mouse::Event::WheelDown)
 	{
-		Zoom(Vei2(-500, -500));
-		UpdateChunkRects();
+		Zoom(Vei2(-100, -100));
 	}
 	if (e.GetType() == Mouse::Event::WheelUp)
 	{
-		Zoom(Vei2(500, 500));
+		Zoom(Vei2(100, 100));
 	}
 
 	posAllowed = ObstaclePosAllowed(fTile, placeObstacle);
 	Vec2 cDelta = gH.MoveCamera(e);
 	
 	ApplyCameraChanges(cDelta);
-	
+	UpdateChunkRects();
 }
 void World::HandleKeyboardEvents(Keyboard::Event& e)
 {
@@ -753,7 +762,7 @@ void World::UpdateGameLogic(float dt)
 	int yStart = renderRect.top;
 	int yStop = renderRect.bottom;
 
-	Vei2 chunkSize = GetChunkRect(Vei2(0, 0)).GetSize();
+	Vei2 chunkSize = GetChunkRectDelta(Vei2(0, 0)).GetSize();
 
 	#ifdef _DEBUG 
 	xStart = -1;
@@ -830,7 +839,7 @@ void World::Draw(Graphics& gfx) const
 			{
 				Vei2 curChunk = Chunk::PutChunkInWorld(mChunk + Vei2(x, y),s.worldHasNChunks);
 				Vei2 curChunkPos = Vei2(x * s.chunkSize.x, -y * s.chunkSize.y) + Graphics::GetMidOfScreen() - Vei2((int)c.x, (int)-c.y);
-				RectF curChunkRect = GetChunkRect(curChunk);//RectF((Vec2)curChunkPos, (float)s.chunkSize.x, (float)s.chunkSize.y);
+				RectF curChunkRect = GetChunkRectDelta(Vei2(x,y));// RectF((Vec2)curChunkPos, (float)s.chunkSize.x, (float)s.chunkSize.y);
 
 				switch (layer)
 				{
@@ -855,7 +864,7 @@ void World::Draw(Graphics& gfx) const
 					{
 						chunks(curChunk).DrawSurfaceAt(curChunkPos, fcctPos.y, s.chunkSize.x / Settings::chunkHasNCells, 1.5f, resC->tC.frames.at(0).GetCurSurface(), gfx);
 					}
-					gfx.DrawRect(GetChunkRect(mChunk), Colors::Red);
+					gfx.DrawRect(GetChunkRectDelta(Vei2(0,1)), Colors::Red);
 					break;
 				}
 			}
@@ -1208,6 +1217,7 @@ void World::Generate(WorldSettings& s)
 	
 	UpdateConMap();
 	UpdateGroundedMap();
+	UpdateChunkRects();
 	if (Settings::obstaclesOn)
 	{
 		SpawnPlayer();

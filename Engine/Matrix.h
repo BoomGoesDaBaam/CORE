@@ -99,7 +99,7 @@ class Matrix
 public:
 	Matrix(int nColums, int nRows, T value):nRows(nRows),nColumns(nColums)
 	{
-		assert(nRow >= 1 && nColumns >= 1);
+		assert(nRows >= 1 && nColumns >= 1);
 		for (int i = 0; i < nColums; i++)
 		{
 			columns.push_back(Column(nRows,value));

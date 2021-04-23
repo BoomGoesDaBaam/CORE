@@ -89,6 +89,7 @@ private:
 	//Graphic calculations
 	RectF GetChunkRect(Vei2 pos)const;
 	void UpdateChunkRects();
+	RectF GetChunkRectDelta(Vei2 chunkPos)const;
 
 	//Tests and corrections
 	bool CellIsInWorld(Vei2& pos)const;
