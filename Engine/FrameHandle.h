@@ -821,7 +821,7 @@ public:
 		fNextTurn->s = &resC->tC.windowsFrame[3].GetCurSurface();
 		fNextTurn->bFunc = BNextTurn;
 
-		Frame* fButtonBuild = AddFrame(RectF(Vec2(30, 30), 60, 60), 1);																			//BUILD MENU BUTTON
+		Frame* fButtonBuild = AddFrame(RectF(Vec2(30, 30), 60, 30), 1);																			//BUILD MENU BUTTON
 		fButtonBuild->s = &resC->tC.windowsFrame[4].GetCurSurface();
 		fButtonBuild->bFunc = BBuildMenu;
 
@@ -831,7 +831,7 @@ public:
 		fBuildSelection->SetMoveable(false);
 		fBuildSelection->GetComp("b_left")->pos = RectF(Vec2(25, 25), 100, 25);
 		fBuildSelection->GetComp("b_right")->pos = RectF(Vec2(675, 25), 100, 25);
-		Button* b_back = fBuildSelection->AddButton(RectF(Vec2(30, 30), 60, 60), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_buildback", a, { 1,0,0,0 });
+		Button* b_back = fBuildSelection->AddButton(RectF(Vec2(30, 30), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_buildback", a, { 1,0,0,0 });
 		b_back->bFunc = BOpenGamefield;
 		//Composition* comp_Tent = fBuildSelection->AddComposition(RectF(Vec2(60, 120), 180, 60), resC, "comp_tent", a, { 1,0,0,0 });
 		Button* bg_Tent = fBuildSelection->AddButton(RectF(Vec2(60, 120), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildtent", a, { 1,0,0,0 });

@@ -697,6 +697,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		if (ObstacleMapAt(fcctPos) != -1)
 		{
 			focusedObst = GetObstacleAt(fcctPos);
+			focusedObst->Update(0.1);
 			if (Settings::anyOfUnit(focusedObst->type))
 			{
 				updateUnitInfo = true;
@@ -770,42 +771,14 @@ void World::UpdateGameLogic(float dt)
 	yStart = -1;
 	yStop = 1;
 	#endif
-	bool any = false;
-	/*
-	if (updateChunkGraphics)
-	{
-		for (int layer = 0; layer < 2; layer++)
-		{
 			for (int y = yStart; y <= yStop; y++)
 			{
 				for (int x = xStart; x <= xStop; x++)
 				{
 					Vei2 curChunk = Chunk::PutChunkInWorld(mChunk + Vei2(x, y), s.worldHasNChunks);
-					//chunks(curChunk).Update(dt);
-					if (chunks(curChunk).NeedGraphicsUpdate(chunkSize) < 2)
-					{
-						any = true;
-						RectF curRect = GetChunkRect(curChunk);
-						if (layer == 0)
-						{
-							chunks(curChunk).UpdateTypeSurface(curRect);
-						}
-						if (layer == 1)
-						{
-							chunks(curChunk).UpdateObstacleSurface(curRect);
-						}
-					}
+					chunks(curChunk).Update(dt);
 				}
 			}
-		}
-		if (any)
-		{
-			updatedGraphics++;
-		}
-			updateChunkGraphics = false;
-		}
-		*/
-	//obstacles[0]->Update(dt);
 }
 void World::Draw(Graphics& gfx) const
 {
@@ -839,28 +812,27 @@ void World::Draw(Graphics& gfx) const
 			{
 				Vei2 curChunk = Chunk::PutChunkInWorld(mChunk + Vei2(x, y),s.worldHasNChunks);
 				Vei2 curChunkPos = Vei2(x * s.chunkSize.x, -y * s.chunkSize.y) + Graphics::GetMidOfScreen() - Vei2((int)c.x, (int)-c.y);
-				RectF curChunkRect = GetChunkRectDelta(Vei2(x,y));// RectF((Vec2)curChunkPos, (float)s.chunkSize.x, (float)s.chunkSize.y);
-
+				
 				switch (layer)
 				{
 				case 0:
-					chunks(curChunk).DrawType(curChunkRect, gfx);
+					chunks(curChunk).DrawType(gfx);
 					break;
 				case 1:
 					if (grit || buildMode)
 					{
-						chunks(curChunk).DrawGroundedMap(curChunkPos, s.chunkSize.x / Settings::chunkHasNCells, gfx);
+						chunks(curChunk).DrawGroundedMap(gfx);
 					}
 					break;
 				case 2:
 					if (grit || buildMode)
 					{
-						chunks(curChunk).DrawGrit(curChunkPos, s.chunkSize.x / Settings::chunkHasNCells, gfx);
+						chunks(curChunk).DrawGrit(gfx);
 					}
 					break;
 				case 3:
-					chunks(curChunk).DrawObstacles(curChunkRect, gfx);
-					if (fcctPos.x == curChunk)
+					chunks(curChunk).DrawObstacles(gfx);
+					if (fcctPos.x == curChunk)	//focused cell marker
 					{
 						chunks(curChunk).DrawSurfaceAt(curChunkPos, fcctPos.y, s.chunkSize.x / Settings::chunkHasNCells, 1.5f, resC->tC.frames.at(0).GetCurSurface(), gfx);
 					}
@@ -870,7 +842,7 @@ void World::Draw(Graphics& gfx) const
 			}
 		}
 	}
-	if (buildMode )
+	if (buildMode)
 	{
 		if (chunks(fcctPosHover.x).ObstaclePosAllowed(fcctPosHover.y * Settings::CellSplitUpIn + fcctPosHover.z, placeObstacle))
 		{
@@ -1217,11 +1189,11 @@ void World::Generate(WorldSettings& s)
 	
 	UpdateConMap();
 	UpdateGroundedMap();
-	UpdateChunkRects();
 	if (Settings::obstaclesOn)
 	{
 		SpawnPlayer();
 	}
+	UpdateChunkRects();
 	//CutHills(1);		//NICHT ZUENDE!!!!
 }
 void World::GenerateCircle(Vei2 pos, int radius,int type, int ontoType, int surrBy)

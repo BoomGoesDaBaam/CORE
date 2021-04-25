@@ -71,6 +71,44 @@ public:
 	template<typename E>
 	void DrawLine(Vec2 p1, Vec2 p0, E effect, int thickness = 1)		//
 	{
+		if (p0.x < 0 && p1.x < 0 || p0.x > ScreenWidth && p1.x > ScreenWidth || p0.y < 0 && p1.y < 0 || p0.y > ScreenHeight && p1.y > ScreenHeight)
+		{
+			return;
+		}
+		if (p1.x < 0)
+		{
+			p1.x = 0;
+		}
+		if (p1.y < 0)
+		{
+			p1.y = 0;
+		}
+		if (p1.x > ScreenWidth)
+		{
+			p1.x = ScreenWidth -1;
+		}
+		if (p1.y > ScreenHeight)
+		{
+			p1.y = ScreenHeight-1;
+		}
+
+		if (p0.x < 0)
+		{
+			p0.x = 0;
+		}
+		if (p0.y < 0)
+		{
+			p0.y = 0;
+		}
+		if (p0.x > ScreenWidth)
+		{
+			p0.x = ScreenWidth - 1;
+		}
+		if (p0.y > ScreenHeight)
+		{
+			p0.y = ScreenHeight - 1;
+		}
+
 		float m = 0.0f;
 		if (p1.x != p0.x)
 		{
@@ -359,18 +397,18 @@ public:
 					}
 					else if (n90rot == 1)
 					{ 
-						sPixelX = (int)(sourceR.right - 1 - ((float)(y) / pos.GetWidth()) * sourceR.GetWidth());
+						sPixelX = (int)(sourceR.right - 1 - ((float)(y + skippedTop) / pos.GetWidth()) * sourceR.GetWidth());
 						sPixelY = (int)(sourceR.top + ((float)(x) / pos.GetHeight()) * sourceR.GetHeight());
 					} 
 					else if (n90rot == 2)
 					{
 						sPixelX = (int)(sourceR.right - 1 - ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
-						sPixelY = (int)(sourceR.bottom - 1 - ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
+						sPixelY = (int)(sourceR.bottom - 1 - ((float)(y + skippedTop) / pos.GetHeight()) * sourceR.GetHeight());
 					}
 					else if (n90rot == 3)
 					{
-						sPixelX = (int)(sourceR.left + ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
-						sPixelY = (int)(sourceR.bottom - 1 - ((float)(y) / pos.GetHeight()) * sourceR.GetHeight());
+						sPixelX = (int)(sourceR.left + ((float)(y + skippedTop) / pos.GetWidth()) * sourceR.GetWidth());
+						sPixelY = (int)(sourceR.bottom - 1 -((float)(x) / pos.GetHeight()) * sourceR.GetHeight());
 					}
 					assert(sPixelX >= 0);
 					assert(sPixelY >= 0);

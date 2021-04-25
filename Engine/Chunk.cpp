@@ -221,7 +221,7 @@ RectF Chunk::GetCellRect(RectF chunkRect, Vei2 cellPos) const
 	Vec2 cellSize = GetCellSize(chunkRect);
 	return  RectF(Vec2(chunkRect.left, chunkRect.top), cellSize.x, cellSize.y) + Vec2((float)cellPos.x, (float)(-cellPos.y - 1)) * cellSize;
 }
-RectF Chunk::GetTileRect(RectF chunkRect, Vei2 tilePos) const		//not finished
+RectF Chunk::GetTileRect(RectF chunkRect, Vei2 tilePos) const	
 {
 	Vec2 tileSize = GetTileSize(chunkRect);
 	RectF tileRect = RectF(Vec2(chunkRect.left, chunkRect.bottom), tileSize.x, tileSize.y) + Vec2(0, -tileSize.y);
@@ -333,10 +333,10 @@ void Chunk::DrawObstacle(Vei2 tilePos, int type, RectF chunkRect, Graphics& gfx)
 		drawPos.right += (Settings::obstacleSizes[type].x - 1) * tileSize.x;
 		*/
 		Obstacle o = Obstacle(tilePos, chunkPos, type, resC);
-		o.Draw(GetTileRect(chunkRect, tilePos)/*,RectF(Vec2(0,0), tileSize.x, tileSize.y)*/, tilePos, chunkRect, gfx);
+		//o.Draw(GetTileRect(chunkRect, tilePos)/*,RectF(Vec2(0,0), tileSize.x, tileSize.y)*/, tilePos, chunkRect, gfx);
 	}
 }
-void Chunk::DrawObstacles(RectF chunkRect, Graphics& gfx) const
+void Chunk::DrawObstacles(Graphics& gfx) const
 {
 	//chunkRect = chunkRect - Vec2(0, chunkRect.GetSize().y);
 	//chunkRect -= GetTileSize(chunkRect) * nTilesOver;
@@ -347,15 +347,26 @@ void Chunk::DrawObstacles(RectF chunkRect, Graphics& gfx) const
 		Vei2 mos = Graphics::GetMidOfScreen();
 		SpriteEffect::Transparent e = SpriteEffect::Transparent(0.6f);
 
-		Vec2 cellSize = GetCellSize(chunkRect);
+		//Vec2 cellSize = GetCellSize(chunkRect);
 
 		for (int y = 0; y < hasNCells; y++)
 		{
 			for (int x = 0; x < hasNCells; x++)
 			{
 				Vei2 curXY = Vei2(x, y);
-				RectF curCellRect = GetCellRect(chunkRect, curXY);
-
+				//RectF curCellRect = GetCellRect(chunkRect, curXY);
+				for (int i = 0; i < obstacles.size(); i++)
+				{
+					bool notUsed = false;
+					if (std::any_of(obstaclesIndexNotUsed.begin(), obstaclesIndexNotUsed.end(), [&](int notUsed) {
+						return notUsed == i;
+						}))
+					{
+						break;
+					}
+					obstacles[i].Draw(gfx);
+				}
+				/*
 				using namespace Settings;
 				for (int tileLayer = 0; tileLayer < 2; tileLayer++)
 				{
@@ -382,12 +393,13 @@ void Chunk::DrawObstacles(RectF chunkRect, Graphics& gfx) const
 						}
 					}
 				}
+				*/
 			}
 		}
 	}
 	
 }
-void Chunk::DrawType(RectF chunkRect, Graphics& gfx)const
+void Chunk::DrawType( Graphics& gfx)const
 {
 	//chunkRect = chunkRect - Vec2(0, chunkRect.GetSize().y);
 	//gfx.DrawSurface((RectI)chunkRect, surf_typesAndObstacles, SpriteEffect::Nothing(), 0);
@@ -415,9 +427,8 @@ void Chunk::DrawType(RectF chunkRect, Graphics& gfx)const
 			}
 		}
 	}
-
 }
-void Chunk::DrawGroundedMap(Vei2 pos, int cellSize, Graphics& gfx)const
+void Chunk::DrawGroundedMap(Graphics& gfx)const
 {
 	using namespace Settings;
 	for (int y = 0; y < hasNCells; y++)
@@ -425,41 +436,36 @@ void Chunk::DrawGroundedMap(Vei2 pos, int cellSize, Graphics& gfx)const
 		for (int x = 0; x < hasNCells; x++)
 		{
 			Vei2 curXY = Vei2(x, y);
-			RectI curCellPos = RectI(Vei2(pos.x, pos.y), cellSize, cellSize) + Vei2(x, -y - 1) * cellSize;
-
 			for (int xOnCell = 0; xOnCell < CellSplitUpIn; xOnCell++)
 			{
 				for (int yOnCell = 0; yOnCell < CellSplitUpIn; yOnCell++)
 				{
-					Vei2 v = (curXY * CellSplitUpIn + Vei2(xOnCell, yOnCell));
-					assert(v.x < 5000 && v.x >= 0);
-					assert(v.y < 5000 && v.y >= 0);
+					Vei2 curTileXY = (curXY * CellSplitUpIn + Vei2(xOnCell, yOnCell));
+					assert(curTileXY.x < 5000 && curTileXY.x >= 0);
+					assert(curTileXY.y < 5000 && curTileXY.y >= 0);
 
-
-					float xPos = curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth();
-					float yPos = curCellPos.bottom - ((float)(yOnCell + 1) / CellSplitUpIn) * curCellPos.GetHeight();
-					RectF curP = RectF(Vec2(xPos, yPos), (float)std::ceil((double)curCellPos.GetWidth() / CellSplitUpIn), (float)std::ceil((double)curCellPos.GetHeight() / CellSplitUpIn));
+					RectF curP = tilesRect(curTileXY); //RectF(Vec2(xPos, yPos), (float)std::ceil((double)curCellPos.GetWidth() / CellSplitUpIn), (float)std::ceil((double)curCellPos.GetHeight() / CellSplitUpIn));
 					if (Graphics::GetScreenRect<float>().IsOverlappingWith(curP))
 					{
 						SpriteEffect::Nothing e = SpriteEffect::Nothing();
 						curP.PutInto(Graphics::GetScreenRect<float>());
-						if (groundedMap(v) == 0)
+						if (groundedMap(curTileXY) == 0)
 						{
 							gfx.DrawFilledRect(curP, Colors::Red, e);
 						}
-						else if (groundedMap(v) == 1)
+						else if (groundedMap(curTileXY) == 1)
 						{
 							//gfx.DrawRect(curP, Colors::Green, e);
 						}
-						else if (groundedMap(v) == -1)
+						else if (groundedMap(curTileXY) == -1)
 						{
 							gfx.DrawFilledRect(curP, Colors::Magenta, e);
 						}
-						else if (groundedMap(v) == 2)
+						else if (groundedMap(curTileXY) == 2)
 						{
 							gfx.DrawFilledRect(curP, Colors::Blue, e);
 						}
-						else if (groundedMap(v) == 3)
+						else if (groundedMap(curTileXY) == 3)
 						{
 							gfx.DrawFilledRect(curP, Colors::Cyan, SpriteEffect::Transparent(0.5f));
 						}
@@ -486,9 +492,37 @@ void Chunk::DrawGroundedMap(Vei2 pos, int cellSize, Graphics& gfx)const
 		}
 	}
 }
-void Chunk::DrawGrit(Vei2 pos, int cellSize, Graphics& gfx)const
+void Chunk::DrawGrit(Graphics& gfx)const
 {
 	using namespace Settings;
+	int chunkHasNTiles = hasNCells * CellSplitUpIn;
+	for (int i = 0; i < chunkHasNTiles; i++)	//vertical Lines
+	{
+		Vec2 p1 = Vec2(tilesRect(Vei2(i, 0)).left, tilesRect(Vei2(i, 0)).bottom);
+		Vec2 p2 = Vec2(tilesRect(Vei2(i, chunkHasNTiles - 1)).left, tilesRect(Vei2(i, chunkHasNTiles - 1)).top);
+		if (i % CellSplitUpIn == 0)
+		{
+			gfx.DrawLine(p1, p2, SpriteEffect::OneColor(Colors::Black), 3);
+		}
+		else
+		{
+			gfx.DrawLine(p1, p2, SpriteEffect::OneColor(Colors::Black), 1);
+		}
+	}
+	for (int i = 0; i < chunkHasNTiles; i++)	//horizontal Lines
+	{
+		Vec2 p1 = Vec2(tilesRect(Vei2(0, i)).left, tilesRect(Vei2(0, i)).top);
+		Vec2 p2 = Vec2(tilesRect(Vei2(chunkHasNTiles - 1, i)).right, tilesRect(Vei2(chunkHasNTiles - 1, i)).top);
+		if (i % CellSplitUpIn == 0)
+		{
+			gfx.DrawLine(p1, p2, SpriteEffect::OneColor(Colors::Black), 3);
+		}
+		else
+		{
+			gfx.DrawLine(p1, p2, SpriteEffect::OneColor(Colors::Black), 1);
+		}
+	}
+	/*
 	for (int y = 0; y < hasNCells; y++)
 	{
 		for (int x = 0; x < hasNCells; x++)
@@ -496,13 +530,16 @@ void Chunk::DrawGrit(Vei2 pos, int cellSize, Graphics& gfx)const
 			Vei2 curXY = Vei2(x, y);
 			//const Cell& curCell = cells(curXY);
 			//int cellType = curCell.type;
-			RectI curCellPos = RectI(Vei2(pos.x, pos.y), cellSize, cellSize) + Vei2(x, -y - 1) * cellSize;
+			RectI curCellPos = (RectI)cellsRect(curXY);	// RectI(Vei2(pos.x, pos.y), cellSize, cellSize) + Vei2(x, -y - 1) * cellSize;
+			
+			//Vei2 tileStart = Vei2(x, y) * Settings::CellSplitUpIn;
 			for (int xOnCell = 0; xOnCell < Settings::CellSplitUpIn; xOnCell++)
 			{
 				if (xOnCell == 0 || xOnCell == CellSplitUpIn)
 				{
 					gfx.DrawLine(Vec2((float)curCellPos.left, (float)curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), Vec2((float)curCellPos.right, (float)curCellPos.top + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetHeight()), SpriteEffect::OneColor(Colors::Black), 3);
 					gfx.DrawLine(Vec2((float)curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), (float)curCellPos.top), Vec2((float)curCellPos.left + ((float)xOnCell / CellSplitUpIn) * curCellPos.GetWidth(), (float)curCellPos.bottom), SpriteEffect::OneColor(Colors::Black), 3);
+					//gfx.DrawLine(tilesRect()
 				}
 				else
 				{
@@ -512,6 +549,7 @@ void Chunk::DrawGrit(Vei2 pos, int cellSize, Graphics& gfx)const
 			}
 		}
 	}
+	*/
 }
 void Chunk::DrawSurfaceAt(Vei2 drawPos, Vei2 cellPos, int cellSize, float scale, const Surface& s, Graphics& gfx)const
 {
@@ -721,6 +759,7 @@ void Chunk::DrawObstacleOnBuffer(RectF curRect,const Surface& s)
 void Chunk::UpdateRects(RectF chunkRect)
 {
 	cellsRect = Matrix<RectF>(cells.GetColums(),cells.GetRows(),RectF(Vec2(0,0),0,0));
+	tilesRect = Matrix<RectF>(cells.GetColums() * Settings::CellSplitUpIn, cells.GetRows() * Settings::CellSplitUpIn, RectF(Vec2(0, 0), 0, 0));
 
 	for (int y = 0; y < hasNCells; y++)
 	{
@@ -728,6 +767,16 @@ void Chunk::UpdateRects(RectF chunkRect)
 		{
 			Vei2 curXY = Vei2(x, y);
 			cellsRect(curXY) = GetCellRect(chunkRect, curXY);
+
+			Vei2 tileStart = curXY * Settings::CellSplitUpIn;
+			for (int tilesY = 0; tilesY < Settings::CellSplitUpIn; tilesY++)
+			{
+				for (int tilesX = 0; tilesX < Settings::CellSplitUpIn; tilesX++)
+				{
+					Vei2 curTileXY = tileStart + Vei2(tilesX, tilesY);
+					tilesRect(curTileXY) = GetTileRect(chunkRect, curTileXY) - Vec2(0,chunkRect.GetHeight());
+				}
+			}
 		}
 	}
 	for (int i = 0; i < obstacles.size(); i++)
@@ -791,7 +840,7 @@ void Chunk::Update(float dt)
 {
 	if (Settings::obstaclesOn)
 	{
-		for (auto obstacle : obstacles)
+		for (auto& obstacle : obstacles)
 		{
 			obstacle.Update(dt);
 		}

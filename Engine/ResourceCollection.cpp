@@ -34,21 +34,18 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	windowsFrame.push_back(Animation(delay));					//	next turn
 	windowsFrame[3].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(284, 61), 120, 60)));
 
-	windowsFrame.push_back(Animation(delay));					//	button to build screen
+	windowsFrame.push_back(Animation(delay));					//	button
 	windowsFrame[4].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(405, 1), 60, 60)));
 
 	windowsFrame.push_back(Animation(delay));					//	build screen background
 	windowsFrame[5].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(1150, 0), 800, 600)));
 
-	windowsFrame.push_back(Animation(delay));					//	button back to game
-	windowsFrame[6].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(466, 1), 60, 60)));
+	windowsFrame.push_back(Animation(delay));					//	small button
+	windowsFrame[6].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(466, 1), 60, 30)));
 
 	windowsFrame.push_back(Animation(delay));					//	composition = 0 bg
 	windowsFrame[7].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(527, 1), 180, 60)));
 	//Obstacles
-
-
-
 	obstacles.push_back(0.2f);//#0
 	for (int i = 0; i < 1; i++)
 	{

@@ -47,6 +47,10 @@ public:
 	{
 		this->keepTime = keepTime;
 	}
+	void SetTimePassed(float timePassed)
+	{
+		this->timePassed = timePassed;
+	}
 	float GetKeepTime()
 	{
 		return keepTime;

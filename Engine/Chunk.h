@@ -38,17 +38,23 @@ public:
 			break;
 
 		}
-		n90rot = (tilePos.x + tilePos.y) % 4;
+		RandyRandom rr;
+		n90rot = rr.Calc(4);
+		for (auto& animation : animations)
+		{
+			animation.SetKeepTime(((float)rr.Calc(50)/100) + 0.5);
+			animation.SetTimePassed(animation.GetKeepTime()*((float)rr.Calc(100)/100));
+		}
 	}
-	void Draw(RectF tileRect, Vei2 tilePos, RectF chunkRect, Graphics& gfx)const			//	'tileRect' = Rect of tile where (Vei2(0, -1) && Vei2(-1, 0) != index) == true
+	void Draw(Graphics& gfx)const			//	'tileRect' = Rect of tile where (Vei2(0, -1) && Vei2(-1, 0) != index) == true
 	{
 		if (state == 0)
 		{
-			gfx.DrawSurface((RectI)rect, animations[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+			gfx.DrawSurface((RectI)rect, animations[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta),n90rot);
 		}
 		else
 		{
-			gfx.DrawSurface((RectI)rect, animations[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
+			gfx.DrawSurface((RectI)rect, animations[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), n90rot);
 		}
 	}
 	void UpdateRect(RectF tileRect, Vei2 tilePos, RectF chunkRect)
@@ -73,10 +79,16 @@ public:
 	}
 	void Update(float dt)
 	{
+		for (int i = 0; i < animations.size(); i++)
+		{
+			animations[i].Update(dt);
+		}
+		/*
 		for (auto animation : animations)
 		{
 			animation.Update(dt);
 		}
+		*/
 	}
 	void GetRect(Vei2 chunkSize, Vei2 midChunk, Vei2 c)
 	{
@@ -108,6 +120,8 @@ class Chunk
 	int hasNCells = 0;
 	Matrix<Cell> cells;
 	Matrix<RectF> cellsRect;
+	Matrix<RectF> tilesRect;
+
 	Matrix<Chunk>* chunks = nullptr;
 	Vei2 chunkPos = Vei2(-1, -1);
 	std::vector<Matrix<int>> conMap;		//Connectionmap	 (1 = needsConnections, 0 = does not		index for type)
@@ -207,10 +221,10 @@ public:
 	}
 	void DrawObstacleOutlines(Vei2 tilePos, int type, RectF chunkRect, Color c, Graphics& gfx) const;
 	void DrawObstacle(Vei2 tilePos, int type, RectF chunkRect, Graphics& gfx) const;
-	void DrawObstacles(RectF chunkRect, Graphics& gfx) const;
-	void DrawType(RectF chunkRect, Graphics& gfx)const;
-	void DrawGroundedMap(Vei2 pos, int cellSize, Graphics& gfx)const;
-	void DrawGrit(Vei2 pos, int cellSize, Graphics& gfx)const;
+	void DrawObstacles(Graphics& gfx) const;
+	void DrawType(Graphics& gfx)const;
+	void DrawGroundedMap(Graphics& gfx)const;
+	void DrawGrit(Graphics& gfx)const;
 	void DrawSurfaceAt(Vei2 drawPos, Vei2 cellPos, int cellSize, float scale, const Surface& s, Graphics& gfx)const;
 	void DrawTile(RectF chunkRect, Vei2 tilePos, Color c, Graphics& gfx)const;
 	

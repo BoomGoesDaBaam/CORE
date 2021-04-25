@@ -117,7 +117,11 @@ void Game::ComposeFrame()
 		if (debugInfoOn)
 		{
 			std::ostringstream oss1, oss2, oss4, oss5;
-			oss1 << "World cords" << curW->GetmChunk().x << " Camera:(" << c.x << " | " << c.y << ")" << "mP: " << mP << "mChunk: " << curW->GetmChunk();
+			oss1 << "World cords" << curW->GetmChunk().x << " Camera:(" << c.x << " | " << c.y << ")" << "mP: " << mP << "mChunk: " << curW->GetmChunk() << "n90rot: ";
+			if (curW->GetFocusedObstacle() != nullptr)
+			{
+				oss1 << curW->GetFocusedObstacle()->n90rot;
+			}
 			oss2 << "fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CSize:" << curW->GetcSize().x << "   x-Felder:" << curW->GetRenderRect().left;
 			oss4 << "Type:" << curW->GetfCellType() << "  use count tC:" << resC.use_count() << " ignoreMouse:" << ignoreMouse << " opt1:" << Settings::obstaclesOn << " updatedGraphics:" << curW->updatedGraphics;
 			resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 14, Colors::Red);
