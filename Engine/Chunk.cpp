@@ -327,13 +327,14 @@ void Chunk::DrawObstacle(Vei2 tilePos, int type, RectF chunkRect, Graphics& gfx)
 	if (Settings::obstaclesOn)
 	{
 		Vec2 tileSize = GetTileSize(chunkRect);
-		/*
-		RectI drawPos = GetTileRect(chunkRect, tilePos);
+		
+		RectF drawPos = GetTileRect(chunkRect, tilePos);
 		drawPos.top -= (Settings::obstacleSizes[type].y - 1) * tileSize.y;
 		drawPos.right += (Settings::obstacleSizes[type].x - 1) * tileSize.x;
-		*/
+		
 		Obstacle o = Obstacle(tilePos, chunkPos, type, resC);
-		//o.Draw(GetTileRect(chunkRect, tilePos)/*,RectF(Vec2(0,0), tileSize.x, tileSize.y)*/, tilePos, chunkRect, gfx);
+		o.rect = drawPos;
+		o.Draw(gfx);
 	}
 }
 void Chunk::DrawObstacles(Graphics& gfx) const
@@ -344,28 +345,31 @@ void Chunk::DrawObstacles(Graphics& gfx) const
 	
 	if (Settings::obstaclesOn)
 	{
-		Vei2 mos = Graphics::GetMidOfScreen();
-		SpriteEffect::Transparent e = SpriteEffect::Transparent(0.6f);
-
-		//Vec2 cellSize = GetCellSize(chunkRect);
-
+		/*
 		for (int y = 0; y < hasNCells; y++)
 		{
 			for (int x = 0; x < hasNCells; x++)
 			{
-				Vei2 curXY = Vei2(x, y);
+			*/
+				//Vei2 curXY = Vei2(x, y);
 				//RectF curCellRect = GetCellRect(chunkRect, curXY);
-				for (int i = 0; i < obstacles.size(); i++)
+		for (int layer = 0; layer < 2; layer++)
+		{
+			for (int i = 0; i < obstacles.size(); i++)
+			{
+				bool notUsed = false;
+				if (std::any_of(obstaclesIndexNotUsed.begin(), obstaclesIndexNotUsed.end(), [&](int notUsed) {
+					return notUsed == i;
+					}))
 				{
-					bool notUsed = false;
-					if (std::any_of(obstaclesIndexNotUsed.begin(), obstaclesIndexNotUsed.end(), [&](int notUsed) {
-						return notUsed == i;
-						}))
-					{
-						break;
-					}
-					obstacles[i].Draw(gfx);
+					continue;
 				}
+					if(obstacles[i].state == 0 && layer == 0)
+					obstacles[i].Draw(gfx);
+					if (obstacles[i].state == 1 && layer == 1)
+						obstacles[i].Draw(gfx);
+			}
+		}
 				/*
 				using namespace Settings;
 				for (int tileLayer = 0; tileLayer < 2; tileLayer++)
@@ -393,9 +397,9 @@ void Chunk::DrawObstacles(Graphics& gfx) const
 						}
 					}
 				}
-				*/
 			}
 		}
+		*/
 	}
 	
 }
@@ -785,6 +789,11 @@ void Chunk::UpdateRects(RectF chunkRect)
 		obstacles[i].UpdateRect(GetTileRect(chunkRect, pos)-Vec2(0,chunkRect.GetWidth()),pos,chunkRect);
 	}
 }
+void Chunk::DeleteRects()
+{
+	cellsRect = Matrix<RectF>(1,1, RectF(Vec2(0, 0), 0, 0));
+	tilesRect = Matrix<RectF>(1, 1, RectF(Vec2(0, 0), 0, 0));
+}
 void Chunk::UpdateAroundMatrix(Matrix<int> mat)
 {
 	aMats = Matrix<Matrix<int>>(hasNCells, hasNCells, Matrix<int>());
@@ -840,9 +849,15 @@ void Chunk::Update(float dt)
 {
 	if (Settings::obstaclesOn)
 	{
-		for (auto& obstacle : obstacles)
+		for (int i = 0; i < obstacles.size(); i++)
 		{
-			obstacle.Update(dt);
+			if (std::any_of(obstaclesIndexNotUsed.begin(), obstaclesIndexNotUsed.end(), [&](int notUsed) {
+				return notUsed == i;
+				}))
+			{
+				continue;
+			}
+			obstacles[i].Update(dt);
 		}
 	}
 }

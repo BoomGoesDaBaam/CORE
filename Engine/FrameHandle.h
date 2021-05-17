@@ -704,7 +704,7 @@ public:
 		using namespace Settings;
 		std::vector<int> a = { 0,1 };	
 
-		MultiFrame* m = AddMultiFrame(RectF(Vec2(540, 110), 140, 280), 0, 1);			//Size of frames is hardcoded
+		MultiFrame* m = AddMultiFrame(RectF(Vec2(1040, 110), 140, 280), 0, 1);			//Size of frames is hardcoded
 																							//FIRST FRAME
 		Frame* f1 = m->AddFrame(RectF(Vec2(0, 0), 140, 280), 0, resC, m);	
 		PageFrame* p3 = m->AddPageFrame(RectF(Vec2(0, 12), 140, 280), 0, resC, m, 3);
@@ -817,7 +817,7 @@ public:
 		b_setAttack->bFunc = BSetAttackMode;
 		b_setAttack->hitable = true;
 
-		Frame* fNextTurn = AddFrame(RectF(Vec2(620, 500), 120, 60), 1);																			//NEXT TURN FRAME
+		Frame* fNextTurn = AddFrame(RectF(Vec2(1120, 600), 120, 60), 1);																			//NEXT TURN FRAME
 		fNextTurn->s = &resC->tC.windowsFrame[3].GetCurSurface();
 		fNextTurn->bFunc = BNextTurn;
 

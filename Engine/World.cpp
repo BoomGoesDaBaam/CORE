@@ -426,6 +426,13 @@ RectF World::GetChunkRect(Vei2 chunkPos)const
 }
 void World::UpdateChunkRects()
 {
+	for (int y = 0; y < chunks.GetRows(); y++)
+	{
+		for (int x = 0; x < chunks.GetColums(); x++)
+		{
+			chunks[x][y].DeleteRects();
+		}
+	}
 	Vei2 mos = Graphics::GetMidOfScreen();
 	auto renderRect = GetRenderRect();
 
@@ -662,9 +669,9 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		{
 			//GenerateObstacle(Chunk::chunkPos2Flat(fcctPos),)
 			Vei2 d = AbstractTilePos(oldCctPos);
-			chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fcctPos);
+			//chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fcctPos);
 			focusedObst = nullptr;
-			/*
+			
 				if (chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fcctPos))
 			{
 				RectF chunkRect = GetChunkRect(oldCctPos.x);
@@ -674,11 +681,11 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 
 				//auto pos = oldCctPos + Vec3_<Vei2>(Vei2(0, 0), Vei2(x, y), Vei2(0, 0));
 
-				chunks(oldCctPos.x).UpdateTypeSurfaceCell(chunkRect, oldCctPos.y, cellSize, chunkSize);
-				chunks(oldCctPos.x).UpdateObstacleSurfaceCell(chunkRect, oldCctPos.y, cellSize, chunkSize, tileSize);
+				//chunks(oldCctPos.x).UpdateTypeSurfaceCell(chunkRect, oldCctPos.y, cellSize, chunkSize);
+				//chunks(oldCctPos.x).UpdateObstacleSurfaceCell(chunkRect, oldCctPos.y, cellSize, chunkSize, tileSize);
 
-				chunks(fcctPos.x).UpdateTypeSurfaceCell(chunkRect, fcctPos.y, cellSize, chunkSize);
-				chunks(fcctPos.x).UpdateObstacleSurfaceCell(chunkRect, fcctPos.y, cellSize, chunkSize, tileSize);
+				//chunks(fcctPos.x).UpdateTypeSurfaceCell(chunkRect, fcctPos.y, cellSize, chunkSize);
+				//chunks(fcctPos.x).UpdateObstacleSurfaceCell(chunkRect, fcctPos.y, cellSize, chunkSize, tileSize);
 
 				//chunks((PutCctPosInWorld(oldCctPos+Vec3_<Vei2>(Vei2(x, y), Vei2(0, 0), Vei2(0, 0)))).x).UpdateGraphics();
 				//chunks((PutCctPosInWorld(fcctPos + Vec3_<Vei2>(Vei2(x, y), Vei2(0, 0), Vei2(0, 0)))).x).UpdateGraphics();
@@ -692,7 +699,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 				}
 				updateChunkGraphics = true;
 			}
-		*/
+		
 		}
 		if (ObstacleMapAt(fcctPos) != -1)
 		{

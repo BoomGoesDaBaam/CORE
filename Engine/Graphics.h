@@ -381,17 +381,25 @@ public:
 		int width = inFpos.GetWidth();
 		int height = inFpos.GetHeight();
 
+		//double percentX = 0;
+		//double pixelPercX = 0;
 		for (int y = 0; y < height; y++)
 		{
+			//percentX = (float)1.f / pos.GetWidth();
+			//pixelPercX = (float)skippedLeft / pos.GetWidth();
+
 			for (int x = 0; x < width; x++)
 			{
-				if (PixelInFrame({ x + inFpos.left, y + inFpos.top }))
-				{
+				assert(PixelInFrame({ x + inFpos.left, y + inFpos.top }));
+				
+				//if (PixelInFrame({ x + inFpos.left, y + inFpos.top }))
+				//{
 					int sPixelX=0;
 					int sPixelY=0;
 
 					if (n90rot == 0)
 					{
+						//sPixelX = (int)(sourceR.left + (pixelPercX) * sourceR.GetWidth());
 						sPixelX = (int)(sourceR.left + ((float)(x + skippedLeft) / pos.GetWidth()) * sourceR.GetWidth());
 						sPixelY = (int)(sourceR.top + ((float)(y + skippedTop) / pos.GetHeight()) * sourceR.GetHeight());
 					}
@@ -417,7 +425,8 @@ public:
 
 					Color sourceP = s.GetPixel(sPixelX, sPixelY);
 					effect(x + inFpos.left, y + inFpos.top, sourceP, *this);
-				}
+					//pixelPercX += percentX;
+				//}
 			}
 		}
 	}
@@ -441,8 +450,8 @@ private:
 	
 
 public:
-	static constexpr int ScreenWidth = 800;
-	static constexpr int ScreenHeight = 600;
+	static constexpr int ScreenWidth = 1280;
+	static constexpr int ScreenHeight = 720;
 	static Vei2 GetMidOfScreen() { return Vei2(ScreenWidth / 2, ScreenHeight / 2); };
 	template<typename T>
 	const static Rect_<T> GetScreenRect() { return Rect_<T>(Vec2_<T>(0, 0), ScreenWidth, ScreenHeight); };

@@ -50,11 +50,11 @@ public:
 	{
 		if (state == 0)
 		{
-			gfx.DrawSurface((RectI)rect, animations[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta),n90rot);
+			gfx.DrawSurface((RectI)rect, animations[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta),0);
 		}
 		else
 		{
-			gfx.DrawSurface((RectI)rect, animations[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), n90rot);
+			gfx.DrawSurface((RectI)rect, animations[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
 		}
 	}
 	void UpdateRect(RectF tileRect, Vei2 tilePos, RectF chunkRect)
@@ -236,6 +236,7 @@ public:
 	void DrawObstacleOnBuffer(RectF curRect,const Surface& s);
 
 	void UpdateRects(RectF curRect);
+	void DeleteRects();
 
 	void UpdateAroundMatrix(Matrix<int> mat);
 	void UpdateGroundedMap();
