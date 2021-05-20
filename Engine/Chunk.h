@@ -42,8 +42,8 @@ public:
 		n90rot = rr.Calc(4);
 		for (auto& animation : animations)
 		{
-			animation.SetKeepTime(((float)rr.Calc(50)/100) + 0.5);
-			animation.SetTimePassed(animation.GetKeepTime()*((float)rr.Calc(100)/100));
+			//animation.SetKeepTime(((float)rr.Calc(50)/100) + 0.5);
+			//animation.SetTimePassed(animation.GetKeepTime()*((float)rr.Calc(100)/100));
 		}
 	}
 	void Draw(Graphics& gfx)const			//	'tileRect' = Rect of tile where (Vei2(0, -1) && Vei2(-1, 0) != index) == true
@@ -196,6 +196,8 @@ public:
 	bool ObstaclePosAllowed(Vei2 tilePos, Vei2 size, int except = -1) const;
 	void DeleteObstacle(Vei2 tilePos);
 	bool CheckIfObstacleBaseTile(Vei2 tilePos);
+	bool CheckIfObstacleBaseTileX(Vei2 tilePos);
+	bool CheckIfObstacleBaseTileY(Vei2 tilePos);
 	int GetObstacleIndex(Vei2 tilePos)const;
 
 	Vec2 GetCellSize(RectF chunkRect) const;
@@ -256,7 +258,8 @@ public:
 	Vec2_<Vei2> GetTilePosOutOfBounds(Vei2 tilePos) const;
 
 	int GetGroundedOutOfBounds(Vei2 tilePos) const;
-	int GetObstacleOutOfBounds(Vei2 tilePos) const;
+	int GetObstacleTypeOutOfBounds(Vei2 tilePos) const;
+	Obstacle* GetObstacleOutOfBounds(Vei2 tilePos) const;
 	void SetTypeAt(Vei2 pos, int type);
 	void NextTurn();
 	void AttackTile(CctPos pos, Obstacle* attacker);

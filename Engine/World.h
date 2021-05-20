@@ -62,7 +62,7 @@ private:
 
 	bool grit = false;						//show grit
 	bool buildMode = false;					//place something
-	int placeObstacle = 0;
+	int placeObstacle = 27;
 	bool posAllowed = true;
 	bool moveMode = false;
 	bool attackMode = false;
@@ -145,7 +145,7 @@ private:
 	void GenerateObstaclesInCell(Vei2 cellPos, int type, int number, Team* team = nullptr, int ontoType = -1, int surrBy = -1);
 
 public:
-
+	
 	int updatedGraphics = 0;																						//Konstruktor + Operatoren
 	World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera, Team* player);
 	

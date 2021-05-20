@@ -130,7 +130,73 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	obstacles[25].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(442, 2417), 32, 32)));
 	obstacles.push_back(0.5f);//#26
 	obstacles[26].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(475, 2417), 40, 40)));
-
+	//
+	obstacles.push_back(0.5f);//#27
+	obstacles[27].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(516, 2417), 32, 32)));
+	obstacles.push_back(0.5f);//#28
+	obstacles[28].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(549, 2417), 24, 24)));
+	obstacles.push_back(0.5f);//#29
+	obstacles[29].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(574, 2417), 32, 32)));
+	obstacles.push_back(0.1f);//#30
+	for (int i = 0; i < 5; i++)
+	{
+		obstacles[30].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(607, 2417 + i * 25), 24, 24)));
+	}
+	obstacles.push_back(0.1f);//#31
+	for (int i = 0; i < 4; i++)
+	{
+		obstacles[31].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(632, 2417 + i * 41), 40, 40)));
+	}
+	obstacles.push_back(0.5f);//#32
+	obstacles[32].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(673, 2417), 24, 24)));
+	obstacles.push_back(0.5f);//#33
+	obstacles[33].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0, 2649), 40, 40)));
+	obstacles.push_back(0.1f);//#34
+	for (int i = 0; i < 4; i++)
+	{
+		obstacles[34].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(41, 2649 + i * 25), 24, 24)));
+	}
+	obstacles.push_back(0.1f);//#35
+	for (int i = 0; i < 4; i++)
+	{
+		obstacles[35].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(66, 2649 + i * 41), 40, 40)));
+	}
+	obstacles.push_back(0.5f);//#36
+	obstacles[36].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(107, 2649), 40, 40)));
+	obstacles.push_back(0.5f);//#37
+	obstacles[37].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(148, 2649), 32, 32)));
+	obstacles.push_back(0.5f);//#38
+	obstacles[38].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(181, 2649), 40, 40)));
+	obstacles.push_back(0.5f);//#39
+	obstacles[39].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(222, 2649), 32, 32)));
+	obstacles.push_back(0.5f);//#40
+	obstacles[40].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(255, 2649), 24, 24)));
+	obstacles.push_back(0.1f);//#41
+	for (int i = 0; i < 4; i++)
+	{
+		obstacles[41].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(280, 2649 + i * 25), 24, 24)));
+	}
+	obstacles.push_back(0.5f);//#42
+	obstacles[42].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(305, 2649), 40, 40)));
+	obstacles.push_back(0.5f);//#43
+	obstacles[43].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(346, 2649), 8, 8)));
+	obstacles.push_back(0.5f);//#44
+	obstacles[44].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(355, 2649), 16, 16)));
+	obstacles.push_back(0.5f);//#45
+	obstacles[45].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(372, 2649), 24, 24)));
+	obstacles.push_back(0.5f);//#46
+	obstacles[46].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(397, 2649), 32, 32)));
+	obstacles.push_back(0.5f);//#47
+	obstacles[47].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(430, 2649), 40, 40)));
+	obstacles.push_back(0.1f);//#48
+	for (int i = 0; i < 4; i++)
+	{
+		obstacles[48].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(471, 2649 + i * 17), 16, 16)));
+	}
+	obstacles.push_back(0.5f);//#49
+	obstacles[49].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(430, 2649), 40, 40)));
+	obstacles.push_back(0.5f);//#50
+	obstacles[50].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(430, 2649), 40, 40)));
 	//Buttons buttons
 	buttons.push_back(0.1f);
 	buttons[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0, 0), 34, 9)));

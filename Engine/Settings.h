@@ -39,6 +39,32 @@ namespace Settings
 			24 = brick house
 			25 = skyscraper
 			26 = villa
+
+			27 = lumberjack hut
+			28 = nature house
+			29 = finishing house
+			30 = wrought
+			31 = windmill
+			32 = hunting house
+			33 = mine
+			34 = sawmill
+			35 = oil drill
+			36 = shipyard
+			37 = factory
+			38 = ship port
+			39 = power plant
+			40 = solar panel
+			41 = wind power plant
+			42 = airport
+			43 = construction site 1x1
+			44 = construction site 2x2
+			45 = construction site 3x3
+			46 = construction site 4x4
+			47 = construction site 5x5
+			48 = power storage
+			49 = CAR FACTORY
+			50 = storage
+
 			### Masked Array ###
 			0 = swamp
 
@@ -77,19 +103,36 @@ namespace Settings
 	static constexpr int chunkHasNTiles = chunkHasNCells * CellSplitUpIn;
 
 	static const int obstacleStates[] = { 1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-										1,1,1,1,1,1 };
+										1,1,1,1,1,1,
+										1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};//[27-50]
 	static const Vei2 obstacleSizes[] = { Vei2(2,2), Vei2(1,1), Vei2(1,1), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(2,2), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1),
-										Vei2(3,3),Vei2(3,3), Vei2(4,4), Vei2(4,4), Vei2(4,4), Vei2(5,5)};
+										Vei2(3,3),Vei2(3,3), Vei2(4,4), Vei2(4,4), Vei2(4,4), Vei2(5,5),
+										Vei2(4,4), Vei2(3,3), Vei2(4,4), Vei2(3,3), Vei2(5,5), Vei2(3,3), Vei2(5,5), Vei2(3,3), Vei2(5,5), Vei2(5,5),//[27-36]
+										Vei2(4,4), Vei2(5,5), Vei2(4,4), Vei2(3,3), Vei2(3,3), Vei2(5,5), Vei2(1,1), Vei2(2,2), Vei2(3,3), Vei2(4,4),//[37-46]
+										Vei2(5,5), Vei2(2,2), Vei2(5,5), Vei2(4,4) };//[47-50]
+
 	static const int obstacleBaseHP[] = { 20,20,20, 100, 20, 10, 5, 100, 20, 100, 50, 10,10,10,25,10,5,10,5,1,25, 
-										10,30,200,150,100,80};
-	static const int obstacleMovesPerTurn[] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,100,10,10,10,10,10,5,10,10,30,15 
-												-1,-1,-1,-1,-1,-1};
+										10,30,200,150,100,80,
+										80,80,80,80,80,80,80,80,80,80,//[27-36]
+										80,80,80,80,80,80,80,80,80,80,//[37-46]
+										80,80,80,80 };//[47-50]
+	static const int obstacleMovesPerTurn[] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,10,10,10,10,10,10,5,10,10,30,15 
+												-1,-1,-1,-1,-1,-1,
+												-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 ,//[27-36]
+												-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 //[37-46]
+												- 1,-1,-1,-1};//[47-50]
 	static const std::map<std::string, float> neededRes[] = { {{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"wood",10},{"sticks",5}},		{{"concrete",300},{"wood",200}},		{{"leather",50},{"sticks",30}},
 															{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
 															{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
 															{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
 															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},
 															{{"concrete",500}},		{{"slate",100},{"bricks",200},{"concrete",200}},
+															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[27-31]
+															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[32-36]
+															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[37-41]
+															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[42-46]   
+															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[47-51]   
+
 	};
 	static const std::map<std::string, float> lootForDestroying[] = { {{"leather",25},{"sticks",15}},		{{"wood",200},{"sticks",50},{"leafes",2},{"apples",5}},		{{"wood",5},{"sticks",15}},		{{"concrete",150},{"wood",100}},		{{"wood",200},{"sticks",50},{"leafes",2},{"apples",5}},
 															{{"cactus",3}},		{{"iron",3},{"gold",0.1}},		{{"stone",20},{"iron",0.5}},		{{"wood",150},{"sticks",30},{"leafes",2}},		{{"stone",40},{"iron",2},{"copper",1}},
@@ -97,6 +140,11 @@ namespace Settings
 															{{"wool",3},{"meat",10}},		{{"",50},{"meat",3}},		{{"meat",30},{"",30}},		{{"meat",20},{"",30}},		{{"meat",1},{"",30}},
 															{{"meat",1},{"",30}},		{{"snow",25},{"wood",10}},		{{"wood",350}},		{{"stone",200},{"wood",100}},		{{"bricks",100},{"wood",50},{"stone",50}},
 															{{"concrete",250}},		{{"slate",50},{"bricks",100},{"concrete",100}},
+															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[27-31]
+															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[32-36]
+															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[37-41]
+															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[42-46]   
+															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[47-51]  
 	};
 	static const int obstacleAttackRange[] = { 0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0 };
 	static const int obstacleAttackDmg[] = { 0,0,0,0,0,0,0,0,0,0,100,20,0,15,30,00,0,20,0,40,0,0,0,0,0,0 };
@@ -223,6 +271,30 @@ namespace Settings
 	const std::string lang_skyscraper[] = { "skyscraper", "Hochhaus" };
 	const std::string lang_villa[] = { "villa", "Villa" };
 
+	//Productions
+	const std::string lang_lumberjackHut[] = { "lumberjack hut", "Holzfaellerhuette" };
+	const std::string lang_natureHouse[] = { "nature house", "Naturhaus" };
+	const std::string lang_finishingHouse[] = { "finishing house", "Fischerei" };
+	const std::string lang_wrought[] = { "wrought", "Schmiede" };
+	const std::string lang_windmill[] = { "windmill", "Windmuehle" };
+	const std::string lang_huntingHouse[] = { "hunting house", "Jaegerei" };
+	const std::string lang_mine[] = { "mine", "Mine" };
+	const std::string lang_sawmill[] = { "sawmill", "Saegewerk" };
+	const std::string lang_oilDrill[] = { "oil drill", "Oelbohrer" };
+	const std::string lang_shipyard[] = { "shipyard", "Schiftwerft" };
+	const std::string lang_factory[] = { "factory", "Fabrik" };
+	const std::string lang_shipPort[] = { "ship port", "Hafen" };
+	const std::string lang_powerPlant[] = { "power plant", "Kraftwerk" };
+	const std::string lang_solarPanel[] = { "solar panel", "Sonnenkraftwerk" };
+	const std::string lang_windPowerPlant[] = { "wind power plant", "Windkraftwerk" };
+	const std::string lang_airport[] = { "airport", "Flughafen" };
+	const std::string lang_constructionSite[] = { "construction site", "Baustelle" };
+	const std::string lang_powerStorage[] = { "power storage", "Stromspeicher" };
+	const std::string lang_carFactory[] = { "car factory", "Autofabrik" };
+	const std::string lang_storage[] = { "storage", "Lagerhalle" };
+
+
+	//
 
 
 	static constexpr float percentForGrab[] = { 0.05f, 0.05f };
@@ -488,6 +560,78 @@ namespace Settings
 			break;
 		case 26:
 			return lang_villa[lang];
+			break;
+		case 27:
+			return lang_lumberjackHut[lang];
+			break;
+		case 28:
+			return lang_natureHouse[lang];
+			break;
+		case 29:
+			return lang_finishingHouse[lang];
+			break;
+		case 30:
+			return lang_wrought[lang];
+			break;
+		case 31:
+			return lang_windmill[lang];
+			break;
+		case 32:
+			return lang_huntingHouse[lang];
+			break;
+		case 33:
+			return lang_mine[lang];
+			break;
+		case 34:
+			return lang_sawmill[lang];
+			break;
+		case 35:
+			return lang_oilDrill[lang];
+			break;
+		case 36:
+			return lang_shipyard[lang];
+			break;
+		case 37:
+			return lang_factory[lang];
+			break;
+		case 38:
+			return lang_shipPort[lang];
+			break;
+		case 39:
+			return lang_powerPlant[lang];
+			break;
+		case 40:
+			return lang_solarPanel[lang];
+			break;
+		case 41:
+			return lang_windPowerPlant[lang];
+			break;
+		case 42:
+			return lang_airport[lang];
+			break;
+		case 43:
+			return lang_constructionSite[lang]+" 1x1";
+			break;
+		case 44:
+			return lang_constructionSite[lang] + " 2x2";
+			break;
+		case 45:
+			return lang_constructionSite[lang] + " 3x3";
+			break;
+		case 46:
+			return lang_constructionSite[lang] + " 4x4";
+			break;
+		case 47:
+			return lang_constructionSite[lang] + " 5x5";
+			break;
+		case 48:
+			return lang_powerStorage[lang];
+			break;
+		case 49:
+			return lang_carFactory[lang];
+			break;
+		case 50:
+			return lang_storage[lang];
 			break;
 		default:
 			return "Settings::GetObstacleString needs an update";

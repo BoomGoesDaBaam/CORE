@@ -716,11 +716,16 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 			moveMode = false;
 		}
 
-		if (buildMode == true && player->GetMaterials().Has((Settings::neededRes[placeObstacle])))
+		if (buildMode == true /*&& player->GetMaterials().Has((Settings::neededRes[placeObstacle]))*/)
 		{
 			auto fcctPos = GetHitTile(mP);
 			chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, placeObstacle, player);
-			player->GetMaterials().Remove(Settings::neededRes[placeObstacle]);
+			if (placeObstacle < 50)
+			{
+				placeObstacle++;
+			}
+			//player->GetMaterials().Remove(Settings::neededRes[placeObstacle]);
+			
 			//chunks(fcctPos.x).UpdateGraphics();
 			//updateChunkGraphics = true;
 		}
