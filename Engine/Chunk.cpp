@@ -39,6 +39,33 @@ void Chunk::ChangeGroundedVal(int from, int to)
 		}
 	}
 }
+int Chunk::countNumberOf(Vei2 where, int radius, int type)
+{
+	/*
+	Vei2 bottomLeft = chunkPos2Flat(CtPos2CctPos(CtPos(chunkPos,where), cells.GetSize().x));
+	CctPos curcctPos = Flat2ChunkPos(bottomLeft, GetWorldSizeInTiles());
+	*/
+	int count = 0;
+	CctPos curcctPos = CtPos2CctPos(CtPos(chunkPos, where), cells.GetSize().x);
+	for (int y = -radius; y <= radius; y++)
+	{
+		for (int x = -radius; x <= radius; x++)
+		{
+			//CctPos cctDelta = { Vei2(0,0),Vei2(0,0),Vei2(x,y) };
+			CtPos ctPos = GetTilePosOutOfBounds(where + Vei2(x, y));
+			//Vec2_<Vei2> ctPos = chunks(cctPos.x).GetTilePosOutOfBounds(cctPos.y * Settings::CellSplitUpIn + cctPos.z);
+			if (radius > 0 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius && chunks->operator()(ctPos.x).GetObstacleAt(ctPos.y)->type == type)
+			{
+				count++;
+			}
+		}
+	}
+	
+}
+CctPos Chunk::CtPos2CctPos(CtPos pos, int chunkHasNCells)
+{
+	return CctPos(pos.x, pos.y / chunkHasNCells, pos.y % chunkHasNCells);
+}
 void Chunk::PlaceTilesForMaskedField(Vei2 pos, int value, int valOfMixed, int valueOfZero, int type)
 {
 	SubAnimation sa = SubAnimation(resC->tC.maskedFields[Settings::translateIntoMaskedType(type)], RectI(Vei2(0, 0), 50, 50), RectI(Vei2(0, 0), 50, 50));
@@ -572,6 +599,7 @@ void Chunk::DrawTile(RectF chunkRect, Vei2 tilePos, Color c, Graphics& gfx)const
 	gfx.DrawFilledRect(GetTileRect(chunkRect, tilePos), c, SpriteEffect::Transparent());
 	gfx.DrawRect(GetTileRect(chunkRect, tilePos), c);
 }
+/*
 void Chunk::UpdateTypeSurface(RectF chunkRect)
 {
 	graphicsWidth = (int)chunkRect.GetWidth();
@@ -645,7 +673,7 @@ void Chunk::UpdateObstacleSurface(RectF chunkRect)
 			surf_obstacles.PutPixel(x, y, Colors::Magenta);
 		}
 	}
-	*/
+	/*#####
 
 	if (Settings::obstaclesOn)
 	{
@@ -768,6 +796,7 @@ void Chunk::DrawObstacleOnBuffer(RectF curRect,const Surface& s)
 {
 	surf_typesAndObstacles.AddLayer((RectI)curRect, s.GetRect(), s);
 }
+*/
 void Chunk::UpdateRects(RectF chunkRect)
 {
 	cellsRect = Matrix<RectF>(cells.GetColums(),cells.GetRows(),RectF(Vec2(0,0),0,0));
@@ -1106,11 +1135,22 @@ void Chunk::SetTypeAt(Vei2 pos, int type)
 {
 	cells(pos) = type;
 }
-void Chunk::NextTurn()
+void Chunk::NextTurn(Team* natur)
 {
+	RandyRandom rr;
 	for (int i = 0; i < obstacles.size(); i++)
 	{
 		obstacles[i].stepsLeft = Settings::obstacleMovesPerTurn[obstacles[i].type];
+		//Obstacle expandation
+		if ((Settings::anyOfPlants(obstacles[i].type)| Settings::anyOfAnimals(obstacles[i].type)) && rr.Calc(10) == 1)
+		{
+			Vei2 pos = obstacles[i].tilePos;
+			Vec2 dir = GigaMath::GetRandomPointOnUnitCircle<float>();
+			//dir = GigaMath::RotPointToOrigin<float>(dir.x, dir.y, )
+			Vei2 newPos = pos + (Vei2)(dir * 4 + dir * 15 * GigaMath::GetRandomNormDistribution());
+			CtPos cctPos = GetTilePosOutOfBounds(newPos);
+			chunks->operator()(cctPos.x).PlaceObstacle(cctPos.y, obstacles[i].type, natur);
+		}
 	}
 }
 void Chunk::AttackTile(CctPos pos, Obstacle* attacker)

@@ -72,5 +72,14 @@ namespace GigaMath
 	{
 		return Vec2_<T>(NegMod(x.x, divisor), NegMod(x.y, divisor));
 	}
+	template <typename T>
+	Vec2_<T> GetRandomPointOnUnitCircle()
+	{
+		Vec2_<double> point = Vec2_<double>(1, 0);
+		RandyRandom rr;
+		float rad = rr.Calc(360) * 0.017453292519943;
+		auto a = RotPointToOrigin(point.x, point.y, rad);
+		return Vec2_<T>(a.first, a.second);
+	}
 }
 namespace GiMa = GigaMath;

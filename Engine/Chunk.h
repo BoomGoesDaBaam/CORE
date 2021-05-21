@@ -140,6 +140,13 @@ class Chunk
 	void PlaceConnectionsIntoCelltiles(Vei2 pos, int value, int valOfMixed, int valueOfZero, const int* types);
 	void PlaceTilesForMaskedField(Vei2 pos, int value, int valOfMixed, int valueOfZero, int type);
 	void ChangeGroundedVal(int from, int to);
+
+	int countNumberOf(Vei2 where, int radius, int type);
+	CctPos CtPos2CctPos(CtPos pos, int chunkHasNCells);
+	Vei2 GetWorldSizeInTiles()
+	{
+		return chunks->GetSize() * cells.GetSize() * Settings::CellSplitUpIn;
+	}
 public:
 	Chunk() = default;
 	Chunk(int hasNCells, Cell defVal, Matrix<Chunk>* chunks, sharedResC resC)
@@ -230,12 +237,12 @@ public:
 	void DrawSurfaceAt(Vei2 drawPos, Vei2 cellPos, int cellSize, float scale, const Surface& s, Graphics& gfx)const;
 	void DrawTile(RectF chunkRect, Vei2 tilePos, Color c, Graphics& gfx)const;
 	
-	void UpdateTypeSurface(RectF chunkRect);
-	void UpdateTypeSurfaceCell(RectF chunkRect, Vei2 curXY, Vec2 cellSize, Vec2 chunkSize);
-	void UpdateObstacleSurface(RectF chunkRect);
-	void UpdateObstacleSurfaceCell(RectF chunkRect, Vei2 curXY, Vec2 cellSize, Vec2 chunkSize, Vec2 tileSize);
-	void DrawObstacleProtrud(RectF curRect, Vec2 chunkSize, const Surface& s);
-	void DrawObstacleOnBuffer(RectF curRect,const Surface& s);
+	//void UpdateTypeSurface(RectF chunkRect);
+	//void UpdateTypeSurfaceCell(RectF chunkRect, Vei2 curXY, Vec2 cellSize, Vec2 chunkSize);
+	//void UpdateObstacleSurface(RectF chunkRect);
+	//void UpdateObstacleSurfaceCell(RectF chunkRect, Vei2 curXY, Vec2 cellSize, Vec2 chunkSize, Vec2 tileSize);
+	//void DrawObstacleProtrud(RectF curRect, Vec2 chunkSize, const Surface& s);
+	//void DrawObstacleOnBuffer(RectF curRect,const Surface& s);
 
 	void UpdateRects(RectF curRect);
 	void DeleteRects();
@@ -261,7 +268,7 @@ public:
 	int GetObstacleTypeOutOfBounds(Vei2 tilePos) const;
 	Obstacle* GetObstacleOutOfBounds(Vei2 tilePos) const;
 	void SetTypeAt(Vei2 pos, int type);
-	void NextTurn();
+	void NextTurn(Team* natur);
 	void AttackTile(CctPos pos, Obstacle* attacker);
 
 	void SetConMapAt(Vei2 pos, int type, bool value);
@@ -282,6 +289,43 @@ public:
 	static Vei2 PutChunkInWorld(int x, int y, Vei2 worldHasNChunks)
 	{
 		return Vei2(GigaMath::NegMod(x, worldHasNChunks.x), GigaMath::NegMod(y, worldHasNChunks.y));
+	}
+	static Vec3_<Vei2> Flat2ChunkPos(Vei2 tilePos, Vei2 wSizeInTiles)
+	{
+		tilePos = PutTileInWorld(tilePos, wSizeInTiles);
+
+		using namespace Settings;
+		Vec3_<Vei2> v3 = Vec3_<Vei2>(Vei2(-1, -1), Vei2(-1, -1), Vei2(-1, -1));
+
+		v3.x = (tilePos / (CellSplitUpIn * Settings::chunkHasNCells));		//chunkPos
+		v3.y = (tilePos / CellSplitUpIn) % Settings::chunkHasNCells;		//cellPos in chunk
+		v3.z = tilePos % CellSplitUpIn;								//tilePos in cellPos 
+
+		return v3;
+	}
+	static Vei2 PutTileInWorld(Vei2 pos, Vei2 wSizeInTiles)
+	{
+		return PutTileInWorld(pos.x, pos.y, wSizeInTiles);
+	}
+	static Vei2 PutTileInWorld(int x, int y, Vei2 wSizeInTiles)
+	{
+		if (y < 0)
+		{
+			y = 0;
+		}
+		if (y >= wSizeInTiles.y)
+		{
+			y = wSizeInTiles.y - 1;
+		}
+		while (x < 0)
+		{
+			x += wSizeInTiles.x;
+		}
+		while (x >= wSizeInTiles.x)
+		{
+			x -= wSizeInTiles.x;
+		}
+		return Vei2(x, y);
 	}
 };
 

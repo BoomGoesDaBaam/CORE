@@ -101,14 +101,11 @@ private:
 
 	Vei2 PutCellInWorldX(Vei2 pos)const;					//Calculates coordinates when x negativ or > cSize.x  
 	Vei2 PutCellInWorldX(int x, int y)const;
-	Vei2 PutTileInWorld(Vei2 pos)const;
-	Vei2 PutTileInWorld(int x, int y)const;
 
 	Vei2 AbstractTilePos(CctPos chunkPos)const;
 	//Transformation between chunk and flat
 	Vec2_<Vei2> Cell2ChunkPos(Vei2 CellPos)const;			//	'x' = chunkPos	'y' = cellPos in chunk
-	Vec3_<Vei2> Tile2ChunkPos(Vei2 tilePos)const;			//	1x3 Matrix		'0' = chunkPos		'1' = cellPos		'2' = tilePos
-
+	
 	CctPos PutCctPosInWorld(CctPos cctPos)const;
 	int ObstacleMapAt(Vei2 tilePos)const;
 	int ObstacleMapAt(Vec3_<Vei2> tilePos)const;

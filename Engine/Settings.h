@@ -314,6 +314,22 @@ namespace Settings
 		}
 		return false;
 	}
+	static bool anyOfAnimals(int type)		
+	{
+		if (type >= 11 && type <= 20)
+		{
+			return true;
+		}
+		return false;
+	}
+	static bool anyOfPlants(int type)
+	{
+		if (type == 1 || type == 4 || type == 5 || type == 8)
+		{
+			return true;
+		}
+		return false;
+	}
 	static bool anyOfHillTypes(int Type)
 	{
 		for (int i = 0; i < sizeof(hillTypesARE) / sizeof(hillTypesARE[0]); i++)
