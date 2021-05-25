@@ -692,7 +692,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 
 			//chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, 42 + constructionWidth, player);
 			chunks(fcctPos.x).PlaceObstacle(adjustedHoverPos.y, &obstacle);
-			player->GetMaterials().Remove(Settings::obstacleStats[placeObstacle].neededResToBuild);
+			//player->GetMaterials().Remove(Settings::obstacleStats[placeObstacle].neededResToBuild);
 			if (!player->GetMaterials().Has(Settings::obstacleStats[placeObstacle].neededResToBuild))
 			{
 				buildMode = false;
@@ -819,7 +819,7 @@ void World::Draw(Graphics& gfx) const
 					{
 						chunks(curChunk).DrawSurfaceAt(curChunkPos, fcctPos.y, s.chunkSize.x / Settings::chunkHasNCells, 1.5f, resC->tC.frames.at(0).GetCurSurface(), gfx);
 					}
-					gfx.DrawRect(GetChunkRectDelta(Vei2(0,1)), Colors::Red);
+					//gfx.DrawRect(GetChunkRectDelta(Vei2(0,1)), Colors::Red);
 					break;
 				}
 			}

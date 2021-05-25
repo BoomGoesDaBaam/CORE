@@ -226,7 +226,7 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 		{
 			if (i == 14)
 			{
-				fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((int)((floor((float)0 / 8)) * 255), 122 + f * 51 + (0 % 8) * 255), 254, 50)));
+			
 			}
 			else
 			{

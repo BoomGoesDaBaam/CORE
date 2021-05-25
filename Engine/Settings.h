@@ -122,6 +122,8 @@ namespace Settings
 	const std::string lang_productions[] = { "Productions", "Produktionen" };
 	const std::string lang_agility[] = { "Agility", "Beweglichkeit" };
 	const std::string lang_decoration[] = { "Decoration", "Dekoration" };
+	const std::string lang_back[] = { "back", "Zurueck" };
+	const std::string lang_build[] = { "build", "bauen" };
 
 	const std::string lang_constructionMaterials[] = { "Construction materials", "Baumaterialien" };
 	const std::string lang_resources[] = { "Resources", "Rohstoffe" };

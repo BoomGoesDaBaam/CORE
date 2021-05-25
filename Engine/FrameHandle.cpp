@@ -12,9 +12,9 @@ Text::Text(std::string text, RectF pos, int size, Font* f, Color c, std::vector<
 	this->text = text;
 	this->c = c;
 }
-Button::Button(RectF pos, Animation* a, Animation* aHover, std::vector<int> activInStates, Component* parentC, std::queue<FrameEvent>* buffer)
+Button::Button(RectF pos, Animation* a, Animation* aHover, std::vector<int> activInStates,Font* f, Component* parentC, std::queue<FrameEvent>* buffer)
 	:
-	Component(pos, parentC, buffer)
+	Text("",pos, 10,f,Colors::Black,activInStates, parentC,0, buffer)
 {
 	this->a = a;
 	this->aHover = aHover;
@@ -78,7 +78,7 @@ PageFrame::PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, i
 	{
 		activOnPagesL.push_back(1);
 	}
-	Button* b1 = AddButton(RectF(Vec2(5, 18), 34, 9), &resC->tC.buttons[0], &resC->tC.buttons[1], "b_left",a, activOnPagesL);
+	Button* b1 = AddButton(RectF(Vec2(5, 18), 34, 9), &resC->tC.buttons[0], &resC->tC.buttons[1], "b_left", &resC->tC.fonts[0],a, activOnPagesL);
 	b1->bFunc = B1;
 	std::vector<int> activOnPagesR;
 	for (int i = 0; i < nPages - 1; i++)
@@ -86,7 +86,7 @@ PageFrame::PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, i
 		activOnPagesR.push_back(1);
 	}
 	activOnPagesR.push_back(0);
-	Button* b2 = AddButton(RectF(Vec2(99, 18), 34, 9), &resC->tC.buttons[2], &resC->tC.buttons[3], "b_right",a, activOnPagesR);
+	Button* b2 = AddButton(RectF(Vec2(99, 18), 34, 9), &resC->tC.buttons[2], &resC->tC.buttons[3], "b_right", &resC->tC.fonts[0],a, activOnPagesR);
 	b2->bFunc = B2;
 }
 

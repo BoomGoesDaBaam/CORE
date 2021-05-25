@@ -147,6 +147,7 @@ void Game::ComposeFrame()
 
 	}
 	igwH.Draw(gfx);
+	gfx.DrawSurface(RectI(Vei2(0, 0), 100, 50), resC->tC.fields[14].GetCurSurface(), SpriteEffect::Nothing());
 }
 //Handle
 void Game::HandleMouseInput(Mouse::Event& e)

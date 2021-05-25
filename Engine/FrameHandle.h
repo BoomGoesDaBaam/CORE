@@ -141,18 +141,34 @@ public:
 	{
 		if (textLoc == 0)
 		{
-			RectF drawPos = parentC->GetPos() + pos.GetCenter();
+			RectF drawPos;
+			if (parentC == nullptr)
+			{
+				drawPos = GetPos() + (Vec2)(pos.GetSize() / 2);
+			}
+			else
+			{
+				drawPos = parentC->GetPos() + pos.GetCenter();
+			}
 			f->DrawTextCentered(text, drawPos.GetTopLeft<int>(), size, c);
 		}
 		else if (textLoc == 1)
 		{
-			RectF drawPos = parentC->GetPos() + pos.GetTopLeft<float>();
+			RectF drawPos;
+			if (parentC == nullptr)
+			{
+				drawPos = GetPos();
+			}
+			else
+			{
+				drawPos = parentC->GetPos() + pos.GetTopLeft<float>();
+			}
 			f->DrawText(text, (int)(drawPos.left), (int)(drawPos.top), size, c);
 		}
 		//gfx.DrawRect(GetPos(), Colors::Red);
 	}
 };
-class Button : public Component
+class Button : public Text
 {
 protected:
 	Animation* a = nullptr;
@@ -178,7 +194,7 @@ public:
 	PageFrame* ppF = nullptr;
 	//Frame* pF = nullptr;
 
-	Button(RectF pos, Animation* a, Animation* aHover, std::vector<int> activInStates, Component* parentC, std::queue<FrameEvent>* buffer);
+	Button(RectF pos, Animation* a, Animation* aHover, std::vector<int> activInStates, Font* f, Component* parentC, std::queue<FrameEvent>* buffer);
 	void Draw(Graphics& gfx) override
 	{
 		if (mouseHovers)
@@ -189,6 +205,7 @@ public:
 		{
 			gfx.DrawSurface((RectI)GetPos(), a->GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 		}
+		Text::Draw(gfx);
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
@@ -385,11 +402,11 @@ public:
 		comps[key] = std::make_unique<Text>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
 		return static_cast<Text*>(comps[key].get());
 	}
-	virtual Button* AddButton(RectF pos, Animation* a, Animation* aHover, std::string key, std::vector<int> activInStates = {})
+	virtual Button* AddButton(RectF pos, Animation* a, Animation* aHover, std::string key, Font* f, std::vector<int> activInStates = {})
 	{
 		activInStates = FillWith1WhenSize0(activInStates, nStates);
 		//assert(activInStates.size() == nStates);
-		comps[key] = std::make_unique<Button>(pos, a, aHover, activInStates, this, buffer);
+		comps[key] = std::make_unique<Button>(pos, a, aHover, activInStates,f, this, buffer);
 		return static_cast<Button*>(comps[key].get());
 	}
 	virtual Frame* AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {})
@@ -446,12 +463,12 @@ public:
 		compActivOnPages[key] = activOnPages;
 		return Frame::AddText(text, pos, size, f, c, key, activInStates, textLoc);
 	}
-	Button* AddButton(RectF pos, Animation* a, Animation* aHover, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
+	Button* AddButton(RectF pos, Animation* a, Animation* aHover, std::string key, Font* f, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
 	{
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
 		compActivOnPages[key] = activOnPages;
-		return Frame::AddButton(pos, a, aHover, key, activInStates);
+		return Frame::AddButton(pos, a, aHover, key, f, activInStates);
 	}
 	
 	Frame* AddFrame(RectF pos, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
@@ -832,7 +849,7 @@ public:
 			fUnity->SetState(1);
 			fUnity->SetVisible(false);
 
-			Button* b_setAttack = fUnity->AddButton(RectF(Vec2(30, 80), 60, 60), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_setAttack", a);
+			Button* b_setAttack = fUnity->AddButton(RectF(Vec2(30, 80), 60, 60), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_setAttack", &resC->tC.fonts[0], a);
 			b_setAttack->bFunc = BSetAttackMode;
 			b_setAttack->hitable = true;
 
@@ -841,11 +858,12 @@ public:
 			//fNextTurn->s = &resC->tC.windowsFrame[3].GetCurSurface();
 			//fNextTurn->bFunc = BNextTurn;
 
-			comps["b_NextTurn"] = std::make_unique<Button>(Button(RectF(Vec2(1120, 600), 120, 60), &resC->tC.windowsFrame[3], &resC->tC.windowsFrame[3], { 0,0 }, nullptr, &buffer));
+			comps["b_NextTurn"] = std::make_unique<Button>(Button(RectF(Vec2(1120, 600), 120, 60), &resC->tC.windowsFrame[3], &resC->tC.windowsFrame[3], { 0,0 }, &resC->tC.fonts[0], nullptr, &buffer));
 			static_cast<Button*>(comps["b_NextTurn"].get())->bFunc = BNextTurn;
 
-			comps["b_buildScene"] = std::make_unique<Button>(Button(RectF(Vec2(30, 30), 60, 30), &resC->tC.windowsFrame[4], &resC->tC.windowsFrame[4], { 0,0 }, nullptr, &buffer));
+			comps["b_buildScene"] = std::make_unique<Button>(Button(RectF(Vec2(30, 60), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], { 0,0 }, &resC->tC.fonts[0], nullptr, &buffer));
 			static_cast<Button*>(comps["b_buildScene"].get())->bFunc = BBuildMenu;
+			static_cast<Button*>(comps["b_buildScene"].get())->text = Settings::lang_build[Settings::lang];
 			/*
 			Frame* fButtonBuild = AddFrame(RectF(Vec2(30, 30), 60, 30), 1);																			//BUILD MENU BUTTON
 			fButtonBuild->s = &resC->tC.windowsFrame[4].GetCurSurface();
@@ -863,9 +881,10 @@ public:
 			fBuildSelection->GetComp("b_right")->pos = RectF(Vec2(Graphics::ScreenWidth - 125, 25), 100, 25);
 			fBuildSelection->AddText(Settings::lang_housing[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->tC.fonts[0], Colors::Black, "HousingH", { 1 }, { 1,0,0,0 });
 
-			Button* b_back = fBuildSelection->AddButton(RectF(Vec2(30, 60), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_buildback", { 1 }, { 1,0,0,0 });
+			Button* b_back = fBuildSelection->AddButton(RectF(Vec2(30, 60), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_buildback", &resC->tC.fonts[0], { 1 }, { 1,1,1,1 });
 			b_back->bFunc = BOpenGamefield;
-			
+			b_back->text = Settings::lang_back[Settings::lang];
+
 			CreateBuildOption(RectF(Vec2(60, 120), 180, 60), 0, fBuildSelection, { 1,0,0,0 },world);
 			CreateBuildOption(RectF(Vec2(60, 190), 180, 60), 2, fBuildSelection, { 1,0,0,0 }, world);
 			CreateBuildOption(RectF(Vec2(60, 260), 180, 60), 3, fBuildSelection, { 1,0,0,0 }, world);
