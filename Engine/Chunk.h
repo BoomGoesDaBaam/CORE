@@ -4,20 +4,35 @@
 #include "Rect.h"
 #include "GigaMath.h"
 #include "Team.h"
+#include <memory>
 class Obstacle
 {
 protected:
 	sharedResC resC;
 public:
-	Vei2 tilePos;						//pos in chunk		Vei2(-1,-1) == disabled
-	Vei2 chunkPos;
-	int type, state = 0;
+	Vei2 tilePos=Vei2(-1,-1);						//pos in chunk		Vei2(-1,-1) == disabled
+	Vei2 chunkPos=Vei2(-1,-1);
+	int type=-1, state = 0;
 	int n90rot = 0;
 	int hp=50;
 	int stepsLeft = 0;
 	Team* team = nullptr;
 	RectF rect = RectF(Vec2(0,0),0,0);
 	std::vector<Animation> animations;	//index runs through states
+	/*
+	Obstacle() {}
+	Obstacle(Obstacle& obst) {}
+	Obstacle(Obstacle&& obst) {}
+	Obstacle& operator=(Obstacle& other)
+	{
+		return *this;
+	}
+	Obstacle& operator=(Obstacle&& other) {
+
+		return *this;
+	}
+	Obstacle::~Obstacle() {};
+	*/
 	Obstacle(Vei2 tilePos, Vei2 chunkPos, int type, sharedResC resC, Team* team = nullptr)
 		:
 		tilePos(tilePos),
@@ -25,9 +40,9 @@ public:
 		type(type),
 		resC(std::move(resC)),
 		team(team),
-		stepsLeft(Settings::obstacleMovesPerTurn[type])
+		stepsLeft(Settings::obstacleStats[type].movesPerTurn)
 	{
-		hp = Settings::obstacleBaseHP[type];
+		hp = Settings::obstacleStats[type].baseHp;
 		animations.push_back(Animation(this->resC->tC.obstacles[type]));
 		switch (type)
 		{
@@ -46,6 +61,18 @@ public:
 			//animation.SetTimePassed(animation.GetKeepTime()*((float)rr.Calc(100)/100));
 		}
 	}
+	void Heal(int deltaHP)
+	{
+		if (hp < Settings::obstacleStats[type].baseHp)
+		{
+			hp += deltaHP;
+			if (hp > Settings::obstacleStats[type].baseHp)
+			{
+				hp += Settings::obstacleStats[type].baseHp;
+			}
+		}
+
+	}
 	void Draw(Graphics& gfx)const			//	'tileRect' = Rect of tile where (Vei2(0, -1) && Vei2(-1, 0) != index) == true
 	{
 		if (state == 0)
@@ -62,16 +89,16 @@ public:
 		if (state == 0)
 		{
 			Vec2 tileSize = Vec2(tileRect.GetWidth(), tileRect.GetHeight());
-			tileRect.right += tileSize.x * (Settings::obstacleSizes[type].x - 1);
-			tileRect.top -= tileSize.y * (Settings::obstacleSizes[type].y - 1);
+			tileRect.right += tileSize.x * (Settings::obstacleStats[type].size[0].x - 1);
+			tileRect.top -= tileSize.y * (Settings::obstacleStats[type].size[0].y - 1);
 			rect = tileRect;
 		}
 		else
 		{
 			Vec2 tileSize = Vec2(tileRect.GetWidth(), tileRect.GetHeight());
 			int multiObstIndex = Settings::Obstacle2MultiObstacle(type);
-			tileRect += Vec2(Settings::multiObstaclePos[multiObstIndex].x * tileSize.x, -Settings::multiObstaclePos[multiObstIndex].y * tileSize.y);
-			Vei2 size = Settings::multiObstacleSize[multiObstIndex][(__int64)state - 1];
+			tileRect += Vec2(Settings::obstacleStats[type].obstacleStartPos[state].x * tileSize.x, -Settings::obstacleStats[type].obstacleStartPos[state].y * tileSize.y);
+			Vei2 size = Settings::obstacleStats[type].size[state];
 			tileRect.right += tileSize.x * (size.x - 1);
 			tileRect.top -= tileSize.y * (size.y - 1);
 			rect = tileRect;
@@ -98,9 +125,38 @@ public:
 	}
 	int GetDmg()
 	{
-		return Settings::obstacleAttackDmg[type];
+		return Settings::obstacleStats[type].attackDmg;
+	}
+	virtual void Poop() {}
+};
+
+class ConstructionSite : public Obstacle
+{
+	int turnsLeft, typeWhenFinished;
+public:
+	ConstructionSite(int turnsLeft, int typeWhenFinished, Vei2 tilePos, Vei2 chunkPos, int type, sharedResC resC, Team* team = nullptr)
+		:
+		Obstacle( tilePos, chunkPos, type, resC, team),
+		turnsLeft(turnsLeft),
+		typeWhenFinished(typeWhenFinished)
+	{
+
+	}
+	virtual void Poop()override {}
+	void TurnPassed()
+	{
+		turnsLeft--;
+	}
+	bool BuildingFinished()
+	{
+		return turnsLeft <= 0;
+	}
+	int GetTypeWhenFinished()
+	{
+		return typeWhenFinished;
 	}
 };
+
 class Cell
 {
 public:
@@ -113,7 +169,6 @@ public:
 		return type;
 	}
 };
-
 class Chunk
 {
 	sharedResC resC = nullptr;
@@ -128,12 +183,12 @@ class Chunk
 	Matrix<int> groundedMap;				// '0' = spot is not grounded, '1' = is grounded, '-1' = not identified yet (will be 0 if not changed), '2' = hill
 	Matrix<Matrix<int>> aMats;
 	Matrix<int> obstacleMap;				// '-1' = empty   val > -1 = index of obstacle in obstacleVec
-	std::vector<Obstacle> obstacles;
+	std::vector<std::unique_ptr<Obstacle>> obstacles;
 	std::vector<int> obstaclesIndexNotUsed;
 	Surface surf_typesAndObstacles;
-	int graphicsWidth = 0;
-	int graphicsUpToDate = 0;				// 0 = nothing		1 = types drawn		2 = obstacles + types
-
+	//int graphicsWidth = 0;
+	//int graphicsUpToDate = 0;				// 0 = nothing		1 = types drawn		2 = obstacles + types
+	//new values have to be added in copy assignment!!!
 
 	void SetTilesAT(Vei2 pos, int value);
 	void SetTilesAT(Vei2 pos, Matrix<int> matrix);
@@ -147,6 +202,7 @@ class Chunk
 	{
 		return chunks->GetSize() * cells.GetSize() * Settings::CellSplitUpIn;
 	}
+	void CastHeal(CtPos pos, int deltaHP, int radius);
 public:
 	Chunk() = default;
 	Chunk(int hasNCells, Cell defVal, Matrix<Chunk>* chunks, sharedResC resC)
@@ -160,8 +216,38 @@ public:
 		conMap.clear();
 		for (int i = 0; i < Settings::nDiffFieldTypes; i++)
 		{
-			conMap.push_back(Matrix<int>(hasNCells, hasNCells, 0));
+			conMap.emplace_back(Matrix<int>(hasNCells, hasNCells, 0));
 		}
+	}
+	Chunk(const Chunk& other)	//needed because unique_ptr cant be copied 
+	{
+		*this = other;
+	}
+	Chunk& operator=(const Chunk& other)//needed because unique_ptr cant be copied 
+	{
+		
+		resC = std::move(other.resC);
+		hasNCells = other.hasNCells;
+		cells = other.cells;
+		cellsRect = other.cellsRect;
+		tilesRect = other.tilesRect;
+
+		chunks = other.chunks;
+		chunkPos = other.chunkPos;
+		conMap = other.conMap;
+		groundedMap = other.groundedMap;
+		aMats = other.aMats;
+		obstacleMap = other.obstacleMap;
+		obstaclesIndexNotUsed = other.obstaclesIndexNotUsed;
+		surf_typesAndObstacles = other.surf_typesAndObstacles;
+		
+
+		obstacles.clear();
+		for (int i = 0; i < other.obstacles.size(); i++)
+		{
+			obstacles.push_back(std::make_unique<Obstacle>(*other.obstacles[i].get()));
+		}
+		return *this;
 	}
 	/*
 	bool GenerateObstacleAt(Vei2 tilePos, int type, int ontoCellType = -1, int ontoGroundedTile = -1, int ontoObstacle = -1, int surrByCellType = -1, int surrByGroundedTile = -1, int surrByObstacle = -1)
@@ -250,14 +336,10 @@ public:
 	void UpdateAroundMatrix(Matrix<int> mat);
 	void UpdateGroundedMap();
 	void Update(float dt);
-	int NeedGraphicsUpdate(Vei2 chunkSize);
-	void UpdateGraphics();
 	void UpdateWhenMoved(RectF chunkRect);
 	bool UnitIsAround(Vei2 tilePos, int range);
-	CtPos PutCtPosInWorld(CtPos ctPos, Vei2 worldHasNChunks);
 
-	bool PlaceObstacle(Vei2 tilePos, int type, Team* team = nullptr);
-	bool Chunk::PlaceObstacle(Vei2 tilePos, Obstacle o);
+	bool Chunk::PlaceObstacle(Vei2 tilePos, Obstacle* o);
 	bool TileIsInChunk(Vei2& pos)const;
 	Vei2 PutTileInChunk(Vei2 pos)const;
 	Vei2 PutTileInChunk(int x, int y)const;
@@ -268,7 +350,8 @@ public:
 	int GetObstacleTypeOutOfBounds(Vei2 tilePos) const;
 	Obstacle* GetObstacleOutOfBounds(Vei2 tilePos) const;
 	void SetTypeAt(Vei2 pos, int type);
-	void NextTurn(Team* natur);
+	void NextTurn(std::map<std::string, Team*> teams);
+	void ApplyObstacleEffect(Obstacle* obstacle);
 	void AttackTile(CctPos pos, Obstacle* attacker);
 
 	void SetConMapAt(Vei2 pos, int type, bool value);
@@ -280,7 +363,14 @@ public:
 	void SetChunkPos(Vei2 pos);
 	void PlaceLadderableTiles(int type);
 	Cell& GetCellAt(Vei2 cellPos);
-
+	static CtPos CctPos2CtPos(const CctPos& cctPos)
+	{
+		return CtPos(cctPos.x, cctPos.y * Settings::CellSplitUpIn + cctPos.z);
+	}
+	static CctPos CtPos2CctPos(const CtPos& ctPos)
+	{
+		return CctPos(ctPos.x, ctPos.y / Settings::CellSplitUpIn, ctPos.y % Settings::CellSplitUpIn);
+	}
 	static Vei2 PutChunkInWorld(Vei2 pos, Vei2 worldHasNChunks)
 	{
 		return PutChunkInWorld(pos.x, pos.y, worldHasNChunks);
@@ -326,6 +416,48 @@ public:
 			x -= wSizeInTiles.x;
 		}
 		return Vei2(x, y);
+	}
+	static CtPos Chunk::PutCtPosInWorld(CtPos ctPos, Vei2 worldHasNChunks)
+	{
+		//	tiles
+		while (ctPos.y.x < 0)
+		{
+			ctPos.y.x += Settings::chunkHasNTiles;
+			ctPos.x.x--;
+		}
+		while (ctPos.y.x >= Settings::chunkHasNTiles)
+		{
+			ctPos.y.x -= Settings::chunkHasNTiles;
+			ctPos.x.x++;
+		}
+		while (ctPos.y.y < 0)
+		{
+			ctPos.y.y += Settings::chunkHasNTiles;
+			ctPos.x.y--;
+		}
+		while (ctPos.y.y >= Settings::chunkHasNTiles)
+		{
+			ctPos.y.y -= Settings::chunkHasNTiles;
+			ctPos.x.y++;
+		}
+		//	chunks
+		while (ctPos.x.x < 0)
+		{
+			ctPos.x.x += worldHasNChunks.x;
+		}
+		while (ctPos.x.x >= worldHasNChunks.x)
+		{
+			ctPos.x.x -= worldHasNChunks.x;
+		}
+		while (ctPos.x.y < 0)
+		{
+			ctPos.x.y = 0;
+		}
+		while (ctPos.x.y >= worldHasNChunks.y)
+		{
+			ctPos.x.y = worldHasNChunks.y - 1;
+		}
+		return ctPos;
 	}
 };
 

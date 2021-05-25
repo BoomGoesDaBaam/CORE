@@ -38,13 +38,11 @@ public:
 	std::vector<SubAnimation> GetConnectionAnimationVec(int lookFor, bool masked = false, Matrix<int> aMat = Matrix<int>(3,3,0))const;
 	bool FIDF(int first, int second)const;
 };
-
 class ResourceCollection
 {
 public:
 	ResourceCollection(Graphics& gfx);
 	TexturesCollection tC;		//Texturenansammlung
 	FramesizeCollection fsC;	//Gives Framesizes for Frames for Drawing, wich need to be prescaled for performance
-
 };
 typedef std::shared_ptr<ResourceCollection> sharedResC;

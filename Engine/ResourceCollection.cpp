@@ -7,7 +7,7 @@ ResourceCollection::ResourceCollection(Graphics& gfx)
 	tC(gfx),
 	fsC(&tC)
 {
-	
+
 }
 
 //  ##### TEXTUREN #####
@@ -194,9 +194,9 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 		obstacles[48].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(471, 2649 + i * 17), 16, 16)));
 	}
 	obstacles.push_back(0.5f);//#49
-	obstacles[49].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(430, 2649), 40, 40)));
+	obstacles[49].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(488, 2649), 40, 40)));
 	obstacles.push_back(0.5f);//#50
-	obstacles[50].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(430, 2649), 40, 40)));
+	obstacles[50].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(529, 2649), 32, 32)));
 	//Buttons buttons
 	buttons.push_back(0.1f);
 	buttons[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(0, 0), 34, 9)));

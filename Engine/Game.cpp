@@ -32,6 +32,7 @@ Game::Game(MainWindow& wnd)
 	igwH(resC)
 
 {
+	igwH.LoadScene(0,curW.get());
 	//Settings::ReloadFile();
 
 	//AddScrollWindow(RectF(Vec2(50, 50), 50, 50), RectF(Vec2(110, 50), 10, 50));
@@ -57,7 +58,6 @@ void Game::Go()
 
 void Game::UpdateModel()
 {
-	
 	//OutputDebugStringW(L"I was here.");
 	float dt = 0.01f;
 	passedTime += 0.01f;
@@ -93,11 +93,12 @@ void Game::UpdateModel()
 
 	curW->UpdateGameLogic(dt);
 	curW->SetMoveMode(wnd.mouse.ShiftIsPressed());
-
-	if (curW->GetBuildMode() &&!curW->GetPlayer()->GetMaterials().Has(Settings::neededRes[curW->GetPlaceObstacle()]))
+	/*
+	if (curW->GetBuildMode() &&!curW->GetPlayer()->GetMaterials().Has(Settings::obstacleStats[curW->GetPlaceObstacle()].neededResToBuild))
 	{
 		curW->SetBuildMode(false);
 	}
+	*/
 }
 
 void Game::ComposeFrame()
@@ -157,10 +158,13 @@ void Game::HandleMouseInput(Mouse::Event& e)
 			igwH.HandleMouseInput(e);
 			return;
 		}
-		if (igwH.HandleMouseInput(e) && e.GetType() == Mouse::Event::Type::LPress)
+		if (igwH.HandleMouseInput(e))
 		{
-			ignoreMouse = true;
 			gH.Release();
+			if (e.GetType() == Mouse::Event::Type::LPress)
+			{
+				ignoreMouse = true;
+			}
 		}
 		else
 		{
@@ -176,20 +180,22 @@ void Game::HandleKeyboardInput(Keyboard::Event& e)
 }
 void Game::HandleFrameChanges()
 {
-	Obstacle* obstacle = curW->GetFocusedObstacle();
-	if (curW->UpdateUnitInfo() && obstacle != nullptr)
+	if (igwH.GetCurScene() == 0)
 	{
-		igwH.UpdateUnitinformation(curW->GetFocusedObstacle());
-		curW->UnitUpdated();
-	}
-	if (obstacle == nullptr || !Settings::anyOfUnit(curW->GetFocusedObstacle()->type))
-	{
-		igwH.HideUnitInfo();
-	}
-	if (curW->NeedToLoadBuildMenu())
-	{
-		igwH.BuildSelectionStarted();
-		curW->BuildMenuLoaded();
+		Obstacle* obstacle = curW->GetFocusedObstacle();
+		if (curW->UpdateUnitInfo() && obstacle != nullptr)
+		{
+			igwH.UpdateUnitinformation(curW->GetFocusedObstacle());
+			curW->UnitUpdated();
+		}
+		if (obstacle == nullptr || !Settings::anyOfUnit(curW->GetFocusedObstacle()->type))
+		{
+			igwH.HideUnitInfo();
+		}
+		if (curW->NeedToLoadBuildMenu())
+		{
+			//curW->BuildMenuLoaded();
+		}
 	}
 }
 void Game::HandleFrameLogic(FrameEvent& e)
@@ -209,10 +215,10 @@ void Game::HandleFrameLogic(FrameEvent& e)
 		}
 		if (e.GetAction() == "enable buildmode")
 		{
-			if (curW->GetPlayer()->GetMaterials().Has(Settings::neededRes[e.GetExtra()]))
+			if (curW->GetPlayer()->GetMaterials().Has(Settings::obstacleStats[e.GetExtra()].neededResToBuild))
 			{
 				curW->SetBuildMode(e.GetExtra());
-				igwH.OpenGamefield();
+				igwH.LoadScene(0,curW.get());
 			}
 		}
 		if (e.GetAction() == "next turn")
@@ -223,13 +229,9 @@ void Game::HandleFrameLogic(FrameEvent& e)
 				igwH.UpdateUnitinformation(curW->GetFocusedObstacle());
 			}
 		}
-		if (e.GetAction() == "load buildmenu")
+		if (e.GetAction() == "load scene")
 		{
-			igwH.BuildSelectionStarted();
-		}
-		if (e.GetAction() == "exit currentView")
-		{
-			igwH.OpenGamefield();
+			igwH.LoadScene(e.GetExtra(), curW.get());
 		}
 		if (e.GetAction() == "set attackMode")
 		{

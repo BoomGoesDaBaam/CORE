@@ -16,7 +16,7 @@ namespace Settings
 			1 = tree		(mo #1)					
 			2 = bonfire						
 			3 = townhall			
-			4= other tree			
+			4 = other tree			
 			5 = cactus
 			6 = box
 			7 = stone
@@ -91,7 +91,7 @@ namespace Settings
 	//	'const'		= generated in runtime
 
 	static constexpr int nDiffFieldTypes = 15;										//Array Nullterminator == -1
-	static constexpr int nDiffObstackes = 11;
+	static constexpr int nDiffObstacles = 51;
 	static constexpr int nDiffWindows = 1;
 	static constexpr int typeLayer[] = { 6,0,8,14,4,3,9,1,5,7,2,13,12,10,11,-1 };		//Orden in wich the connections are drawn
 	static constexpr int hillTypesARE[] = { 11,10,12,-1 };
@@ -101,65 +101,15 @@ namespace Settings
 	static constexpr int CellSplitUpIn = 25;										//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
 	static constexpr int chunkHasNCells = 5;
 	static constexpr int chunkHasNTiles = chunkHasNCells * CellSplitUpIn;
-
-	static const int obstacleStates[] = { 1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-										1,1,1,1,1,1,
-										1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};//[27-50]
-	static const Vei2 obstacleSizes[] = { Vei2(2,2), Vei2(1,1), Vei2(1,1), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(2,2), Vei2(4,4), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1), Vei2(1,1),
-										Vei2(3,3),Vei2(3,3), Vei2(4,4), Vei2(4,4), Vei2(4,4), Vei2(5,5),
-										Vei2(4,4), Vei2(3,3), Vei2(4,4), Vei2(3,3), Vei2(5,5), Vei2(3,3), Vei2(5,5), Vei2(3,3), Vei2(5,5), Vei2(5,5),//[27-36]
-										Vei2(4,4), Vei2(5,5), Vei2(4,4), Vei2(3,3), Vei2(3,3), Vei2(5,5), Vei2(1,1), Vei2(2,2), Vei2(3,3), Vei2(4,4),//[37-46]
-										Vei2(5,5), Vei2(2,2), Vei2(5,5), Vei2(4,4) };//[47-50]
-
-	static const int obstacleBaseHP[] = { 20,20,20, 100, 20, 10, 5, 100, 20, 100, 50, 10,10,10,25,10,5,10,5,1,25, 
-										10,30,200,150,100,80,
-										80,80,80,80,80,80,80,80,80,80,//[27-36]
-										80,80,80,80,80,80,80,80,80,80,//[37-46]
-										80,80,80,80 };//[47-50]
-	static const int obstacleMovesPerTurn[] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,10,10,10,10,10,10,5,10,10,30,15 
-												-1,-1,-1,-1,-1,-1,
-												-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 ,//[27-36]
-												-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 //[37-46]
-												- 1,-1,-1,-1};//[47-50]
-	static const std::map<std::string, float> neededRes[] = { {{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"wood",10},{"sticks",5}},		{{"concrete",300},{"wood",200}},		{{"leather",50},{"sticks",30}},
-															{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
-															{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
-															{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},		{{"leather",50},{"sticks",30}},
-															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},
-															{{"concrete",500}},		{{"slate",100},{"bricks",200},{"concrete",200}},
-															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[27-31]
-															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[32-36]
-															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[37-41]
-															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[42-46]   
-															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[47-51]   
-
-	};
-	static const std::map<std::string, float> lootForDestroying[] = { {{"leather",25},{"sticks",15}},		{{"wood",200},{"sticks",50},{"leafes",2},{"apples",5}},		{{"wood",5},{"sticks",15}},		{{"concrete",150},{"wood",100}},		{{"wood",200},{"sticks",50},{"leafes",2},{"apples",5}},
-															{{"cactus",3}},		{{"iron",3},{"gold",0.1}},		{{"stone",20},{"iron",0.5}},		{{"wood",150},{"sticks",30},{"leafes",2}},		{{"stone",40},{"iron",2},{"copper",1}},
-															{{"",50},{"",30}},		{{"leather",25},{"meat",20}},		{{"leather",25},{"meat",25}},		{{"leather",25},{"meat",10}},		{{"fur",25},{"meat",10}},
-															{{"wool",3},{"meat",10}},		{{"",50},{"meat",3}},		{{"meat",30},{"",30}},		{{"meat",20},{"",30}},		{{"meat",1},{"",30}},
-															{{"meat",1},{"",30}},		{{"snow",25},{"wood",10}},		{{"wood",350}},		{{"stone",200},{"wood",100}},		{{"bricks",100},{"wood",50},{"stone",50}},
-															{{"concrete",250}},		{{"slate",50},{"bricks",100},{"concrete",100}},
-															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[27-31]
-															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[32-36]
-															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[37-41]
-															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[42-46]   
-															{{"leather",50},{"sticks",30}},		{{"snow",50},{"wood",20}},		{{"wood",700}},		{{"stone",400},{"wood",200}},		{{"bricks",200},{"wood",100},{"stone",100}},//[47-51]  
-	};
-	static const int obstacleAttackRange[] = { 0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0 };
-	static const int obstacleAttackDmg[] = { 0,0,0,0,0,0,0,0,0,0,100,20,0,15,30,00,0,20,0,40,0,0,0,0,0,0 };
-	static const std::vector<Vei2> multiObstacleSize[] = { {Vei2(5,5)}, {Vei2(5,5)} };					//sizes of hidden frames
-	static const Vei2 multiObstaclePos[] = { Vei2(-2,-2), Vei2(-2,-2) };									//relativ pos of hidden frames in tiles
-
+	
 	//Graphic options
 	//static bool displayObstacles = true;
-
+	static int probToGrow = 20;
 	//Game options
 	static bool obstaclesOn = true;
 	static bool spawnObstacles = true;
 
 	static bool framesOn = true;
-
 
 	//
 	static int lang = 0;															//choosen language (0 = english, 1 = german)
@@ -178,6 +128,8 @@ namespace Settings
 	const std::string lang_materials[] = { "Materials", "Werkstoffe" };
 	const std::string lang_organic[] = { "Organic", "Oragnisches" };
 
+	const std::string lang_computer[] = { "computer", "computer" };
+	
 	const std::string lang_wood[] = { "wood", "Holz" };
 	const std::string lang_iron[] = { "iron", "Eisen" };
 	const std::string lang_sand[] = { "sand", "Sand" };
@@ -190,6 +142,8 @@ namespace Settings
 	const std::string lang_robin[] = { "robin", "Robin" };
 	const std::string lang_diamond[] = { "diamond", "Diamant" };
 	const std::string lang_amber[] = { "amber", "Bernstein" };
+	const std::string lang_silicon[] = { "silicon", "Silizium" };
+	const std::string lang_lithium[] = { "lithium", "Lithium" };
 
 	const std::string lang_steel[] = { "steel", "Stahl" };
 	const std::string lang_plastic[] = { "plastic", "Kunststoff" };
@@ -198,7 +152,8 @@ namespace Settings
 	const std::string lang_ceramics[] = { "ceramics", "Keramik" };
 	const std::string lang_bricks[] = { "bricks", "Ziegeln" };
 	const std::string lang_slate[] = { "slate", "schiefer" };
-
+	
+	const std::string lang_leafes[] = { "leafes", "Blaetter" };
 	const std::string lang_corals[] = { "corals", "Korallen" };
 	const std::string lang_sticks[] = { "sticks", "Stoecke" };
 	const std::string lang_leaves[] = { "leaves", "Blaetter" };
@@ -210,7 +165,8 @@ namespace Settings
 	const std::string lang_berrys[] = { "berrys", "Beeren" };
 	const std::string lang_apples[] = { "apples", "Aepfel" };
 	const std::string lang_cactus[] = { "cactus", "Kaktus" };
-
+	const std::string lang_feather[] = { "feather", "Feder" };
+	const std::string lang_sapling[] = { "sapling", "Setzling" };
 
 	const std::string lang_water[] = { "water", "Wasser" };
 	const std::string lang_plans[] = {"plans", "Ebene"};
@@ -243,6 +199,8 @@ namespace Settings
 	const std::string lang_box[] = { "box", "Box" };
 	const std::string lang_unit[] = { "unit", "Einheit" };
 	const std::string lang_worker[] = { "worker", "Arbeiter" };
+	const std::string lang_units[] = { "units", "Einheiten" };
+	const std::string lang_maxUnits[] = { "maxUnits", "MaxUnits" };
 
 	const std::string lang_unitName[] = { "Unit name", "Name der Einheit" };
 	const std::string lang_hp[] = { "Health points", "Lebenspunkte" };
@@ -295,7 +253,157 @@ namespace Settings
 
 
 	//
-
+	static std::string TranslateRessource(std::string ressource, int lang)
+	{
+		if (ressource == "computer")
+		{
+			return lang_computer[lang];
+		}
+		else if (ressource == "wood")
+		{
+			return lang_wood[lang];
+		}
+		else if (ressource == "iron")
+		{
+			return lang_iron[lang];
+		}
+		else if (ressource == "sand")
+		{
+			return lang_sand[lang];
+		}
+		else if (ressource == "stone")
+		{
+			return lang_stone[lang];
+		}
+		else if (ressource == "copper")
+		{
+			return lang_copper[lang];
+		}
+		else if (ressource == "gold")
+		{
+			return lang_gold[lang];
+		}
+		else if (ressource == "aluminum")
+		{
+			return lang_aluminum[lang];
+		}
+		else if (ressource == "emerald")
+		{
+			return lang_emerald[lang];
+		}
+		else if (ressource == "sapphire")
+		{
+			return lang_sapphire[lang];
+		}
+		else if (ressource == "robin")
+		{
+			return lang_robin[lang];
+		}
+		else if (ressource == "diamond")
+		{
+			return lang_diamond[lang];
+		}
+		else if (ressource == "amber")
+		{
+			return lang_amber[lang];
+		}
+		else if (ressource == "silicon")
+		{
+			return lang_silicon[lang];
+		}
+		else if (ressource == "lithium")
+		{
+			return lang_lithium[lang];
+		}
+		else if (ressource == "steel")
+		{
+			return lang_steel[lang];
+		}
+		else if (ressource == "plastic")
+		{
+			return lang_plastic[lang];
+		}
+		else if (ressource == "concrete")
+		{
+			return lang_concrete[lang];
+		}
+		else if (ressource == "glass")
+		{
+			return lang_glass[lang];
+		}
+		else if (ressource == "ceramics")
+		{
+			return lang_ceramics[lang];
+		}
+		else if (ressource == "snow")
+		{
+			return lang_snow[lang];
+		}
+		else if (ressource == "bricks")
+		{
+			return lang_bricks[lang];
+		}
+		else if (ressource == "slate")
+		{
+			return lang_slate[lang];
+		}
+		else if (ressource == "corals")
+		{
+			return lang_corals[lang];
+		}
+		else if (ressource == "sticks")
+		{
+			return lang_sticks[lang];
+		}
+		else if (ressource == "leafes")
+		{
+			return lang_leafes[lang];
+		}
+		else if (ressource == "wool")
+		{
+			return lang_wool[lang];
+		}
+		else if (ressource == "leather")
+		{
+		return lang_leather[lang];
+		}
+		else if (ressource == "fur")
+		{
+		return lang_fur[lang];
+		}
+		else if (ressource == "meat")
+		{
+		return lang_meat[lang];
+		}
+		else if (ressource == "fish")
+		{
+		return lang_fish[lang];
+		}
+		else if (ressource == "berrys")
+		{
+		return lang_berrys[lang];
+		}
+		else if (ressource == "apples")
+		{
+		return lang_apples[lang];
+		}
+		else if (ressource == "cactus")
+		{
+		return lang_cactus[lang];
+		}
+		else if (ressource == "sapling")
+		{
+		return lang_sapling[lang];
+		}
+		else if (ressource == "feather")
+		{
+		return lang_feather[lang];
+		}
+		else
+		{
+		return "ERROR:"+ressource + " not supported in Method TranslateRessources!";
+		}
+	}
 
 	static constexpr float percentForGrab[] = { 0.05f, 0.05f };
 	static bool anyOfUnit(int type)
@@ -655,4 +763,244 @@ namespace Settings
 		}
 		return lang_unknown[lang];
 	}
+	struct ObstacleStats
+	{
+		ObstacleStats(int nStates, std::vector<Vei2> size, int baseHp, int movesPerTurn,
+			int attackRange, int attackDmg, int constructionTime,
+			std::map<std::string, float> neededResToBuild,
+			std::map<std::string, float> lootForDestroying,
+			std::vector<Vei2> obstacleStartPos = { Vei2(0,0) })
+			:
+			nStates(nStates),
+			size(size),
+			movesPerTurn(movesPerTurn),
+			attackRange(attackRange),
+			attackDmg(attackDmg),
+			constructionTime(constructionTime),
+			neededResToBuild(neededResToBuild),
+			lootForDestroying(lootForDestroying),
+			obstacleStartPos(obstacleStartPos)
+		{}
+
+		int nStates = 1;
+		int baseHp = 50;
+		int movesPerTurn = 10;
+		int attackRange = 1;
+		int attackDmg = 10;
+		int constructionTime = 10;
+		std::vector<Vei2> size = {};
+		std::vector<Vei2> obstacleStartPos = { Vei2(0,0) };
+		std::map<std::string, float> neededResToBuild = { {"leather",50},{"sticks",30} };
+		std::map<std::string, float> lootForDestroying = { {"leather",25},{"sticks",15} };
+	};
+
+	static const ObstacleStats obstacleStats[] =
+	{ 
+		ObstacleStats(				//#0
+		1,{Vei2(2,2)},100,-1,0,0,1,
+		{{"leather",50},{"sticks",30}},
+		{{"leather",25},{"sticks",15}}),
+		ObstacleStats(				//#1
+		2,{Vei2(1,1),Vei2(5,5)},100,-1,0,0,1,
+		{{"sapling",1}},
+		{{"wood",200},{"sticks",50},{"leafes",2},{"apples",5}},
+		{Vei2(0,0),Vei2(-2,-2) }),
+		ObstacleStats(				//#2
+		1,{Vei2(1,1)},100,-1,0,0,1,
+		{{"wood",10},{"sticks",30}},
+		{{"wood",5},{"sticks",15}}),
+		ObstacleStats(				//#3
+		1,{Vei2(4,4)},100,-1,0,0,3,
+		{{"stone",60},{"wood",100}},
+		{{"stone",30},{"wood",15}}),
+		ObstacleStats(				//#4
+		2,{Vei2(1,1),Vei2(5,5)},100,-1,0,0,1,
+		{{"sapling",1}},
+		{{"wood",200},{"sticks",50},{"leafes",2},{"apples",5}},
+		{Vei2(0,0),Vei2(-2,-2) }),
+		ObstacleStats(				//#5
+		1,{Vei2(1,1)},100,-1,0,0,1,
+		{{"cactus",6}},
+		{{"cactus",3}}),
+		ObstacleStats(				//#6
+		1,{Vei2(1,1)},100,-1,0,0,1,
+		{},
+		{{"iron",3},{"gold",0.1}}),
+		ObstacleStats(				//#7
+		1,{Vei2(1,1)},100,-1,0,0,1,
+		{{"stone",60}},
+		{{"stone",20},{"iron",0.5}}),
+		ObstacleStats(				//#8
+		1,{Vei2(2,2)},100,-1,0,0,1,
+		{{"sapling",1}},
+		{{"wood",150},{"sticks",30},{"leafes",2}}),
+		ObstacleStats(				//#9
+		1,{Vei2(4,4)},100,-1,0,0,3,
+		{{"stone",80}},
+		{{"stone",40},{"iron",2},{"copper",1}}),
+		ObstacleStats(				//#10
+		1,{Vei2(1,1)},100,10,1,20,0,
+		{},
+		{}),
+		ObstacleStats(				//#11
+		1,{Vei2(1,1)},100,10,1,20,0,
+		{},
+		{{"leather",25},{"meat",20}}),
+		ObstacleStats(				//#12
+		1,{Vei2(1,1)},100,10,1,20,0,
+		{},
+		{{"leather",25},{"meat",20}}),
+		ObstacleStats(				//#13
+		1,{Vei2(1,1)},100,10,1,20,0,
+		{},
+		{{"leather",25},{"meat",20}}),
+		ObstacleStats(				//#14
+		1,{Vei2(1,1)},100,10,1,20,0,
+		{},
+		{{"fur",25},{"meat",20}}),
+		ObstacleStats(				//#15
+		1,{Vei2(1,1)},100,10,1,20,0,
+		{},
+		{{"wool",3},{"meat",10}}),
+		ObstacleStats(				//#16
+		1,{Vei2(1,1)},100,10,1,20,0,
+		{},
+		{{"feather",1},{"meat",20}}),
+		ObstacleStats(				//#17
+		1,{Vei2(1,1)},100,10,1,20,0,
+		{},
+		{{"meat",20}}),
+		ObstacleStats(				//#18
+		1,{Vei2(1,1)},100,10,1,20,0,
+		{},
+		{{"feather",1},{"meat",20}}),
+		ObstacleStats(				//#19
+		1,{Vei2(1,1)},100,10,1,20,0,
+		{},
+		{{"meat",20}}),
+		ObstacleStats(				//#20
+		1,{Vei2(1,1)},100,10,1,20,0,
+		{},
+		{{"meat",20}}),
+		ObstacleStats(				//#21
+		1,{Vei2(3,3)},100,-1,0,0,3,
+		{{"snow",50},{"wood",20}},
+		{{"snow",25},{"wood",10}}),
+		ObstacleStats(				//#22
+		1,{Vei2(3,3)},100,-1,0,0,4,
+		{{"wood",700}},
+		{{"wood",350}}),
+		ObstacleStats(				//#23
+		1,{Vei2(4,4)},100,-1,0,0,4,
+		{{"stone",400},{"wood",200}},
+		{{"stone",200},{"wood",100}}),
+		ObstacleStats(				//#24
+		1,{Vei2(4,4)},100,-1,0,0,4,
+		{{"bricks",200},{"wood",100},{"stone",100}},
+		{{"bricks",100},{"wood",50},{"stone",50} }),
+		ObstacleStats(				//#25
+		1,{Vei2(4,4)},100,-1,0,0,6,
+		{{"concrete",500} },
+		{{"concrete",250} }),
+		ObstacleStats(				//#26
+		1,{Vei2(5,5)},100,-1,0,0,6,
+		{{"slate",100},{"bricks",200},{"concrete",200} },
+		{{"slate",50},{"bricks",100},{"concrete",100} }),
+		ObstacleStats(				//#27
+		1,{Vei2(4,4)},100,-1,0,0,3,
+		{{"wood",100}},
+		{{"wood",50}}),
+		ObstacleStats(				//#28
+		1,{Vei2(3,3)},100,-1,0,0,3,
+		{{"sapling",50},{"wood",50},{"stone",50} },
+		{{"sapling",25},{"wood",25},{"stone",25} }),
+		ObstacleStats(				//#29
+		1,{Vei2(4,4)},100,-1,0,0,3,
+		{{"wood",50},{"stone",30}},
+		{ {"wood",25},{"stone",25} }),
+		ObstacleStats(				//#30
+		1,{Vei2(3,3)},100,-1,0,0,3,
+		{{"iron",10},{"stone",100},{"sticks",30}},
+		{ {"iron",5},{"stone",50},{"sticks",15} }),
+		ObstacleStats(				//#31
+		1,{Vei2(5,5)},100,-1,0,0,6,
+		{ {"iron",5},{"wood",200},{"stone",130}},
+		{ {"iron",2.5},{"wood",100},{"stone",65} }),
+		ObstacleStats(				//#32
+		1,{Vei2(3,3)},100,-1,0,0,3,
+		{{"wood",100},{"feather",2}},
+		{{"wood",50},{"feather",1}}),
+		ObstacleStats(				//#33
+		1,{Vei2(5,5)},100,-1,0,0,6,
+		{{"stone",100},{"wood",200},{"concrete",80} },
+		{{"stone",50},{"wood",100},{"concrete",40} }),
+		ObstacleStats(				//#34
+		1,{Vei2(3,3)},100,-1,0,0,3,
+		{{"steel",50},{"wood",150}},
+		{{"steel",25},{"wood",75}}),
+		ObstacleStats(				//#35
+		1,{Vei2(5,5)},100,-1,0,0,6,
+		{{"steel",50},{"stone",150}},
+		{{"steel",25},{"stone",75}}),
+		ObstacleStats(				//#36
+		1,{Vei2(5,5)},100,-1,0,0,3,
+		{{"steel",50},{"iron",30},{"stone",100} },
+		{{"steel",25},{"iron",15},{"stone",50} }),
+		ObstacleStats(				//#37
+		1,{Vei2(4,4)},100,-1,0,0,6,
+		{{"steel",100},{"stone",100}},
+		{{"steel",50},{"stone",75}}),
+		ObstacleStats(				//#38
+		1,{Vei2(5,5)},100,-1,0,0,3,
+		{{"steel",50},{"iron",30},{"stone",100} },
+		{{"steel",25},{"iron",15},{"stone",50} }),
+		ObstacleStats(				//#39
+		1,{Vei2(4,4)},100,-1,0,0,6,
+		{{"steel",50},{"iron",30},{"stone",150} },
+		{{"steel",25},{"iron",15},{"stone",75} }),
+		ObstacleStats(				//#40
+		1,{Vei2(3,3)},100,-1,0,0,3,
+		{{"silicon",50},{"plastic",30}, {"copper",3}},
+		{{"silicon",25},{"plastic",15}, {"copper",1.5} }),
+		ObstacleStats(				//#41
+		1,{Vei2(3,3)},100,-1,0,0,3,
+		{{"iron",50},{"plastic",30}, {"copper",3} },
+		{{"iron",25},{"plastic",15}, {"copper",3} }),
+		ObstacleStats(				//#42
+		1,{Vei2(5,5)},100,-1,0,0,6,
+		{{"concrete",250},{"computer",30}},
+		{{"concrete",125},{"computer",15}}),
+		ObstacleStats(				//#43
+		1,{Vei2(1,1)},100,-1,0,0,0,
+		{},
+		{}),
+		ObstacleStats(				//#44
+		1,{Vei2(2,2)},100,-1,0,0,0,
+		{},
+		{}),
+		ObstacleStats(				//#45
+		1,{Vei2(3,3)},100,-1,0,0,0,
+		{},
+		{}),
+		ObstacleStats(				//#46
+		1,{Vei2(4,4)},100,-1,0,0,0,
+		{},
+		{}),
+		ObstacleStats(				//#47
+		1,{Vei2(5,5)},100,-1,0,0,0,
+		{},
+		{}),
+		ObstacleStats(				//#48
+		1,{Vei2(2,2)},100,-1,0,0,3,
+		{{"lithium",50},{"copper",30},{"concrete",30} },
+		{{"lithium",25},{"copper",15},{"concrete",15} }),
+		ObstacleStats(				//#49
+		1,{Vei2(5,5)},100,-1,0,0,6,
+		{{"concrete",250},{"computer",30} },
+		{{"concrete",125},{"computer",15} }),
+		ObstacleStats(				//#50
+		1,{Vei2(4,4)},100,-1,0,0,3,
+		{{"stone",200},{"wood",200}},
+		{{"stone",100},{"wood",100}})
+	};
 };

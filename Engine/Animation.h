@@ -95,9 +95,9 @@ public:
 		:
 		a(a),
 		sourceR(sourceR),
-		posIn50x50grit(posIn50x50grit)
+		posIn50x50grit(posIn50x50grit),
+		chromaM(GetPosOfChroma())
 	{
-		chromaM = GetPosOfChroma();
 	}
 	SubAnimation() = delete;
 	Matrix<int> GetPosOfChroma(Color chroma = Colors::Magenta)		// 1 = every animation surface has none chroma at (x,y)			0 = at least one animation surface has chroma at (x,y)

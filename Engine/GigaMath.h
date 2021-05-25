@@ -72,6 +72,7 @@ namespace GigaMath
 	{
 		return Vec2_<T>(NegMod(x.x, divisor), NegMod(x.y, divisor));
 	}
+	
 	template <typename T>
 	Vec2_<T> GetRandomPointOnUnitCircle()
 	{
@@ -81,5 +82,6 @@ namespace GigaMath
 		auto a = RotPointToOrigin(point.x, point.y, rad);
 		return Vec2_<T>(a.first, a.second);
 	}
+	
 }
 namespace GiMa = GigaMath;

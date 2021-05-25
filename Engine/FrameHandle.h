@@ -95,6 +95,7 @@ public:
 		}
 		return pos + parentC->GetPos().GetTopLeft<float>(); }
 	RectF pos;
+	int extra = 0;
 	Color c = Colors::Black;
 	std::vector<int> activInStates;
 	std::string text = "no title";
@@ -156,7 +157,6 @@ class Button : public Component
 protected:
 	Animation* a = nullptr;
 	Animation* aHover = nullptr;
-
 	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)override
 	{
 		Component::HandleMouseInputFrame(e, interact);
@@ -183,11 +183,11 @@ public:
 	{
 		if (mouseHovers)
 		{
-			gfx.DrawSurface((RectI)GetPos(), aHover->GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.6f));
+			gfx.DrawSurface((RectI)GetPos(), aHover->GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 		}
 		else
 		{
-			gfx.DrawSurface((RectI)GetPos(), a->GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta,0.6));
+			gfx.DrawSurface((RectI)GetPos(), a->GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 		}
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
@@ -392,7 +392,14 @@ public:
 		comps[key] = std::make_unique<Button>(pos, a, aHover, activInStates, this, buffer);
 		return static_cast<Button*>(comps[key].get());
 	}
-	
+	virtual Frame* AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {})
+	{
+		activInStates = FillWith1WhenSize0(activInStates, nStates);
+		//assert(activInStates.size() == nStates);
+		comps[key] = std::make_unique<Frame>(pos, type,resC,this, buffer);
+		comps[key]->activInStates = activInStates;
+		return static_cast<Frame*>(comps[key].get());
+	}
 	/*
 	virtual Composition* AddComposition(RectF pos, sharedResC resC, std::string key, std::vector<int> activInStates = {}, int type = 0)
 	{
@@ -446,6 +453,14 @@ public:
 		compActivOnPages[key] = activOnPages;
 		return Frame::AddButton(pos, a, aHover, key, activInStates);
 	}
+	
+	Frame* AddFrame(RectF pos, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
+	{
+		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
+		assert(activOnPages.size() == nPages);
+		compActivOnPages[key] = activOnPages;
+		return Frame::AddFrame(pos,type,resC,this,buffer, key, activInStates);
+	}
 	/*
 	Composition* AddComposition(RectF pos, sharedResC resC, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
 	{
@@ -482,16 +497,16 @@ public:
 			{
 				return true;
 			}
-			return HandleMouseInputFrame(e, interact);
+			return Frame::HandleMouseInputFrame(e, interact);
 		}
 		return false;
 	}
-	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)
-	{
-		return Frame::HandleMouseInputFrame(e, interact);
-	}
 	virtual bool HandleMouseInputComps(Mouse::Event& e, bool interact)
 	{
+		if (e.GetType() == Mouse::Event::LRelease)
+		{
+			int k = 23;
+		}
 		bool hitComp = false;
 		std::for_each(comps.begin(), comps.end(), [&](auto& comp)
 			{
@@ -523,6 +538,7 @@ public:
 	}
 	void AdjustArrowButtons()
 	{
+		/*
 		if (curPage == 0)
 		{
 			comps["b_left"]->SetVisible(false);
@@ -540,23 +556,14 @@ public:
 		{
 			comps["b_right"]->SetVisible(true);
 		}
+		*/
 	}
 };
 
 
 bool B1(std::queue<FrameEvent>* buffer, Component* caller);
 bool B2(std::queue<FrameEvent>* buffer, Component* caller);
-bool BBuildMode0(std::queue<FrameEvent>* buffer, Component* caller);
-bool BBuildMode2(std::queue<FrameEvent>* buffer, Component* caller);
-bool BBuildMode3(std::queue<FrameEvent>* buffer, Component* caller);
-bool BBuildMode21(std::queue<FrameEvent>* buffer, Component* caller);
-bool BBuildMode22(std::queue<FrameEvent>* buffer, Component* caller);
-bool BBuildMode23(std::queue<FrameEvent>* buffer, Component* caller);
-bool BBuildMode24(std::queue<FrameEvent>* buffer, Component* caller);
-bool BBuildMode25(std::queue<FrameEvent>* buffer, Component* caller);
-bool BBuildMode26(std::queue<FrameEvent>* buffer, Component* caller);
-
-
+bool BBuildMode(std::queue<FrameEvent>* buffer, Component* caller);
 
 bool BNextTurn(std::queue<FrameEvent>* buffer, Component* caller);
 bool BBuildMenu(std::queue<FrameEvent>* buffer, Component* caller);
@@ -565,29 +572,26 @@ bool BSetAttackMode(std::queue<FrameEvent>* buffer, Component* caller);
 
 class MultiFrame : public Frame
 {
-	std::vector<std::unique_ptr<Frame>> frames;
+	std::map<std::string, std::unique_ptr<Frame>> frames;
 public:
 	MultiFrame(RectF pos, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer) :Frame(pos, -1, resC, parentC, buffer) {}
 
-	Frame* AddFrame(RectF pos, int type, sharedResC resC, Component* parentC);
-	PageFrame* AddPageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages);
+	Frame* AddFrame(std::string key, RectF pos, int type, sharedResC resC, Component* parentC);
+	PageFrame* AddPageFrame(std::string key, RectF pos, int type, sharedResC resC, Component* parentC, int nPages);
 
 	void Draw(Graphics& gfx)override
 	{
 		if (IsVisible())
 		{
-			for (int i = 0; i < (int)(frames.size()); i++)
+			std::map<std::string, std::unique_ptr<Frame>>::iterator frame;
+			for (frame = frames.begin(); frame != frames.end(); frame++)
 			{
-				frames[i]->Draw(gfx);
+				frame->second->Draw(gfx);
 			}
 		}
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
-		if (e.GetType() == Mouse::Event::LRelease)
-		{
-			int k = 23;
-		}
 		if (IsVisible())
 		{
 			return HandleMouseInputFrame(e, interact);
@@ -597,58 +601,66 @@ public:
 	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)
 	{
 			bool hit = Frame::HandleMouseInputFrame(e, interact);
-			std::vector<bool> extended;
-			for (int i = 0; i < (int)(frames.size()); i++)
+			std::map<std::string,bool> extended;
+			std::map<std::string, std::unique_ptr<Frame>>::iterator frame;
+			for (frame = frames.begin(); frame != frames.end(); frame++)
 			{
-				extended.push_back(frames[i]->GetCurState());
+				extended[frame->first] = frame->second->GetCurState();
 			}
-			int changed = -1;
+			std::string changed ="-";
 			int yMove = 0;
-			for (int n = 0; n < (int)(frames.size()); n++)
+			int n = 0;
+			for (frame = frames.begin(); frame != frames.end(); frame++)
 			{
-				bool hitFrame = frames[n]->HandleMouseInput(e, interact);
+				bool hitFrame = frame->second->HandleMouseInput(e, interact);
 				hit = hit || hitFrame;
 				if (hitFrame)
 				{
-					for (int i = 0; i < (int)(frames.size()); i++)
+					
+					std::map<std::string, std::unique_ptr<Frame>>::iterator innerFrame;
+					for (innerFrame = frames.begin(); innerFrame != frames.end(); innerFrame++)
 					{
-						frames[i]->pos.top += yMove;
-						frames[i]->pos.bottom += yMove;
-						if (extended[i] != (bool)frames[i]->GetCurState())
+						innerFrame->second->pos.top += yMove;
+						innerFrame->second->pos.bottom += yMove;
+						if (extended[innerFrame->first] != (bool)innerFrame->second->GetCurState())
 						{
-							changed = i;
+							changed = innerFrame->first;
 							n = frames.size();
-							if (extended[i])
+							if (extended[innerFrame->first])
 							{
-								yMove -= frames[i]->GetExtendedHeight();
+								yMove -= frame->second->GetExtendedHeight();
 							}
-							if (!extended[i])
+							if (!extended[innerFrame->first])
 							{
-								yMove += frames[i]->GetExtendedHeight();
+								yMove += frame->second->GetExtendedHeight();
 							}
 						}
 					}
 				}
+				n++;
 			}
 			yMove = 0;
-			if (changed != -1)
+			if (changed != "-")
 			{
-				for (int i = 0; i < (int)(frames.size()); i++)
+				int i = 0;
+				std::map<std::string, std::unique_ptr<Frame>>::iterator frame;
+				for (frame = frames.begin(); frame != frames.end(); frame++)
 				{
-					frames[i]->pos.top += yMove;
-					frames[i]->pos.bottom += yMove;
-					if (frames[i]->IsExtended() && i != changed)
+					frame->second->pos.top += yMove;
+					frame->second->pos.bottom += yMove;
+					if (frame->second->IsExtended() && frame->first != changed)
 					{
-						frames[i]->SetState(0);
-						yMove -= frames[i]->GetExtendedHeight();
+						frame->second->SetState(0);
+						yMove -= frame->second->GetExtendedHeight();
 					}
+					i++;
 				}
 			}
 			if (hit)
 			{
 				return true;
 			}
-			return changed != -1;
+			return changed != "-";
 	}
 	virtual bool HandleMouseInputComps(Mouse::Event& e, bool interact)
 	{
@@ -665,220 +677,260 @@ public:
 		return false;
 	}
 
-	Frame* GetFrame(int index)
+	Frame* GetFrame(std::string key)
 	{
-		assert(index >= 0 && index < (int)(frames.size()));
-		return frames[index].get();
+		return frames[key].get();
 	}
 };
 class FrameHandle
 {
 private:
-	std::vector<std::unique_ptr<Frame>> windows;
+	std::map<std::string, std::unique_ptr<Component>> comps;
 	sharedResC resC;
 	RectF overallParent = Graphics::GetScreenRect<float>();
 
+	int curScene = 0;
 	std::queue<FrameEvent> buffer;
 	static constexpr unsigned int bufferSize = 4u;
+	Frame* AddFrame(std::string key,RectF pos, int type);
+	PageFrame* AddPageFrame(std::string key, RectF pos, int type, int nPages);
+	MultiFrame* AddMultiFrame(std::string key, RectF pos, int type, int nStates);
 public:
 	bool BufferIsEmpty() const
 	{
 		return buffer.empty();
 	}
 	FrameEvent Read();
-
-	const Frame& operator[](std::size_t idx) const { return *windows[idx].get(); }
-	Frame& operator[](std::size_t idx) { return *windows[idx].get();  }
+	int GetCurScene() { return curScene; }
+	//const Frame& operator[](std::size_t idx) const { return *comps[idx].get(); }
+	//Frame& operator[](std::size_t idx) { return *windows[idx].get();  }
 
 	FrameHandle(sharedResC resC);
 	bool HandleMouseInput(Mouse::Event& e);
 	void Draw(Graphics& gfx);
 	
-	Frame* AddFrame(RectF pos, int type);
-	PageFrame* AddPageFrame(RectF pos, int type, int nPages);
-	MultiFrame* AddMultiFrame(RectF pos, int type, int nStates);
-	
 	// ###### Init Frames #####
-	void InitFrames()
+	void LoadScene(int scene, World* world)
 	{
-		using namespace Settings;
-		std::vector<int> a = { 0,1 };	
+		comps.clear();
+		curScene = scene;
+		if (scene == 0)
+		{
+			using namespace Settings;
+			std::vector<int> a = { 0,1 };
+			
+			MultiFrame* m = AddMultiFrame("f_resD", RectF(Vec2(1040, 110), 140, 280), 0, 1);
 
-		MultiFrame* m = AddMultiFrame(RectF(Vec2(1040, 110), 140, 280), 0, 1);			//Size of frames is hardcoded
-																							//FIRST FRAME
-		Frame* f1 = m->AddFrame(RectF(Vec2(0, 0), 140, 280), 0, resC, m);	
-		PageFrame* p3 = m->AddPageFrame(RectF(Vec2(0, 12), 140, 280), 0, resC, m, 3);
+			Frame* f1 = m->AddFrame("fresD_f1", RectF(Vec2(0, 0), 140, 280), 0, resC, m);
+			PageFrame* p3 = m->AddPageFrame("fresD_f2", RectF(Vec2(0, 12), 140, 280), 0, resC, m, 3);
+
+			// #1
+			f1->AddText(Settings::lang_fieldInformation[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "h_f1");
+
+			f1->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(60, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_cellType", a, 1);
+			f1->AddText(Settings::lang_flora[Settings::lang] + ":", RectF(Vec2(2, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_flora", a, 1);
+			f1->AddText(Settings::lang_Obstacle[Settings::lang] + ":", RectF(Vec2(2, 35), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_obstacle", a, 1);
+			f1->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(60, 35), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_obstacleInfo", a, 1);
+			f1->AddText(Settings::lang_hp[Settings::lang] + ":", RectF(Vec2(2, 46), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_obstacleHp", a, 1);
+			f1->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(60, 46), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_obstacleHpIs", a, 1);
+
+			// #2
+			// #3
+			// Page 1
+			p3->AddText(Settings::lang_constructionMaterials[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "h_f3");
+
+			p3->AddText(Settings::lang_resources[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "sh_resourcen", { 0,1 }, { 1, 0, 0 });
+			p3->AddText(Settings::lang_materials[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "sh_materials", { 0,1 }, { 0, 1, 0 });
+			p3->AddText(Settings::lang_organic[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "sh_organic", { 0,1 }, { 0, 0, 1 });
+
+			p3->AddText(Settings::lang_wood[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_wood", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText(Settings::lang_iron[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_iron", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText(Settings::lang_sand[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_sand", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText(Settings::lang_stone[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_stone", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText(Settings::lang_copper[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_copper", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText(Settings::lang_gold[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_gold", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText(Settings::lang_aluminum[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_aluminum", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText(Settings::lang_emerald[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_emerald", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText(Settings::lang_sapphire[Settings::lang] + ":", RectF(Vec2(5, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_sapphire", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText(Settings::lang_robin[Settings::lang] + ":", RectF(Vec2(5, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_robin", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText(Settings::lang_diamond[Settings::lang] + ":", RectF(Vec2(5, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_dimond", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText(Settings::lang_amber[Settings::lang] + ":", RectF(Vec2(5, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_amber", { 0,1 }, { 1, 0, 0 }, 1);
+
+			p3->AddText(Settings::lang_kilogram[Settings::lang], RectF(Vec2(100, 40), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_kilogram", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nWood", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nIron", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSand", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nStone", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCopper", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText("24", RectF(Vec2(100, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nGold", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText("3", RectF(Vec2(100, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nAluminum", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText("4", RectF(Vec2(100, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nEmerald", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSapphire", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText("4", RectF(Vec2(100, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nRobin", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText("24", RectF(Vec2(100, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nDimond", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddText("24", RectF(Vec2(100, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nAmber", { 0,1 }, { 1, 0, 0 }, 1);
+
+			//Page 2
+			p3->AddText(Settings::lang_steel[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_steel", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText(Settings::lang_plastic[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_plastic", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText(Settings::lang_concrete[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_concrete", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText(Settings::lang_glass[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_glass", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText(Settings::lang_ceramics[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_ceramics", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText(Settings::lang_snow[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_snow", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText(Settings::lang_bricks[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_bricks", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText(Settings::lang_slate[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_slate", { 0,1 }, { 0, 1, 0 }, 1);
+
+			p3->AddText("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSteel", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nPlastic", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nConcrete", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nGlass", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCeramics", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSnow", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nBricks", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSlate", { 0,1 }, { 0, 1, 0 }, 1);
+
+			//Page 3
+			p3->AddText(Settings::lang_corals[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_corals", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText(Settings::lang_sticks[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_sticks", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText(Settings::lang_leaves[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_leaves", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText(Settings::lang_wool[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_wool", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText(Settings::lang_leather[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_leather", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText(Settings::lang_fur[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_fur", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText(Settings::lang_meat[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_meat", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText(Settings::lang_fish[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_fish", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText(Settings::lang_berrys[Settings::lang] + ":", RectF(Vec2(5, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_berrys", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText(Settings::lang_apples[Settings::lang] + ":", RectF(Vec2(5, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_apples", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText(Settings::lang_cactus[Settings::lang] + ":", RectF(Vec2(5, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_cactus", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText(Settings::lang_units[Settings::lang] + ":", RectF(Vec2(5, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_units", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText(Settings::lang_maxUnits[Settings::lang] + ":", RectF(Vec2(5, 170), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_maxUnits", { 0,1 }, { 0, 0, 1 }, 1);
+
+			p3->AddText("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCorals", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSticks", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nLeaves", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nWool", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nLeather", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText("24", RectF(Vec2(100, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nFur", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText("3", RectF(Vec2(100, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nMeat", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText("4", RectF(Vec2(100, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nFish", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText("2", RectF(Vec2(100, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nBerrys", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText("4", RectF(Vec2(100, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nApples", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText("24", RectF(Vec2(100, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCactus", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText("24", RectF(Vec2(100, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nUnits", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddText("24", RectF(Vec2(100, 170), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nMaxUnits", { 0,1 }, { 0, 0, 1 }, 1);
+			
+
+			Frame* fUnity = AddFrame("f_Unit", RectF(Vec2(100, 150), 140, 280), 0);																			//Unit Frame
+			fUnity->AddText(Settings::lang_unitInfo[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_h");
+			fUnity->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(80, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_unitNameIs", a, 1);
+			fUnity->AddText(Settings::lang_unitName[Settings::lang] + ":", RectF(Vec2(2, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_unitName", a, 1);
+			fUnity->AddText(Settings::lang_hp[Settings::lang] + ":", RectF(Vec2(2, 35), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hp", a, 1);
+			fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 35), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hpIs", a, 1);
+			fUnity->AddText(Settings::lang_team[Settings::lang] + ":", RectF(Vec2(2, 51), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_team", a, 1);
+			fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 51), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_teamIs", a, 1);
+			fUnity->AddText(Settings::lang_stepsLeft[Settings::lang] + ":", RectF(Vec2(2, 67), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_steps", a, 1);
+			fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 67), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_stepsIs", a, 1);
+			fUnity->SetState(1);
+			fUnity->SetVisible(false);
+
+			Button* b_setAttack = fUnity->AddButton(RectF(Vec2(30, 80), 60, 60), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_setAttack", a);
+			b_setAttack->bFunc = BSetAttackMode;
+			b_setAttack->hitable = true;
+
+
+			//Frame* fNextTurn = AddFrame(RectF(Vec2(1120, 600), 120, 60), 1);																			//NEXT TURN FRAME
+			//fNextTurn->s = &resC->tC.windowsFrame[3].GetCurSurface();
+			//fNextTurn->bFunc = BNextTurn;
+
+			comps["b_NextTurn"] = std::make_unique<Button>(Button(RectF(Vec2(1120, 600), 120, 60), &resC->tC.windowsFrame[3], &resC->tC.windowsFrame[3], { 0,0 }, nullptr, &buffer));
+			static_cast<Button*>(comps["b_NextTurn"].get())->bFunc = BNextTurn;
+
+			comps["b_buildScene"] = std::make_unique<Button>(Button(RectF(Vec2(30, 30), 60, 30), &resC->tC.windowsFrame[4], &resC->tC.windowsFrame[4], { 0,0 }, nullptr, &buffer));
+			static_cast<Button*>(comps["b_buildScene"].get())->bFunc = BBuildMenu;
+			/*
+			Frame* fButtonBuild = AddFrame(RectF(Vec2(30, 30), 60, 30), 1);																			//BUILD MENU BUTTON
+			fButtonBuild->s = &resC->tC.windowsFrame[4].GetCurSurface();
+			fButtonBuild->bFunc = BBuildMenu;
+			*/
+		}
+		else if(scene == 1)
+		{
 		
-		// #1
-    	f1->AddText(Settings::lang_fieldInformation[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black,"h_f1");
+			std::vector<int> a = { 0,1 };  
+			PageFrame * fBuildSelection = AddPageFrame("f_bg",RectF(Vec2(0, 0), Graphics::ScreenWidth, Graphics::ScreenHeight), 1, 4);															//build selection menu
+			fBuildSelection->s = &resC->tC.windowsFrame[5].GetCurSurface();
+			fBuildSelection->SetMoveable(false);
+			fBuildSelection->GetComp("b_left")->pos = RectF(Vec2(25, 25), 100, 25);
+			fBuildSelection->GetComp("b_right")->pos = RectF(Vec2(Graphics::ScreenWidth - 125, 25), 100, 25);
+			fBuildSelection->AddText(Settings::lang_housing[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->tC.fonts[0], Colors::Black, "HousingH", { 1 }, { 1,0,0,0 });
 
-		f1->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(60, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black,"t_cellType", a, 1);
-		f1->AddText(Settings::lang_flora[Settings::lang] + ":", RectF(Vec2(2, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_flora", a, 1);
-		f1->AddText(Settings::lang_Obstacle[Settings::lang] + ":", RectF(Vec2(2, 35), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_obstacle", a, 1);
-		f1->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(60, 35), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_obstacleInfo", a, 1);
-		f1->AddText(Settings::lang_hp[Settings::lang] + ":", RectF(Vec2(2, 46), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_obstacleHp", a, 1);
-		f1->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(60, 46), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_obstacleHpIs", a, 1);
+			Button* b_back = fBuildSelection->AddButton(RectF(Vec2(30, 60), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_buildback", { 1 }, { 1,0,0,0 });
+			b_back->bFunc = BOpenGamefield;
+			
+			CreateBuildOption(RectF(Vec2(60, 120), 180, 60), 0, fBuildSelection, { 1,0,0,0 },world);
+			CreateBuildOption(RectF(Vec2(60, 190), 180, 60), 2, fBuildSelection, { 1,0,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(60, 260), 180, 60), 3, fBuildSelection, { 1,0,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(60, 330), 180, 60), 21, fBuildSelection, { 1,0,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(60, 400), 180, 60), 22, fBuildSelection, { 1,0,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(60, 470), 180, 60), 23, fBuildSelection, { 1,0,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(60, 540), 180, 60), 24, fBuildSelection, { 1,0,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(60, 610), 180, 60), 25, fBuildSelection, { 1,0,0,0 }, world);
 
-		// #2
-		// #3
-		// Page 1
-		p3->AddText(Settings::lang_constructionMaterials[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "h_f3");
+			CreateBuildOption(RectF(Vec2(250, 190), 180, 60), 26, fBuildSelection, { 1,0,0,0 }, world);
 
-		p3->AddText(Settings::lang_resources[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "sh_resourcen", { 0,1 }, { 1, 0, 0 });
-		p3->AddText(Settings::lang_materials[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "sh_materials", { 0,1 }, { 0, 1, 0 });
-		p3->AddText(Settings::lang_organic[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "sh_organic", { 0,1 }, { 0, 0, 1 });
+			fBuildSelection->AddText(Settings::lang_productions[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->tC.fonts[0], Colors::Black, "roductionH", { 1 }, { 0,1,0,0 });
 
-		p3->AddText(Settings::lang_wood[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_wood", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText(Settings::lang_iron[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black,"t_iron", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText(Settings::lang_sand[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black,"t_sand", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText(Settings::lang_stone[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black,"t_stone", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText(Settings::lang_copper[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black,"t_copper", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText(Settings::lang_gold[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black,"t_gold", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText(Settings::lang_aluminum[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black,"t_aluminum", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText(Settings::lang_emerald[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black,"t_emerald", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText(Settings::lang_sapphire[Settings::lang] + ":", RectF(Vec2(5, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black,"t_sapphire", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText(Settings::lang_robin[Settings::lang] + ":", RectF(Vec2(5, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black,"t_robin", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText(Settings::lang_diamond[Settings::lang] + ":", RectF(Vec2(5, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black,"t_dimond", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText(Settings::lang_amber[Settings::lang] + ":", RectF(Vec2(5, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black,"t_amber", { 0,1 }, { 1, 0, 0 }, 1);
+			CreateBuildOption(RectF(Vec2(60, 120), 180, 60), 27, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(60, 190), 180, 60), 28, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(60, 260), 180, 60), 29, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(60, 330), 180, 60), 30, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(60, 400), 180, 60), 31, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(60, 470), 180, 60), 32, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(60, 540), 180, 60), 33, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(60, 610), 180, 60), 34, fBuildSelection, { 0,1,0,0 }, world);
 
-		p3->AddText(Settings::lang_kilogram[Settings::lang], RectF(Vec2(100, 40), 50, 10), 7, &resC->tC.fonts[0], Colors::Black,"t_kilogram", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nWood", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nIron", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSand", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nStone", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCopper", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText("24", RectF(Vec2(100, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nGold", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText("3", RectF(Vec2(100, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nAluminum", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText("4", RectF(Vec2(100, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nEmerald", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSapphire", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText("4", RectF(Vec2(100, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nRobin", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText("24", RectF(Vec2(100, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nDimond", { 0,1 }, { 1, 0, 0 }, 1);
-		p3->AddText("24", RectF(Vec2(100, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nAmber", { 0,1 }, { 1, 0, 0 }, 1);
+			CreateBuildOption(RectF(Vec2(250, 120), 180, 60), 35, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(250, 190), 180, 60), 36, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(250, 260), 180, 60), 37, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(250, 330), 180, 60), 38, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(250, 400), 180, 60), 39, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(250, 470), 180, 60), 40, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(250, 540), 180, 60), 41, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(250, 610), 180, 60), 42, fBuildSelection, { 0,1,0,0 }, world);
 
-		//Page 2
-		p3->AddText(Settings::lang_steel[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_steel", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText(Settings::lang_plastic[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_plastic", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText(Settings::lang_concrete[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_concrete", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText(Settings::lang_glass[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_glass", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText(Settings::lang_ceramics[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_ceramics", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText(Settings::lang_snow[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_snow", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText(Settings::lang_bricks[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_bricks", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText(Settings::lang_slate[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_slate", { 0,1 }, { 0, 1, 0 }, 1);
+			CreateBuildOption(RectF(Vec2(440, 120), 180, 60), 48, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(440, 190), 180, 60), 49, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(440, 260), 180, 60), 50, fBuildSelection, { 0,1,0,0 }, world);
 
-		p3->AddText("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSteel", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nPlastic", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nConcrete", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nGlass", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCeramics", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSnow", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nBricks", { 0,1 }, { 0, 1, 0 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSlate", { 0,1 }, { 0, 1, 0 }, 1);
+		}
+	}
+	//HELP CREATE FUNCTIONS
+	Frame* CreateBuildOption(RectF pos, int obstacleType, PageFrame* parentC, std::vector<int> activOnPages, World* world)
+	{
+		std::string key = Settings::GetObstacleString(obstacleType);
+		Frame* frame = parentC->AddFrame(pos, key, { 1 }, activOnPages);
+		frame->s = &resC->tC.windowsFrame[7].GetCurSurface();
+		frame->extra = obstacleType;
+		frame->bFunc = BBuildMode;
+		frame->hitable = true;
+		frame->AddText(Settings::GetObstacleString(obstacleType), RectF(Vec2(60, 5), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, key + "H", { 1 });
+		std::map<std::string, float> neededRes = Settings::obstacleStats[obstacleType].neededResToBuild;
+		std::map<std::string, float>::iterator res;
+		int i = 0;
+		for (res = neededRes.begin(); res != neededRes.end(); res++)
+		{
+			//std::map<st::string,float> check ={{}}
+			if (world->GetPlayer()->GetMaterials().Has({ { res->first,res->second } }))
+				frame->AddText("-"+res->first+": x"+std::to_string(res->second)+" "+ Settings::lang_kilogram[Settings::lang], RectF(Vec2(70, 20+i*10), 50, 8), 7, &resC->tC.fonts[0], Colors::Green, key + "res"+std::to_string(i), { 1 });
+			else
+			{
+				frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(70, 20 + i * 10), 50, 8), 7, &resC->tC.fonts[0], Colors::Red, key + "res" + std::to_string(i), { 1 });
+			}
+			i++;
+		}
+		//Frame* frame = AddFrame(key, pos, 0);
+		return nullptr;// static_cast<Frame*>(comps[key].get());
+	}
 
-		//Page 3
-		p3->AddText(Settings::lang_corals[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_corals", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText(Settings::lang_sticks[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_sticks", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText(Settings::lang_leaves[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_leaves", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText(Settings::lang_wool[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_wool", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText(Settings::lang_leather[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_leather", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText(Settings::lang_fur[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_fur", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText(Settings::lang_meat[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_meat", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText(Settings::lang_fish[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_fish", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText(Settings::lang_berrys[Settings::lang] + ":", RectF(Vec2(5, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_berrys", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText(Settings::lang_apples[Settings::lang] + ":", RectF(Vec2(5, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_apples", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText(Settings::lang_cactus[Settings::lang] + ":", RectF(Vec2(5, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_cactus", { 0,1 }, { 0, 0, 1 }, 1);
-
-		p3->AddText("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCorals", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSticks", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nLeaves", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nWool", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nLeather", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText("24", RectF(Vec2(100, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nFur", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText("3", RectF(Vec2(100, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nMeat", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText("4", RectF(Vec2(100, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nFish", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText("2", RectF(Vec2(100, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nBerrys", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText("4", RectF(Vec2(100, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nApples", { 0,1 }, { 0, 0, 1 }, 1);
-		p3->AddText("24", RectF(Vec2(100, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCactus", { 0,1 }, { 0, 0, 1 }, 1);
-
-
-		Frame* fUnity = AddFrame(RectF(Vec2(100, 150), 140, 280), 0);																			//Unit Frame
-		fUnity->AddText(Settings::lang_unitInfo[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_h");
-		fUnity->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(80, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_unitNameIs", a, 1);
-		fUnity->AddText(Settings::lang_unitName[Settings::lang] + ":", RectF(Vec2(2, 19), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_unitName", a, 1);
-		fUnity->AddText(Settings::lang_hp[Settings::lang] + ":", RectF(Vec2(2, 35), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hp", a, 1);
-		fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 35), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hpIs", a, 1);
-		fUnity->AddText(Settings::lang_team[Settings::lang] + ":", RectF(Vec2(2, 51), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_team", a, 1);
-		fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 51), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_teamIs", a, 1);
-		fUnity->AddText(Settings::lang_stepsLeft[Settings::lang] + ":", RectF(Vec2(2, 67), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_steps", a, 1);
-		fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 67), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_stepsIs", a, 1);
-		fUnity->SetState(1);
-		fUnity->SetVisible(false);
-
-		Button* b_setAttack = fUnity->AddButton(RectF(Vec2(30, 80), 60, 60), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_setAttack", a);
-		b_setAttack->bFunc = BSetAttackMode;
-		b_setAttack->hitable = true;
-
-		Frame* fNextTurn = AddFrame(RectF(Vec2(1120, 600), 120, 60), 1);																			//NEXT TURN FRAME
-		fNextTurn->s = &resC->tC.windowsFrame[3].GetCurSurface();
-		fNextTurn->bFunc = BNextTurn;
-
-		Frame* fButtonBuild = AddFrame(RectF(Vec2(30, 30), 60, 30), 1);																			//BUILD MENU BUTTON
-		fButtonBuild->s = &resC->tC.windowsFrame[4].GetCurSurface();
-		fButtonBuild->bFunc = BBuildMenu;
-
-		PageFrame* fBuildSelection = AddPageFrame(RectF(Vec2(0, 0), 800, 600), 1, 4);															//build selection menu
-		fBuildSelection->s = &resC->tC.windowsFrame[5].GetCurSurface();
-		fBuildSelection->SetVisible(false);
-		fBuildSelection->SetMoveable(false);
-		fBuildSelection->GetComp("b_left")->pos = RectF(Vec2(25, 25), 100, 25);
-		fBuildSelection->GetComp("b_right")->pos = RectF(Vec2(675, 25), 100, 25);
-		Button* b_back = fBuildSelection->AddButton(RectF(Vec2(30, 30), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_buildback", a, { 1,0,0,0 });
-		b_back->bFunc = BOpenGamefield;
-		//Composition* comp_Tent = fBuildSelection->AddComposition(RectF(Vec2(60, 120), 180, 60), resC, "comp_tent", a, { 1,0,0,0 });
-		Button* bg_Tent = fBuildSelection->AddButton(RectF(Vec2(60, 120), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildtent", a, { 1,0,0,0 });
-		bg_Tent->bFunc = BBuildMode0;
-		fBuildSelection->AddText(lang_tent[lang], RectF(Vec2(132, 127), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hTent", a, { 1,0,0,0 });
-		fBuildSelection->AddText("- "+lang_leather[lang]+": x"+std::to_string((int)neededRes[0].at("leather"))+" "+lang_kilogram[lang], RectF(Vec2(102, 140), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_TentR1", a, { 1,0,0,0 },1);
-		fBuildSelection->AddText("- " + lang_sticks[lang] + ": x" + std::to_string((int)neededRes[0].at("sticks")) + " " + lang_kilogram[lang], RectF(Vec2(102, 150), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_TentR2", a, { 1,0,0,0 }, 1);
-
-		Button* bg_igloo = fBuildSelection->AddButton(RectF(Vec2(60, 200), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildigloo", a, { 1,0,0,0 });
-		bg_igloo->bFunc = BBuildMode21;
-		fBuildSelection->AddText(lang_igloo[lang], RectF(Vec2(132, 207), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hIgloo", a, { 1,0,0,0 });
-		fBuildSelection->AddText("- " + lang_snow[lang] + ": x" + std::to_string((int)neededRes[21].at("snow")) + " " + lang_kilogram[lang], RectF(Vec2(102, 220), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_IglooR1", a, { 1,0,0,0 }, 1);
-		fBuildSelection->AddText("- " + lang_wood[lang] + ": x" + std::to_string((int)neededRes[21].at("wood")) + " " + lang_kilogram[lang], RectF(Vec2(102, 230), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_IglooR2", a, { 1,0,0,0 }, 1);
-
-		Button* bg_woodHouse = fBuildSelection->AddButton(RectF(Vec2(60, 280), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildwoodenHouse", a, { 1,0,0,0 });
-		bg_woodHouse->bFunc = BBuildMode22;
-		fBuildSelection->AddText(lang_woodenHouse[lang], RectF(Vec2(132, 287), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hWoodenhouse", a, { 1,0,0,0 });
-		fBuildSelection->AddText("- " + lang_wood[lang] + ": x" + std::to_string((int)neededRes[22].at("wood")) + " " + lang_kilogram[lang], RectF(Vec2(102, 300), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_woodenHouseR1", a, { 1,0,0,0 }, 1);
-
-		Button* bg_stoneHouse = fBuildSelection->AddButton(RectF(Vec2(60, 360), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildstoneHouse", a, { 1,0,0,0 });
-		bg_stoneHouse->bFunc = BBuildMode23;
-		fBuildSelection->AddText(lang_stoneHouse[lang], RectF(Vec2(132, 367), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hStoneHouse", a, { 1,0,0,0 });
-		fBuildSelection->AddText("- " + lang_stone[lang] + ": x" + std::to_string((int)neededRes[23].at("stone")) + " " + lang_kilogram[lang], RectF(Vec2(102, 380), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_stoneHouseR1", a, { 1,0,0,0 }, 1);
-		fBuildSelection->AddText("- " + lang_wood[lang] + ": x" + std::to_string((int)neededRes[23].at("wood")) + " " + lang_kilogram[lang], RectF(Vec2(102, 390), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_stoneHouseR2", a, { 1,0,0,0 }, 1);
-
-		Button* bg_brickHouse = fBuildSelection->AddButton(RectF(Vec2(60, 440), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildbrickhouse", a, { 1,0,0,0 });
-		bg_brickHouse->bFunc = BBuildMode24;
-		fBuildSelection->AddText(lang_brickhouse[lang], RectF(Vec2(132, 447), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hBrickhouse", a, { 1,0,0,0 });
-		fBuildSelection->AddText("- " + lang_stone[lang] + ": x" + std::to_string((int)neededRes[24].at("stone")) + " " + lang_kilogram[lang], RectF(Vec2(102, 460), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_brickHouseR1", a, { 1,0,0,0 }, 1);
-		fBuildSelection->AddText("- " + lang_wood[lang] + ": x" + std::to_string((int)neededRes[24].at("wood")) + " " + lang_kilogram[lang], RectF(Vec2(102, 470), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_brickHouseR2", a, { 1,0,0,0 }, 1);
-		fBuildSelection->AddText("- " + lang_bricks[lang] + ": x" + std::to_string((int)neededRes[24].at("bricks")) + " " + lang_kilogram[lang], RectF(Vec2(102, 480), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_brickHouseR3", a, { 1,0,0,0 }, 1);
-
-		Button* bg_skyscraper = fBuildSelection->AddButton(RectF(Vec2(60, 520), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildskyscraper", a, { 1,0,0,0 });
-		bg_skyscraper->bFunc = BBuildMode25;
-		fBuildSelection->AddText(lang_skyscraper[lang], RectF(Vec2(132, 527), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hSkyscraper", a, { 1,0,0,0 });
-		fBuildSelection->AddText("- " + lang_concrete[lang] + ": x" + std::to_string((int)neededRes[25].at("concrete")) + " " + lang_kilogram[lang], RectF(Vec2(102, 540), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_skyscraperR1", a, { 1,0,0,0 }, 1);
-
-		Button* bg_villa = fBuildSelection->AddButton(RectF(Vec2(260, 120), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildVilla", a, { 1,0,0,0 });
-		bg_villa->bFunc = BBuildMode26;
-		fBuildSelection->AddText(lang_villa[lang], RectF(Vec2(332, 127), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hVilla", a, { 1,0,0,0 });
-		fBuildSelection->AddText("- " + lang_slate[lang] + ": x" + std::to_string((int)neededRes[26].at("slate")) + " " + lang_kilogram[lang], RectF(Vec2(302, 140), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_VillaR1", a, { 1,0,0,0 }, 1);
-		fBuildSelection->AddText("- " + lang_bricks[lang] + ": x" + std::to_string((int)neededRes[26].at("bricks")) + " " + lang_kilogram[lang], RectF(Vec2(302, 150), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_VillaR2", a, { 1,0,0,0 }, 1);
-		fBuildSelection->AddText("- " + lang_concrete[lang] + ": x" + std::to_string((int)neededRes[26].at("concrete")) + " " + lang_kilogram[lang], RectF(Vec2(302, 160), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_VillaR3", a, { 1,0,0,0 }, 1);
-
-		//Button* bg_Tent = fBuildSelection->AddButton(RectF(Vec2(60, 120), 180, 60), &resC->tC.windowsFrame[7], &resC->tC.windowsFrame[7], "b_buildtent", a, { 1,0,0,0 });
-
-}
 	// ### Update components of existing Frames ###
 
 	// ###### Update existing Frames ######
@@ -886,11 +938,11 @@ public:
 	{
 		if (Settings::framesOn)
 		{
-			
-			MultiFrame* m = static_cast<MultiFrame*>(windows[0].get());
+
+			MultiFrame* m = static_cast<MultiFrame*>(comps["f_resD"].get());
 			Materials& playerM = player->GetMaterials();
 			//#1
-			Frame* f1 = static_cast<Frame*>(m->GetFrame(0));
+			Frame* f1 = static_cast<Frame*>(m->GetFrame("fresD_f1"));
 			f1->SetText(Settings::GetTypeString(curW.GetfCellType()), "t_cellType");
 			if (curW.GetFocusedObstacle() != nullptr)
 			{
@@ -901,7 +953,7 @@ public:
 			//#2
 
 			//#3
-			PageFrame* p3 = static_cast<PageFrame*>(m->GetFrame(1));
+			PageFrame* p3 = static_cast<PageFrame*>(m->GetFrame("fresD_f2"));
 			
 			// Page 1
 			p3->SetText(std::to_string(playerM.values["wood"]), "t_nWood");
@@ -939,12 +991,14 @@ public:
 			p3->SetText(std::to_string(playerM.values["berrys"]), "t_nBerrys");
 			p3->SetText(std::to_string(playerM.values["apples"]), "t_nApples");
 			p3->SetText(std::to_string(playerM.values["cactus"]), "t_nCactus");
-			
+			p3->SetText(std::to_string(playerM.values["units"]), "t_nUnits");
+			p3->SetText(std::to_string(playerM.values["maxUnits"]), "t_nMaxUnits");
+
 		}
 	}
 	void UpdateUnitinformation(Obstacle* obst)
 	{
-		Frame* f = static_cast<Frame*>(windows[1].get());
+		Frame* f = static_cast<Frame*>(comps["f_Unit"].get());
 		f->SetVisible(true);
 		std::string s1 = Settings::GetObstacleString(obst->type);
 
@@ -962,41 +1016,8 @@ public:
 	}
 	void HideUnitInfo()
 	{
-		Frame* f = static_cast<Frame*>(windows[1].get());
+		Frame* f = static_cast<Frame*>(comps["f_Unit"].get());
 		f->SetVisible(false);
-	}
-	void BuildSelectionStarted()
-	{
-		MultiFrame* m = static_cast<MultiFrame*>(windows[0].get());
-		m->SetVisible(false);
-	
-		Frame* f1 = static_cast<Frame*>(windows[1].get());
-		Frame* f2 = static_cast<Frame*>(windows[2].get());
-		Frame* f3 = static_cast<Frame*>(windows[3].get());
-
-		f1->SetVisible(false);
-		f2->SetVisible(false);
-		f3->SetVisible(false);
-
-		PageFrame* f4 = static_cast<PageFrame*>(windows[4].get());
-		f4->SetVisible(true);
-		f4->AdjustArrowButtons();
-	}
-	void OpenGamefield()
-	{
-		MultiFrame* m = static_cast<MultiFrame*>(windows[0].get());
-		m->SetVisible(true);
-
-		Frame* f1 = static_cast<Frame*>(windows[1].get());
-		Frame* f2 = static_cast<Frame*>(windows[2].get());
-		Frame* f3 = static_cast<Frame*>(windows[3].get());
-
-		f2->SetVisible(true);
-		f3->SetVisible(true);
-
-		Frame* f4 = static_cast<Frame*>(windows[4].get());
-		f4->SetVisible(false);
-
 	}
 	static constexpr float percentForGrab = 0.05;			
 };

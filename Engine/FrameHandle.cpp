@@ -68,14 +68,26 @@ PageFrame::PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, i
 	nPages(nPages)
 {
 	std::vector<int> a = {0, 1};
-	Button* b1 = AddButton(RectF(Vec2(5, 18), 34, 9), &resC->tC.buttons[0], &resC->tC.buttons[1], "b_left", a);
-	b1->bFunc = B1;
-	Button* b2 = AddButton(RectF(Vec2(99, 18), 34, 9), &resC->tC.buttons[2], &resC->tC.buttons[3], "b_right", a);
-	b2->bFunc = B2;
-	if(type != 0)
+	if (type == 1)
 	{
-		curState = 1;
+		a = { 1 };
 	}
+	std::vector<int> activOnPagesL;
+	activOnPagesL.push_back(0);
+	for (int i = 0; i < nPages - 1; i++)
+	{
+		activOnPagesL.push_back(1);
+	}
+	Button* b1 = AddButton(RectF(Vec2(5, 18), 34, 9), &resC->tC.buttons[0], &resC->tC.buttons[1], "b_left",a, activOnPagesL);
+	b1->bFunc = B1;
+	std::vector<int> activOnPagesR;
+	for (int i = 0; i < nPages - 1; i++)
+	{
+		activOnPagesR.push_back(1);
+	}
+	activOnPagesR.push_back(0);
+	Button* b2 = AddButton(RectF(Vec2(99, 18), 34, 9), &resC->tC.buttons[2], &resC->tC.buttons[3], "b_right",a, activOnPagesR);
+	b2->bFunc = B2;
 }
 
 void Frame::SetText(std::string text, std::string key)
@@ -106,6 +118,10 @@ bool Frame::Hit(Vec2 mP)
 			}
 			break;
 		case 1:
+			Vec2 scale = Vec2(s->GetSize()) / Vec2(pos.GetSize());
+			mpRel.x = mpRel.x * scale.x;
+			mpRel.y = mpRel.y * scale.y;
+
 			return s->TestIfHitOnScreen((Vec2)mpRel);
 			break;
 		case -1:
@@ -158,58 +174,10 @@ bool B2(std::queue<FrameEvent>* buffer, Component* caller)
 	//pF->NextPage();
 	return true;
 }
-bool BBuildMode0(std::queue<FrameEvent>* buffer, Component* caller)
+bool BBuildMode(std::queue<FrameEvent>* buffer, Component* caller)
 {
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "enable buildmode", 0, caller));
+	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "enable buildmode", caller->extra, caller));
 	//curW.SetBuildMode(0);
-	return true;
-}
-bool BBuildMode2(std::queue<FrameEvent>* buffer, Component* caller)
-{
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "enable buildmode", 2, caller));
-	//curW.SetBuildMode(2);
-	return true;
-}
-bool BBuildMode3(std::queue<FrameEvent>* buffer, Component* caller)
-{
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "enable buildmode", 3, caller));
-	//curW.SetBuildMode(3);
-	return true;
-}
-bool BBuildMode21(std::queue<FrameEvent>* buffer, Component* caller)
-{
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "enable buildmode", 21, caller));
-	//curW.SetBuildMode(3);
-	return true;
-}
-bool BBuildMode22(std::queue<FrameEvent>* buffer, Component* caller)
-{
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "enable buildmode", 22, caller));
-	//curW.SetBuildMode(3);
-	return true;
-}
-bool BBuildMode23(std::queue<FrameEvent>* buffer, Component* caller)
-{
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "enable buildmode", 23, caller));
-	//curW.SetBuildMode(3);
-	return true;
-}
-bool BBuildMode24(std::queue<FrameEvent>* buffer, Component* caller)
-{
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "enable buildmode", 24, caller));
-	//curW.SetBuildMode(3);
-	return true;
-}
-bool BBuildMode25(std::queue<FrameEvent>* buffer, Component* caller)
-{
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "enable buildmode", 25, caller));
-	//curW.SetBuildMode(3);
-	return true;
-}
-bool BBuildMode26(std::queue<FrameEvent>* buffer, Component* caller)
-{
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "enable buildmode", 26, caller));
-	//curW.SetBuildMode(3);
 	return true;
 }
 bool BNextTurn(std::queue<FrameEvent>* buffer, Component* caller)
@@ -220,13 +188,13 @@ bool BNextTurn(std::queue<FrameEvent>* buffer, Component* caller)
 }
 bool BBuildMenu(std::queue<FrameEvent>* buffer, Component* caller)
 {
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "load buildmenu", -1, caller));
+	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "load scene", 1, caller));
 	//curW.LoadBuildMenu();
 	return true;
 }
 bool BOpenGamefield(std::queue<FrameEvent>* buffer, Component* caller)
 {
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "exit currentView", -1, caller));
+	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "load scene", 0, caller));
 	//curW.LoadBuildMenu();
 	return true;
 }
@@ -265,15 +233,15 @@ std::vector<int> Frame::FillWith1WhenSize0(std::vector<int> activInStates, int n
 
 
 //	### Framehandle::MultiFrame ###
-Frame* MultiFrame::AddFrame(RectF pos, int type, sharedResC resC, Component* parentC)
+Frame* MultiFrame::AddFrame(std::string key, RectF pos, int type, sharedResC resC, Component* parentC)
 {
-	frames.push_back(std::make_unique<Frame>(pos,type,resC,parentC, buffer));
-	return frames[frames.size() - 1].get();
+	frames[key] = std::make_unique<Frame>(pos,type,resC,parentC, buffer);
+	return frames[key].get();
 }
-PageFrame* MultiFrame::AddPageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages)
+PageFrame* MultiFrame::AddPageFrame(std::string key, RectF pos, int type, sharedResC resC, Component* parentC, int nPages)
 {
-	frames.push_back(std::make_unique<PageFrame>(pos, type, resC, parentC, nPages, buffer));
-	return static_cast<PageFrame*>(frames[frames.size() - 1].get());
+	frames[key] = std::make_unique<PageFrame>(pos, type, resC, parentC, nPages, buffer);
+	return static_cast<PageFrame*>(frames[key].get());
 }
 
 FrameEvent FrameHandle::Read()
@@ -294,19 +262,17 @@ FrameEvent FrameHandle::Read()
 FrameHandle::FrameHandle(sharedResC resC)
 	:resC(std::move(resC))
 {
-	if (Settings::framesOn)
-	{
-		InitFrames();
-	}
+	
 }
 
 bool FrameHandle::HandleMouseInput(Mouse::Event& e)
 {
 	if (Settings::framesOn)
 	{
-		for (auto& frame : windows)
+		std::map<std::string, std::unique_ptr<Component>>::iterator i;
+		for (i = comps.begin(); i != comps.end(); i++)
 		{
-			if (frame->HandleMouseInput(e, true))
+			if (i->second->HandleMouseInput(e, true))
 			{
 				return true;
 			}
@@ -319,29 +285,30 @@ void FrameHandle::Draw(Graphics& gfx)
 {
 	if (Settings::framesOn)
 	{
-		for (int i = windows.size() - 1; i >= 0; i--)
+		std::map<std::string, std::unique_ptr<Component>>::iterator i;
+		for (i = comps.begin(); i != comps.end(); i++)
 		{
-			windows[i]->Draw(gfx);
+			i->second->Draw(gfx);
 		}
 	}
 }
-Frame* FrameHandle::AddFrame(RectF pos, int type)
+Frame* FrameHandle::AddFrame(std::string key, RectF pos, int type)
 {
 	if (Settings::framesOn)
 	{
-		windows.push_back(std::make_unique<Frame>(pos, type, resC, nullptr,&buffer));
-		return static_cast<Frame*>(windows[windows.size() - 1].get());
+		comps[key] = std::make_unique<Frame>(pos, type, resC, nullptr,&buffer);
+		return static_cast<Frame*>(comps[key].get());
 	}
 }
-PageFrame* FrameHandle::AddPageFrame(RectF pos, int type, int nPages)
+PageFrame* FrameHandle::AddPageFrame(std::string key, RectF pos, int type, int nPages)
 {
 	if (Settings::framesOn)
 	{
-		windows.push_back(std::make_unique<PageFrame>(pos, type, resC, nullptr, nPages, &buffer));
-		return static_cast<PageFrame*>(windows[windows.size() - 1].get());
+		comps[key] = std::make_unique<PageFrame>(pos, type, resC, nullptr, nPages, &buffer);
+		return static_cast<PageFrame*>(comps[key].get());
 	}
 }
-MultiFrame* FrameHandle::AddMultiFrame(RectF pos, int type, int nStates)
+MultiFrame* FrameHandle::AddMultiFrame(std::string key, RectF pos, int type, int nStates)
 {
 	if (Settings::framesOn)
 	{
@@ -350,8 +317,8 @@ MultiFrame* FrameHandle::AddMultiFrame(RectF pos, int type, int nStates)
 		{
 			activInStates.push_back(1);
 		}
-		windows.push_back(std::make_unique<MultiFrame>(pos, resC, nullptr, &buffer));
-		return static_cast<MultiFrame*>(windows[windows.size() - 1].get());
+		comps[key] = std::make_unique<MultiFrame>(pos, resC, nullptr, &buffer);
+		return static_cast<MultiFrame*>(comps[key].get());
 	}
 }
 

@@ -73,6 +73,7 @@ private:
 	bool loadBuildMenu = false;
 	bool buildMenuShown = false;
 
+	std::map<std::string, Team*> teams;
 	Team* player;
 	Team animals = Team("Fuer die Natur");
 	Team enemie1 = Team("In dem Sinne");
