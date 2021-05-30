@@ -9,47 +9,47 @@ struct Materials
 		//New Ressources need to be added in TranslateRessources
 
 		//IT
-		values["computer"] = 2500.f;//not added to showresorrces
+		values["computer chips"] = 2500.f;//not added to showresorrces
 		//Ressources
 		values["wood"] = 2500.f;
-		values["iron"] = 0;
-		values["sand"] = 0;
+		values["iron"] = 1000;
+		values["sand"] = 200;
 		values["stone"] = 2000;
-		values["copper"] = 0;
-		values["gold"] = 0;
-		values["aluminum"] = 0;
-		values["emerald"] = 0;
-		values["sapphire"] = 0;
-		values["robin"] = 0;
-		values["diamond"] = 0;
-		values["amber"] = 0; 
-		values["silicon"] = 0; //not added to showresorrces
-		values["lithium"] = 0; //not added to showresorrces
+		values["copper"] = 200;
+		values["gold"] = 200;
+		values["aluminum"] = 200;
+		values["emerald"] = 200;
+		values["sapphire"] = 200;
+		values["robin"] = 200;
+		values["diamond"] = 200;
+		values["amber"] = 200;
+		values["silicon"] = 200; //not added to showresorrces
+		values["lithium"] = 200; //not added to showresorrces
 
 		//Materials
-		values["steel"] = 0;
-		values["plastic"] = 0;
+		values["steel"] = 200;
+		values["plastic"] = 200;
 		values["concrete"] = 2000;
-		values["glass"] = 0;
-		values["ceramics"] = 0;
+		values["glass"] = 200;
+		values["ceramics"] = 200;
 		values["snow"] = 100;
 		values["bricks"] = 2000; 
 		values["slate"] = 1011; 
 
 		//Organics
-		values["corals"] = 0;
+		values["corals"] = 200;
 		values["sticks"] = 205.f;
-		values["leafes"] = 0;
-		values["wool"] = 0;
+		values["leafes"] = 200;
+		values["wool"] = 200;
 		values["leather"] = 120.f;
-		values["fur"] = 0;
+		values["fur"] = 200;
 		values["meat"] = 5;
 		values["fish"] = 5;
 		values["berrys"] = 5;
-		values["apples"] = 0;
-		values["cactus"] = 0; 
-		values["sapling"] = 0;		//not added to showresorrces
-		values["feather"] = 0;		//not added to showresorrces
+		values["apples"] = 200;
+		values["cactus"] = 200;
+		values["sapling"] = 200;		//not added to showresorrces
+		values["feather"] = 200;		//not added to showresorrces
 		values["maxUnits"] = 5;		//not added to showresorrces
 		values["units"] = 5;		//not added to showresorrces
 	}

@@ -101,10 +101,13 @@ namespace Settings
 	static constexpr int CellSplitUpIn = 25;										//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
 	static constexpr int chunkHasNCells = 5;
 	static constexpr int chunkHasNTiles = chunkHasNCells * CellSplitUpIn;
-	
+	//Type Traits
+	static constexpr int obstacleTrait_education[] = { 3,-1 };
+	static constexpr int obstacleTrait_heal[] = { 2,3,-1 };
+	static constexpr int obstacleTrait_attack[] = { 3,10,11,12,13,14,15,16,17,18,19,20,-1 };
 	//Graphic options
 	//static bool displayObstacles = true;
-	static int probToGrow = 20;
+	static int probToGrow = 50;
 	//Game options
 	static bool obstaclesOn = true;
 	static bool spawnObstacles = true;
@@ -124,13 +127,14 @@ namespace Settings
 	const std::string lang_decoration[] = { "Decoration", "Dekoration" };
 	const std::string lang_back[] = { "back", "Zurueck" };
 	const std::string lang_build[] = { "build", "bauen" };
+	const std::string lang_attack[] = { "attack", "Angreifen" };
 
 	const std::string lang_constructionMaterials[] = { "Construction materials", "Baumaterialien" };
 	const std::string lang_resources[] = { "Resources", "Rohstoffe" };
 	const std::string lang_materials[] = { "Materials", "Werkstoffe" };
 	const std::string lang_organic[] = { "Organic", "Oragnisches" };
 
-	const std::string lang_computer[] = { "computer", "computer" };
+	const std::string lang_computerChip[] = { "computer chip", "computer chip" };
 	
 	const std::string lang_wood[] = { "wood", "Holz" };
 	const std::string lang_iron[] = { "iron", "Eisen" };
@@ -192,6 +196,8 @@ namespace Settings
 	const std::string lang_Obstacle[] = { "Obstacle", "Hindernis" };			// Goettin
 	const std::string lang_kilogram[] = { "kg", "kg" };		
 	const std::string lang_stepsLeft[] = { "steps left", "Schritte ueber" };
+	const std::string lang_educate[] = { "educate", "Ausbilden" };
+	const std::string lang_heal[] = { "heal", "Heilen" };
 
 
 	//Obstacles
@@ -207,6 +213,7 @@ namespace Settings
 	const std::string lang_unitName[] = { "Unit name", "Name der Einheit" };
 	const std::string lang_hp[] = { "Health points", "Lebenspunkte" };
 	const std::string lang_team[] = { "Team", "Team" };
+	const std::string lang_attacksLeft[] = { "attacks left", "Verb. angriffe" };
 
 	//Animals
 	const std::string lang_deer[] = { "deer", "Hirsch" };
@@ -253,13 +260,15 @@ namespace Settings
 	const std::string lang_carFactory[] = { "car factory", "Autofabrik" };
 	const std::string lang_storage[] = { "storage", "Lagerhalle" };
 
+	//Beschreibungen
+	const std::string lang_TownhallInfo[] = { "This is the main building of your town. Use it to heal your surrounding units, train units or defent your town from enemies. Choose one every turn!", "Lagerhalle" };
 
 	//
 	static std::string TranslateRessource(std::string ressource, int lang)
 	{
 		if (ressource == "computer")
 		{
-			return lang_computer[lang];
+			return lang_computerChip[lang];
 		}
 		else if (ressource == "wood")
 		{
@@ -768,20 +777,25 @@ namespace Settings
 	struct ObstacleStats
 	{
 		ObstacleStats(int nStates, std::vector<Vei2> size, int baseHp, int movesPerTurn,
-			int attackRange, int attackDmg, int constructionTime,
+			int attackRange, int attackDmg, int attacksPerTurn, int constructionTime,
 			std::map<std::string, float> neededResToBuild,
 			std::map<std::string, float> lootForDestroying,
-			std::vector<Vei2> obstacleStartPos = { Vei2(0,0) })
+			std::vector<Vei2> obstacleStartPos = { Vei2(0,0) },
+			int healNumber = 0,
+			int healRange = 0)
 			:
 			nStates(nStates),
 			size(size),
 			movesPerTurn(movesPerTurn),
 			attackRange(attackRange),
 			attackDmg(attackDmg),
+			attacksPerTurn(attacksPerTurn),
 			constructionTime(constructionTime),
 			neededResToBuild(neededResToBuild),
 			lootForDestroying(lootForDestroying),
-			obstacleStartPos(obstacleStartPos)
+			obstacleStartPos(obstacleStartPos),
+			healNumber(healNumber),
+			healRange(healRange)
 		{}
 
 		int nStates = 1;
@@ -789,219 +803,224 @@ namespace Settings
 		int movesPerTurn = 10;
 		int attackRange = 1;
 		int attackDmg = 10;
+		int attacksPerTurn = 10;
 		int constructionTime = 10;
 		std::vector<Vei2> size = {};
 		std::vector<Vei2> obstacleStartPos = { Vei2(0,0) };
 		std::map<std::string, float> neededResToBuild = { {"leather",50},{"sticks",30} };
 		std::map<std::string, float> lootForDestroying = { {"leather",25},{"sticks",15} };
+		int healNumber = 10;
+		int healRange = 10;
 	};
 
 	static const ObstacleStats obstacleStats[] =
 	{ 
 		ObstacleStats(				//#0
-		1,{Vei2(2,2)},100,-1,0,0,1,
+		1,{Vei2(2,2)},100,-1,0,0,0,1,
 		{{"leather",50},{"sticks",30}},
 		{{"leather",25},{"sticks",15}}),
 		ObstacleStats(				//#1
-		2,{Vei2(1,1),Vei2(5,5)},100,-1,0,0,1,
+		2,{Vei2(1,1),Vei2(5,5)},100,-1,0,0,0,1,
 		{{"sapling",1}},
 		{{"wood",200},{"sticks",50},{"leafes",2},{"apples",5}},
 		{Vei2(0,0),Vei2(-2,-2) }),
 		ObstacleStats(				//#2
-		1,{Vei2(1,1)},100,-1,0,0,1,
+		1,{Vei2(1,1)},100,-1,0,0,0,1,
 		{{"wood",10},{"sticks",30}},
-		{{"wood",5},{"sticks",15}}),
+		{{"wood",5},{"sticks",15}},{Vei2(0,0)},
+			10,5),
 		ObstacleStats(				//#3
-		1,{Vei2(4,4)},100,-1,0,0,3,
+		1,{Vei2(4,4)},100,-1,10,20,3,3,
 		{{"stone",60},{"wood",100}},
-		{{"stone",30},{"wood",15}}),
+		{{"stone",30},{"wood",15}},{Vei2(0,0)},
+			20,10),
 		ObstacleStats(				//#4
-		2,{Vei2(1,1),Vei2(5,5)},100,-1,0,0,1,
+		2,{Vei2(1,1),Vei2(5,5)},100,-1,0,0,0,1,
 		{{"sapling",1}},
 		{{"wood",200},{"sticks",50},{"leafes",2},{"apples",5}},
 		{Vei2(0,0),Vei2(-2,-2) }),
 		ObstacleStats(				//#5
-		1,{Vei2(1,1)},100,-1,0,0,1,
+		1,{Vei2(1,1)},100,-1,0,0,0,1,
 		{{"cactus",6}},
 		{{"cactus",3}}),
 		ObstacleStats(				//#6
-		1,{Vei2(1,1)},100,-1,0,0,1,
+		1,{Vei2(1,1)},100,-1,0,0,0,1,
 		{},
 		{{"iron",3},{"gold",0.1}}),
 		ObstacleStats(				//#7
-		1,{Vei2(1,1)},100,-1,0,0,1,
+		1,{Vei2(1,1)},100,-1,0,0,0,1,
 		{{"stone",60}},
 		{{"stone",20},{"iron",0.5}}),
 		ObstacleStats(				//#8
-		1,{Vei2(2,2)},100,-1,0,0,1,
+		1,{Vei2(2,2)},100,-1,0,0,0,1,
 		{{"sapling",1}},
 		{{"wood",150},{"sticks",30},{"leafes",2}}),
 		ObstacleStats(				//#9
-		1,{Vei2(4,4)},100,-1,0,0,3,
+		1,{Vei2(4,4)},100,-1,0,0,0,3,
 		{{"stone",80}},
 		{{"stone",40},{"iron",2},{"copper",1}}),
 		ObstacleStats(				//#10
-		1,{Vei2(1,1)},100,10,1,20,0,
+		1,{Vei2(1,1)},100,10,1,20,1,0,
 		{},
 		{}),
 		ObstacleStats(				//#11
-		1,{Vei2(1,1)},100,10,1,20,0,
+		1,{Vei2(1,1)},100,10,1,10,1,0,
 		{},
 		{{"leather",25},{"meat",20}}),
 		ObstacleStats(				//#12
-		1,{Vei2(1,1)},100,10,1,20,0,
+		1,{Vei2(1,1)},100,10,1,10,1,0,
 		{},
 		{{"leather",25},{"meat",20}}),
 		ObstacleStats(				//#13
-		1,{Vei2(1,1)},100,10,1,20,0,
+		1,{Vei2(1,1)},100,10,1,10,1,0,
 		{},
 		{{"leather",25},{"meat",20}}),
 		ObstacleStats(				//#14
-		1,{Vei2(1,1)},100,10,1,20,0,
+		1,{Vei2(1,1)},100,10,1,10,1,0,
 		{},
 		{{"fur",25},{"meat",20}}),
 		ObstacleStats(				//#15
-		1,{Vei2(1,1)},100,10,1,20,0,
+		1,{Vei2(1,1)},100,10,1,10,1,0,
 		{},
 		{{"wool",3},{"meat",10}}),
 		ObstacleStats(				//#16
-		1,{Vei2(1,1)},100,10,1,20,0,
+		1,{Vei2(1,1)},100,10,1,10,1,0,
 		{},
 		{{"feather",1},{"meat",20}}),
 		ObstacleStats(				//#17
-		1,{Vei2(1,1)},100,10,1,20,0,
+		1,{Vei2(1,1)},100,10,1,10,1,0,
 		{},
 		{{"meat",20}}),
 		ObstacleStats(				//#18
-		1,{Vei2(1,1)},100,10,1,20,0,
+		1,{Vei2(1,1)},100,10,1,10,1,0,
 		{},
 		{{"feather",1},{"meat",20}}),
 		ObstacleStats(				//#19
-		1,{Vei2(1,1)},100,10,1,20,0,
+		1,{Vei2(1,1)},100,10,1,10,1,0,
 		{},
 		{{"meat",20}}),
 		ObstacleStats(				//#20
-		1,{Vei2(1,1)},100,10,1,20,0,
+		1,{Vei2(1,1)},100,10,1,10,1,0,
 		{},
 		{{"meat",20}}),
 		ObstacleStats(				//#21
-		1,{Vei2(3,3)},100,-1,0,0,3,
+		1,{Vei2(3,3)},100,-1,0,0,0,3,
 		{{"snow",50},{"wood",20}},
 		{{"snow",25},{"wood",10}}),
 		ObstacleStats(				//#22
-		1,{Vei2(3,3)},100,-1,0,0,4,
+		1,{Vei2(3,3)},100,-1,0,0,0,4,
 		{{"wood",700}},
 		{{"wood",350}}),
 		ObstacleStats(				//#23
-		1,{Vei2(4,4)},100,-1,0,0,4,
+		1,{Vei2(4,4)},100,-1,0,0,0,4,
 		{{"stone",400},{"wood",200}},
 		{{"stone",200},{"wood",100}}),
 		ObstacleStats(				//#24
-		1,{Vei2(4,4)},100,-1,0,0,4,
+		1,{Vei2(4,4)},100,-1,0,0, 0,4,
 		{{"bricks",200},{"wood",100},{"stone",100}},
 		{{"bricks",100},{"wood",50},{"stone",50} }),
 		ObstacleStats(				//#25
-		1,{Vei2(4,4)},100,-1,0,0,6,
+		1,{Vei2(4,4)},100,-1,0,0, 0,6,
 		{{"concrete",500} },
 		{{"concrete",250} }),
 		ObstacleStats(				//#26
-		1,{Vei2(5,5)},100,-1,0,0,6,
+		1,{Vei2(5,5)},100,-1,0,0, 0,6,
 		{{"slate",100},{"bricks",200},{"concrete",200} },
 		{{"slate",50},{"bricks",100},{"concrete",100} }),
 		ObstacleStats(				//#27
-		1,{Vei2(4,4)},100,-1,0,0,3,
+		1,{Vei2(4,4)},100,-1,0,0,0,3,
 		{{"wood",100}},
 		{{"wood",50}}),
 		ObstacleStats(				//#28
-		1,{Vei2(3,3)},100,-1,0,0,3,
+		1,{Vei2(3,3)},100,-1,0,0, 0,3,
 		{{"sapling",50},{"wood",50},{"stone",50} },
 		{{"sapling",25},{"wood",25},{"stone",25} }),
 		ObstacleStats(				//#29
-		1,{Vei2(4,4)},100,-1,0,0,3,
+		1,{Vei2(4,4)},100,-1,0,0, 0,3,
 		{{"wood",50},{"stone",30}},
 		{ {"wood",25},{"stone",25} }),
 		ObstacleStats(				//#30
-		1,{Vei2(3,3)},100,-1,0,0,3,
+		1,{Vei2(3,3)},100,-1,0,0, 0,3,
 		{{"iron",10},{"stone",100},{"sticks",30}},
 		{ {"iron",5},{"stone",50},{"sticks",15} }),
 		ObstacleStats(				//#31
-		1,{Vei2(5,5)},100,-1,0,0,6,
+		1,{Vei2(5,5)},100,-1,0,0,0,6,
 		{ {"iron",5},{"wood",200},{"stone",130}},
 		{ {"iron",2.5},{"wood",100},{"stone",65} }),
 		ObstacleStats(				//#32
-		1,{Vei2(3,3)},100,-1,0,0,3,
+		1,{Vei2(3,3)},100,-1,0,0, 0,3,
 		{{"wood",100},{"feather",2}},
 		{{"wood",50},{"feather",1}}),
 		ObstacleStats(				//#33
-		1,{Vei2(5,5)},100,-1,0,0,6,
+		1,{Vei2(5,5)},100,-1,0,0, 0,6,
 		{{"stone",100},{"wood",200},{"concrete",80} },
 		{{"stone",50},{"wood",100},{"concrete",40} }),
 		ObstacleStats(				//#34
-		1,{Vei2(3,3)},100,-1,0,0,3,
+		1,{Vei2(3,3)},100,-1,0,0, 0,3,
 		{{"steel",50},{"wood",150}},
 		{{"steel",25},{"wood",75}}),
 		ObstacleStats(				//#35
-		1,{Vei2(5,5)},100,-1,0,0,6,
+		1,{Vei2(5,5)},100,-1,0,0, 0,6,
 		{{"steel",50},{"stone",150}},
 		{{"steel",25},{"stone",75}}),
 		ObstacleStats(				//#36
-		1,{Vei2(5,5)},100,-1,0,0,3,
+		1,{Vei2(5,5)},100,-1,0,0, 0,3,
 		{{"steel",50},{"iron",30},{"stone",100} },
 		{{"steel",25},{"iron",15},{"stone",50} }),
 		ObstacleStats(				//#37
-		1,{Vei2(4,4)},100,-1,0,0,6,
+		1,{Vei2(4,4)},100,-1,0,0, 0,6,
 		{{"steel",100},{"stone",100}},
 		{{"steel",50},{"stone",75}}),
 		ObstacleStats(				//#38
-		1,{Vei2(5,5)},100,-1,0,0,3,
+		1,{Vei2(5,5)},100,-1,0,0, 0,3,
 		{{"steel",50},{"iron",30},{"stone",100} },
 		{{"steel",25},{"iron",15},{"stone",50} }),
 		ObstacleStats(				//#39
-		1,{Vei2(4,4)},100,-1,0,0,6,
+		1,{Vei2(4,4)},100,-1,0,0, 0,6,
 		{{"steel",50},{"iron",30},{"stone",150} },
 		{{"steel",25},{"iron",15},{"stone",75} }),
 		ObstacleStats(				//#40
-		1,{Vei2(3,3)},100,-1,0,0,3,
+		1,{Vei2(3,3)},100,-1,0,0, 0,3,
 		{{"silicon",50},{"plastic",30}, {"copper",3}},
 		{{"silicon",25},{"plastic",15}, {"copper",1.5} }),
 		ObstacleStats(				//#41
-		1,{Vei2(3,3)},100,-1,0,0,3,
+		1,{Vei2(3,3)},100,-1,0,0, 0,3,
 		{{"iron",50},{"plastic",30}, {"copper",3} },
 		{{"iron",25},{"plastic",15}, {"copper",3} }),
 		ObstacleStats(				//#42
-		1,{Vei2(5,5)},100,-1,0,0,6,
-		{{"concrete",250},{"computer",30}},
-		{{"concrete",125},{"computer",15}}),
+		1,{Vei2(5,5)},100,-1,0,0, 0,6,
+		{{"concrete",250},{"computer chips",30}},
+		{{"concrete",125},{"computer chips",15}}),
 		ObstacleStats(				//#43
-		1,{Vei2(1,1)},100,-1,0,0,0,
+		1,{Vei2(1,1)},100,-1,0,0, 0,0,
 		{},
 		{}),
 		ObstacleStats(				//#44
-		1,{Vei2(2,2)},100,-1,0,0,0,
+		1,{Vei2(2,2)},100,-1,0,0, 0,0,
 		{},
 		{}),
 		ObstacleStats(				//#45
-		1,{Vei2(3,3)},100,-1,0,0,0,
+		1,{Vei2(3,3)},100,-1,0,0, 0,0,
 		{},
 		{}),
 		ObstacleStats(				//#46
-		1,{Vei2(4,4)},100,-1,0,0,0,
+		1,{Vei2(4,4)},100,-1,0,0, 0,0,
 		{},
 		{}),
 		ObstacleStats(				//#47
-		1,{Vei2(5,5)},100,-1,0,0,0,
+		1,{Vei2(5,5)},100,-1,0,0, 0,0,
 		{},
 		{}),
 		ObstacleStats(				//#48
-		1,{Vei2(2,2)},100,-1,0,0,3,
+		1,{Vei2(2,2)},100,-1,0,0, 0,3,
 		{{"lithium",50},{"copper",30},{"concrete",30} },
 		{{"lithium",25},{"copper",15},{"concrete",15} }),
 		ObstacleStats(				//#49
-		1,{Vei2(5,5)},100,-1,0,0,6,
-		{{"concrete",250},{"computer",30} },
-		{{"concrete",125},{"computer",15} }),
+		1,{Vei2(5,5)},100,-1,0,0, 0,6,
+		{{"concrete",250},{"computer chips",30} },
+		{{"concrete",125},{"computer chips",15} }),
 		ObstacleStats(				//#50
-		1,{Vei2(4,4)},100,-1,0,0,3,
+		1,{Vei2(4,4)},100,-1,0,0, 0,3,
 		{{"stone",200},{"wood",200}},
 		{{"stone",100},{"wood",100}})
 	};

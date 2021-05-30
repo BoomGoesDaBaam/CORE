@@ -95,13 +95,15 @@ public:
 		}
 		return pos + parentC->GetPos().GetTopLeft<float>(); }
 	RectF pos;
-	int extra = 0;
+	int extra1 = 0;
+	int extra2 = 0;
+	bool extraB1 = false;
 	Color c = Colors::Black;
 	std::vector<int> activInStates;
 	std::string text = "no title";
 	bool mouseHovers = false, hitable = false;
 
-	Component(RectF pos, Component* parentC, std::queue<FrameEvent>* buffer, int type = 0) :pos(pos), parentC(parentC),buffer(buffer){}
+	Component(RectF pos, Component* parentC, std::queue<FrameEvent>* buffer) :pos(pos), parentC(parentC),buffer(buffer){}
 	virtual void Draw(Graphics& gfx)
 	{
 		gfx.DrawFilledRect(GetPos(), c, SpriteEffect::Nothing());
@@ -166,6 +168,92 @@ public:
 			f->DrawText(text, (int)(drawPos.left), (int)(drawPos.top), size, c);
 		}
 		//gfx.DrawRect(GetPos(), Colors::Red);
+	}
+};
+class TextBox : public Text
+{
+protected:
+	std::vector<std::string> lines;
+public:
+	TextBox(std::string text, RectF pos, int size, Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer);
+	void Draw(Graphics& gfx) override
+	{
+		for (int i = 0; i < (int)lines.size(); i++)
+		{
+			RectF drawPos;
+			if (parentC == nullptr)
+			{
+				drawPos = GetPos();
+			}
+			else
+			{
+				drawPos = parentC->GetPos() + pos.GetTopLeft<float>();
+			}
+			f->DrawText(lines[i], (int)(drawPos.left), (int)(drawPos.top) + i * (size+2), size, c);
+		}
+	}
+};
+class CheckBox : public Component
+{
+protected:
+	sharedResC resC;
+	bool ticked = false;
+	std::vector<CheckBox*> disable;
+	void UncheckOther()
+	{
+		for (auto checkBox : disable)
+		{
+			checkBox->Uncheck();
+		}
+	}
+	bool(*bFunc)(std::queue<FrameEvent>* buffer, Component* caller) = nullptr;
+public:
+	CheckBox(RectF pos, Component* parentC, std::queue<FrameEvent>* buffer, sharedResC resC, std::vector<int> activInStates = {});
+	void Draw(Graphics& gfx) override
+	{
+		if (ticked)
+		{
+			gfx.DrawSurface((RectI)GetPos(), resC->tC.buttons[5].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+		}
+		else
+		{
+			gfx.DrawSurface((RectI)GetPos(), resC->tC.buttons[4].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+		}
+	}
+	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)override
+	{
+		if (Component::HandleMouseInputFrame(e, interact) && e.GetType() == Mouse::Event::LRelease)
+		{
+			ticked = !ticked;
+			extraB1 = false;
+			if (ticked)
+			{
+				UncheckOther();
+				extraB1 = true;
+			}
+			if (bFunc != nullptr)
+			{
+				bFunc(buffer, this);
+			}
+			return true;
+		}
+		return false;
+	}
+	void AddCheckBox2Disable(CheckBox* other)
+	{
+		disable.push_back(other);
+	}
+	void Uncheck()
+	{
+		ticked = false;
+	}
+	void Check()
+	{
+		ticked = true;
+	}
+	void SetBFunc(bool(*bFunc)(std::queue<FrameEvent>* buffer, Component* caller))
+	{
+		this->bFunc = bFunc;
 	}
 };
 class Button : public Text
@@ -402,12 +490,26 @@ public:
 		comps[key] = std::make_unique<Text>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
 		return static_cast<Text*>(comps[key].get());
 	}
+	virtual TextBox* AddTextBox(std::string text, RectF pos, int size, Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0)
+	{
+		activInStates = FillWith1WhenSize0(activInStates, nStates);
+		//assert(activInStates.size() == nStates);
+		comps[key] = std::make_unique<TextBox>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
+		return static_cast<TextBox*>(comps[key].get());
+	}
 	virtual Button* AddButton(RectF pos, Animation* a, Animation* aHover, std::string key, Font* f, std::vector<int> activInStates = {})
 	{
 		activInStates = FillWith1WhenSize0(activInStates, nStates);
 		//assert(activInStates.size() == nStates);
 		comps[key] = std::make_unique<Button>(pos, a, aHover, activInStates,f, this, buffer);
 		return static_cast<Button*>(comps[key].get());
+	}
+	virtual CheckBox* AddCheckBox(RectF pos, std::queue<FrameEvent>* buffer, sharedResC resC, std::string key, std::vector<int> activInStates = {})
+	{
+		activInStates = FillWith1WhenSize0(activInStates, nStates);
+		//assert(activInStates.size() == nStates);
+		comps[key] = std::make_unique<CheckBox>(pos, this, buffer, resC, activInStates);
+		return static_cast<CheckBox*>(comps[key].get());
 	}
 	virtual Frame* AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {})
 	{
@@ -586,6 +688,8 @@ bool BNextTurn(std::queue<FrameEvent>* buffer, Component* caller);
 bool BBuildMenu(std::queue<FrameEvent>* buffer, Component* caller);
 bool BOpenGamefield(std::queue<FrameEvent>* buffer, Component* caller);
 bool BSetAttackMode(std::queue<FrameEvent>* buffer, Component* caller);
+
+bool BSetObstacleState(std::queue<FrameEvent>* buffer, Component* caller);
 
 class MultiFrame : public Frame
 {
@@ -846,12 +950,61 @@ public:
 			fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 51), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_teamIs", a, 1);
 			fUnity->AddText(Settings::lang_stepsLeft[Settings::lang] + ":", RectF(Vec2(2, 67), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_steps", a, 1);
 			fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 67), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_stepsIs", a, 1);
+			fUnity->AddText(Settings::lang_attacksLeft[Settings::lang] + ":", RectF(Vec2(2, 83), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_attacks", a, 1);
+			fUnity->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(80, 83), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_attacksIs", a, 1);
 			fUnity->SetState(1);
 			fUnity->SetVisible(false);
-
-			Button* b_setAttack = fUnity->AddButton(RectF(Vec2(30, 80), 60, 60), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_setAttack", &resC->tC.fonts[0], a);
+			Button* b_setAttack = fUnity->AddButton(RectF(Vec2(35, 100), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_setAttack", &resC->tC.fonts[0], a);
 			b_setAttack->bFunc = BSetAttackMode;
+			b_setAttack->text = Settings::lang_attack[Settings::lang];
+			b_setAttack->size = 7;
 			b_setAttack->hitable = true;
+			
+			Frame* fTownhall = AddFrame("f_Townhall", RectF(Vec2(100, 150), 140, 280), 0);																			//Unit Frame
+			fTownhall->SetState(1);
+			Text* text = fTownhall->AddText(Settings::lang_townhall[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_h");
+			fTownhall->AddText(Settings::lang_hp[Settings::lang] + ":", RectF(Vec2(2, 95), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hp", a, 1);
+			fTownhall->AddText(Settings::lang_noInformation[Settings::lang] , RectF(Vec2(80, 95), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hpIs", a, 1);
+			fTownhall->AddText(Settings::lang_attacksLeft[Settings::lang] + ":", RectF(Vec2(2, 110), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_attacks", a, 1);
+			fTownhall->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(80, 110), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_attacksIs", a, 1);
+			fTownhall->AddText(Settings::lang_team[Settings::lang] + ":", RectF(Vec2(2, 125), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_team", a, 1);
+			fTownhall->AddText(Settings::lang_noInformation[Settings::lang] , RectF(Vec2(80, 125), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_teamIs", a, 1);
+			fTownhall->AddText(Settings::lang_educate[Settings::lang] + ":", RectF(Vec2(2, 145), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_ausbilden", a, 1);
+			fTownhall->AddText(Settings::lang_heal[Settings::lang] + ":", RectF(Vec2(2, 160), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_heilen", a, 1);
+			fTownhall->AddText(Settings::lang_attack[Settings::lang] + ":", RectF(Vec2(2, 175), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_attack", a, 1);
+			fTownhall->SetVisible(false);
+
+			TextBox* tB_townHall = fTownhall->AddTextBox(Settings::lang_TownhallInfo[Settings::lang], RectF(Vec2(5, 17), 135, 40), 7, &resC->tC.fonts[0], Colors::Black, "tB_townhallInfo", a);
+
+			CheckBox* cB_educate = fTownhall->AddCheckBox(RectF(Vec2(80, 137),15, 15), &buffer, resC, "cB_educate", a);
+			cB_educate->extra1 = 0;
+			cB_educate->extra2 = 1;
+			cB_educate->SetBFunc(BSetObstacleState);
+
+			CheckBox* cB_heal = fTownhall->AddCheckBox(RectF(Vec2(80, 157), 15, 15), &buffer, resC, "cB_heal", a);
+			cB_heal->extra1 = 2;
+			cB_heal->extra2 = 3;
+			cB_heal->SetBFunc(BSetObstacleState);
+
+			CheckBox* cB_attack = fTownhall->AddCheckBox(RectF(Vec2(80, 177), 15, 15), &buffer, resC, "cB_attack", a);
+			cB_attack->extra1 = 4;
+			cB_attack->extra2 = 5;
+			cB_attack->SetBFunc(BSetObstacleState);
+
+			cB_educate->AddCheckBox2Disable(cB_heal);
+			cB_educate->AddCheckBox2Disable(cB_attack);
+
+			cB_heal->AddCheckBox2Disable(cB_attack);
+			cB_heal->AddCheckBox2Disable(cB_educate);
+			
+			cB_attack->AddCheckBox2Disable(cB_heal);
+			cB_attack->AddCheckBox2Disable(cB_educate);
+
+			Button* b_THsetAttack = fTownhall->AddButton(RectF(Vec2(35, 200), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_setAttack", &resC->tC.fonts[0], a);
+			b_THsetAttack->bFunc = BSetAttackMode;
+			b_THsetAttack->text = Settings::lang_attack[Settings::lang];
+			b_THsetAttack->size = 7;
+			b_THsetAttack->hitable = true;
 
 
 			//Frame* fNextTurn = AddFrame(RectF(Vec2(1120, 600), 120, 60), 1);																			//NEXT TURN FRAME
@@ -928,7 +1081,7 @@ public:
 		std::string key = Settings::GetObstacleString(obstacleType);
 		Frame* frame = parentC->AddFrame(pos, key, { 1 }, activOnPages);
 		frame->s = &resC->tC.windowsFrame[7].GetCurSurface();
-		frame->extra = obstacleType;
+		frame->extra1 = obstacleType;
 		frame->bFunc = BBuildMode;
 		frame->hitable = true;
 		frame->AddText(Settings::GetObstacleString(obstacleType), RectF(Vec2(60, 5), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, key + "H", { 1 });
@@ -966,7 +1119,7 @@ public:
 			if (curW.GetFocusedObstacle() != nullptr)
 			{
 				f1->SetText(Settings::GetObstacleString(curW.GetFocusedObstacle()->type), "t_obstacleInfo");
-				f1->SetText(std::to_string(curW.GetFocusedObstacle()->hp), "t_obstacleHpIs");
+				f1->SetText(std::to_string(curW.GetFocusedObstacle()->hp)+" / "+ std::to_string(Settings::obstacleStats[curW.GetFocusedObstacle()->type].baseHp), "t_obstacleHpIs");
 			}
 
 			//#2
@@ -1015,28 +1168,60 @@ public:
 
 		}
 	}
-	void UpdateUnitinformation(Obstacle* obst)
+	void UpdateFrames(Obstacle* obst)
 	{
-		Frame* f = static_cast<Frame*>(comps["f_Unit"].get());
-		f->SetVisible(true);
-		std::string s1 = Settings::GetObstacleString(obst->type);
+		Frame* f_unit = static_cast<Frame*>(comps["f_Unit"].get());
+		f_unit->SetVisible(false);
+		Frame* f_townhall = static_cast<Frame*>(comps["f_Townhall"].get());
+		f_townhall->SetVisible(false);
+		if (obst != nullptr)
+		{
+			if (Settings::anyOfUnit(obst->type))
+			{
+				f_unit->SetVisible(true);
+				std::string s1 = Settings::GetObstacleString(obst->type);
 
-		f->SetText(s1, "t_unitNameIs");
-		f->SetText(std::to_string(obst->hp), "t_hpIs");
-		f->SetText(std::to_string(obst->stepsLeft), "t_stepsIs");
-		if (obst->team != nullptr)
-		{
-			f->SetText(obst->team->GetTeamName(), "t_teamIs");
+				f_unit->SetText(s1, "t_unitNameIs");
+				f_unit->SetText(std::to_string(obst->hp) + " / " + std::to_string(Settings::obstacleStats[obst->type].baseHp), "t_hpIs");
+				f_unit->SetText(std::to_string(obst->stepsLeft), "t_stepsIs");
+				f_unit->SetText(std::to_string(obst->attack->GetAttacksLeft()), "t_attacksIs");
+				if (obst->team != nullptr)
+				{
+					f_unit->SetText(obst->team->GetTeamName(), "t_teamIs");
+				}
+				else
+				{
+					f_unit->SetText(Settings::lang_noInformation[Settings::lang], "t_teamIs");
+				}
+			}
+			if (obst->type == 3)
+			{
+				f_townhall->SetVisible(true);
+				//t_teamIs
+				f_townhall->SetText(std::to_string(obst->hp) + " / " + std::to_string(Settings::obstacleStats[obst->type].baseHp), "t_hpIs");
+				f_townhall->SetText(std::to_string(obst->attack->GetAttacksLeft()) + " / " + std::to_string(Settings::obstacleStats[obst->type].attacksPerTurn), "t_attacksIs");
+				if (obst->team != nullptr)
+				{
+					f_townhall->SetText(obst->team->GetTeamName(), "t_teamIs");
+				}
+				else
+				{
+					f_townhall->SetText(Settings::lang_noInformation[Settings::lang], "t_teamIs");
+				}
+				if(obst->education->Educates())
+					static_cast<CheckBox*>(f_townhall->GetComp("cB_educate"))->Check();
+				else
+					static_cast<CheckBox*>(f_townhall->GetComp("cB_educate"))->Uncheck();
+				if (obst->heal->Isenabled())
+					static_cast<CheckBox*>(f_townhall->GetComp("cB_heal"))->Check();
+				else
+					static_cast<CheckBox*>(f_townhall->GetComp("cB_heal"))->Uncheck();
+				if (obst->attack->GetAttackMode())
+					static_cast<CheckBox*>(f_townhall->GetComp("cB_attack"))->Check();
+				else
+					static_cast<CheckBox*>(f_townhall->GetComp("cB_attack"))->Uncheck();
+			}
 		}
-		else
-		{
-			f->SetText(Settings::lang_noInformation[Settings::lang], "t_teamIs");
-		}
-	}
-	void HideUnitInfo()
-	{
-		Frame* f = static_cast<Frame*>(comps["f_Unit"].get());
-		f->SetVisible(false);
 	}
 	static constexpr float percentForGrab = 0.05;			
 };

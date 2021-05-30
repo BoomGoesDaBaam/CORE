@@ -110,7 +110,10 @@ public:
 		columns.push_back(Column(1, T()));
 	}
 	
-	const T& operator()(Vei2 pos)const { return columns[pos.x][pos.y]; }
+	const T& operator()(Vei2 pos)const { 
+		assert(pos.x >= 0 && pos.x < columns.size());
+		assert(pos.y >= 0 && pos.y < nRows);
+		return columns[pos.x][pos.y]; }
 	T& operator()(Vei2 pos) { return columns[pos.x][pos.y]; }
 	const Column& operator[](std::size_t idx) const { return columns[idx % columns.size()]; }
 	Column& operator[](std::size_t idx) { return columns[idx % columns.size()]; }

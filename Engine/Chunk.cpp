@@ -74,7 +74,7 @@ void Chunk::CastHeal(CtPos pos, int deltaHP, int radius)
 		{
 			CtPos ctDelta = { Vei2(0,0),Vei2(x,y) };
 			CtPos ctPos = PutCtPosInWorld(pos + ctDelta,chunks->GetSize());
-			if(chunks->operator()(ctPos.x).GetObstacleMapAt(ctPos.y) != -1)
+			if(chunks->operator()(ctPos.x).GetObstacleMapAt(ctPos.y) != -1 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius)
 				chunks->operator()(ctPos.x).GetObstacleAt(ctPos.y)->Heal(deltaHP);
 		}
 	}
@@ -268,6 +268,15 @@ RectF Chunk::GetTileRect(RectF chunkRect, Vei2 tilePos) const
 	tileRect += (Vec2)tilePos * Vec2(tileSize.x, -tileSize.y);
 	return tileRect;
 }
+RectF Chunk::GetTileRect(Vei2 tilePos) const
+{
+	if (TileIsInChunk(tilePos))
+	{
+		return tilesRect(tilePos);
+	}
+	CtPos ctPos = PutCtPosInWorld(CtPos(chunkPos, tilePos), chunks->GetSize());
+	chunks->operator()(ctPos.x).GetTileRect(ctPos.y);
+}
 bool Chunk::ObstaclePosAllowed(Vei2 tilePos, int type, int except) const
 {
 	return ObstaclePosAllowed(tilePos, Settings::obstacleStats[type].size[0], except);
@@ -367,7 +376,7 @@ void Chunk::DrawObstacleOutlines(Vei2 tilePos, int type, RectF chunkRect, Color 
 		drawPos.top -= (Settings::obstacleStats[type].size[0].y - 1) * tileSize.y;
 		drawPos.right += (Settings::obstacleStats[type].size[0].x - 1) * tileSize.x;
 		gfx.DrawFilledRect(drawPos, c, SpriteEffect::Transparent(0.5f));
-		//gfx.DrawFilledRect(drawPos, c,Spriteeff);
+		gfx.DrawRect(drawPos, c);
 	}
 }
 void Chunk::DrawObstacle(Vei2 tilePos, int type, RectF chunkRect, Graphics& gfx) const
@@ -841,8 +850,8 @@ void Chunk::UpdateRects(RectF chunkRect)
 }
 void Chunk::DeleteRects()
 {
-	cellsRect = Matrix<RectF>(1, 1, RectF(Vec2(0, 0), 0, 0));
-	tilesRect = Matrix<RectF>(1, 1, RectF(Vec2(0, 0), 0, 0));
+	//cellsRect = Matrix<RectF>(1, 1, RectF(Vec2(0, 0), 0, 0));
+	//tilesRect = Matrix<RectF>(1, 1, RectF(Vec2(0, 0), 0, 0));
 }
 void Chunk::UpdateAroundMatrix(Matrix<int> mat)
 {
@@ -954,6 +963,40 @@ bool Chunk::UnitIsAround(Vei2 tilePos, int range)
 	}
 	return false;
 }
+bool Chunk::PlaceObstacle(Vei2 tilePos, int type, Team* team, int ontoType, int surrByObst)
+{
+	
+	CtPos ctPos  = Chunk::CctPos2CtPos(Chunk::Flat2ChunkPos(tilePos, GetWorldSizeInTiles()));
+	//Matrix<int> aMat = chunks->operator()(ctPos.x).GetAroundmatrix(ctPos.y / Vei2(Settings::CellSplitUpIn,Settings::CellSplitUpIn));// GetAroundMatrix(tileIsInCell);
+	//if (ObstaclePosAllowed(tilePos, type) && (ontoType == -1 || ontoType == cells(tileIsInCell).type) && (surrBy == -1 || aMat.HasValue(surrBy)))
+	//{
+	if (Settings::spawnObstacles)
+	{
+		Obstacle obstacle = Obstacle(ctPos.y, ctPos.x, type, resC, team);
+		return chunks->operator()(ctPos.x).PlaceObstacle(ctPos.y, &obstacle);
+	}
+	return true;
+	//}
+	//return false;
+	/*
+	tilePos = Chunk::PutTileInWorld(tilePos, s.wSizeInTiles);
+	Vei2 tileIsInCell = TileIsInCell(tilePos);
+	auto ccPos = Cell2ChunkPos(tileIsInCell);
+	Matrix<int> aMat = chunks(ccPos.x).GetAroundmatrix(ccPos.y);// GetAroundMatrix(tileIsInCell);
+	//if (ObstaclePosAllowed(tilePos, type) && (ontoType == -1 || ontoType == cells(tileIsInCell).type) && (surrBy == -1 || aMat.HasValue(surrBy)))
+	//{
+	CctPos cctPos = Chunk::Flat2ChunkPos(tilePos, s.wSizeInTiles);
+	CtPos ctPos = Chunk::CctPos2CtPos(cctPos);
+	if (Settings::spawnObstacles)
+	{
+		Obstacle obstacle = Obstacle(ctPos.y, ctPos.x, type, resC, team);
+		return chunks(ctPos.x).PlaceObstacle((Vei2)cctPos.y * Settings::CellSplitUpIn + cctPos.z, &obstacle);
+	}
+	return true;
+	//}
+	//return false;
+	*/
+}
 bool Chunk::PlaceObstacle(Vei2 tilePos, Obstacle* o)
 {
 	if (Settings::obstaclesOn && ObstaclePosAllowed(tilePos, o->type))
@@ -963,6 +1006,7 @@ bool Chunk::PlaceObstacle(Vei2 tilePos, Obstacle* o)
 		{
 			int index = obstacles.size();
 			MarkObstacleMap(tilePos, Settings::obstacleStats[o->type].size[0], index);
+			
 			if (ConstructionSite* conObst = dynamic_cast<ConstructionSite*>(o))
 			{
 				obstacles.push_back(std::make_unique<ConstructionSite>(*conObst));
@@ -1018,7 +1062,28 @@ Vei2 Chunk::PutTileInChunk(int x, int y)const
 	}
 	return Vei2(x, y);
 }
-
+CtPos Chunk::FindNearestPositionThatFits(Vei2 tilePos, int type)
+{
+	int range = 0;
+	while (true)
+	{
+		CtPos ctMidPos = CtPos(chunkPos, tilePos);
+		for (int y = -range; y <= range; y++)
+		{
+			for (int x = -range; x <= range; x++)
+			{
+				CtPos ctDelta = { Vei2(0,0),Vei2(x,y) };
+				CtPos ctPos = PutCtPosInWorld(ctMidPos + ctDelta, chunks->GetSize());
+				if (chunks->operator()(ctPos.x).ObstaclePosAllowed(ctPos.y,type) && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= range)
+				{
+					return ctPos;
+				}
+			}
+		}
+		range++;
+	}
+	return CtPos(Vei2(-1, -1), Vei2(-1, -1));
+}
 Vec2_<Vei2> Chunk::GetTilePosOutOfBounds(Vei2 tilePos) const		// 'x' = chunkPos		'y' = tilePos
 {
 	if (TileIsInChunk(tilePos))
@@ -1087,12 +1152,41 @@ void Chunk::SetTypeAt(Vei2 pos, int type)
 {
 	cells(pos) = type;
 }
-void Chunk::NextTurn(std::map<std::string, Team*> teams)
+void Chunk::NextTurnFirst(std::map<std::string, Team*> teams)
+{
+	for (int i = 0; i < obstacles.size(); i++)			//Update Map
+	{
+		if (obstacles[i]->education != nullptr && obstacles[i]->education->Educates())
+		{
+			obstacles[i]->education->TurnPassed();
+			if (obstacles[i]->education->EducationFinished() && teams["player"]->GetMaterials().values["units"] + 1 <= teams["player"]->GetMaterials().values["maxUnits"])
+			{
+				int uunit = teams["player"]->GetMaterials().values["units"] + 1;
+				int max = teams["player"]->GetMaterials().values["maxUnits"] + 1;
+				CtPos spawnPoint = FindNearestPositionThatFits(obstacles[i]->tilePos, obstacles[i]->education->GetFinishedType());
+				Obstacle obstacle = Obstacle(spawnPoint.y, spawnPoint.x, obstacles[i]->education->GetFinishedType(), resC, obstacles[i]->team);
+				chunks->operator()(spawnPoint.x).PlaceObstacle(obstacle.tilePos, &obstacle);
+				obstacles[i]->education->ResetTurns();
+			}
+		}
+		if (obstacles[i]->heal != nullptr && obstacles[i]->heal->Isenabled())
+		{
+			CastHeal(GetMidPosOfObstacle(CtPos(chunkPos, obstacles[i]->tilePos), obstacles[i]->type, chunks->GetSize()),Settings::obstacleStats[obstacles[i]->type].healNumber, Settings::obstacleStats[obstacles[i]->type].healRange);
+		}
+	}
+}
+void Chunk::NextTurnSecond(std::map<std::string, Team*> teams)
 {
 	RandyRandom rr;
 	for (int i = 0; i < obstacles.size(); i++)
 	{
 		obstacles[i]->stepsLeft = Settings::obstacleStats[obstacles[i]->type].movesPerTurn;
+		if (obstacles[i]->attack != nullptr && obstacles[i]->attack->GetAttackMode())
+		{
+			int type = obstacles[i]->type;
+			int much = Settings::obstacleStats[obstacles[i]->type].attacksPerTurn;
+			obstacles[i]->attack->SetAttacksleft(Settings::obstacleStats[obstacles[i]->type].attacksPerTurn);
+		}
 		//Obstacle expandation
 		if ((Settings::anyOfPlants(obstacles[i]->type) || Settings::anyOfAnimals(obstacles[i]->type)) && rr.Calc(Settings::probToGrow) == 1)
 		{
@@ -1105,7 +1199,10 @@ void Chunk::NextTurn(std::map<std::string, Team*> teams)
 			Obstacle obstacle = Obstacle(ctPos.y, ctPos.x, obstacles[i]->type, resC, teams["Fuer die Natur"]);
 			chunks->operator()(ctPos.x).PlaceObstacle(ctPos.y, &obstacle);
 		}
-		//
+		//Add meterials
+		if (obstacles[i]->team != nullptr)
+			ApplyObstacleEffect(obstacles[i].get());
+		//COnstructions finished
 		if (ConstructionSite* conObst = dynamic_cast<ConstructionSite*>(obstacles[i].get()))
 		{
 			conObst->TurnPassed();
@@ -1116,9 +1213,6 @@ void Chunk::NextTurn(std::map<std::string, Team*> teams)
 				PlaceObstacle(obstacle.tilePos, &obstacle);
 			}
 		}
-		//
-		if (obstacles[i]->team != nullptr)
-			ApplyObstacleEffect(obstacles[i].get());
 	}
 }
 void Chunk::ApplyObstacleEffect(Obstacle* obstacle)

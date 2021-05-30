@@ -123,7 +123,7 @@ void Game::ComposeFrame()
 			{
 				oss1 << curW->GetFocusedObstacle()->n90rot;
 			}
-			oss2 << "fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CSize:" << curW->GetcSize().x << "   x-Felder:" << curW->GetRenderRect().left;
+			oss2 << "fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CellSize:" << curW->GetcSize().x << "   x-Felder:" << curW->GetRenderRect().left;
 			oss4 << "Type:" << curW->GetfCellType() << "  use count tC:" << resC.use_count() << " ignoreMouse:" << ignoreMouse << " opt1:" << Settings::obstaclesOn << " updatedGraphics:" << curW->updatedGraphics;
 			resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 14, Colors::Red);
 			resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 14, Colors::Red);
@@ -147,7 +147,7 @@ void Game::ComposeFrame()
 
 	}
 	igwH.Draw(gfx);
-	gfx.DrawSurface(RectI(Vei2(0, 0), 100, 50), resC->tC.fields[14].GetCurSurface(), SpriteEffect::Nothing());
+	//gfx.DrawSurface(RectI(Vei2(0, 0), 100, 50), resC->tC.fields[14].GetCurSurface(), SpriteEffect::Nothing());
 }
 //Handle
 void Game::HandleMouseInput(Mouse::Event& e)
@@ -184,18 +184,10 @@ void Game::HandleFrameChanges()
 	if (igwH.GetCurScene() == 0)
 	{
 		Obstacle* obstacle = curW->GetFocusedObstacle();
-		if (curW->UpdateUnitInfo() && obstacle != nullptr)
+		if (curW->UpdateFrameInfo())
 		{
-			igwH.UpdateUnitinformation(curW->GetFocusedObstacle());
-			curW->UnitUpdated();
-		}
-		if (obstacle == nullptr || !Settings::anyOfUnit(curW->GetFocusedObstacle()->type))
-		{
-			igwH.HideUnitInfo();
-		}
-		if (curW->NeedToLoadBuildMenu())
-		{
-			//curW->BuildMenuLoaded();
+			igwH.UpdateFrames(curW->GetFocusedObstacle());
+			curW->FramesUpdated();
 		}
 	}
 }
@@ -225,9 +217,9 @@ void Game::HandleFrameLogic(FrameEvent& e)
 		if (e.GetAction() == "next turn")
 		{
 			curW->NextTurn();
-			if (curW->GetFocusedObstacle() != nullptr && Settings::anyOfUnit(curW->GetFocusedObstacle()->type))
+			if (curW->GetFocusedObstacle() != nullptr)
 			{
-				igwH.UpdateUnitinformation(curW->GetFocusedObstacle());
+				igwH.UpdateFrames(curW->GetFocusedObstacle());
 			}
 		}
 		if (e.GetAction() == "load scene")
@@ -236,7 +228,55 @@ void Game::HandleFrameLogic(FrameEvent& e)
 		}
 		if (e.GetAction() == "set attackMode")
 		{
-			curW->SetAttackMode(true);
+			curW->SetAttackMode(!curW->GetAttackMode());
+		}
+		if (e.GetAction().find("set obstacle state") != std::string::npos)
+		{
+			if (e.GetAction().find("townhall") != std::string::npos)
+			{
+				Obstacle* obstacle = curW->GetFocusedObstacle();
+				if (obstacle->education != nullptr)
+				{
+					//Disable all boxes
+					if (e.GetExtra() == 1)
+					{
+						obstacle->education->SetEducates(false);
+					}
+					if (e.GetExtra() == 3)
+					{
+						obstacle->heal->Disable();
+					}
+					if (e.GetExtra() == 5)
+					{
+						obstacle->attack->SetAttackMode(false);
+					}
+					//Check for ticked box
+					if (e.GetExtra() == 0)
+					{
+						obstacle->education->SetEducates(true);
+					}
+					else
+					{
+						obstacle->education->SetEducates(false);
+					}
+					if (e.GetExtra() == 2)
+					{
+						obstacle->heal->Enable();
+					}
+					else
+					{
+						obstacle->heal->Disable();
+					}
+					if (e.GetExtra() == 4)
+					{
+						obstacle->attack->SetAttackMode(true);
+					}
+					else
+					{
+						obstacle->attack->SetAttackMode(false);
+					}
+				}
+			}
 		}
 	}
 }

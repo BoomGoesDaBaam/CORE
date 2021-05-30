@@ -5,6 +5,97 @@
 #include "GigaMath.h"
 #include "Team.h"
 #include <memory>
+class EducationTrait
+{
+protected:
+	int turn2Educate = 0, turn2EducateBase, educatesType;
+	bool educates = false;
+public:
+	EducationTrait(int turn2Educate, int educatesType)
+		:
+		turn2Educate(turn2Educate),
+		turn2EducateBase(turn2Educate),
+		educatesType(educatesType)
+	{}
+	void TurnPassed()
+	{
+		if(educates)
+			turn2Educate--;
+	}
+	bool EducationFinished()
+	{
+		return turn2Educate <= 0;
+	}
+	void ResetTurns()
+	{
+		turn2Educate = turn2EducateBase;
+	}
+	int GetFinishedType()
+	{
+		return educatesType;
+	}
+	void SetEducates(bool educates)
+	{
+		this->educates = educates;
+	}
+	bool Educates()
+	{
+		return educates;
+	}
+};
+class HealTrait
+{
+protected:
+	bool heals = false;
+public:
+	HealTrait(int heals)
+		:
+		heals(heals)
+	{}
+	void Enable()
+	{
+		heals = true;
+	}
+	void Disable()
+	{
+		heals = false;
+	}
+	bool Isenabled()
+	{
+		return heals;
+	}
+};
+class AttackTrait
+{
+protected:
+	int attacksLeft = 0;
+	bool attackMode = false;
+public:
+	AttackTrait(int attacksLeft)
+		:
+		attacksLeft(attacksLeft)
+	{}
+	bool GetAttackMode()
+	{
+		return attackMode;
+	}
+	void SetAttackMode(bool attackMode)
+	{
+		this->attackMode = attackMode;
+	}
+	void SetAttacksleft(bool attacksLeft)
+	{
+		this->attacksLeft = attacksLeft;
+	}
+	bool GetAttacksLeft()
+	{
+		return attacksLeft;
+	}
+	void Attacked()
+	{
+		attacksLeft--;
+	}
+};
 class Obstacle
 {
 protected:
@@ -12,21 +103,50 @@ protected:
 public:
 	Vei2 tilePos=Vei2(-1,-1);						//pos in chunk		Vei2(-1,-1) == disabled
 	Vei2 chunkPos=Vei2(-1,-1);
-	int type=-1, state = 0;
+	int type;
+	int state = 0;
 	int n90rot = 0;
 	int hp=50;
 	int stepsLeft = 0;
 	Team* team = nullptr;
 	RectF rect = RectF(Vec2(0,0),0,0);
 	std::vector<Animation> animations;	//index runs through states
-	/*
-	Obstacle() {}
-	Obstacle(Obstacle& obst) {}
-	Obstacle(Obstacle&& obst) {}
-	Obstacle& operator=(Obstacle& other)
+	//Traits		new Trait need handle in creation and in COPY ASSIGNMENT!
+	std::unique_ptr<EducationTrait> education = nullptr;
+	std::unique_ptr<HealTrait> heal = nullptr;
+	std::unique_ptr<AttackTrait> attack = nullptr;
+
+	//Obstacle() {}
+	Obstacle(Obstacle& obst) 
 	{
+		*this = obst;
+	}
+	//Obstacle(Obstacle&& obst) {}
+	Obstacle& operator=(const Obstacle& other)
+	{
+		resC = std::move(other.resC);
+		tilePos = other.tilePos;
+		chunkPos = other.chunkPos;
+		type = other.type;
+		state = other.state;
+		n90rot = other.n90rot;
+		hp = other.hp;
+		stepsLeft = other.stepsLeft;
+		team = other.team;
+		rect = other.rect;
+		animations = other.animations;
+		//Traits
+		if(other.education != nullptr)
+			education = std::make_unique<EducationTrait>(*other.education.get());
+		if (other.heal != nullptr)
+			heal = std::make_unique<HealTrait>(*other.heal.get());
+		if (other.attack != nullptr)
+			attack = std::make_unique<AttackTrait>(*other.attack.get());
+
+
 		return *this;
 	}
+	/*
 	Obstacle& operator=(Obstacle&& other) {
 
 		return *this;
@@ -42,6 +162,38 @@ public:
 		team(team),
 		stepsLeft(Settings::obstacleStats[type].movesPerTurn)
 	{
+		//Add Traits
+		
+		if (std::any_of(std::begin(Settings::obstacleTrait_education), std::end(Settings::obstacleTrait_education), [&](const int& val)
+			{
+				return type == val;
+			}))
+		{
+			education = std::make_unique<EducationTrait>(5, 10);
+		}
+		std::for_each(std::begin(Settings::obstacleTrait_heal), std::end(Settings::obstacleTrait_heal), [&](const int& val)
+		{
+			if (type == val && val == 2)
+			{
+				heal = std::make_unique<HealTrait>(true);
+			}
+			else if (type == val)
+			{
+				heal = std::make_unique<HealTrait>(false);
+			}
+		});
+		if (std::any_of(std::begin(Settings::obstacleTrait_attack), std::end(Settings::obstacleTrait_attack), [&](const int& val)
+			{
+				return type == val;
+			}))
+		{
+			attack = std::make_unique<AttackTrait>(Settings::obstacleStats[type].attacksPerTurn);
+			if (type == 3)
+			{
+				attack->SetAttacksleft(0);
+			}
+		}
+
 		hp = Settings::obstacleStats[type].baseHp;
 		animations.push_back(Animation(this->resC->tC.obstacles[type]));
 		switch (type)
@@ -156,7 +308,6 @@ public:
 		return typeWhenFinished;
 	}
 };
-
 class Cell
 {
 public:
@@ -183,9 +334,10 @@ class Chunk
 	Matrix<int> groundedMap;				// '0' = spot is not grounded, '1' = is grounded, '-1' = not identified yet (will be 0 if not changed), '2' = hill
 	Matrix<Matrix<int>> aMats;
 	Matrix<int> obstacleMap;				// '-1' = empty   val > -1 = index of obstacle in obstacleVec
+
 	std::vector<std::unique_ptr<Obstacle>> obstacles;
 	std::vector<int> obstaclesIndexNotUsed;
-	Surface surf_typesAndObstacles;
+
 	//int graphicsWidth = 0;
 	//int graphicsUpToDate = 0;				// 0 = nothing		1 = types drawn		2 = obstacles + types
 	//new values have to be added in copy assignment!!!
@@ -225,7 +377,7 @@ public:
 	}
 	Chunk& operator=(const Chunk& other)//needed because unique_ptr cant be copied 
 	{
-		
+
 		resC = std::move(other.resC);
 		hasNCells = other.hasNCells;
 		cells = other.cells;
@@ -239,8 +391,7 @@ public:
 		aMats = other.aMats;
 		obstacleMap = other.obstacleMap;
 		obstaclesIndexNotUsed = other.obstaclesIndexNotUsed;
-		surf_typesAndObstacles = other.surf_typesAndObstacles;
-		
+
 
 		obstacles.clear();
 		for (int i = 0; i < other.obstacles.size(); i++)
@@ -297,6 +448,7 @@ public:
 	Vec2 GetTileSize(RectF chunkRect) const;
 	RectF GetCellRect(RectF chunkRect, Vei2 cellPos) const;
 	RectF GetTileRect(RectF chunkRect, Vei2 tilePos) const;
+	RectF Chunk::GetTileRect(Vei2 tilePos) const;
 	static Vei2 chunkPos2Flat(Vec3_<Vei2> cctPos)
 	{
 		return cctPos.x * Settings::CellSplitUpIn * Settings::chunkHasNCells + cctPos.y * Settings::CellSplitUpIn + cctPos.z;
@@ -322,7 +474,7 @@ public:
 	void DrawGrit(Graphics& gfx)const;
 	void DrawSurfaceAt(Vei2 drawPos, Vei2 cellPos, int cellSize, float scale, const Surface& s, Graphics& gfx)const;
 	void DrawTile(RectF chunkRect, Vei2 tilePos, Color c, Graphics& gfx)const;
-	
+
 	//void UpdateTypeSurface(RectF chunkRect);
 	//void UpdateTypeSurfaceCell(RectF chunkRect, Vei2 curXY, Vec2 cellSize, Vec2 chunkSize);
 	//void UpdateObstacleSurface(RectF chunkRect);
@@ -340,9 +492,11 @@ public:
 	bool UnitIsAround(Vei2 tilePos, int range);
 
 	bool Chunk::PlaceObstacle(Vei2 tilePos, Obstacle* o);
+	bool Chunk::PlaceObstacle(Vei2 tilePos, int type, Team* team = nullptr, int ontoType = -1, int surrBy = -1);
 	bool TileIsInChunk(Vei2& pos)const;
 	Vei2 PutTileInChunk(Vei2 pos)const;
 	Vei2 PutTileInChunk(int x, int y)const;
+	CtPos FindNearestPositionThatFits(Vei2 tilePos, int type);
 
 	Vec2_<Vei2> GetTilePosOutOfBounds(Vei2 tilePos) const;
 
@@ -350,7 +504,9 @@ public:
 	int GetObstacleTypeOutOfBounds(Vei2 tilePos) const;
 	Obstacle* GetObstacleOutOfBounds(Vei2 tilePos) const;
 	void SetTypeAt(Vei2 pos, int type);
-	void NextTurn(std::map<std::string, Team*> teams);
+	void NextTurnFirst(std::map<std::string, Team*> teams);
+	void NextTurnSecond(std::map<std::string, Team*> teams);
+
 	void ApplyObstacleEffect(Obstacle* obstacle);
 	void AttackTile(CctPos pos, Obstacle* attacker);
 
@@ -458,6 +614,16 @@ public:
 			ctPos.x.y = worldHasNChunks.y - 1;
 		}
 		return ctPos;
+	}
+	static CtPos Chunk::PutCursorInMidOfObstacle(CtPos ctPosBottomLeft, int type, Vei2 worldHasNChunks)
+	{
+		ctPosBottomLeft.y -= Settings::obstacleStats[type].size[0] / 2;
+		return Chunk::PutCtPosInWorld(ctPosBottomLeft, worldHasNChunks);
+	}
+	static CtPos Chunk::GetMidPosOfObstacle(CtPos ctPosBottomLeft, int type, Vei2 worldHasNChunks)
+	{
+		ctPosBottomLeft.y += Settings::obstacleStats[type].size[0] / 2;
+		return Chunk::PutCtPosInWorld(ctPosBottomLeft, worldHasNChunks);
 	}
 };
 

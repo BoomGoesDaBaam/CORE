@@ -12,6 +12,13 @@ Text::Text(std::string text, RectF pos, int size, Font* f, Color c, std::vector<
 	this->text = text;
 	this->c = c;
 }
+TextBox::TextBox(std::string text, RectF pos, int size, Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer)
+	:
+	Text("text should be shown",pos,size,f,c,activInStates, parentC,0, buffer),
+	lines(f->SplitTextToLines(text, size, pos.GetWidth()))
+{
+
+}
 Button::Button(RectF pos, Animation* a, Animation* aHover, std::vector<int> activInStates,Font* f, Component* parentC, std::queue<FrameEvent>* buffer)
 	:
 	Text("",pos, 10,f,Colors::Black,activInStates, parentC,0, buffer)
@@ -44,6 +51,15 @@ Composition::Composition(RectF pos, sharedResC resC, std::vector<int> activInSta
 	}
 }
 */
+
+CheckBox::CheckBox(RectF pos, Component* parentC, std::queue<FrameEvent>* buffer, sharedResC resC, std::vector<int> activInStates)
+	:
+	Component(pos, parentC, buffer),
+	resC(std::move(resC))
+{
+	this->activInStates = activInStates;
+	this->hitable = true;
+}
 //		### Framehandle::Frame ###
 
 Frame::Frame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer)
@@ -176,7 +192,7 @@ bool B2(std::queue<FrameEvent>* buffer, Component* caller)
 }
 bool BBuildMode(std::queue<FrameEvent>* buffer, Component* caller)
 {
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "enable buildmode", caller->extra, caller));
+	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "enable buildmode", caller->extra1, caller));
 	//curW.SetBuildMode(0);
 	return true;
 }
@@ -201,6 +217,14 @@ bool BOpenGamefield(std::queue<FrameEvent>* buffer, Component* caller)
 bool BSetAttackMode(std::queue<FrameEvent>* buffer, Component* caller)
 {
 	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "set attackMode", -1, caller));
+	return true;
+}
+bool BSetObstacleState(std::queue<FrameEvent>* buffer, Component* caller)
+{
+	if(caller->extraB1)
+		buffer->push(FrameEvent(FrameEvent::ButtonPressed, "set obstacle state townhall", caller->extra1, caller));
+	else
+		buffer->push(FrameEvent(FrameEvent::ButtonPressed, "set obstacle state townhall", caller->extra2, caller));
 	return true;
 }
 void Frame::Move(Vec2 mP)

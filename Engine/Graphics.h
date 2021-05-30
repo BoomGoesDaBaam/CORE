@@ -181,7 +181,7 @@ public:
 	}
 	void DrawFilledRect(Vec2 pos, Vec2 size, Color c, float radiant = 0);
 	template<typename E>
-	void DrawFilledRect(RectF pos, Color c, E effect)
+	void DrawFilledRect(RectF pos, Color c, E effect = SpriteEffect::Nothing())
 	{
 		for (int y = 0; y < pos.GetHeight(); y++)
 		{
@@ -196,9 +196,9 @@ public:
 	}
 	void DrawRect(RectF pos, Color c)
 	{
-		Vec2 p1(pos.left,pos.top);
+		Vec2 p1(std::ceil(pos.left),pos.top);
 		Vec2 p2(pos.right, pos.top);
-		Vec2 p3(pos.left, pos.bottom);
+		Vec2 p3(std::ceil(pos.left), pos.bottom);
 		Vec2 p4(pos.right, pos.bottom);
 
 		DrawLine(p1, p2, c);

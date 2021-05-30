@@ -213,6 +213,10 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	{
 		buttons[3].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(70, i * 10), 34, 9)));
 	}
+	buttons.push_back(0.1f);				//CheckBox not clicked
+	buttons[4].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(284, 0), 15, 15)));
+	buttons.push_back(0.1f);				//CheckBox clicked
+	buttons[5].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(300, 0), 15, 15)));
 	//	Items
 
 
@@ -224,15 +228,7 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 		fields.push_back(Animation(delay));
 		for (int f = 0; f < 5; f++)			//f diffent animations
 		{
-			if (i == 14)
-			{
-				fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((int)((floor((float)0 / 8)) * 255), 122 + f * 51 + (0 % 8) * 255), 254, 50)));
-			}
-			else
-			{
-				fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((int)((floor((float)i / 8)) * 255), 122 + f * 51 + (i % 8) * 255), 254, 50)));
-			}
-			
+			fields[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2((int)((floor((float)i / 8)) * 255), 122 + f * 51 + (i % 8) * 255), 254, 50)));
 			
 			if (Settings::anyMaskedType(i))
 			{

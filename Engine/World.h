@@ -34,7 +34,7 @@ public:
 		Vei2 wSizeInCells;
 		Vei2 wSizeInTiles;
 		Vei2 worldHasNChunks = Vei2(10, 10);
-		Vei2 chunkSize = { 3000, 3000 };
+		Vei2 chunkSize = { 2000, 2000 };
 	};
 private:
 	
@@ -68,7 +68,7 @@ private:
 	bool attackMode = false;
 	bool updateChunkGraphics = true;
 
-	bool updateUnitInfo = false;
+	bool updateFrameInfo = false;
 	bool showBuildMenu = false;
 	bool loadBuildMenu = false;
 	bool buildMenuShown = false;
@@ -112,6 +112,7 @@ private:
 	int ObstacleMapAt(Vec3_<Vei2> tilePos)const;
 	int GroundedMapAt(Vei2 tilePos)const;
 
+	Obstacle* World::GetObstacleAt(Vec2_<Vei2> ctPos);
 	Obstacle* GetObstacleAt(Vec3_<Vei2> tilePos);
 
 	Vei2 TileIsInCell(Vei2 tilePos);
@@ -137,7 +138,6 @@ private:
 	bool GenerateCell(Vei2 pos, int type, int ontoType = -1, int surrBy = -1);
 	bool ObstaclePosAllowed(Vei2 tilePos, int type);
 	
-	bool GenerateObstacle(Vei2 tilePos, int type, Team* team = nullptr, int ontoType = -1, int surrBy = -1);
 	void GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, Team* team = nullptr, int ontoType = -1, int nRolls = 25, int surrBy = -1);
 	void GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, Team* team = nullptr, int ontoType = -1, int thickness = 1, int surrBy = -1);
 	void GenerateObstaclesInCell(Vei2 cellPos, int type, int number, Team* team = nullptr, int ontoType = -1, int surrBy = -1);
@@ -155,6 +155,7 @@ public:
 	//Grafiken + Einbindung dieser in groundedMap
 	void Draw(Graphics& gfx)const;
 	void DrawObstacle(Vei2 tilePos, int type, Graphics& gfx, Color color = Colors::Magenta, int frame = -1)const;
+	void DrawCircle(CtPos pos, int radius, Color c, Graphics& gfx)const;
 
 	std::vector<SubAnimation> GetConnectionsOfTypes(Vei2 pos, int* types);
 	bool NeedsConnections(Vei2 curXY)const;
@@ -168,13 +169,25 @@ public:
 	}
 	void SetAttackMode(bool val)
 	{
-		attackMode = val;
-		grit = true;
+		if (val && focusedObst != nullptr && focusedObst->attack->GetAttacksLeft() > 0)
+		{
+			grit = true;
+			attackMode = true;
+		}
+		else
+		{
+			grit = false;
+			attackMode = false;
+		}
+	}
+	bool GetAttackMode()
+	{
+		return attackMode;
 	}
 	void NextTurn();
 	//Frames Update
-	bool UpdateUnitInfo()const{ return updateUnitInfo; }
-	void UnitUpdated() { updateUnitInfo = false; }
+	bool UpdateFrameInfo()const{ return updateFrameInfo; }
+	void FramesUpdated() { updateFrameInfo = false; }
 
 	void LoadBuildMenu()
 	{
