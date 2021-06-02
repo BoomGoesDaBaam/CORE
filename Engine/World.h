@@ -51,6 +51,8 @@ private:
 	Matrix<Chunk> chunks;
 	Vec3_<Vei2> fcctPos = Vec3_<Vei2>(Vei2(0, 0), Vei2(1, 1), Vei2(1, 1));
 	Vec3_<Vei2> fcctPosHover = Vec3_<Vei2>(Vei2(10, 12), Vei2(1, 1), Vei2(1, 1));
+	CtPos fctPos = Vec2_<Vei2>(Vei2(0, 0), Vei2(0, 0));
+
 
 	Obstacle* focusedObst = nullptr;
 
@@ -83,6 +85,7 @@ private:
 	//Mouse calculations
 	Vei2 GetChunkHit(Vec2 mP)const;
 	Vec3_<Vei2> GetHitTile(Vec2 mP)const;
+	CtPos World::GetHitTileCtPos(Vec2 mP)const;
 
 	//Tile operations
 	bool TileIsInRange(CctPos tPos1, CctPos tPos2, float range);
@@ -99,7 +102,6 @@ private:
 	bool TileIsInWorldY(int y)const;
 	bool ChunkIsInWorld(Vei2& cellPos)const;
 
-
 	Vei2 PutCellInWorldX(Vei2 pos)const;					//Calculates coordinates when x negativ or > cSize.x  
 	Vei2 PutCellInWorldX(int x, int y)const;
 
@@ -110,6 +112,7 @@ private:
 	CctPos PutCctPosInWorld(CctPos cctPos)const;
 	int ObstacleMapAt(Vei2 tilePos)const;
 	int ObstacleMapAt(Vec3_<Vei2> tilePos)const;
+	int World::ObstacleMapAt(CtPos ctPos)const;
 	int GroundedMapAt(Vei2 tilePos)const;
 
 	Obstacle* World::GetObstacleAt(Vec2_<Vei2> ctPos);
@@ -124,7 +127,6 @@ private:
 	void SpawnPlayer();
 	void SpawnUnitGroup(Vei2 circaTilePos, int type, Team* team, int n);
 	bool IsSurroundedBy(Vei2 pos, int type);		//3x3 around pos
-	void UnitKilled(CctPos killerPos, CctPos victimPos);
 	//Private not const Funktions
 	void Zoom(Vei2 delta);				//Delta == delta cSize
 	void ApplyCameraChanges(Vec2 cDelta);

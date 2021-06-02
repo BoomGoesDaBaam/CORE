@@ -98,6 +98,7 @@ public:
 	int extra1 = 0;
 	int extra2 = 0;
 	bool extraB1 = false;
+	std::string extraS1 = "";
 	Color c = Colors::Black;
 	std::vector<int> activInStates;
 	std::string text = "no title";
@@ -971,7 +972,7 @@ public:
 			fTownhall->AddText(Settings::lang_noInformation[Settings::lang] , RectF(Vec2(80, 125), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_teamIs", a, 1);
 			fTownhall->AddText(Settings::lang_educate[Settings::lang] + ":", RectF(Vec2(2, 145), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_ausbilden", a, 1);
 			fTownhall->AddText(Settings::lang_heal[Settings::lang] + ":", RectF(Vec2(2, 160), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_heilen", a, 1);
-			fTownhall->AddText(Settings::lang_attack[Settings::lang] + ":", RectF(Vec2(2, 175), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_attack", a, 1);
+			fTownhall->AddText(Settings::lang_recharge[Settings::lang] + ":", RectF(Vec2(2, 175), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_attack", a, 1);
 			fTownhall->SetVisible(false);
 
 			TextBox* tB_townHall = fTownhall->AddTextBox(Settings::lang_TownhallInfo[Settings::lang], RectF(Vec2(5, 17), 135, 40), 7, &resC->tC.fonts[0], Colors::Black, "tB_townhallInfo", a);
@@ -979,16 +980,19 @@ public:
 			CheckBox* cB_educate = fTownhall->AddCheckBox(RectF(Vec2(80, 137),15, 15), &buffer, resC, "cB_educate", a);
 			cB_educate->extra1 = 0;
 			cB_educate->extra2 = 1;
+			cB_educate->extraS1 = "townhall";
 			cB_educate->SetBFunc(BSetObstacleState);
 
 			CheckBox* cB_heal = fTownhall->AddCheckBox(RectF(Vec2(80, 157), 15, 15), &buffer, resC, "cB_heal", a);
 			cB_heal->extra1 = 2;
 			cB_heal->extra2 = 3;
+			cB_heal->extraS1 = "townhall";
 			cB_heal->SetBFunc(BSetObstacleState);
 
 			CheckBox* cB_attack = fTownhall->AddCheckBox(RectF(Vec2(80, 177), 15, 15), &buffer, resC, "cB_attack", a);
 			cB_attack->extra1 = 4;
 			cB_attack->extra2 = 5;
+			cB_attack->extraS1 = "townhall";
 			cB_attack->SetBFunc(BSetObstacleState);
 
 			cB_educate->AddCheckBox2Disable(cB_heal);
@@ -1006,6 +1010,31 @@ public:
 			b_THsetAttack->size = 7;
 			b_THsetAttack->hitable = true;
 
+			Frame* fLumberjackHut = AddFrame("f_LumberjackHut", RectF(Vec2(100, 150), 140, 280), 0);																			//Lumberjack Frame
+			fLumberjackHut->SetState(1);
+			fLumberjackHut->AddText(Settings::lang_lumberjackHut[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_h");
+			fLumberjackHut->AddText(Settings::lang_hp[Settings::lang] + ":", RectF(Vec2(2, 95), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hp", a, 1);
+			fLumberjackHut->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(80, 95), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hpIs", a, 1);
+			fLumberjackHut->AddText(Settings::lang_chopsLeft[Settings::lang] + ":", RectF(Vec2(2, 110), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_attacks", a, 1);
+			fLumberjackHut->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(80, 110), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_attacksIs", a, 1);
+			fLumberjackHut->AddText(Settings::lang_team[Settings::lang] + ":", RectF(Vec2(2, 125), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_team", a, 1);
+			fLumberjackHut->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(80, 125), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_teamIs", a, 1);
+			fLumberjackHut->AddText(Settings::lang_automatic[Settings::lang] + ":", RectF(Vec2(2, 145), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_ausbilden", a, 1);
+			fLumberjackHut->SetVisible(false);
+
+			fLumberjackHut->AddTextBox(Settings::lang_LumberjackHutInfo[Settings::lang], RectF(Vec2(5, 17), 135, 40), 7, &resC->tC.fonts[0], Colors::Black, "tB_lumberjackHutInfo", a);
+
+			CheckBox* cB_chop = fLumberjackHut->AddCheckBox(RectF(Vec2(80, 137), 15, 15), &buffer, resC, "cB_automatic", a);
+			cB_chop->extra1 = 0;
+			cB_chop->extra2 = 1;
+			cB_chop->extraS1 = "lumberjackHut";
+			cB_chop->SetBFunc(BSetObstacleState);
+
+			Button* b_THsetChop = fLumberjackHut->AddButton(RectF(Vec2(35, 200), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_setAttack", &resC->tC.fonts[0], a);
+			b_THsetChop->bFunc = BSetAttackMode;
+			b_THsetChop->text = Settings::lang_chop[Settings::lang];
+			b_THsetChop->size = 7;
+			b_THsetChop->hitable = true;
 
 			//Frame* fNextTurn = AddFrame(RectF(Vec2(1120, 600), 120, 60), 1);																			//NEXT TURN FRAME
 			//fNextTurn->s = &resC->tC.windowsFrame[3].GetCurSurface();
@@ -1174,6 +1203,9 @@ public:
 		f_unit->SetVisible(false);
 		Frame* f_townhall = static_cast<Frame*>(comps["f_Townhall"].get());
 		f_townhall->SetVisible(false);
+		Frame* f_lumberjackHut = static_cast<Frame*>(comps["f_LumberjackHut"].get());
+		f_lumberjackHut->SetVisible(false);
+
 		if (obst != nullptr)
 		{
 			if (Settings::anyOfUnit(obst->type))
@@ -1208,7 +1240,7 @@ public:
 				{
 					f_townhall->SetText(Settings::lang_noInformation[Settings::lang], "t_teamIs");
 				}
-				if(obst->education->Educates())
+				if (obst->education->Educates())
 					static_cast<CheckBox*>(f_townhall->GetComp("cB_educate"))->Check();
 				else
 					static_cast<CheckBox*>(f_townhall->GetComp("cB_educate"))->Uncheck();
@@ -1220,6 +1252,22 @@ public:
 					static_cast<CheckBox*>(f_townhall->GetComp("cB_attack"))->Check();
 				else
 					static_cast<CheckBox*>(f_townhall->GetComp("cB_attack"))->Uncheck();
+			}
+			if (obst->type == 27)
+			{
+				f_lumberjackHut->SetVisible(true);
+				//t_teamIs
+				f_lumberjackHut->SetText(std::to_string(obst->hp) + " / " + std::to_string(Settings::obstacleStats[obst->type].baseHp), "t_hpIs");
+				f_lumberjackHut->SetText(std::to_string(obst->attack->GetAttacksLeft()) + " / " + std::to_string(Settings::obstacleStats[obst->type].attacksPerTurn), "t_attacksIs");
+				if (obst->team != nullptr)
+				{
+					f_lumberjackHut->SetText(obst->team->GetTeamName(), "t_teamIs");
+				}
+				else
+				{
+					f_lumberjackHut->SetText(Settings::lang_noInformation[Settings::lang], "t_teamIs");
+				}
+
 			}
 		}
 	}

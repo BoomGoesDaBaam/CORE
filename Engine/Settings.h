@@ -2,6 +2,7 @@
 #include "Rect.h"
 #include <fstream>
 #include <map>
+#include <algorithm>
 namespace Settings
 {
 	/*		### Types ###
@@ -104,7 +105,10 @@ namespace Settings
 	//Type Traits
 	static constexpr int obstacleTrait_education[] = { 3,-1 };
 	static constexpr int obstacleTrait_heal[] = { 2,3,-1 };
-	static constexpr int obstacleTrait_attack[] = { 3,10,11,12,13,14,15,16,17,18,19,20,-1 };
+	static constexpr int obstacleTrait_attack[] = { 3,10,11,12,13,14,15,16,17,18,19,20,27,-1 };
+	//Categorisation
+	static const std::vector<int> anyOfPlantsVec = { 1,4,5,8};
+	
 	//Graphic options
 	//static bool displayObstacles = true;
 	static int probToGrow = 50;
@@ -198,7 +202,8 @@ namespace Settings
 	const std::string lang_stepsLeft[] = { "steps left", "Schritte ueber" };
 	const std::string lang_educate[] = { "educate", "Ausbilden" };
 	const std::string lang_heal[] = { "heal", "Heilen" };
-
+	const std::string lang_recharge[] = { "recharge", "nachladen" };
+	const std::string lang_automatic[] = { "automatic chop", "automatisch faellen" };
 
 	//Obstacles
 
@@ -214,6 +219,8 @@ namespace Settings
 	const std::string lang_hp[] = { "Health points", "Lebenspunkte" };
 	const std::string lang_team[] = { "Team", "Team" };
 	const std::string lang_attacksLeft[] = { "attacks left", "Verb. angriffe" };
+	const std::string lang_chopsLeft[] = { "chops left", "schlaege über" };
+	const std::string lang_chop[] = { "chops", "zerhacken" };
 
 	//Animals
 	const std::string lang_deer[] = { "deer", "Hirsch" };
@@ -262,6 +269,7 @@ namespace Settings
 
 	//Beschreibungen
 	const std::string lang_TownhallInfo[] = { "This is the main building of your town. Use it to heal your surrounding units, train units or defent your town from enemies. Choose one every turn!", "Lagerhalle" };
+	const std::string lang_LumberjackHutInfo[] = { "Use this building to chop wood.", "Lagerhalle" };
 
 	//
 	static std::string TranslateRessource(std::string ressource, int lang)
@@ -443,11 +451,7 @@ namespace Settings
 	}
 	static bool anyOfPlants(int type)
 	{
-		if (type == 1 || type == 4 || type == 5 || type == 8)
-		{
-			return true;
-		}
-		return false;
+		return std::any_of(std::begin(anyOfPlantsVec), std::end(anyOfPlantsVec), [&](const int val) {return type == val; });
 	}
 	static bool anyOfHillTypes(int Type)
 	{
@@ -782,7 +786,12 @@ namespace Settings
 			std::map<std::string, float> lootForDestroying,
 			std::vector<Vei2> obstacleStartPos = { Vei2(0,0) },
 			int healNumber = 0,
-			int healRange = 0)
+			int healRange = 0,
+			float dmgAgainstPlants = 1.0f,
+			float dmgAgainstWater = 1.0f,
+			float dmgAgainstLand = 1.0f,
+			float dmgAgainstAir = 1.0f,
+			float dmgAgainstArmored = 1.0f)
 			:
 			nStates(nStates),
 			size(size),
@@ -795,7 +804,12 @@ namespace Settings
 			lootForDestroying(lootForDestroying),
 			obstacleStartPos(obstacleStartPos),
 			healNumber(healNumber),
-			healRange(healRange)
+			healRange(healRange),
+			dmgAgainstPlants(dmgAgainstPlants),
+			dmgAgainstWater(dmgAgainstWater),
+			dmgAgainstLand(dmgAgainstLand),
+			dmgAgainstAir(dmgAgainstAir),
+			dmgAgainstArmored(dmgAgainstArmored)
 		{}
 
 		int nStates = 1;
@@ -811,6 +825,11 @@ namespace Settings
 		std::map<std::string, float> lootForDestroying = { {"leather",25},{"sticks",15} };
 		int healNumber = 10;
 		int healRange = 10;
+		float dmgAgainstPlants;
+		float dmgAgainstWater;
+		float dmgAgainstLand;
+		float dmgAgainstAir;
+		float dmgAgainstArmored;
 	};
 
 	static const ObstacleStats obstacleStats[] =
@@ -830,7 +849,7 @@ namespace Settings
 		{{"wood",5},{"sticks",15}},{Vei2(0,0)},
 			10,5),
 		ObstacleStats(				//#3
-		1,{Vei2(4,4)},100,-1,10,20,3,3,
+		1,{Vei2(4,4)},100,-1,10,10,3,3,
 		{{"stone",60},{"wood",100}},
 		{{"stone",30},{"wood",15}},{Vei2(0,0)},
 			20,10),
@@ -928,9 +947,11 @@ namespace Settings
 		{{"slate",100},{"bricks",200},{"concrete",200} },
 		{{"slate",50},{"bricks",100},{"concrete",100} }),
 		ObstacleStats(				//#27
-		1,{Vei2(4,4)},100,-1,0,0,0,3,
+		1,{Vei2(4,4)},100,-1,15,5,3,3,
 		{{"wood",100}},
-		{{"wood",50}}),
+		{{"wood",50}},
+			{ Vei2(0,0) },
+		0,0,8.f),
 		ObstacleStats(				//#28
 		1,{Vei2(3,3)},100,-1,0,0, 0,3,
 		{{"sapling",50},{"wood",50},{"stone",50} },

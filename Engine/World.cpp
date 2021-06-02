@@ -52,12 +52,16 @@ int World::ObstacleMapAt(Vec3_<Vei2> cctPos)const
 {
 	return chunks(cctPos.x).GetObstacleMapAt(cctPos.y * Settings::CellSplitUpIn + cctPos.z);
 }
+int World::ObstacleMapAt(CtPos ctPos)const
+{
+	return chunks(ctPos.x).GetObstacleMapAt(ctPos.y);
+}
 int World::GroundedMapAt(Vei2 tilePos)const
 {
 	auto tccPos = Chunk::Flat2ChunkPos(tilePos, s.wSizeInTiles);
 	return chunks(tccPos.x).GetGrounedMapAt(tccPos.y * Settings::CellSplitUpIn + tccPos.z);
 }
-Obstacle* World::GetObstacleAt(Vec2_<Vei2> ctPos)
+Obstacle* World::GetObstacleAt(CtPos ctPos)
 {
 	return chunks(ctPos.x).GetObstacleAt(ctPos.y);
 }
@@ -282,14 +286,6 @@ bool World::IsSurroundedBy(Vei2 pos, int type)
 	}
 	return false;
 }
-void World::UnitKilled(CctPos killerPos, CctPos victimPos)
-{
-	Obstacle* killer = chunks(killerPos.x).GetObstacleAt(killerPos.y * Settings::CellSplitUpIn + killerPos.z);
-	Obstacle* victim = chunks(victimPos.x).GetObstacleAt(victimPos.y * Settings::CellSplitUpIn + victimPos.z);
-	assert(killer != nullptr && victim != nullptr);
-	killer->team->GetMaterials().Add(Settings::obstacleStats[victim->type].lootForDestroying);
-	chunks(victimPos.x).DeleteObstacle(victim->tilePos);
-}
 /*
 RectF World::GetCellRect(Vei2 cellP)const
 {
@@ -449,6 +445,11 @@ void World::UpdateChunkRects()
 			
 		}
 	}
+}
+CtPos World::GetHitTileCtPos(Vec2 mP)const
+{
+	CctPos pos = GetHitTile(mP);
+	return CtPos(pos.x, pos.y * Settings::CellSplitUpIn + pos.z);
 }
 Vec3_<Vei2> World::GetHitTile(Vec2 mP)const
 {
@@ -626,63 +627,55 @@ void World::ApplyCameraChanges(Vec2 cDelta)
 void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 {
 	CctPos oldCctPos = fcctPos;
+	CtPos oldCtPos = fctPos;
 	Vec2 mP = (Vec2)e.GetPos();
 	fcctPosHover = GetHitTile(mP);
 	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLocked())
 	{
 		fcctPos = GetHitTile(mP);
-		Vei2 dist2lastclick = Chunk::chunkPos2Flat(fcctPos) - Chunk::chunkPos2Flat(oldCctPos);
-		if(attackMode && fcctPos != oldCctPos && chunks(fcctPos.x).GetObstacleMapAt(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z) != -1 && sqrt(pow(dist2lastclick.x, 2) + pow(dist2lastclick.y, 2)) <= Settings::obstacleStats[focusedObst->type].attackRange)
+		fctPos = GetHitTileCtPos(mP);
+		if (attackMode)
 		{
-			chunks(fcctPos.x).AttackTile(fcctPos, focusedObst);
-			focusedObst->attack->Attacked();
-			if (focusedObst->attack->GetAttacksLeft() <= 0)
+			Vei2 dist2lastclick = Chunk::chunkPos2Flat(Chunk::CtPos2CctPos(Chunk::GetMidPosOfObstacle(focusedObst->GetCtPos(),focusedObst->type,chunks.GetSize()))) - Chunk::chunkPos2Flat(fctPos);
+			if (dist2lastclick.x > s.wSizeInTiles.x / 2)
 			{
-				grit = false;
+				dist2lastclick.x -= s.wSizeInTiles.x;
+			}
+			if (dist2lastclick.x < -s.wSizeInTiles.x / 2)
+			{
+				dist2lastclick.x += s.wSizeInTiles.x;
+			}
+			if (attackMode && fctPos != oldCtPos && chunks(fctPos.x).GetObstacleMapAt(fctPos.y) != -1 && sqrt(pow(dist2lastclick.x, 2) + pow(dist2lastclick.y, 2)) <= Settings::obstacleStats[focusedObst->type].attackRange)
+			{
+				chunks(fctPos.x).AttackTile(Chunk::CtPos2CctPos(fctPos), focusedObst);
+				focusedObst->attack->Attacked();
+				if (focusedObst->attack->GetAttacksLeft() <= 0)
+				{
+					grit = false;
+					attackMode = false;
+				}
+				fctPos = oldCtPos;
+			}
+			else if (attackMode && fctPos != oldCtPos)
+			{
 				attackMode = false;
+				grit = false;
 			}
-			if (chunks(fcctPos.x).GetObstacleAt(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z)->hp <= 0)
-			{
-				UnitKilled(oldCctPos, fcctPos);
-				//chunks(fcctPos.x).UpdateGraphics();
-				//updateChunkGraphics = true;
-			}
-			fcctPos = oldCctPos;
 		}
-		else if (attackMode && fcctPos != oldCctPos)
-		{
-			attackMode = false;
-			grit = false;
-		}
-		if (moveMode && focusedObst != nullptr && TileIsInRange(oldCctPos, fcctPos, focusedObst->stepsLeft))
+		if (moveMode && focusedObst != nullptr && TileIsInRange(Chunk::CtPos2CctPos(oldCtPos), Chunk::CtPos2CctPos(fctPos), focusedObst->stepsLeft))
 		{
 			//chunks(Vei2(0,0)).PlaceObstacle(Chunk::chunkPos2Flat(fcctPos),)
 			Vei2 d = AbstractTilePos(oldCctPos);
 			//chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fcctPos);
 			focusedObst = nullptr;
 			
-				if (chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fcctPos))
+				if (chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fctPos))
 			{
-				RectF chunkRect = GetChunkRect(oldCctPos.x);
-				Vec2 chunkSize = (Vec2)chunkRect.GetSize();
-				Vec2 cellSize = chunks[0][0].GetCellSize(chunkRect);
-				Vec2 tileSize = chunks[0][0].GetTileSize(chunkRect);
-
-				//auto pos = oldCctPos + Vec3_<Vei2>(Vei2(0, 0), Vei2(x, y), Vei2(0, 0));
-
-				//chunks(oldCctPos.x).UpdateTypeSurfaceCell(chunkRect, oldCctPos.y, cellSize, chunkSize);
-				//chunks(oldCctPos.x).UpdateObstacleSurfaceCell(chunkRect, oldCctPos.y, cellSize, chunkSize, tileSize);
-
-				//chunks(fcctPos.x).UpdateTypeSurfaceCell(chunkRect, fcctPos.y, cellSize, chunkSize);
-				//chunks(fcctPos.x).UpdateObstacleSurfaceCell(chunkRect, fcctPos.y, cellSize, chunkSize, tileSize);
-
-				//chunks((PutCctPosInWorld(oldCctPos+Vec3_<Vei2>(Vei2(x, y), Vei2(0, 0), Vei2(0, 0)))).x).UpdateGraphics();
-				//chunks((PutCctPosInWorld(fcctPos + Vec3_<Vei2>(Vei2(x, y), Vei2(0, 0), Vei2(0, 0)))).x).UpdateGraphics();
 				for (int y = -1; y < 2; y++)
 				{
 					for (int x = -1; x < 2; x++)
 					{
-						auto curChunk = PutCctPosInWorld(fcctPos + Vec3_<Vei2>(Vei2(x, y), Vei2(0, 0), Vei2(0, 0)));
+						auto curChunk = PutCctPosInWorld(Chunk::CtPos2CctPos(fctPos) + Vec3_<Vei2>(Vei2(x, y), Vei2(0, 0), Vei2(0, 0)));
 						chunks(curChunk.x).UpdateWhenMoved(GetChunkRect(curChunk.x));
 					}
 				}
@@ -690,9 +683,9 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 			}
 		
 		}
-		if (ObstacleMapAt(fcctPos) != -1)
+		if (ObstacleMapAt(fctPos) != -1)
 		{
-			focusedObst = GetObstacleAt(fcctPos);
+			focusedObst = GetObstacleAt(fctPos);
 			focusedObst->Update(0.1);
 			updateFrameInfo = true;
 		}
@@ -834,7 +827,7 @@ void World::Draw(Graphics& gfx) const
 					}
 					break;
 				case 3:
-					if (fcctPos.x == curChunk)	//focused cell marker
+					if (fctPos.x == curChunk)	//focused cell marker
 					{
 						//chunks(curChunk).DrawSurfaceAt(curChunkPos, fcctPos.y, s.chunkSize.x / Settings::chunkHasNCells, 1.5f, resC->tC.frames.at(0).GetCurSurface(), gfx);
 					}
@@ -867,12 +860,12 @@ void World::Draw(Graphics& gfx) const
 		}
 		if (focusedObst->attack != nullptr && focusedObst->attack->GetAttackMode())
 		{
-			DrawCircle(obstacleMidPos, Settings::obstacleStats[focusedObst->type].healRange, Colors::Red, gfx);
+			DrawCircle(obstacleMidPos, Settings::obstacleStats[focusedObst->type].attackRange, Colors::Red, gfx);
 		}
 	}
 	if (moveMode && Settings::obstaclesOn && focusedObst != nullptr)
 	{
-		Vei2 bottomLeft = Chunk::chunkPos2Flat(fcctPos);
+		Vei2 bottomLeft = Chunk::chunkPos2Flat(fctPos);
 		CctPos curcctPos = Chunk::Flat2ChunkPos(bottomLeft, s.wSizeInTiles);
 		int moveRange = focusedObst->stepsLeft;
 		for (int y = -moveRange; y <= moveRange; y++)
@@ -893,15 +886,14 @@ void World::Draw(Graphics& gfx) const
 	}
 	if (attackMode)
 	{
-		Vei2 bottomLeft = Chunk::chunkPos2Flat(fcctPos);
-		CctPos curcctPos = Chunk::Flat2ChunkPos(bottomLeft, s.wSizeInTiles);
-		DrawCircle(Chunk::CctPos2CtPos(curcctPos), Settings::obstacleStats[focusedObst->type].attackRange, Colors::Red, gfx);
+		CtPos obstacleMidPos = Chunk::GetMidPosOfObstacle(CtPos(focusedObst->chunkPos,focusedObst->tilePos), focusedObst->type, chunks.GetSize());
+		DrawCircle(obstacleMidPos, Settings::obstacleStats[focusedObst->type].attackRange, Colors::Red, gfx);
 	}
 }
 void World::DrawObstacle(Vei2 tilePos, int type, Graphics& gfx, Color color, int frame)const
 {
-	Vec3_<Vei2> fcctPos = Chunk::Flat2ChunkPos(tilePos, s.wSizeInTiles);
-	chunks(fcctPos.x).DrawObstacle(tilePos, type, GetChunkRect(fcctPos.x), gfx);
+	CtPos fctPos = Chunk::Flat2ChunkPosCtPos(tilePos, s.wSizeInTiles);
+	chunks(fctPos.x).DrawObstacle(tilePos, type, GetChunkRect(fctPos.x), gfx);
 	/*
 	Vec2 tileSize = GetTileSize();
 	//RectI dRect = (RectI)GetTileRect(tilePos);

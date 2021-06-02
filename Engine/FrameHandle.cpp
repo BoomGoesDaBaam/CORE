@@ -222,9 +222,9 @@ bool BSetAttackMode(std::queue<FrameEvent>* buffer, Component* caller)
 bool BSetObstacleState(std::queue<FrameEvent>* buffer, Component* caller)
 {
 	if(caller->extraB1)
-		buffer->push(FrameEvent(FrameEvent::ButtonPressed, "set obstacle state townhall", caller->extra1, caller));
+		buffer->push(FrameEvent(FrameEvent::ButtonPressed, "set obstacle state "+ caller->extraS1, caller->extra1, caller));
 	else
-		buffer->push(FrameEvent(FrameEvent::ButtonPressed, "set obstacle state townhall", caller->extra2, caller));
+		buffer->push(FrameEvent(FrameEvent::ButtonPressed, "set obstacle state "+ caller->extraS1, caller->extra2, caller));
 	return true;
 }
 void Frame::Move(Vec2 mP)

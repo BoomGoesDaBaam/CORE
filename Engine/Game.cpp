@@ -232,9 +232,9 @@ void Game::HandleFrameLogic(FrameEvent& e)
 		}
 		if (e.GetAction().find("set obstacle state") != std::string::npos)
 		{
+			Obstacle* obstacle = curW->GetFocusedObstacle();
 			if (e.GetAction().find("townhall") != std::string::npos)
 			{
-				Obstacle* obstacle = curW->GetFocusedObstacle();
 				if (obstacle->education != nullptr)
 				{
 					//Disable all boxes
@@ -275,6 +275,17 @@ void Game::HandleFrameLogic(FrameEvent& e)
 					{
 						obstacle->attack->SetAttackMode(false);
 					}
+				}
+			}
+			if (e.GetAction().find("lumberjackHut") != std::string::npos)
+			{
+				if (e.GetExtra() == 0)
+				{
+					obstacle->attack->SetAutomaticMode(CtPos(Vei2(-2,-2), Vei2(-2, -2)));
+				}
+				else
+				{
+					obstacle->attack->SetAutomaticMode(CtPos(Vei2(-1, -1), Vei2(-1, -1)));
 				}
 			}
 		}
