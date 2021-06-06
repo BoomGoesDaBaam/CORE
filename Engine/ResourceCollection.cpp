@@ -45,6 +45,10 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 
 	windowsFrame.push_back(Animation(delay));					//	composition = 0 bg
 	windowsFrame[7].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(527, 1), 180, 60)));
+
+	windowsFrame.push_back(Animation(delay));					//	composition = 0 bg
+	windowsFrame[8].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(649, 62), 250, 190)));
+
 	//Obstacles
 	obstacles.push_back(0.2f);//#0
 	for (int i = 0; i < 1; i++)
@@ -239,12 +243,11 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 				fields[i].SetKeepTime(fields[0].GetKeepTime());
 				for (int y = 0; y < 50; y++)
 				{
-					for (int x = 0; x < 210; x++)
+					for (int x = 0; x < 254; x++)
 					{
 						if (fields[i].GetPixel(f, x, y) == Colors::Magenta)
 						{
-							fields[i].PutPixel(f, x, y, fields[0].GetPixel(f, x, y));
-							maskedFields[nMasked].PutPixel(f, x, y, Colors::Magenta);
+							fields[i].PutPixel(f, x, y, fields[0].GetPixel(f, x % 51, y));
 						}
 					}
 				}
@@ -262,6 +265,29 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	fields[12].SetKeepTime(0.3f);
 	//Fonts
 	fonts.push_back(Font("Textures/Font5.bmp", 112, '!', '~', Colors::FontDelimitor, Colors::FontNewLine, gfx));
+	//Items
+	items.push_back(0.2f);//#1
+	items[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(708, 1), 50, 50)));
+}
+void TexturesCollection::IdkCallOnce()
+{
+	for (int f = 0; f < 5; f++)
+	{
+		for (int y = 0; y < 50; y++)
+		{
+			for (int x = 0; x < 254; x++)
+			{
+				if (fields[14].GetPixel(f, x, y) == Colors::Magenta)
+				{
+					fields[14].PutPixel(f, x, y, fields[0].GetPixel(f, x % 51, y));
+				}
+			}
+		}
+	}
+	for (int i = 1; i < Settings::nDiffFieldTypes; i++)
+	{
+		fields[i].SetKeepTime(fields[0].GetKeepTime());
+	}
 }
 void TexturesCollection::Update(float dt)
 {

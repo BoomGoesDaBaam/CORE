@@ -33,6 +33,7 @@ Game::Game(MainWindow& wnd)
 
 {
 	igwH.LoadScene(0,curW.get());
+	resC->tC.IdkCallOnce();
 	//Settings::ReloadFile();
 
 	//AddScrollWindow(RectF(Vec2(50, 50), 50, 50), RectF(Vec2(110, 50), 10, 50));
@@ -123,6 +124,7 @@ void Game::ComposeFrame()
 			{
 				oss1 << curW->GetFocusedObstacle()->n90rot;
 			}
+			oss1 << " obstaclesOnCHunk:" << curW->GetObstacleCount();
 			oss2 << "fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CellSize:" << curW->GetcSize().x << "   x-Felder:" << curW->GetRenderRect().left;
 			oss4 << "Type:" << curW->GetfCellType() << "  use count tC:" << resC.use_count() << " ignoreMouse:" << ignoreMouse << " opt1:" << Settings::obstaclesOn << " updatedGraphics:" << curW->updatedGraphics;
 			resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 14, Colors::Red);
@@ -147,7 +149,6 @@ void Game::ComposeFrame()
 
 	}
 	igwH.Draw(gfx);
-	//gfx.DrawSurface(RectI(Vei2(0, 0), 100, 50), resC->tC.fields[14].GetCurSurface(), SpriteEffect::Nothing());
 }
 //Handle
 void Game::HandleMouseInput(Mouse::Event& e)
@@ -248,7 +249,7 @@ void Game::HandleFrameLogic(FrameEvent& e)
 					}
 					if (e.GetExtra() == 5)
 					{
-						obstacle->attack->SetAttackMode(false);
+						obstacle->attack->SetReloadNextTurn(false);
 					}
 					//Check for ticked box
 					if (e.GetExtra() == 0)
@@ -269,11 +270,11 @@ void Game::HandleFrameLogic(FrameEvent& e)
 					}
 					if (e.GetExtra() == 4)
 					{
-						obstacle->attack->SetAttackMode(true);
+						obstacle->attack->SetReloadNextTurn(true);
 					}
 					else
 					{
-						obstacle->attack->SetAttackMode(false);
+						obstacle->attack->SetReloadNextTurn(false);
 					}
 				}
 			}

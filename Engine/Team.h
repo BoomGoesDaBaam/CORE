@@ -94,6 +94,168 @@ struct Materials
 	}
 };
 
+class Slot
+{
+public:
+	enum Type
+	{
+		Holdable,
+		Armor,
+		Bonus,
+		Simple,
+		Empty
+	};
+private:
+	int itemId;
+	int durability;	//-1 == Item has no durability	0 == Item has no durability left
+	Type type;
+public:
+	Slot() { type = Slot::Type::Empty; }
+	Slot(int id, int durability = -1) :itemId(itemId), durability(durability)
+	{
+		type = Empty;
+		if (id == 0)
+		{
+			type == Holdable;
+		}
+		if (id == 1)
+		{
+			type == Holdable;
+		}
+		if (id == 2)
+		{
+			type == Holdable;
+		}
+		if (id == 3)
+		{
+			type == Bonus;
+		}
+		if (id == 4)
+		{
+			type == Bonus;
+		}
+		if (id == 5)
+		{
+			type == Bonus;
+		}
+		if (id == 6)
+		{
+			type == Simple;
+		}
+		if (id == 7)
+		{
+			type == Simple;
+		}
+		if (id == 8)
+		{
+			type == Simple;
+		}
+		if (id == 9)
+		{
+			type == Armor;
+		}
+		if (id == 10)
+		{
+			type == Holdable;
+		}
+	}
+	int GetId()
+	{
+		return itemId;
+	}
+	int Used()
+	{
+		if (durability > 0)
+		{
+			durability--;
+		}
+	}
+	bool IsBroken()
+	{
+		return durability == 0;
+	}
+	Slot::Type GetType()
+	{
+		return type;
+	}
+};
+class Inventory
+{
+	Slot hand1, hand2;
+	Slot armor, bonus;
+	Slot item1, item2, item3, item4;
+public:
+	Inventory(Slot hand1 = Slot(), Slot hand2 = Slot(), Slot armor = Slot(), Slot bonus = Slot(), Slot item1 = Slot(), Slot item2 = Slot(), Slot item3 = Slot(), Slot item4 = Slot())
+		:hand1(hand1), hand2(hand2), armor(armor), bonus(bonus), item1(item1), item2(item2), item3(item3), item4(item4)
+	{}
+	//SET
+	bool SetHand1(Slot hand1)
+	{
+		//if(hand1.GetType == Slot::Type::Holdable)
+		this->hand1 = hand1;
+	}
+	bool SetHand2(Slot hand2)
+	{
+		this->hand2 = hand2;
+	}
+	bool SetArmor(Slot armor)
+	{
+		this->armor = armor;
+	}
+	bool SetBonus(Slot bonus)
+	{
+		this->bonus = bonus;
+	}
+	bool SetItem1(Slot item1)
+	{
+		this->item1 = item1;
+	}
+	bool SetItem2(Slot item2)
+	{
+		this->item2 = item2;
+	}
+	bool SetItem3(Slot item3)
+	{
+		this->item3 = item3;
+	}
+	bool SetItem4(Slot item3)
+	{
+		this->item3 = item3;
+	}
+	//GET
+	const Slot* GetHand1()
+	{
+		return &hand1;
+	}
+	const Slot* GetHand2()
+	{
+		return &hand2;
+	}
+	const Slot* GetArmor()
+	{
+		return &armor;
+	}
+	const Slot* GetBonus()
+	{
+		return &bonus;
+	}
+	const Slot* GetItem1()
+	{
+		return &item1;
+	}
+	const Slot* GetItem2()
+	{
+		return &item2;
+	}
+	const Slot* GetItem3()
+	{
+		return &item3;
+	}
+	const Slot* GetItem4()
+	{
+		return &item3;
+	}
+};
 class Team
 {
 	std::string teamname = "kein Name";

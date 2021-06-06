@@ -153,7 +153,6 @@
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="Mouse.h" />
-    <ClInclude Include="Obstacle.h" />
     <ClInclude Include="RandyRandom.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Resource.h" />
@@ -182,7 +181,6 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Mouse.cpp" />
-    <ClCompile Include="Obstacle.cpp" />
     <ClCompile Include="ResourceCollection.cpp" />
     <ClCompile Include="Surface.cpp" />
     <ClCompile Include="Team.cpp" />

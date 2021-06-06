@@ -66,6 +66,19 @@ namespace Settings
 			49 = CAR FACTORY
 			50 = storage
 
+			### Items
+			0 = iron axe
+			1 = iron sword
+			2 = iron shield
+			3 = range chain
+			4 = dmg ring
+			5 = heal Head
+			6 = tulip
+			7 = rose 
+			8 = lily
+			9 = iron armor
+			10 = iron pickaxe
+
 			### Masked Array ###
 			0 = swamp
 
@@ -108,15 +121,20 @@ namespace Settings
 	static constexpr int obstacleTrait_attack[] = { 3,10,11,12,13,14,15,16,17,18,19,20,27,-1 };
 	//Categorisation
 	static const std::vector<int> anyOfPlantsVec = { 1,4,5,8};
-	
+	static const std::vector<int> anyOfAnimalsVec = { 11,12,13,14,15,16,17,18,19,20 };
 	//Graphic options
 	//static bool displayObstacles = true;
 	static int probToGrow = 50;
 	//Game options
 	static bool obstaclesOn = true;
 	static bool spawnObstacles = true;
+	static bool testMode = false;
 
 	static bool framesOn = true;
+
+	static int forestDensity = 8;
+	static int animalDensity = 4;
+
 
 	//
 	static int lang = 0;															//choosen language (0 = english, 1 = german)
@@ -441,13 +459,9 @@ namespace Settings
 		}
 		return false;
 	}
-	static bool anyOfAnimals(int type)		
+	static bool anyOfAnimals(int type)	
 	{
-		if (type >= 11 && type <= 20)
-		{
-			return true;
-		}
-		return false;
+		return std::any_of(std::begin(anyOfAnimalsVec), std::end(anyOfAnimalsVec), [&](const int val) {return type == val; });
 	}
 	static bool anyOfPlants(int type)
 	{
@@ -883,43 +897,43 @@ namespace Settings
 		{},
 		{}),
 		ObstacleStats(				//#11
-		1,{Vei2(1,1)},100,10,1,10,1,0,
+		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
 		{{"leather",25},{"meat",20}}),
 		ObstacleStats(				//#12
-		1,{Vei2(1,1)},100,10,1,10,1,0,
+		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
 		{{"leather",25},{"meat",20}}),
 		ObstacleStats(				//#13
-		1,{Vei2(1,1)},100,10,1,10,1,0,
+		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
 		{{"leather",25},{"meat",20}}),
 		ObstacleStats(				//#14
-		1,{Vei2(1,1)},100,10,1,10,1,0,
+		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
 		{{"fur",25},{"meat",20}}),
 		ObstacleStats(				//#15
-		1,{Vei2(1,1)},100,10,1,10,1,0,
+		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
 		{{"wool",3},{"meat",10}}),
 		ObstacleStats(				//#16
-		1,{Vei2(1,1)},100,10,1,10,1,0,
+		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
 		{{"feather",1},{"meat",20}}),
 		ObstacleStats(				//#17
-		1,{Vei2(1,1)},100,10,1,10,1,0,
+		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
 		{{"meat",20}}),
 		ObstacleStats(				//#18
-		1,{Vei2(1,1)},100,10,1,10,1,0,
+		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
 		{{"feather",1},{"meat",20}}),
 		ObstacleStats(				//#19
-		1,{Vei2(1,1)},100,10,1,10,1,0,
+		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
 		{{"meat",20}}),
 		ObstacleStats(				//#20
-		1,{Vei2(1,1)},100,10,1,10,1,0,
+		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
 		{{"meat",20}}),
 		ObstacleStats(				//#21

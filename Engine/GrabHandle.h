@@ -8,8 +8,12 @@ class GrabHandle
 	Vec2 holdPos = { -1,-1 };
 	Vec2 lastPos = { -1,-1 };
 
+	float dist2Grab;
 public:
-	GrabHandle() = default;
+	GrabHandle(float dist2Grab = 20.f)
+		:
+		dist2Grab(dist2Grab)
+	{}
 	Vec2 MoveCamera(const Mouse::Event& e);
 	bool IsLocked() { return grabbed; }
 	void Release()

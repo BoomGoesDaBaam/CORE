@@ -69,7 +69,7 @@ class AttackTrait
 {
 protected:
 	int attacksLeft = 0;
-	bool attackMode = false;
+	bool reloadNextTurn = true;
 	CtPos automaticMode = CtPos(Vei2(-1,-1), Vei2(-1, -1));		//CtPos(Vei2(-1,-1), Vei2(-1, -1)) == not attacking automatic
 																//CtPos(Vei2(-2,-2), Vei2(-2, -2)) == need new location to attack automatic
 public:
@@ -85,13 +85,13 @@ public:
 	{
 		this->automaticMode = automaticMode;
 	}
-	bool GetAttackMode()
+	bool GetReloadNextTurn()
 	{
-		return attackMode;
+		return reloadNextTurn;
 	}
-	void SetAttackMode(bool attackMode)
+	void SetReloadNextTurn(bool reloadNextTurn)
 	{
-		this->attackMode = attackMode;
+		this->reloadNextTurn = reloadNextTurn;
 	}
 	void SetAttacksleft(int attacksLeft)
 	{
@@ -125,7 +125,9 @@ public:
 	std::unique_ptr<EducationTrait> education = nullptr;
 	std::unique_ptr<HealTrait> heal = nullptr;
 	std::unique_ptr<AttackTrait> attack = nullptr;
-
+	
+	//
+	Inventory inv;
 	//Obstacle() {}
 	Obstacle(Obstacle& obst) 
 	{
@@ -198,13 +200,11 @@ public:
 			}))
 		{
 			attack = std::make_unique<AttackTrait>(Settings::obstacleStats[type].attacksPerTurn);
+			attack->SetReloadNextTurn(true);
 			if (type == 3)
 			{
 				attack->SetAttacksleft(0);
-			}
-			if (type == 27)
-			{
-				attack->SetAttackMode(true);
+				attack->SetReloadNextTurn(false);
 			}
 		}
 
@@ -220,7 +220,14 @@ public:
 
 		}
 		RandyRandom rr;
-		n90rot = rr.Calc(4);
+		if (type == 10)
+		{
+			n90rot = 0;
+		}
+		else
+		{
+			n90rot = rr.Calc(3);
+		}
 		for (auto& animation : animations)
 		{
 			//animation.SetKeepTime(((float)rr.Calc(50)/100) + 0.5);
@@ -243,11 +250,11 @@ public:
 	{
 		if (state == 0)
 		{
-			gfx.DrawSurface((RectI)rect, animations[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta),0);
+			gfx.DrawSurface((RectI)rect, animations[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta),n90rot);
 		}
 		else
 		{
-			gfx.DrawSurface((RectI)rect, animations[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
+			gfx.DrawSurface((RectI)rect, animations[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), n90rot);
 		}
 	}
 	void UpdateRect(RectF tileRect, Vei2 tilePos, RectF chunkRect)
@@ -362,7 +369,7 @@ class Chunk
 	Matrix<Chunk>* chunks = nullptr;
 	Vei2 chunkPos = Vei2(-1, -1);
 	std::vector<Matrix<int>> conMap;		//Connectionmap	 (1 = needsConnections, 0 = does not		index for type)
-	Matrix<int> groundedMap;				// '0' = spot is not grounded, '1' = is grounded, '-1' = not identified yet (will be 0 if not changed), '2' = hill
+	Matrix<int> groundedMap;				// '0' = spot is not grounded(water), '1' = is grounded, '-1' = not identified yet (will be 0 if not changed), '2' = hill
 	Matrix<Matrix<int>> aMats;
 	Matrix<int> obstacleMap;				// '-1' = empty   val > -1 = index of obstacle in obstacleVec
 
@@ -387,7 +394,10 @@ class Chunk
 	}
 	void CastHeal(CtPos pos, int deltaHP, int radius);
 	void UnitKilled(CtPos killerPos, CtPos victimPos);
-	void PlantExpand(CtPos ctPos, int type, int radius, Team* team);
+	void PlantExpand(CtPos ctPos, int type, int radius, int maxInRange, Team* team);
+	void MakeRadomMove(Obstacle* obstacle);
+	void MakeMoveTowardsHunting(Obstacle* obstacle);
+	void AttractObstacles(const CtPos& attractTo, const int& radius, const std::vector<int>& allowedTypes);
 
 	CtPos FindNearestObstacle(CtPos pos,std::vector<int> allowedTypes, int radius);
 	CtPos FindNearestPositionThatFits(Vei2 tilePos, int type);
@@ -495,14 +505,16 @@ public:
 	}
 	*/
 	bool MoveObstacle(int index, CtPos newPos);
-	bool ObstaclePosAllowed(Vei2 tilePos, int type, int except = -1) const;
-	bool ObstaclePosAllowed(Vei2 tilePos, Vei2 size, int except = -1) const;
+	bool MoveObstacle(Obstacle* obstacle, Vec2 dir);	//dir must be normalized
+	bool ObstaclePosAllowed(Vei2 tilePos, int type, int except = -1, Matrix<int> placeCondMat = Matrix<int>(1,1,-3)) const;
+	bool ObstaclePosAllowed(Vei2 tilePos, Vei2 size, int except = -1, Matrix<int> placeCondMat = Matrix<int>(1, 1, -3)) const;
 	int GetObstacleIndex(Vei2 tilePos)const;
 	RectF GetTileRect(Vei2 tilePos) const;
+	int GetObstacleCount() { return obstacles.size(); }
 	void SetTypeAt(Vei2 pos, int type);
 
 	void DrawObstacleOutlines(Vei2 tilePos, int type, RectF chunkRect, Color c, Graphics& gfx) const;
-	void DrawObstacle(Vei2 tilePos, int type, RectF chunkRect, Graphics& gfx) const;
+	void DrawObstacle(Vei2 tilePos, int type, RectF chunkRect, int n90rot, Graphics& gfx) const;
 	void DrawObstacles(Graphics& gfx) const;
 	void DrawType(Graphics& gfx)const;
 	void DrawGroundedMap(Graphics& gfx)const;
@@ -520,6 +532,7 @@ public:
 	bool UnitIsAround(Vei2 tilePos, int range);
 
 	bool PlaceObstacle(Vei2 tilePos, Obstacle* o);
+	bool PlaceObstacleWithoutCheck(Vei2 tilePos, Obstacle* o);
 	bool PlaceObstacle(Vei2 tilePos, int type, Team* team = nullptr, int ontoType = -1, int surrBy = -1);
 	Vei2 PutTileInChunk(int x, int y)const;
 	Vec2_<Vei2> GetTilePosOutOfBounds(Vei2 tilePos) const;

@@ -65,6 +65,8 @@ private:
 	bool grit = false;						//show grit
 	bool buildMode = false;					//place something
 	int placeObstacle = 27;
+	int placeObstaclen90Rot = 0;
+	Matrix<int> placeCondMat = Matrix<int>(1, 1, -3);
 	bool posAllowed = true;
 	bool moveMode = false;
 	bool attackMode = false;
@@ -123,7 +125,7 @@ private:
 	void DestroyObstacleAt(Vei2 tilePos);
 	void UpdateConMap();							//
 	void UpdateGroundedMap(Vei2 pos=Vei2(0,0), Vei2 size = Vei2(-1,-1));						// VERY performance heavy - UpdateConMap must be called before UpdateGroundedMap
-	void SpawnUnits(int n, int type, Team* inTeam, Vei2 tilePos);
+	std::vector<Obstacle*> SpawnUnits(int n, int type, Team* inTeam, Vei2 tilePos);
 	void SpawnPlayer();
 	void SpawnUnitGroup(Vei2 circaTilePos, int type, Team* team, int n);
 	bool IsSurroundedBy(Vei2 pos, int type);		//3x3 around pos
@@ -220,6 +222,10 @@ public:
 	bool GetBuildMode() { return buildMode; }
 	void SetBuildMode(bool val) { buildMode = val; }
 	int GetPlaceObstacle() { return placeObstacle; }
+	int GetObstacleCount()
+	{
+		return chunks(fctPos.x).GetObstacleCount();
+	}
 	Team* GetPlayer() { return player; }
 	RectI GetRenderRect()const { 
 		auto mos = Graphics::GetMidOfScreen();

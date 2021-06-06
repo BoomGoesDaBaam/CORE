@@ -37,6 +37,21 @@ Button::Button(RectF pos, Animation* a, Animation* aHover, std::vector<int> acti
 	}
 	this->activInStates = activInStates;
 }
+Image::Image(RectF pos, Animation* a, Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates)
+	:
+	Component(pos, parentC, buffer),
+	a(a),
+	aHover(aHover)
+{
+	this->activInStates = activInStates;
+	this->hitable = true;
+}
+GrabImage::GrabImage(RectF pos, Animation* a, Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates)
+	:
+	Image(pos, a, aHover, parentC, buffer, activInStates)
+{
+
+}
 /*
 Composition::Composition(RectF pos, sharedResC resC, std::vector<int> activInStates, Component* parentC, std::queue<FrameEvent>* buffer, int type)
 	:

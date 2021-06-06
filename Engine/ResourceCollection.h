@@ -13,6 +13,7 @@ class TexturesCollection
 public:	
 
 	TexturesCollection(Graphics& gfx);
+	void TexturesCollection::IdkCallOnce();
 	Surface spriteSHEEP = { "Textures/Spritesheet.bmp" };
 	//Surface s_Items[1];
 	std::vector<Animation>	fields;			//new vectors need to be added in update function
@@ -22,6 +23,7 @@ public:
 	std::vector<Animation>	buttons;
 	std::vector<Animation>	obstacles;
 	std::vector<Animation>	multiObstacles;
+	std::vector<Animation>	items;
 	std::vector<Font>		fonts;		
 	void Update(float dt);
 };

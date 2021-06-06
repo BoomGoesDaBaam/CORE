@@ -11,7 +11,7 @@ class Matrix
 	public:
 		Column(int size, T value)
 		{
-			for (int i = 0; i < size;i++)
+			for (int i = 0; i < size; i++)
 			{
 				column.push_back(value);
 			}
@@ -24,13 +24,30 @@ class Matrix
 			}
 			return column[i % column.size()];
 		}
-		T& operator[](std::size_t i) { 
+		T& operator[](std::size_t i) {
 			if (column.size() == 0)
 			{
 				return column[0];
 			}
-			return column[i % column.size()]; 
+			return column[i % column.size()];
 		}
+		bool operator==(const Column& rhs)const
+		{
+			assert((int)rhs.column.size() == (int)column.size());
+			for (int i = 0; i < column.size(); i++)
+			{
+				if(rhs[i] != column[i])
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+		bool operator!=(const Column& rhs)const
+		{
+			return !(*this == rhs);
+		}
+
 		template <typename T>
 		Vec2_<T>& operator=(const Vec2_<T>& other)
 		{
@@ -118,7 +135,26 @@ public:
 	const Column& operator[](std::size_t idx) const { return columns[idx % columns.size()]; }
 	Column& operator[](std::size_t idx) { return columns[idx % columns.size()]; }
 
-	
+	bool operator==(const Matrix<T>& rhs)const
+	{
+		if (GetSize() != rhs.GetSize())
+		{
+			return false;
+		}
+
+		for (int i = 0; i < columns.size(); i++)
+		{
+			if (columns[i] != rhs.GetColumn(i))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	bool operator!=(const Matrix<T>& rhs)
+	{
+		return !(*this == rhs);
+	}
 
 	void ReInit(int nColumns, int nRows, int value)
 	{
@@ -146,6 +182,12 @@ public:
 	Vei2 GetSize()
 	{
 		return Vei2(nRows, nColumns);
+	}
+	Column GetColumn(int index)const
+	{
+		assert(index >= 0);
+		assert(index < columns.size());
+		return columns[index];
 	}
 	bool IndexInBounds(Vei2 index)const
 	{
@@ -178,12 +220,12 @@ public:
 			columns[i].Sort(nonZero, zeros);
 		}
 	}
-	void SetValueOfRaw(int raw, T value)
+	void SetValueOfRow(int row, T value)
 	{
-		assert(raw >= 0 && raw < nRows);
+		assert(row >= 0 && row < nRows);
 		for (int i = 0; i < nColumns; i++)
 		{
-			columns[i].SetValue(raw, value);
+			columns[i].SetValue(row, value);
 		}
 	}
 	void SetValueOfColum(int column, T value)
@@ -318,6 +360,51 @@ public:
 				columns[x][y] = columns[x][y] || rhs[x][y];
 			}
 		}
+	}
+	void RotateAntiClockwise(int n90rot)
+	{
+		n90rot %= 4;
+		for (int i = 0; i < n90rot;i++)
+		{
+			Matrix<T> old = *this;
+			for (int y = 0; y < nRows; y++)
+			{
+				for (int x = 0; x < nColumns; x++)
+				{
+					columns[nColumns - 1 - y][x] = old[x][y];
+				}
+			}
+		}
+		int lookAtThis = 23;
+	}
+	void RotateClockwise(int n90rot)
+	{
+		n90rot %= 4;
+		for(int i = 0; i < n90rot;i++)
+		{
+			Matrix<T> old = *this;
+			for (int y = 0; y < nRows; y++)
+			{
+				for (int x = 0; x < nColumns; x++)
+				{
+					columns[y][nRows - 1 - x] = old[x][y];
+				}
+			}
+		}
+	}
+	Matrix<T> CutMatrix(Vei2 pos)
+	{
+		assert(IndexInBounds(pos));
+		Vei2 size = Vei2(nColumns - pos.x, nRows - pos.y);
+		Matrix<T> cutMat = Matrix<T>(size.x, size.y,-1);
+		for (int y = 0; y < size.y; y++)
+		{
+			for (int x = 0; x < size.x; x++)
+			{
+				cutMat[x][y] = columns[pos.x + x][pos.y + y];
+			}
+		}
+		return cutMat;
 	}
 };
 typedef Matrix<Vei2> VecN;

@@ -88,7 +88,7 @@ protected:
 	}
 public:
 	Component* parentC;
-	RectF GetPos() {
+	virtual RectF GetPos() {
 		if (parentC == nullptr)
 		{
 			return pos;
@@ -309,6 +309,60 @@ public:
 		return false;
 	}
 };
+class Image : public Component
+{
+	Animation* a;
+	Animation* aHover;
+public:
+	Image(RectF pos, Animation* a, Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates);
+	void Draw(Graphics& gfx) override
+	{
+		if (mouseHovers)
+		{
+			gfx.DrawSurface((RectI)GetPos(), aHover->GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+		}
+		else
+		{
+			gfx.DrawSurface((RectI)GetPos(), a->GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+		}
+	}
+};
+class GrabImage : public Image
+{
+	GrabHandle gH = GrabHandle(5.0f);
+	Vec2 delta;
+public:
+	GrabImage(RectF pos, Animation* a, Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates);
+	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)override
+	{
+		Vec2 mP = (Vec2)e.GetPos();
+		if (GetPos().Contains(mP) || gH.IsLocked())
+		{
+			delta += gH.MoveCamera(e);
+		}
+		if (e.GetType() == Mouse::Event::LRelease)
+		{
+			gH.Release();
+			delta = Vec2(0, 0);
+		}
+		if (IsVisible())
+		{
+			if (HandleMouseInputComps(e, interact))
+			{
+				return true;
+			}
+			return HandleMouseInputFrame(e, interact);
+		}
+		return false;
+	}
+	virtual RectF GetPos()override {
+		if (parentC == nullptr)
+		{
+			return pos + delta;
+		}
+		return pos + delta + parentC->GetPos().GetTopLeft<float>();
+	}
+};
 class Frame : public Component
 {
 protected:
@@ -511,6 +565,22 @@ public:
 		//assert(activInStates.size() == nStates);
 		comps[key] = std::make_unique<CheckBox>(pos, this, buffer, resC, activInStates);
 		return static_cast<CheckBox*>(comps[key].get());
+	}
+	virtual Image* AddImage(RectF pos, Animation* a, Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {})
+	{
+		//RectF pos, Animation* a, Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates
+		activInStates = FillWith1WhenSize0(activInStates, nStates);
+		//assert(activInStates.size() == nStates);
+		comps[key] = std::make_unique<Image>(pos, a, aHover, this, buffer, activInStates);
+		return static_cast<Image*>(comps[key].get());
+	}
+	virtual GrabImage* AddGrabImage(RectF pos, Animation* a, Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {})
+	{
+		//(RectF pos, Animation * a, Animation * aHover, Component * parentC, std::queue<FrameEvent>*buffer, std::vector<int> activInStates);
+		activInStates = FillWith1WhenSize0(activInStates, nStates);
+		//assert(activInStates.size() == nStates);
+		comps[key] = std::make_unique<GrabImage>(pos, a, aHover, this, buffer, activInStates);
+		return static_cast<GrabImage*>(comps[key].get());
 	}
 	virtual Frame* AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {})
 	{
@@ -1051,6 +1121,20 @@ public:
 			fButtonBuild->s = &resC->tC.windowsFrame[4].GetCurSurface();
 			fButtonBuild->bFunc = BBuildMenu;
 			*/
+			Frame* fInventory = AddFrame("f_Inventory", RectF(Vec2(Graphics::ScreenWidth/2 - 125, Graphics::ScreenHeight/12), 250, 190), 1);
+			fInventory->s = &resC->tC.windowsFrame[8].GetCurSurface();
+			fInventory->SetVisible(true);
+
+			fInventory->AddGrabImage(RectF(Vec2(71, 11), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer,"gI_Hand1", { 1,1 });
+			fInventory->AddGrabImage(RectF(Vec2(131, 11), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Hand2", { 1,1 });
+			fInventory->AddGrabImage(RectF(Vec2(71, 71), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Armor", { 1,1 });
+			fInventory->AddGrabImage(RectF(Vec2(131, 71), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Bonus", { 1,1 });
+			
+			fInventory->AddGrabImage(RectF(Vec2(11, 131), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item1", { 1,1 });
+			fInventory->AddGrabImage(RectF(Vec2(71, 131), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item2", { 1,1 });
+			fInventory->AddGrabImage(RectF(Vec2(131, 131), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item3", { 1,1 });
+			fInventory->AddGrabImage(RectF(Vec2(191, 131), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item4", { 1,1 });
+
 		}
 		else if(scene == 1)
 		{
@@ -1205,12 +1289,15 @@ public:
 		f_townhall->SetVisible(false);
 		Frame* f_lumberjackHut = static_cast<Frame*>(comps["f_LumberjackHut"].get());
 		f_lumberjackHut->SetVisible(false);
+		Frame* f_Inventory = static_cast<Frame*>(comps["f_Inventory"].get());
+		f_Inventory->SetVisible(false);
 
 		if (obst != nullptr)
 		{
 			if (Settings::anyOfUnit(obst->type))
 			{
 				f_unit->SetVisible(true);
+				f_Inventory->SetVisible(true);
 				std::string s1 = Settings::GetObstacleString(obst->type);
 
 				f_unit->SetText(s1, "t_unitNameIs");
@@ -1248,7 +1335,7 @@ public:
 					static_cast<CheckBox*>(f_townhall->GetComp("cB_heal"))->Check();
 				else
 					static_cast<CheckBox*>(f_townhall->GetComp("cB_heal"))->Uncheck();
-				if (obst->attack->GetAttackMode())
+				if (obst->attack->GetReloadNextTurn())
 					static_cast<CheckBox*>(f_townhall->GetComp("cB_attack"))->Check();
 				else
 					static_cast<CheckBox*>(f_townhall->GetComp("cB_attack"))->Uncheck();

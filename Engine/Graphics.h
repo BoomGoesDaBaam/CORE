@@ -405,26 +405,35 @@ public:
 					}
 					else if (n90rot == 1)
 					{ 
-						sPixelX = (int)(sourceR.right - 1 - ((float)(y + skippedTop) / pos.GetWidth()) * sourceR.GetWidth());
-						sPixelY = (int)(sourceR.top + ((float)(x) / pos.GetHeight()) * sourceR.GetHeight());
+						sPixelX = (int)std::ceil(sourceR.right - 1 - ((float)(y + skippedTop) / pos.GetWidth()) * sourceR.GetWidth());
+						sPixelY = (int)(sourceR.top + ((float)(x + skippedLeft) / pos.GetHeight()) * sourceR.GetHeight());
 					} 
 					else if (n90rot == 2)
 					{
-						sPixelX = (int)(sourceR.right - 1 - ((float)(x) / pos.GetWidth()) * sourceR.GetWidth());
-						sPixelY = (int)(sourceR.bottom - 1 - ((float)(y + skippedTop) / pos.GetHeight()) * sourceR.GetHeight());
+						sPixelX = (int)std::ceil(sourceR.right - 1 - ((float)(x + skippedLeft) / pos.GetWidth()) * sourceR.GetWidth());
+						sPixelY = (int)std::ceil(sourceR.bottom - 1 - ((float)(y + skippedTop) / pos.GetHeight()) * sourceR.GetHeight());
 					}
 					else if (n90rot == 3)
 					{
 						sPixelX = (int)(sourceR.left + ((float)(y + skippedTop) / pos.GetWidth()) * sourceR.GetWidth());
-						sPixelY = (int)(sourceR.bottom - 1 -((float)(x) / pos.GetHeight()) * sourceR.GetHeight());
+						sPixelY = (int)std::ceil(sourceR.bottom - 1 -((float)(x) / pos.GetHeight()) * sourceR.GetHeight());
 					}
+
+					int sWidth = s.GetRect().GetWidth();
+					int sHeight = s.GetRect().GetWidth();
+
+					int posWidth = pos.GetWidth();
+					int posHeight = pos.GetHeight();
+
 					assert(sPixelX >= 0);
 					assert(sPixelY >= 0);
 					assert(sPixelX < s.GetRect().GetWidth());
 					assert(sPixelY < s.GetRect().GetHeight());
-
-					Color sourceP = s.GetPixel(sPixelX, sPixelY);
-					effect(x + inFpos.left, y + inFpos.top, sourceP, *this);
+					if (sPixelX >= 0 && sPixelY >= 0 && sPixelX < s.GetRect().GetWidth() && sPixelY < s.GetRect().GetHeight())
+					{
+						Color sourceP = s.GetPixel(sPixelX, sPixelY);
+						effect(x + inFpos.left, y + inFpos.top, sourceP, *this);
+					}
 					//pixelPercX += percentX;
 				//}
 			}
