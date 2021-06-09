@@ -142,7 +142,7 @@ private:
 	bool GenerateCell(Vei2 pos, int type, int ontoType = -1, int surrBy = -1);
 	bool ObstaclePosAllowed(Vei2 tilePos, int type);
 	
-	void GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, Team* team = nullptr, int ontoType = -1, int nRolls = 25, int surrBy = -1);
+	std::vector<Obstacle*> GenerateObstacleExplosion(Vei2 pos, int nMax, int maxLineLength, int type, Team* team = nullptr, int ontoType = -1, int nRolls = 25, int surrBy = -1);
 	void GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, Team* team = nullptr, int ontoType = -1, int thickness = 1, int surrBy = -1);
 	void GenerateObstaclesInCell(Vei2 cellPos, int type, int number, Team* team = nullptr, int ontoType = -1, int surrBy = -1);
 
@@ -216,7 +216,7 @@ public:
 	Vec2 GetTileSize()const { return (Vec2)GetcSize()/Settings::CellSplitUpIn; }
 	Vei2 GetfCell()const { return Vei2(-1,-1); }
 	Vei2 GetfTile()const { return fTile; }
-	int GetfCellType()const { return chunks(fcctPos.x).GetCellTypeAt(fcctPos.y); }
+	int GetfCellType()const { return chunks(fctPos.x).GetCellTypeAt(fctPos.y / Settings::CellSplitUpIn); }
 	Vei2 GetmChunk()const { return mChunk; }
 	void SetPlayer(Team* player) { this->player = player; }
 	bool GetBuildMode() { return buildMode; }

@@ -127,7 +127,7 @@ public:
 	std::unique_ptr<AttackTrait> attack = nullptr;
 	
 	//
-	Inventory inv;
+	std::unique_ptr<Inventory> inv = nullptr;
 	//Obstacle() {}
 	Obstacle(Obstacle& obst) 
 	{
@@ -154,7 +154,9 @@ public:
 			heal = std::make_unique<HealTrait>(*other.heal.get());
 		if (other.attack != nullptr)
 			attack = std::make_unique<AttackTrait>(*other.attack.get());
-
+		//Inventory
+		if (other.inv != nullptr)
+			inv = std::make_unique<Inventory>(*other.inv.get());
 
 		return *this;
 	}
@@ -175,7 +177,6 @@ public:
 		stepsLeft(Settings::obstacleStats[type].movesPerTurn)
 	{
 		//Add Traits
-		
 		if (std::any_of(std::begin(Settings::obstacleTrait_education), std::end(Settings::obstacleTrait_education), [&](const int& val)
 			{
 				return type == val;
@@ -207,7 +208,25 @@ public:
 				attack->SetReloadNextTurn(false);
 			}
 		}
-
+		//Add Inventory
+		if (Settings::anyOfCreature(type))
+		{
+			inv = std::make_unique<Inventory>(0);
+		}
+		if (type == 6)
+		{
+			RandyRandom rr;
+			inv = std::make_unique<Inventory>(1);
+			int nItem = rr.Calc(2) + 3;
+			for (int i = 0; i < nItem; i++)
+			{
+				inv->SetItem(std::make_unique<Slot>(rr.Calc(12)), i);
+			}
+		}
+		if (type == 50)
+		{
+			inv = std::make_unique<Inventory>(2);
+		}
 		hp = Settings::obstacleStats[type].baseHp;
 		animations.push_back(Animation(this->resC->tC.obstacles[type]));
 		switch (type)
@@ -241,7 +260,7 @@ public:
 			hp += deltaHP;
 			if (hp > Settings::obstacleStats[type].baseHp)
 			{
-				hp += Settings::obstacleStats[type].baseHp;
+				hp = Settings::obstacleStats[type].baseHp;
 			}
 		}
 
@@ -306,16 +325,64 @@ public:
 	}
 	int GetDmg(const Obstacle* victim)
 	{
-		float dmg = Settings::obstacleStats[type].attackDmg * ( (float)hp / Settings::obstacleStats[type].baseHp);
+		float dmg = Settings::obstacleStats[type].attackDmg; //* ( (float)hp / Settings::obstacleStats[type].baseHp);
 		if (Settings::anyOfPlants(victim->type))
 		{
 			dmg *= Settings::obstacleStats[type].dmgAgainstPlants;
+		}
+		if (inv->HasItemNotBroken(1) && Settings::anyOfCreature(victim->type))	//iron sword
+		{
+			dmg *= 1.5f;
+			inv->ItemUsed(1);
+		}
+		if (inv->HasItemNotBroken(12) && Settings::anyOfCreature(victim->type))	//sniper
+		{
+			dmg *= 3;
+			inv->ItemUsed(12);
+		}
+		if (inv->HasItemNotBroken(0))						//axe
+		{
+			if (Settings::anyOfPlants(victim->type))		
+			{
+				dmg *= 3;
+				inv->ItemUsed(0);
+			}
+			if (Settings::anyOfCreature(victim->type))		
+			{
+				dmg *= 1.5f;
+				inv->ItemUsed(0);
+			}
 		}
 		return dmg;
 	}
 	int GetAttackRange()
 	{
-		return Settings::obstacleStats[type].attackRange;
+		float attackRange = Settings::obstacleStats[type].attackRange;
+		if (inv->HasItemNotBroken(11))	//bow
+		{
+			attackRange = 10;
+		}
+		if (inv->HasItemNotBroken(12))	//sniper
+		{
+			attackRange = 20;
+		}
+		return attackRange;
+	}
+	float AttackObstacle(Obstacle* attacker, float dmg)
+	{
+		float dmgAdjusted = dmg;
+		if (inv->HasItemNotBroken(9))
+		{
+			dmgAdjusted *= 0.5f;
+			inv->ItemUsed(9);
+		}
+		if (inv->HasItemNotBroken(2))
+		{
+			dmgAdjusted *= 0.75f;
+			inv->ItemUsed(2);
+		}
+		hp -= dmgAdjusted;
+		return dmgAdjusted;
 	}
 	virtual void Poop() {}
 };

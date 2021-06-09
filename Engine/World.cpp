@@ -170,9 +170,9 @@ std::vector<Obstacle*> World::SpawnUnits(int n, int type, Team* team, Vei2 tileP
 		float rad = (float)rng.Calc(360) * 0.0174533f;
 		Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin<float>(1.0f, 0.0f, rad);
 		Vei2 spawnPos = tilePos + Vei2(p1 * rng.Calc(10));
-		if (chunks(Vei2(0, 0)).PlaceObstacle(spawnPos, type, team))
+  		if (chunks(Vei2(0, 0)).PlaceObstacle(spawnPos, type, team))
 		{
-			assert(chunks(Vei2(0, 0)).GetObstacleAt(spawnPos) != nullptr);
+			assert(chunks(Vei2(0, 0)).GetObstacleOutOfBounds(spawnPos) != nullptr);
 			generatedObstacles.push_back(chunks(Vei2(0, 0)).GetObstacleAt(spawnPos));
 			i++;
 		}
@@ -187,9 +187,12 @@ void World::SpawnPlayer()
 		spawnpoint.x++;
 	}
 	std::vector<Obstacle*> genObsts = SpawnUnits(5,10, player, spawnpoint);
+	std::vector<Obstacle*> box = GenerateObstacleExplosion(spawnpoint,1, 5, 6, player, -1, 25);
 	for (int i = 0; i < genObsts.size(); i++)
 	{
-		genObsts[i]->inv.SetHand1(Slot(0, 40));
+		genObsts[i]->inv->SetItem(std::make_unique<Slot>(0, 40),4);
+		genObsts[i]->inv->SetItem(std::make_unique<Slot>(4, 40),5);
+		genObsts[i]->inv->SetItem(std::make_unique<Slot>(12, 40),6);
 	}
 	auto cctPos = Chunk::Flat2ChunkPos(spawnpoint, s.wSizeInTiles);
 	mChunk = cctPos.x;
@@ -672,7 +675,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 			{
 				dist2lastclick.x += s.wSizeInTiles.x;
 			}
-			if (attackMode && fctPos != oldCtPos && chunks(fctPos.x).GetObstacleMapAt(fctPos.y) != -1 && sqrt(pow(dist2lastclick.x, 2) + pow(dist2lastclick.y, 2)) <= Settings::obstacleStats[focusedObst->type].attackRange)
+			if (attackMode && fctPos != oldCtPos && chunks(fctPos.x).GetObstacleMapAt(fctPos.y) != -1 && sqrt(pow(dist2lastclick.x, 2) + pow(dist2lastclick.y, 2)) <= focusedObst->GetAttackRange())
 			{
 				chunks(fctPos.x).AttackTile(Chunk::CtPos2CctPos(fctPos), focusedObst);
 				focusedObst->attack->Attacked();
@@ -775,6 +778,10 @@ void World::HandleKeyboardEvents(Keyboard::Event& e)
 	{
 		switch (e.GetCode())
 		{
+		case 'A':
+			if (focusedObst != nullptr)
+				attackMode = !attackMode;
+			break;
 		case 'G':
 			grit = !grit;
 			break;
@@ -923,10 +930,12 @@ void World::Draw(Graphics& gfx) const
 		{
 			DrawCircle(obstacleMidPos, Settings::obstacleStats[focusedObst->type].healRange, Colors::Green,gfx);
 		}
+		/*
 		if (focusedObst->attack != nullptr && focusedObst->attack->GetReloadNextTurn())
 		{
-			DrawCircle(obstacleMidPos, Settings::obstacleStats[focusedObst->type].attackRange, Colors::Red, gfx);
+			DrawCircle(obstacleMidPos, focusedObst->GetAttackRange(), Colors::Red, gfx);
 		}
+		*/
 	}
 	if (moveMode && Settings::obstaclesOn && focusedObst != nullptr)
 	{
@@ -952,7 +961,7 @@ void World::Draw(Graphics& gfx) const
 	if (attackMode)
 	{
 		CtPos obstacleMidPos = Chunk::GetMidPosOfObstacle(CtPos(focusedObst->chunkPos,focusedObst->tilePos), focusedObst->type, chunks.GetSize());
-		DrawCircle(obstacleMidPos, Settings::obstacleStats[focusedObst->type].attackRange, Colors::Red, gfx);
+		DrawCircle(obstacleMidPos, focusedObst->GetAttackRange(), Colors::Red, gfx);
 	}
 }
 void World::DrawObstacle(Vei2 tilePos, int type, Graphics& gfx, Color color, int frame)const
@@ -1186,15 +1195,15 @@ void World::Generate(WorldSettings& s)
 			
 			if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 1)
 			{
-				GenerateObstacleExplosion(spawnAt, 100, 1, nullptr, 1, 15);
-				GenerateObstacleExplosion(spawnAt + Vei2(0,1), 100, 1, nullptr, 1, 15);
-				GenerateObstacleExplosion(spawnAt + Vei2(1, 0), 100, 1, nullptr, 1, 15);
-				GenerateObstacleExplosion(spawnAt + Vei2(1, 1), 100, 1, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt, 10, 100, 1, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(0,1), 10, 100, 1, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(1, 0), 10, 100, 1, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(1, 1), 10, 100, 1, nullptr, 1, 15);
 
-				GenerateObstacleExplosion(spawnAt, 50, 4, nullptr, 1, 15);
-				GenerateObstacleExplosion(spawnAt + Vei2(0, 1), 100, 4, nullptr, 1, 15);
-				GenerateObstacleExplosion(spawnAt + Vei2(1, 0), 100, 4, nullptr, 1, 15);
-				GenerateObstacleExplosion(spawnAt + Vei2(1, 1), 100, 4, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt, 10, 50, 4, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(0, 1), 10, 100, 4, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(1, 0), 10, 100, 4, nullptr, 1, 15);
+				GenerateObstacleExplosion(spawnAt + Vei2(1, 1), 10, 100, 4, nullptr, 1, 15);
 			}
 		}
 		for (int n = 0; n < 7; n++)
@@ -1434,16 +1443,26 @@ void World::GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, Team* team, i
 		}
 	}
 }
-void World::GenerateObstacleExplosion(Vei2 pos, int maxLineLength, int type, Team* team, int ontoType, int nRolls, int surrBy)
+std::vector<Obstacle*> World::GenerateObstacleExplosion(Vei2 pos,int nMax, int maxLineLength, int type, Team* team, int ontoType, int nRolls, int surrBy)
 {
+	std::vector<Obstacle*> obsts;
 	for (int i = 0; i < nRolls; i++)
 	{
 		float rad = (float)rng.Calc(360) * 0.0174533f;
 		Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin<double>(1.0f, 0.0f, rad);
 		Vei2 scaled = pos + (Vei2)((p1 * (float)maxLineLength) * GigaMath::GetRandomNormDistribution());
 
-		chunks(Vei2(0,0)).PlaceObstacle(scaled, type, team, ontoType, surrBy);
+		if (chunks(Vei2(0, 0)).PlaceObstacle(scaled, type, team, ontoType, surrBy))
+		{
+			obsts.push_back(chunks(Vei2(0, 0)).GetObstacleAt(scaled));
+			nMax--;
+		}
+		if (nMax <= 0)
+		{
+			return obsts;
+		}
 	}
+	return obsts;
 }
 void World::GenerateExplosion(Vei2 pos, int maxLineLength, int type,int ontoType, int nRolls, int surrBy)//not
 {

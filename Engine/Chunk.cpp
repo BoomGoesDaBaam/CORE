@@ -799,7 +799,7 @@ bool Chunk::UnitIsAround(Vei2 tilePos, int range)
 			if (chunks->operator()(curctPos.x).GetObstacleMapAt(curctPos.y) != -1)
 			{
 				Obstacle* obst = chunks->operator()(curctPos.x).GetObstacleAt(curctPos.y);
-				if (sqrt(pow(x, 2) + pow(y, 2)) <= range && obst != nullptr && Settings::anyOfUnit(obst->type))
+				if (sqrt(pow(x, 2) + pow(y, 2)) <= range && obst != nullptr && Settings::anyOfCreature(obst->type))
 				{
 					return true;
 				}
@@ -810,8 +810,8 @@ bool Chunk::UnitIsAround(Vei2 tilePos, int range)
 }
 bool Chunk::PlaceObstacle(Vei2 tilePos, int type, Team* team, int ontoType, int surrByObst)
 {
-	
-	CtPos ctPos  = Chunk::CctPos2CtPos(Chunk::Flat2ChunkPos(tilePos, GetWorldSizeInTiles()));
+	CtPos ctPos = Chunk::PutCtPosInWorld(CtPos(Vei2(0, 0), tilePos),chunks->GetSize());
+	//CtPos ctPos  = Chunk::CctPos2CtPos(Chunk::Flat2ChunkPos(tilePos, GetWorldSizeInTiles()));
 	//Matrix<int> aMat = chunks->operator()(ctPos.x).GetAroundmatrix(ctPos.y / Vei2(Settings::CellSplitUpIn,Settings::CellSplitUpIn));// GetAroundMatrix(tileIsInCell);
 	//if (ObstaclePosAllowed(tilePos, type) && (ontoType == -1 || ontoType == cells(tileIsInCell).type) && (surrBy == -1 || aMat.HasValue(surrBy)))
 	//{
@@ -820,7 +820,7 @@ bool Chunk::PlaceObstacle(Vei2 tilePos, int type, Team* team, int ontoType, int 
 		Obstacle obstacle = Obstacle(ctPos.y, ctPos.x, type, resC, team);
 		return chunks->operator()(ctPos.x).PlaceObstacle(ctPos.y, &obstacle);
 	}
-	return true;
+	return false;
 	//}
 	//return false;
 	/*
@@ -1002,7 +1002,7 @@ Obstacle* Chunk::GetObstacleOutOfBounds(Vei2 tilePos) const
 {
 	if (Settings::obstaclesOn)
 	{
-		auto ctPos = GetTilePosOutOfBounds(tilePos);
+		auto ctPos = PutCtPosInWorld(CtPos(Vei2(0,0),tilePos),chunks->GetSize());
 		return chunks->operator()(ctPos.x).GetObstacleAt(ctPos.y);
 	}
 	return nullptr;
@@ -1041,8 +1041,23 @@ void Chunk::NextTurnSecond(std::map<std::string, Team*> teams)
 	for (int i = 0; i < obstacles.size(); i++)
 	{
 		if (std::none_of(obstaclesIndexNotUsed.begin(), obstaclesIndexNotUsed.end(), [&](const int& val) {return val == i; })) {
-			//Apply Traits
 			obstacles[i]->stepsLeft = Settings::obstacleStats[obstacles[i]->type].movesPerTurn;
+			obstacles[i]->Heal(2);
+			//Apply Items
+			if (obstacles[i]->inv.get() != nullptr)
+			{
+				if (obstacles[i]->inv->HasItemNotBroken(3))		//range chain
+				{
+					obstacles[i]->stepsLeft += 5;
+					obstacles[i]->inv->ItemUsed(3);
+				}
+				if (obstacles[i]->inv->HasItemNotBroken(4))		//heal ring
+				{
+					obstacles[i]->Heal(10);
+					obstacles[i]->inv->ItemUsed(4);
+				}
+			}
+			//Apply Traits
 			if (obstacles[i]->attack != nullptr && obstacles[i]->attack->GetReloadNextTurn() && obstacles[i]->attack->GetAutomaticMode() == CtPos(Vei2(-1, -1), Vei2(-1, -1)))
 			{
 				obstacles[i]->attack->SetAttacksleft(Settings::obstacleStats[obstacles[i]->type].attacksPerTurn);
@@ -1228,7 +1243,8 @@ void Chunk::AttackTile(CctPos pos, Obstacle* attacker)
 	Vei2 tilePos = pos.y * Settings::CellSplitUpIn + pos.z;
 	if (obstacleMap(tilePos) != -1)
 	{
-		obstacles[obstacleMap(tilePos)]->hp -= attacker->GetDmg(obstacles[obstacleMap(tilePos)].get());
+		obstacles[obstacleMap(tilePos)]->AttackObstacle(attacker, attacker->GetDmg(obstacles[obstacleMap(tilePos)].get()));
+
 		if (obstacles[obstacleMap(tilePos)]->hp <= 0)
 		{
 			UnitKilled(attacker->GetCtPos(),CctPos2CtPos(pos));
@@ -1312,6 +1328,11 @@ int Chunk::GetObstacleMapAt(Vei2 pos)const
 }
 Obstacle* Chunk::GetObstacleAt(Vei2 pos)
 {
+	if (!RectI(Vei2(0, 0), obstacleMap.GetColums(), obstacleMap.GetRows()).Contains(pos))
+	{
+		CtPos ctPosInWord = PutCtPosInWorld(CtPos(chunkPos, pos), chunks->GetSize());
+		return chunks->operator()(ctPosInWord.x).GetObstacleAt(ctPosInWord.y);
+	}
 	if (obstacleMap(pos) == -1)
 	{
 		return nullptr;

@@ -46,8 +46,14 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	windowsFrame.push_back(Animation(delay));					//	composition = 0 bg
 	windowsFrame[7].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(527, 1), 180, 60)));
 
-	windowsFrame.push_back(Animation(delay));					//	composition = 0 bg
+	windowsFrame.push_back(Animation(delay));					//	inventory creature
 	windowsFrame[8].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(649, 62), 250, 190)));
+
+	windowsFrame.push_back(Animation(delay));					//	inventory box
+	windowsFrame[9].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(900, 62), 190, 190)));
+
+	windowsFrame.push_back(Animation(delay));					//	inventory storage
+	windowsFrame[10].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(649, 253), 310, 310)));
 
 	//Obstacles
 	obstacles.push_back(0.2f);//#0
@@ -266,8 +272,11 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	//Fonts
 	fonts.push_back(Font("Textures/Font5.bmp", 112, '!', '~', Colors::FontDelimitor, Colors::FontNewLine, gfx));
 	//Items
-	items.push_back(0.2f);//#1
-	items[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(708, 1), 50, 50)));
+	for (int i = 0; i < 13; i++)
+	{
+		items.push_back(0.2f);
+		items[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(1150 + (i%10) * 51, 601 + (i/10) * 51), 50, 50)));
+	}
 }
 void TexturesCollection::IdkCallOnce()
 {

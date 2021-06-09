@@ -291,5 +291,37 @@ void Game::HandleFrameLogic(FrameEvent& e)
 			}
 		}
 	}
+	else if (e.GetType() == FrameEvent::ItemDragReleased)
+	{
+		Obstacle* obstacle = curW->GetFocusedObstacle();
+		if (obstacle != nullptr)
+		{
+			Vec2 mP = (Vec2)wnd.mouse.GetPos();
+			int hitSlot = 0; 
+
+			if(e.GetAction().find("unit") != std::string::npos)
+				hitSlot = igwH.GetHitInventorySpace(mP);
+			if (e.GetAction().find("box") != std::string::npos)
+				hitSlot = igwH.GetHitInventoryBox(mP);
+			if (e.GetAction().find("storage") != std::string::npos)
+				hitSlot = igwH.GetHitInventoryStorage(mP);
+
+
+			std::unique_ptr<Slot>* move = obstacle->inv->GetItem(e.GetExtra());
+			if (hitSlot != e.GetExtra() && obstacle->inv->ItemFitsForSlotFlat(move, hitSlot))
+			{
+				obstacle->inv->SetItem(std::move(*move), hitSlot);
+				igwH.UpdateFrames(obstacle);
+			}
+			else if (hitSlot != e.GetExtra() && obstacle->inv->WouldFitWhenEmptyFlat(move, hitSlot) && obstacle->inv->WouldFitWhenEmptyFlat(obstacle->inv->GetItem(hitSlot), e.GetExtra()))
+			{
+				std::unique_ptr<Slot> swap = std::move(*obstacle->inv->GetItem(hitSlot));
+				
+				obstacle->inv->SetItem(std::move(*move), hitSlot);
+				obstacle->inv->SetItem(std::move(swap), e.GetExtra());
+				igwH.UpdateFrames(obstacle);
+			}
+		}
+	}
 }
 

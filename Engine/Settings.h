@@ -71,13 +71,15 @@ namespace Settings
 			1 = iron sword
 			2 = iron shield
 			3 = range chain
-			4 = dmg ring
+			4 = heal ring
 			5 = heal Head
 			6 = tulip
 			7 = rose 
 			8 = lily
 			9 = iron armor
 			10 = iron pickaxe
+			11 = bow
+			12 = sniper
 
 			### Masked Array ###
 			0 = swamp
@@ -122,6 +124,7 @@ namespace Settings
 	//Categorisation
 	static const std::vector<int> anyOfPlantsVec = { 1,4,5,8};
 	static const std::vector<int> anyOfAnimalsVec = { 11,12,13,14,15,16,17,18,19,20 };
+	static const std::vector<int> anyUnitsVec = { 10 };
 	//Graphic options
 	//static bool displayObstacles = true;
 	static int probToGrow = 50;
@@ -443,13 +446,10 @@ namespace Settings
 	}
 
 	static constexpr float percentForGrab[] = { 0.05f, 0.05f };
-	static bool anyOfUnit(int type)
+	static bool anyOfCreature(int type)
 	{
-		if (type >= 10 && type <=20)
-		{
-			return true;
-		}
-		return false;
+		return std::any_of(std::begin(anyOfAnimalsVec), std::end(anyOfAnimalsVec), [&](const int val) {return type == val; })
+			|| std::any_of(std::begin(anyUnitsVec), std::end(anyUnitsVec), [&](const int val) {return type == val; });
 	}
 	static bool anyOfChangeSizeWhenNear(int type)		//trees that have a diffrent look when unit is nearby
 	{
@@ -893,7 +893,7 @@ namespace Settings
 		{{"stone",80}},
 		{{"stone",40},{"iron",2},{"copper",1}}),
 		ObstacleStats(				//#10
-		1,{Vei2(1,1)},100,10,1,20,1,0,
+		1,{Vei2(1,1)},100,10,1,10,1,0,
 		{},
 		{}),
 		ObstacleStats(				//#11

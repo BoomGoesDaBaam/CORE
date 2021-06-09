@@ -1,6 +1,7 @@
 #pragma once
 #include "Rect.h"
 #include <map>
+#include <vector>
 struct Materials
 {
 	std::map<std::string, float> values;
@@ -108,71 +109,81 @@ public:
 private:
 	int itemId;
 	int durability;	//-1 == Item has no durability	0 == Item has no durability left
-	Type type;
+	Type type = Slot::Type::Empty;
 public:
 	Slot() { type = Slot::Type::Empty; }
-	Slot(int id, int durability = -1) :itemId(itemId), durability(durability)
+	Slot(int id, int durability = -1) :itemId(id), durability(durability)
 	{
 		type = Empty;
 		if (id == 0)
 		{
-			type == Holdable;
+			type = Holdable;
 		}
 		if (id == 1)
 		{
-			type == Holdable;
+			type = Holdable;
 		}
 		if (id == 2)
 		{
-			type == Holdable;
+			type = Armor;
 		}
 		if (id == 3)
 		{
-			type == Bonus;
+			type = Bonus;
 		}
 		if (id == 4)
 		{
-			type == Bonus;
+			type = Bonus;
 		}
 		if (id == 5)
 		{
-			type == Bonus;
+			type = Armor;
 		}
 		if (id == 6)
 		{
-			type == Simple;
+			type = Simple;
 		}
 		if (id == 7)
 		{
-			type == Simple;
+			type = Simple;
 		}
 		if (id == 8)
 		{
-			type == Simple;
+			type = Simple;
 		}
 		if (id == 9)
 		{
-			type == Armor;
+			type = Armor;
 		}
 		if (id == 10)
 		{
-			type == Holdable;
+			type = Holdable;
+		}
+		if (id == 11)
+		{
+			type = Holdable;
+		}
+		if (id == 12)
+		{
+			type = Holdable;
 		}
 	}
 	int GetId()
 	{
 		return itemId;
 	}
-	int Used()
+	bool IsBroken()
+	{
+		return durability == 0;
+	}
+	bool Used()
 	{
 		if (durability > 0)
 		{
 			durability--;
+			return true;
 		}
-	}
-	bool IsBroken()
-	{
-		return durability == 0;
+		return false;
 	}
 	Slot::Type GetType()
 	{
@@ -181,79 +192,109 @@ public:
 };
 class Inventory
 {
-	Slot hand1, hand2;
-	Slot armor, bonus;
-	Slot item1, item2, item3, item4;
+	std::vector<std::unique_ptr<Slot>> slots = {};
+	std::vector<Slot::Type> slotsType;
+	int type = -1;
 public:
-	Inventory(Slot hand1 = Slot(), Slot hand2 = Slot(), Slot armor = Slot(), Slot bonus = Slot(), Slot item1 = Slot(), Slot item2 = Slot(), Slot item3 = Slot(), Slot item4 = Slot())
-		:hand1(hand1), hand2(hand2), armor(armor), bonus(bonus), item1(item1), item2(item2), item3(item3), item4(item4)
-	{}
-	//SET
-	bool SetHand1(Slot hand1)
+	Inventory() = delete;
+	Inventory(int type)			//type == 0 => Unit Inventory		type == 1 => Box Inventory		type == 2 => Storage Inventory
+		:
+		type(type)
 	{
-		//if(hand1.GetType == Slot::Type::Holdable)
-		this->hand1 = hand1;
+		if (type == 0)
+		{
+			for (int i = 0; i < 8; i++)
+			{
+				slotsType.push_back(Slot::Type::Simple);
+				slots.push_back(nullptr);
+			}
+			slotsType[0] = Slot::Type::Holdable;
+			slotsType[1] = Slot::Type::Bonus;
+			slotsType[2] = Slot::Type::Armor;
+			slotsType[3] = Slot::Type::Bonus;
+		}
+		if (type == 1)
+		{
+			for (int i = 0; i < 9; i++)
+			{
+				slotsType.push_back(Slot::Type::Simple);
+				slots.push_back(nullptr);
+			}
+		}
+		if (type == 2)
+		{
+			for (int i = 0; i < 25; i++)
+			{
+				slotsType.push_back(Slot::Type::Simple);
+				slots.push_back(nullptr);
+			}
+		}
 	}
-	bool SetHand2(Slot hand2)
+	Inventory(Inventory& other)
 	{
-		this->hand2 = hand2;
+		*this = other;
 	}
-	bool SetArmor(Slot armor)
+	//Obstacle(Obstacle&& obst) {}
+	Inventory& operator=(const Inventory& other)
 	{
-		this->armor = armor;
+		slotsType = other.slotsType;
+		for (int i = 0; i < other.slots.size(); i++)
+		{
+			if (other.slots[i].get() != nullptr)
+				slots.push_back(std::make_unique<Slot>(*other.slots[i].get()));
+			else
+				slots.push_back(nullptr);
+		}
+		type = other.type;
+		return *this;
 	}
-	bool SetBonus(Slot bonus)
+	bool SetItem(std::unique_ptr<Slot>&& item, int flatID)
 	{
-		this->bonus = bonus;
+		assert(flatID >= 0 && flatID < slots.size());
+		if (ItemFitsForSlotFlat(&item, flatID))
+		{
+			slots[flatID] = std::move(item);
+			return true;
+		}
+		return false;
 	}
-	bool SetItem1(Slot item1)
+	bool ItemFitsForSlotFlat(std::unique_ptr<Slot>* item, int flatID)
 	{
-		this->item1 = item1;
+		assert(flatID >= 0 && flatID < slots.size());
+		return (slotsType[flatID] == item->get()->GetType() || slotsType[flatID] == Slot::Type::Simple) && slots[flatID].get() == nullptr;
 	}
-	bool SetItem2(Slot item2)
+	bool WouldFitWhenEmptyFlat(std::unique_ptr<Slot>* item, int flatID)
 	{
-		this->item2 = item2;
+		assert(item->get() != nullptr);
+		return item->get()->GetType() == slotsType[flatID] || slotsType[flatID] == Slot::Type::Simple;
 	}
-	bool SetItem3(Slot item3)
+	std::unique_ptr<Slot>* GetItem(int flatID)
 	{
-		this->item3 = item3;
+		assert(flatID >= 0 && flatID < slots.size());
+		return &slots[flatID];
+		return nullptr;
 	}
-	bool SetItem4(Slot item3)
+	void ItemUsed(int itemID)
 	{
-		this->item3 = item3;
+		for (int i = 0; i < slots.size(); i++)
+		{
+			if (slots[i].get() != nullptr && slots[i].get()->GetId() == itemID && !slots[i].get()->IsBroken() && slotsType[i] != Slot::Type::Simple)
+			{
+				slots[i].get()->Used();
+				return;
+			}
+		}
 	}
-	//GET
-	const Slot* GetHand1()
+	bool HasItemNotBroken(int itemID)
 	{
-		return &hand1;
-	}
-	const Slot* GetHand2()
-	{
-		return &hand2;
-	}
-	const Slot* GetArmor()
-	{
-		return &armor;
-	}
-	const Slot* GetBonus()
-	{
-		return &bonus;
-	}
-	const Slot* GetItem1()
-	{
-		return &item1;
-	}
-	const Slot* GetItem2()
-	{
-		return &item2;
-	}
-	const Slot* GetItem3()
-	{
-		return &item3;
-	}
-	const Slot* GetItem4()
-	{
-		return &item3;
+		for (int i = 0; i < slots.size(); i++)
+		{
+			if (slots[i].get() != nullptr && slots[i].get()->GetId() == itemID && !slots[i].get()->IsBroken() && slotsType[i] != Slot::Type::Simple)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 };
 class Team

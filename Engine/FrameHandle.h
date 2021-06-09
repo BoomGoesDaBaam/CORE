@@ -14,6 +14,7 @@ public:
 	enum Type
 	{
 		ButtonPressed,
+		ItemDragReleased,
 		Invalid
 	};
 private:
@@ -317,20 +318,34 @@ public:
 	Image(RectF pos, Animation* a, Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates);
 	void Draw(Graphics& gfx) override
 	{
-		if (mouseHovers)
+		if (mouseHovers && aHover != nullptr)
 		{
 			gfx.DrawSurface((RectI)GetPos(), aHover->GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 		}
-		else
+		else if(a != nullptr)
 		{
 			gfx.DrawSurface((RectI)GetPos(), a->GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 		}
 	}
+	void SetAnimation(Animation* a)
+	{
+		this->a = a;
+	}
+	void SetAnimationOfBouth(Animation* a)
+	{
+		this->a = a;
+		this->aHover = a;
+
+	}
+	void SetHoverAnimation(Animation* a)
+	{
+		this->a = a;
+	}
 };
 class GrabImage : public Image
 {
-	GrabHandle gH = GrabHandle(5.0f);
-	Vec2 delta;
+	GrabHandle gH = GrabHandle(0.0f);
+	Vec2 delta = Vec2(0, 0);
 public:
 	GrabImage(RectF pos, Animation* a, Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates);
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)override
@@ -342,6 +357,8 @@ public:
 		}
 		if (e.GetType() == Mouse::Event::LRelease)
 		{
+			if(delta != Vec2(0,0))
+				buffer->push(FrameEvent(FrameEvent::ItemDragReleased, extraS1, extra1, this));
 			gH.Release();
 			delta = Vec2(0, 0);
 		}
@@ -1027,7 +1044,7 @@ public:
 			fUnity->SetVisible(false);
 			Button* b_setAttack = fUnity->AddButton(RectF(Vec2(35, 100), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_setAttack", &resC->tC.fonts[0], a);
 			b_setAttack->bFunc = BSetAttackMode;
-			b_setAttack->text = Settings::lang_attack[Settings::lang];
+			b_setAttack->text = Settings::lang_attack[Settings::lang]+" (A)";
 			b_setAttack->size = 7;
 			b_setAttack->hitable = true;
 			
@@ -1121,20 +1138,67 @@ public:
 			fButtonBuild->s = &resC->tC.windowsFrame[4].GetCurSurface();
 			fButtonBuild->bFunc = BBuildMenu;
 			*/
-			Frame* fInventory = AddFrame("f_Inventory", RectF(Vec2(Graphics::ScreenWidth/2 - 125, Graphics::ScreenHeight/12), 250, 190), 1);
+			Frame* fInventory = AddFrame("f_Inventory", RectF(Vec2(Graphics::ScreenWidth/2 - 125, Graphics::ScreenHeight/12), 250, 191), 1);
 			fInventory->s = &resC->tC.windowsFrame[8].GetCurSurface();
-			fInventory->SetVisible(true);
+			fInventory->SetVisible(false);
 
-			fInventory->AddGrabImage(RectF(Vec2(71, 11), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer,"gI_Hand1", { 1,1 });
-			fInventory->AddGrabImage(RectF(Vec2(131, 11), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Hand2", { 1,1 });
-			fInventory->AddGrabImage(RectF(Vec2(71, 71), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Armor", { 1,1 });
-			fInventory->AddGrabImage(RectF(Vec2(131, 71), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Bonus", { 1,1 });
-			
-			fInventory->AddGrabImage(RectF(Vec2(11, 131), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item1", { 1,1 });
-			fInventory->AddGrabImage(RectF(Vec2(71, 131), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item2", { 1,1 });
-			fInventory->AddGrabImage(RectF(Vec2(131, 131), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item3", { 1,1 });
-			fInventory->AddGrabImage(RectF(Vec2(191, 131), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item4", { 1,1 });
+			GrabImage* hand1 = fInventory->AddGrabImage(RectF(Vec2(70, 10), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer,"gI_Hand1", { 1,1 });
+			hand1->SetVisible(false);
+			hand1->extra1 = 0;
+			hand1->extraS1 = "inventory swap unit";
+			GrabImage* hand2 = fInventory->AddGrabImage(RectF(Vec2(130, 10), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Bonus2", { 1,1 });
+			hand2->SetVisible(false);
+			hand2->extra1 = 1;
+			hand2->extraS1 = "inventory swap unit";
+			GrabImage* armor = fInventory->AddGrabImage(RectF(Vec2(70, 70), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Armor", { 1,1 });
+			armor->SetVisible(false);
+			armor->extra1 = 2;
+			armor->extraS1 = "inventory swap unit";
+			GrabImage* bonus = fInventory->AddGrabImage(RectF(Vec2(130, 70), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Bonus", { 1,1 });
+			bonus->SetVisible(false);
+			bonus->extra1 = 3;
+			bonus->extraS1 = "inventory swap unit";
 
+			GrabImage* item1 = fInventory->AddGrabImage(RectF(Vec2(10, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item1", { 1,1 });
+			item1->SetVisible(false);
+			item1->extra1 = 4;
+			item1->extraS1 = "inventory swap unit";
+			GrabImage* item2 = fInventory->AddGrabImage(RectF(Vec2(70, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item2", { 1,1 });
+			item2->SetVisible(false);
+			item2->extra1 = 5;
+			item2->extraS1 = "inventory swap unit";
+			GrabImage* item3 = fInventory->AddGrabImage(RectF(Vec2(130, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item3", { 1,1 });
+			item3->SetVisible(false);
+			item3->extra1 = 6;
+			item3->extraS1 = "inventory swap unit";
+			GrabImage* item4 = fInventory->AddGrabImage(RectF(Vec2(190, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item4", { 1,1 });
+			item4->SetVisible(false);
+			item4->extra1 = 7;
+			item4->extraS1 = "inventory swap unit";
+
+			Frame* fInventoryBox = AddFrame("f_InventoryBox", RectF(Vec2(Graphics::ScreenWidth / 8 * 5, Graphics::ScreenHeight / 12), 190, 190), 1);
+			fInventoryBox->s = &resC->tC.windowsFrame[9].GetCurSurface();
+			fInventoryBox->SetVisible(false);
+
+			for (int i = 0; i < 9; i++)
+			{
+				GrabImage* image = fInventoryBox->AddGrabImage(RectF(Vec2(10 + (i%3) * 60, 10 + (i / 3) * 60), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item"+std::to_string(i), { 1,1 });
+				image->SetVisible(false);
+				image->extra1 = i;
+				image->extraS1 = "inventory swap box";
+			}
+
+			Frame* fInventoryStorage = AddFrame("f_InventoryStorage", RectF(Vec2(Graphics::ScreenWidth / 8 * 5, Graphics::ScreenHeight / 12), 310, 310), 1);
+			fInventoryStorage->s = &resC->tC.windowsFrame[10].GetCurSurface();
+			fInventoryStorage->SetVisible(false);
+
+			for (int i = 0; i < 25; i++)
+			{
+				GrabImage* image = fInventoryStorage->AddGrabImage(RectF(Vec2(10 + (i % 5) * 60, 10 + (i / 5) * 60), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
+				image->SetVisible(false);
+				image->extra1 = i;
+				image->extraS1 = "inventory swap storage";
+			}
 		}
 		else if(scene == 1)
 		{
@@ -1291,13 +1355,16 @@ public:
 		f_lumberjackHut->SetVisible(false);
 		Frame* f_Inventory = static_cast<Frame*>(comps["f_Inventory"].get());
 		f_Inventory->SetVisible(false);
+		Frame* f_InventoryBox = static_cast<Frame*>(comps["f_InventoryBox"].get());
+		f_InventoryBox->SetVisible(false);
+		Frame* f_InventoryStorage = static_cast<Frame*>(comps["f_InventoryStorage"].get());
+		f_InventoryStorage->SetVisible(false);
 
 		if (obst != nullptr)
 		{
-			if (Settings::anyOfUnit(obst->type))
+			if (Settings::anyOfCreature(obst->type))
 			{
 				f_unit->SetVisible(true);
-				f_Inventory->SetVisible(true);
 				std::string s1 = Settings::GetObstacleString(obst->type);
 
 				f_unit->SetText(s1, "t_unitNameIs");
@@ -1312,6 +1379,90 @@ public:
 				{
 					f_unit->SetText(Settings::lang_noInformation[Settings::lang], "t_teamIs");
 				}
+				f_Inventory->SetVisible(true);
+				
+				Inventory& inv = *obst->inv;
+				//### hand1
+				if (inv.GetItem(0)->get() != nullptr)
+				{
+					f_Inventory->GetComp("gI_Hand1")->SetVisible(true);
+					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Hand1"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(0)->get()->GetId()]);
+				}
+				else
+				{
+					f_Inventory->GetComp("gI_Hand1")->SetVisible(false);
+				}
+				//### bonus2
+				if (inv.GetItem(1)->get() != nullptr)
+				{
+					f_Inventory->GetComp("gI_Bonus2")->SetVisible(true);
+					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Bonus2"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(1)->get()->GetId()]);
+				}
+				else
+				{
+					f_Inventory->GetComp("gI_Bonus2")->SetVisible(false);
+				}
+				//### armor
+				if (inv.GetItem(2)->get() != nullptr)
+				{
+					f_Inventory->GetComp("gI_Armor")->SetVisible(true);
+					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Armor"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(2)->get()->GetId()]);
+				}
+				else
+				{
+					f_Inventory->GetComp("gI_Armor")->SetVisible(false);
+				}
+				//### bonus
+				if (inv.GetItem(3)->get() != nullptr)
+				{
+					f_Inventory->GetComp("gI_Bonus")->SetVisible(true);
+					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Bonus"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(3)->get()->GetId()]);
+				}
+				else
+				{
+					f_Inventory->GetComp("gI_Bonus")->SetVisible(false);
+				}
+				//### item1
+				if (inv.GetItem(4)->get() != nullptr)
+				{
+					f_Inventory->GetComp("gI_Item1")->SetVisible(true);
+					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item1"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(4)->get()->GetId()]);
+				}
+				else
+				{
+					f_Inventory->GetComp("gI_Item1")->SetVisible(false);
+				}
+				//### item2
+				if (inv.GetItem(5)->get() != nullptr)
+				{
+					f_Inventory->GetComp("gI_Item2")->SetVisible(true);
+					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item2"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(5)->get()->GetId()]);
+				}
+				else
+				{
+					f_Inventory->GetComp("gI_Item2")->SetVisible(false);
+				}
+				//### item3
+				if (inv.GetItem(6)->get() != nullptr)
+				{
+					f_Inventory->GetComp("gI_Item3")->SetVisible(true);
+					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item3"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(6)->get()->GetId()]);
+				}
+				else
+				{
+					f_Inventory->GetComp("gI_Item3")->SetVisible(false);
+				}
+				//### item4
+				if (inv.GetItem(7)->get() != nullptr)
+				{
+					f_Inventory->GetComp("gI_Item4")->SetVisible(true);
+					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item4"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(7)->get()->GetId()]);
+				}
+				else
+				{
+					f_Inventory->GetComp("gI_Item4")->SetVisible(false);
+				}
+				//###
 			}
 			if (obst->type == 3)
 			{
@@ -1340,6 +1491,42 @@ public:
 				else
 					static_cast<CheckBox*>(f_townhall->GetComp("cB_attack"))->Uncheck();
 			}
+			if (obst->type == 6)
+			{
+				f_InventoryBox->SetVisible(true);
+				Inventory& inv = *obst->inv;
+				for (int i = 0; i < 9; i++)
+				{
+					std::string key = "gI_item" + std::to_string(i);
+					if (inv.GetItem(i)->get() != nullptr)
+					{
+						f_InventoryBox->GetComp(key)->SetVisible(true);
+						static_cast<GrabImage*>(f_InventoryBox->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
+					}
+					else
+					{
+						f_InventoryBox->GetComp(key)->SetVisible(false);
+					}
+				}
+			}
+			if (obst->type == 50)
+			{
+				f_InventoryStorage->SetVisible(true);
+				Inventory& inv = *obst->inv;
+				for (int i = 0; i < 25; i++)
+				{
+					std::string key = "gI_item" + std::to_string(i);
+					if (inv.GetItem(i)->get() != nullptr)
+					{
+						f_InventoryStorage->GetComp(key)->SetVisible(true);
+						static_cast<GrabImage*>(f_InventoryStorage->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
+					}
+					else
+					{
+						f_InventoryStorage->GetComp(key)->SetVisible(false);
+					}
+				}
+			}
 			if (obst->type == 27)
 			{
 				f_lumberjackHut->SetVisible(true);
@@ -1355,6 +1542,68 @@ public:
 					f_lumberjackHut->SetText(Settings::lang_noInformation[Settings::lang], "t_teamIs");
 				}
 
+			}
+		}
+	}
+	int GetHitInventorySpace(Vec2 mP)
+	{
+		Frame* f_Inventory = static_cast<Frame*>(comps["f_Inventory"].get());
+		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Hand1"))->GetPos().Contains(mP))
+		{
+			return 0;
+		}
+		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Bonus2"))->GetPos().Contains(mP))
+		{
+			return 1;
+		}
+		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Armor"))->GetPos().Contains(mP))
+		{
+			return 2;
+		}
+		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Bonus"))->GetPos().Contains(mP))
+		{
+			return 3;
+		}
+		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item1"))->GetPos().Contains(mP))
+		{
+			return 4;
+		}
+		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item2"))->GetPos().Contains(mP))
+		{
+			return 5;
+		}
+		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item3"))->GetPos().Contains(mP))
+		{
+			return 6;
+		}
+		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item4"))->GetPos().Contains(mP))
+		{
+			return 7;
+		}
+		return -1;
+	}
+	int GetHitInventoryBox(Vec2 mP)//f_InventoryBox    f_InventoryStorage
+	{
+		Frame* f_InventoryBox = static_cast<Frame*>(comps["f_InventoryBox"].get());
+		for (int i = 0; i < 9; i++)
+		{
+			std::string key = "gI_item" + std::to_string(i);
+			if (static_cast<GrabImage*>(f_InventoryBox->GetComp(key))->GetPos().Contains(mP))
+			{
+				return f_InventoryBox->GetComp(key)->extra1;
+			}
+		}
+		return -1;
+	}
+	int GetHitInventoryStorage(Vec2 mP)//f_InventoryBox    f_InventoryStorage
+	{
+		Frame* f_InventoryStorage = static_cast<Frame*>(comps["f_InventoryStorage"].get());
+		for (int i = 0; i < 9; i++)
+		{
+			std::string key = "gI_item" + std::to_string(i);
+			if (static_cast<GrabImage*>(f_InventoryStorage->GetComp(key))->GetPos().Contains(mP))
+			{
+				return f_InventoryStorage->GetComp(key)->extra1;
 			}
 		}
 	}
