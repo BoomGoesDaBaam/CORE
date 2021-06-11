@@ -55,6 +55,7 @@ private:
 
 
 	Obstacle* focusedObst = nullptr;
+	Obstacle* storageObst = nullptr;
 
 	Vec2& c;								//Camera
 
@@ -233,6 +234,10 @@ public:
 	Obstacle* GetFocusedObstacle()
 	{
 		return focusedObst;
+	}
+	Obstacle* GetStorageObstacle()
+	{
+		return storageObst;
 	}
 };
 

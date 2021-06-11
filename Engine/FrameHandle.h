@@ -60,12 +60,18 @@ public:
 class Component
 {
 	bool visible = true;
+	int prio = 5;	//prio range [0-10] lower means first handled
 protected:
 	std::queue<FrameEvent>* buffer;
 	std::map<std::string, std::unique_ptr<Component>> comps;
+	void IncreasePrio()
+	{
+		if (GetPrio() < 10)
+			prio++;
+	}
 	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)
 	{
-		if (interact && GetPos().Contains((Vec2)e.GetPos()))
+		if (e.GetType() == Mouse::Event::LRelease && interact && GetPos().Contains((Vec2)e.GetPos()))
 		{
 			mouseHovers = true;
 			return true;
@@ -78,7 +84,7 @@ protected:
 		bool hitComp = false;
 		std::for_each(comps.begin(), comps.end(), [&](auto& comp)
 			{
-				hitComp = comp.second->IsVisible() && comp.second->HandleMouseInput(e, interact && !hitComp) || hitComp;
+				hitComp = e.GetType() == Mouse::Event::LRelease && comp.second->IsVisible() && comp.second->HandleMouseInput(e, interact && !hitComp) || hitComp;
 			});
 
 		if (hitComp && interact)
@@ -104,7 +110,6 @@ public:
 	std::vector<int> activInStates;
 	std::string text = "no title";
 	bool mouseHovers = false, hitable = false;
-
 	Component(RectF pos, Component* parentC, std::queue<FrameEvent>* buffer) :pos(pos), parentC(parentC),buffer(buffer){}
 	virtual void Draw(Graphics& gfx)
 	{
@@ -112,13 +117,14 @@ public:
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
+		IncreasePrio();
 		if (IsVisible())
 		{
-			if (HandleMouseInputComps(e, interact))
+			if (HandleMouseInputComps(e, interact) || HandleMouseInputFrame(e, interact))
 			{
+				SetPrio(1);
 				return true;
 			}
-			return HandleMouseInputFrame(e, interact);
 		}
 		return false;
 	}
@@ -133,6 +139,14 @@ public:
 	bool IsVisible()
 	{
 		return visible;
+	}
+	void SetPrio(int prio)
+	{
+		this->prio = prio;
+	}
+	int GetPrio()
+	{
+		return prio;
 	}
 };
 class Text: public Component
@@ -224,6 +238,7 @@ public:
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)override
 	{
+		IncreasePrio();
 		if (Component::HandleMouseInputFrame(e, interact) && e.GetType() == Mouse::Event::LRelease)
 		{
 			ticked = !ticked;
@@ -301,11 +316,11 @@ public:
 	{
 		if (IsVisible())
 		{
-			if (HandleMouseInputComps(e, interact))
+			if (HandleMouseInputComps(e, interact) || HandleMouseInputFrame(e, interact))
 			{
+				SetPrio(1);
 				return true;
 			}
-			return HandleMouseInputFrame(e, interact);
 		}
 		return false;
 	}
@@ -350,25 +365,31 @@ public:
 	GrabImage(RectF pos, Animation* a, Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates);
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)override
 	{
-		Vec2 mP = (Vec2)e.GetPos();
-		if (GetPos().Contains(mP) || gH.IsLocked())
-		{
-			delta += gH.MoveCamera(e);
-		}
-		if (e.GetType() == Mouse::Event::LRelease)
-		{
-			if(delta != Vec2(0,0))
-				buffer->push(FrameEvent(FrameEvent::ItemDragReleased, extraS1, extra1, this));
-			gH.Release();
-			delta = Vec2(0, 0);
-		}
+		IncreasePrio();
 		if (IsVisible())
 		{
-			if (HandleMouseInputComps(e, interact))
+			Vec2 mP = (Vec2)e.GetPos();
+			if (e.GetType() == Mouse::Event::LRelease && gH.IsLocked())
 			{
+				if (delta != Vec2(0, 0))
+					buffer->push(FrameEvent(FrameEvent::ItemDragReleased, extraS1, extra1, this));
+				gH.Release();
+				delta = Vec2(0, 0);
 				return true;
 			}
-			return HandleMouseInputFrame(e, interact);
+			if (GetPos().Contains(mP) || gH.IsLocked())
+			{
+				delta += gH.MoveCamera(e);
+				if (parentC != nullptr)
+				{
+					parentC->SetPrio(1);
+				}
+				else
+				{
+					SetPrio(1);
+				}
+				return true;
+			}
 		}
 		return false;
 	}
@@ -401,12 +422,15 @@ public:
 
 	virtual void DrawComps(Graphics& gfx)
 	{
-		std::for_each(comps.begin(), comps.end(), [&](auto& comp)		//auto = something like 'std::pair<std::string, std::unique_ptr<Component>>'
+		for (int prio = 10; prio >= 0; prio--)
 		{
-			if (comp.second->activInStates[curState] == 1 && comp.second->IsVisible()) {
-				comp.second->Draw(gfx);
-			}
-		});
+			std::for_each(comps.begin(), comps.end(), [&](auto& comp)		//auto = something like 'std::pair<std::string, std::unique_ptr<Component>>'
+				{
+					if (comp.second->GetPrio() == prio && comp.second->activInStates[curState] == 1 && comp.second->IsVisible()) {
+						comp.second->Draw(gfx);
+					}
+				});
+		}
 	}
 	virtual void Draw(Graphics& gfx)override {
 		if (IsVisible())
@@ -460,13 +484,14 @@ public:
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
+		IncreasePrio();
 		if (IsVisible())
 		{
-			if (HandleMouseInputComps(e, interact))
+			if (HandleMouseInputComps(e, interact) || HandleMouseInputFrame(e, interact))
 			{
+				SetPrio(1);
 				return true;
 			}
-			return HandleMouseInputFrame(e, interact);
 		}
 		return false;
 	}
@@ -516,15 +541,25 @@ public:
 	}
 	virtual bool HandleMouseInputComps(Mouse::Event& e, bool interact)
 	{
-		bool hitComp = false;
-		std::for_each(comps.begin(), comps.end(), [&](auto& comp)
-			{
-				hitComp = comp.second->hitable && comp.second->activInStates[curState] == 1 && comp.second->IsVisible() && comp.second->HandleMouseInput(e, interact && !hitComp) || hitComp;
-			});
-
-		if (hitComp && interact)
+		bool hitComp = interact;
+		for (int prio = 0; prio <= 10; prio++)
 		{
-			return true;
+			if (std::any_of(comps.begin(), comps.end(), [&](auto& comp)
+				{
+					if (comp.second->GetPrio() == prio && hitComp && comp.second->hitable && comp.second->activInStates[curState] == 1 && comp.second->IsVisible() && comp.second->HandleMouseInput(e, interact && hitComp))
+					{
+						comp.second->SetPrio(1);
+						hitComp = false;
+						return true;
+					}
+					return false;
+				}))
+			{
+				if (interact)
+				{
+					return true;
+				}
+			}
 		}
 		return false;
 	}
@@ -700,11 +735,11 @@ public:
 	{
 		if (IsVisible())
 		{
-			if (HandleMouseInputComps(e, interact))
+			if (HandleMouseInputComps(e, interact) || Frame::HandleMouseInputFrame(e, interact))
 			{
+				SetPrio(1);
 				return true;
 			}
-			return Frame::HandleMouseInputFrame(e, interact);
 		}
 		return false;
 	}
@@ -803,7 +838,11 @@ public:
 	{
 		if (IsVisible())
 		{
-			return HandleMouseInputFrame(e, interact);
+			if (HandleMouseInputFrame(e, interact))
+			{
+				SetPrio(1);
+				return true;
+			}
 		}
 		return false;
 	}
@@ -865,7 +904,7 @@ public:
 					i++;
 				}
 			}
-			if (hit)
+			if (hit || grabbed)
 			{
 				return true;
 			}
@@ -1199,6 +1238,10 @@ public:
 				image->extra1 = i;
 				image->extraS1 = "inventory swap storage";
 			}
+
+			//Frame* fInventorySrought = AddFrame("f_InventoryWrought", RectF(Vec2(Graphics::ScreenWidth / 8 * 5, Graphics::ScreenHeight / 12), 190, 190), 1);
+			//fInventoryBox->s = &resC->tC.windowsFrame[10].GetCurSurface();
+			//fInventoryBox->SetVisible(false);
 		}
 		else if(scene == 1)
 		{
@@ -1345,7 +1388,7 @@ public:
 
 		}
 	}
-	void UpdateFrames(Obstacle* obst)
+	void UpdateFrames(Obstacle* obst, Obstacle* storage)
 	{
 		Frame* f_unit = static_cast<Frame*>(comps["f_Unit"].get());
 		f_unit->SetVisible(false);
@@ -1359,6 +1402,8 @@ public:
 		f_InventoryBox->SetVisible(false);
 		Frame* f_InventoryStorage = static_cast<Frame*>(comps["f_InventoryStorage"].get());
 		f_InventoryStorage->SetVisible(false);
+		Frame* f_InventoryWrought = static_cast<Frame*>(comps["f_InventoryWrought"].get());
+		f_InventoryWrought->SetVisible(false);
 
 		if (obst != nullptr)
 		{
@@ -1491,42 +1536,6 @@ public:
 				else
 					static_cast<CheckBox*>(f_townhall->GetComp("cB_attack"))->Uncheck();
 			}
-			if (obst->type == 6)
-			{
-				f_InventoryBox->SetVisible(true);
-				Inventory& inv = *obst->inv;
-				for (int i = 0; i < 9; i++)
-				{
-					std::string key = "gI_item" + std::to_string(i);
-					if (inv.GetItem(i)->get() != nullptr)
-					{
-						f_InventoryBox->GetComp(key)->SetVisible(true);
-						static_cast<GrabImage*>(f_InventoryBox->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
-					}
-					else
-					{
-						f_InventoryBox->GetComp(key)->SetVisible(false);
-					}
-				}
-			}
-			if (obst->type == 50)
-			{
-				f_InventoryStorage->SetVisible(true);
-				Inventory& inv = *obst->inv;
-				for (int i = 0; i < 25; i++)
-				{
-					std::string key = "gI_item" + std::to_string(i);
-					if (inv.GetItem(i)->get() != nullptr)
-					{
-						f_InventoryStorage->GetComp(key)->SetVisible(true);
-						static_cast<GrabImage*>(f_InventoryStorage->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
-					}
-					else
-					{
-						f_InventoryStorage->GetComp(key)->SetVisible(false);
-					}
-				}
-			}
 			if (obst->type == 27)
 			{
 				f_lumberjackHut->SetVisible(true);
@@ -1544,53 +1553,118 @@ public:
 
 			}
 		}
+		if (storage != nullptr)
+		{
+			if (storage->type == 6)
+			{
+				f_InventoryBox->SetVisible(true);
+				Inventory& inv = *storage->inv;
+				for (int i = 0; i < 9; i++)
+				{
+					std::string key = "gI_item" + std::to_string(i);
+					if (inv.GetItem(i)->get() != nullptr)
+					{
+						f_InventoryBox->GetComp(key)->SetVisible(true);
+						static_cast<GrabImage*>(f_InventoryBox->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
+					}
+					else
+					{
+						f_InventoryBox->GetComp(key)->SetVisible(false);
+					}
+				}
+			}
+			if (storage->type == 50)
+			{
+				f_InventoryStorage->SetVisible(true);
+				Inventory& inv = *storage->inv;
+				for (int i = 0; i < 25; i++)
+				{
+					std::string key = "gI_item" + std::to_string(i);
+					if (inv.GetItem(i)->get() != nullptr)
+					{
+						f_InventoryStorage->GetComp(key)->SetVisible(true);
+						static_cast<GrabImage*>(f_InventoryStorage->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
+					}
+					else
+					{
+						f_InventoryStorage->GetComp(key)->SetVisible(false);
+					}
+				}
+			}
+			if (storage->type == 30)
+			{
+				//f_InventoryWrought->SetVisible(true);
+				/*
+				Inventory& inv = *storage->inv;
+				for (int i = 0; i < 25; i++)
+				{
+					std::string key = "gI_item" + std::to_string(i);
+					if (inv.GetItem(i)->get() != nullptr)
+					{
+						f_InventoryStorage->GetComp(key)->SetVisible(true);
+						static_cast<GrabImage*>(f_InventoryStorage->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
+					}
+					else
+					{
+						f_InventoryStorage->GetComp(key)->SetVisible(false);
+					}
+				}
+				*/
+			}
+		}
 	}
 	int GetHitInventorySpace(Vec2 mP)
 	{
 		Frame* f_Inventory = static_cast<Frame*>(comps["f_Inventory"].get());
-		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Hand1"))->GetPos().Contains(mP))
+		if (f_Inventory->IsVisible())
 		{
-			return 0;
-		}
-		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Bonus2"))->GetPos().Contains(mP))
-		{
-			return 1;
-		}
-		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Armor"))->GetPos().Contains(mP))
-		{
-			return 2;
-		}
-		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Bonus"))->GetPos().Contains(mP))
-		{
-			return 3;
-		}
-		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item1"))->GetPos().Contains(mP))
-		{
-			return 4;
-		}
-		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item2"))->GetPos().Contains(mP))
-		{
-			return 5;
-		}
-		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item3"))->GetPos().Contains(mP))
-		{
-			return 6;
-		}
-		if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item4"))->GetPos().Contains(mP))
-		{
-			return 7;
+			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Hand1"))->GetPos().Contains(mP))
+			{
+				return 0;
+			}
+			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Bonus2"))->GetPos().Contains(mP))
+			{
+				return 1;
+			}
+			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Armor"))->GetPos().Contains(mP))
+			{
+				return 2;
+			}
+			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Bonus"))->GetPos().Contains(mP))
+			{
+				return 3;
+			}
+			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item1"))->GetPos().Contains(mP))
+			{
+				return 4;
+			}
+			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item2"))->GetPos().Contains(mP))
+			{
+				return 5;
+			}
+			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item3"))->GetPos().Contains(mP))
+			{
+				return 6;
+			}
+			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item4"))->GetPos().Contains(mP))
+			{
+				return 7;
+			}
 		}
 		return -1;
 	}
 	int GetHitInventoryBox(Vec2 mP)//f_InventoryBox    f_InventoryStorage
 	{
 		Frame* f_InventoryBox = static_cast<Frame*>(comps["f_InventoryBox"].get());
-		for (int i = 0; i < 9; i++)
+		if (f_InventoryBox->IsVisible())
 		{
-			std::string key = "gI_item" + std::to_string(i);
-			if (static_cast<GrabImage*>(f_InventoryBox->GetComp(key))->GetPos().Contains(mP))
+			for (int i = 0; i < 9; i++)
 			{
-				return f_InventoryBox->GetComp(key)->extra1;
+				std::string key = "gI_item" + std::to_string(i);
+				if (static_cast<GrabImage*>(f_InventoryBox->GetComp(key))->GetPos().Contains(mP))
+				{
+					return f_InventoryBox->GetComp(key)->extra1;
+				}
 			}
 		}
 		return -1;
@@ -1598,14 +1672,18 @@ public:
 	int GetHitInventoryStorage(Vec2 mP)//f_InventoryBox    f_InventoryStorage
 	{
 		Frame* f_InventoryStorage = static_cast<Frame*>(comps["f_InventoryStorage"].get());
-		for (int i = 0; i < 9; i++)
+		if (f_InventoryStorage->IsVisible())
 		{
-			std::string key = "gI_item" + std::to_string(i);
-			if (static_cast<GrabImage*>(f_InventoryStorage->GetComp(key))->GetPos().Contains(mP))
+			for (int i = 0; i < 25; i++)
 			{
-				return f_InventoryStorage->GetComp(key)->extra1;
+				std::string key = "gI_item" + std::to_string(i);
+				if (static_cast<GrabImage*>(f_InventoryStorage->GetComp(key))->GetPos().Contains(mP))
+				{
+					return f_InventoryStorage->GetComp(key)->extra1;
+				}
 			}
 		}
+		return -1;
 	}
 	static constexpr float percentForGrab = 0.05;			
 };

@@ -187,7 +187,7 @@ void Game::HandleFrameChanges()
 		Obstacle* obstacle = curW->GetFocusedObstacle();
 		if (curW->UpdateFrameInfo())
 		{
-			igwH.UpdateFrames(curW->GetFocusedObstacle());
+			igwH.UpdateFrames(curW->GetFocusedObstacle(),curW->GetStorageObstacle());
 			curW->FramesUpdated();
 		}
 	}
@@ -220,7 +220,7 @@ void Game::HandleFrameLogic(FrameEvent& e)
 			curW->NextTurn();
 			if (curW->GetFocusedObstacle() != nullptr)
 			{
-				igwH.UpdateFrames(curW->GetFocusedObstacle());
+				igwH.UpdateFrames(curW->GetFocusedObstacle(),curW->GetStorageObstacle());
 			}
 		}
 		if (e.GetAction() == "load scene")
@@ -293,33 +293,64 @@ void Game::HandleFrameLogic(FrameEvent& e)
 	}
 	else if (e.GetType() == FrameEvent::ItemDragReleased)
 	{
-		Obstacle* obstacle = curW->GetFocusedObstacle();
-		if (obstacle != nullptr)
+		if (curW->GetFocusedObstacle() != nullptr || curW->GetStorageObstacle() != nullptr)
 		{
 			Vec2 mP = (Vec2)wnd.mouse.GetPos();
 			int hitSlot = 0; 
-
-			if(e.GetAction().find("unit") != std::string::npos)
+			Obstacle* giver = nullptr;
+			Obstacle* reciever = nullptr;
+			//
+			if (e.GetAction().find("unit") != std::string::npos)
+			{
 				hitSlot = igwH.GetHitInventorySpace(mP);
-			if (e.GetAction().find("box") != std::string::npos)
-				hitSlot = igwH.GetHitInventoryBox(mP);
-			if (e.GetAction().find("storage") != std::string::npos)
-				hitSlot = igwH.GetHitInventoryStorage(mP);
-
-
-			std::unique_ptr<Slot>* move = obstacle->inv->GetItem(e.GetExtra());
-			if (hitSlot != e.GetExtra() && obstacle->inv->ItemFitsForSlotFlat(move, hitSlot))
-			{
-				obstacle->inv->SetItem(std::move(*move), hitSlot);
-				igwH.UpdateFrames(obstacle);
+				giver = curW->GetFocusedObstacle();
 			}
-			else if (hitSlot != e.GetExtra() && obstacle->inv->WouldFitWhenEmptyFlat(move, hitSlot) && obstacle->inv->WouldFitWhenEmptyFlat(obstacle->inv->GetItem(hitSlot), e.GetExtra()))
+			if (e.GetAction().find("box") != std::string::npos)
 			{
-				std::unique_ptr<Slot> swap = std::move(*obstacle->inv->GetItem(hitSlot));
-				
-				obstacle->inv->SetItem(std::move(*move), hitSlot);
-				obstacle->inv->SetItem(std::move(swap), e.GetExtra());
-				igwH.UpdateFrames(obstacle);
+				hitSlot = igwH.GetHitInventoryBox(mP);
+				giver = curW->GetStorageObstacle();
+			}
+			if (e.GetAction().find("storage") != std::string::npos)
+			{
+					hitSlot = igwH.GetHitInventoryStorage(mP);
+					giver = curW->GetStorageObstacle();
+			}
+			//
+			
+			int releasedHitSlot;
+			if (igwH.GetHitInventorySpace(mP) != -1)
+			{
+				reciever = curW->GetFocusedObstacle();
+				releasedHitSlot = igwH.GetHitInventorySpace(mP);
+			}
+			if (igwH.GetHitInventoryBox(mP) != -1)
+			{
+				reciever = curW->GetStorageObstacle();
+				releasedHitSlot = igwH.GetHitInventoryBox(mP);
+			}
+			if (igwH.GetHitInventoryStorage(mP) != -1)
+			{
+				reciever = curW->GetStorageObstacle();
+				releasedHitSlot = igwH.GetHitInventoryStorage(mP);
+			}
+			
+			//
+			if (reciever != nullptr)
+			{
+				std::unique_ptr<Slot>* move = giver->inv->GetItem(e.GetExtra());
+				if (hitSlot != e.GetExtra() && reciever->inv->ItemFitsForSlotFlat(move, releasedHitSlot))
+				{
+					reciever->inv->SetItem(std::move(*move), releasedHitSlot);
+					igwH.UpdateFrames(curW->GetFocusedObstacle(), curW->GetStorageObstacle());
+				}
+				else if (hitSlot != e.GetExtra() && reciever->inv->WouldFitWhenEmptyFlat(move, releasedHitSlot) && giver->inv->WouldFitWhenEmptyFlat(reciever->inv->GetItem(releasedHitSlot), e.GetExtra()))
+				{
+					std::unique_ptr<Slot> swap = std::move(*reciever->inv->GetItem(releasedHitSlot));
+
+					reciever->inv->SetItem(std::move(*move), releasedHitSlot);
+					giver->inv->SetItem(std::move(swap), e.GetExtra());
+					igwH.UpdateFrames(curW->GetFocusedObstacle(), curW->GetStorageObstacle());
+				}
 			}
 		}
 	}

@@ -159,8 +159,8 @@ bool Frame::Hit(Vec2 mP)
 			return resC->tC.windowsFrame[1].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
 			break;
 		}
-		return false;
 	}
+	return false;
 }
 bool Frame::IsExtended() 
 { 
@@ -308,12 +308,15 @@ bool FrameHandle::HandleMouseInput(Mouse::Event& e)
 {
 	if (Settings::framesOn)
 	{
-		std::map<std::string, std::unique_ptr<Component>>::iterator i;
-		for (i = comps.begin(); i != comps.end(); i++)
+		for (int prio = 0; prio <= 10; prio++)
 		{
-			if (i->second->HandleMouseInput(e, true))
+			std::map<std::string, std::unique_ptr<Component>>::iterator i;
+			for (i = comps.begin(); i != comps.end(); i++)
 			{
-				return true;
+				if (i->second->GetPrio() == prio && i->second->HandleMouseInput(e, true))
+				{
+					return true;
+				}
 			}
 		}
 	}
@@ -324,10 +327,14 @@ void FrameHandle::Draw(Graphics& gfx)
 {
 	if (Settings::framesOn)
 	{
-		std::map<std::string, std::unique_ptr<Component>>::iterator i;
-		for (i = comps.begin(); i != comps.end(); i++)
+		for (int prio = 10; prio >= 0; prio--)
 		{
-			i->second->Draw(gfx);
+			std::map<std::string, std::unique_ptr<Component>>::iterator i;
+			for (i = comps.begin(); i != comps.end(); i++)
+			{
+				if(i->second->GetPrio() == prio)
+					i->second->Draw(gfx);
+			}
 		}
 	}
 }

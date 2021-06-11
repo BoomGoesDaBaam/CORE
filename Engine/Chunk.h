@@ -226,6 +226,12 @@ public:
 		if (type == 50)
 		{
 			inv = std::make_unique<Inventory>(2);
+			RandyRandom rr;
+			int nItem = rr.Calc(2) + 3;
+			for (int i = 0; i < nItem; i++)
+			{
+				inv->SetItem(std::make_unique<Slot>(rr.Calc(12)), i);
+			}
 		}
 		hp = Settings::obstacleStats[type].baseHp;
 		animations.push_back(Animation(this->resC->tC.obstacles[type]));
@@ -371,15 +377,18 @@ public:
 	float AttackObstacle(Obstacle* attacker, float dmg)
 	{
 		float dmgAdjusted = dmg;
-		if (inv->HasItemNotBroken(9))
+		if (attacker->inv != nullptr)
 		{
-			dmgAdjusted *= 0.5f;
-			inv->ItemUsed(9);
-		}
-		if (inv->HasItemNotBroken(2))
-		{
-			dmgAdjusted *= 0.75f;
-			inv->ItemUsed(2);
+			if (attacker->inv->HasItemNotBroken(9))
+			{
+				dmgAdjusted *= 0.5f;
+				attacker->inv->ItemUsed(9);
+			}
+			if (attacker->inv->HasItemNotBroken(2))
+			{
+				dmgAdjusted *= 0.75f;
+				attacker->inv->ItemUsed(2);
+			}
 		}
 		hp -= dmgAdjusted;
 		return dmgAdjusted;

@@ -125,6 +125,7 @@ namespace Settings
 	static const std::vector<int> anyOfPlantsVec = { 1,4,5,8};
 	static const std::vector<int> anyOfAnimalsVec = { 11,12,13,14,15,16,17,18,19,20 };
 	static const std::vector<int> anyUnitsVec = { 10 };
+	static const std::vector<int> anyStorageVec = { 6,50 };
 	//Graphic options
 	//static bool displayObstacles = true;
 	static int probToGrow = 50;
@@ -450,6 +451,10 @@ namespace Settings
 	{
 		return std::any_of(std::begin(anyOfAnimalsVec), std::end(anyOfAnimalsVec), [&](const int val) {return type == val; })
 			|| std::any_of(std::begin(anyUnitsVec), std::end(anyUnitsVec), [&](const int val) {return type == val; });
+	}
+	static bool anyOfStorage(int type)
+	{
+		return std::any_of(std::begin(anyStorageVec), std::end(anyStorageVec), [&](const int val) {return type == val; });
 	}
 	static bool anyOfChangeSizeWhenNear(int type)		//trees that have a diffrent look when unit is nearby
 	{

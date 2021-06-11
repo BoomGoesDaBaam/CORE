@@ -55,6 +55,10 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	windowsFrame.push_back(Animation(delay));					//	inventory storage
 	windowsFrame[10].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(649, 253), 310, 310)));
 
+	windowsFrame.push_back(Animation(delay));					//	inventory wrought
+	windowsFrame[11].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(649, 564), 190, 190)));
+
+
 	//Obstacles
 	obstacles.push_back(0.2f);//#0
 	for (int i = 0; i < 1; i++)

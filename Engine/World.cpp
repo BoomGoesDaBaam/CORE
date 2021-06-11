@@ -692,14 +692,9 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 				grit = false;
 			}
 		}
-		if (moveMode && focusedObst != nullptr && TileIsInRange(Chunk::CtPos2CctPos(oldCtPos), Chunk::CtPos2CctPos(fctPos), focusedObst->stepsLeft))
+		if (moveMode && focusedObst != nullptr && TileIsInRange(Chunk::CtPos2CctPos(fctPos), Chunk::CtPos2CctPos(focusedObst->GetCtPos()), focusedObst->stepsLeft))
 		{
-			//chunks(Vei2(0,0)).PlaceObstacle(Chunk::chunkPos2Flat(fcctPos),)
-			Vei2 d = AbstractTilePos(oldCctPos);
-			//chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fcctPos);
-			focusedObst = nullptr;
-			
-				if (chunks(oldCctPos.x).MoveObstacle(ObstacleMapAt(oldCctPos), fctPos))
+			if (chunks(focusedObst->chunkPos).MoveObstacle(ObstacleMapAt(focusedObst->GetCtPos()), fctPos))
 			{
 				for (int y = -1; y < 2; y++)
 				{
@@ -715,8 +710,23 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		}
 		if (ObstacleMapAt(fctPos) != -1)
 		{
-			focusedObst = GetObstacleAt(fctPos);
-			focusedObst->Update(0.1);
+			Obstacle* hitObstacle = GetObstacleAt(fctPos);
+			if (Settings::anyOfStorage(hitObstacle->type))
+			{
+				if (storageObst != nullptr && storageObst->type == hitObstacle->type)
+				{
+					storageObst = nullptr;
+				}
+				else
+				{
+					storageObst = hitObstacle;
+				}
+			}
+			else
+			{
+				focusedObst = GetObstacleAt(fctPos);
+				focusedObst->Update(0.1);
+			}
 			updateFrameInfo = true;
 		}
 		else
@@ -724,6 +734,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 			updateFrameInfo = true;
 			focusedObst = nullptr;
 			moveMode = false;
+			storageObst = nullptr;
 		}
 
 		CtPos obstacleMidPos = Chunk::PutCursorInMidOfObstacle(Chunk::CctPos2CtPos(fcctPosHover), placeObstacle, chunks.GetSize());
@@ -939,7 +950,7 @@ void World::Draw(Graphics& gfx) const
 	}
 	if (moveMode && Settings::obstaclesOn && focusedObst != nullptr)
 	{
-		Vei2 bottomLeft = Chunk::chunkPos2Flat(fctPos);
+		Vei2 bottomLeft = Chunk::chunkPos2Flat(focusedObst->GetCtPos());
 		CctPos curcctPos = Chunk::Flat2ChunkPos(bottomLeft, s.wSizeInTiles);
 		int moveRange = focusedObst->stepsLeft;
 		for (int y = -moveRange; y <= moveRange; y++)
