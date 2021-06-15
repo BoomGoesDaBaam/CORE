@@ -223,6 +223,16 @@ public:
 				inv->SetItem(std::make_unique<Slot>(rr.Calc(12)), i);
 			}
 		}
+		if (type == 30)
+		{
+			RandyRandom rr;
+			inv = std::make_unique<Inventory>(1);
+			int nItem = 1;
+			for (int i = 0; i < nItem; i++)
+			{
+				inv->SetItem(std::make_unique<Slot>(rr.Calc(12)), i);
+			}
+		}
 		if (type == 50)
 		{
 			inv = std::make_unique<Inventory>(2);
@@ -280,6 +290,18 @@ public:
 		else
 		{
 			gfx.DrawSurface((RectI)rect, animations[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), n90rot);
+		}
+		if (hp != Settings::obstacleStats[type].baseHp)
+		{
+			float percentage = (float)hp / Settings::obstacleStats[type].baseHp;
+			assert(percentage >= 0 && percentage <= 100);
+			float tileWidth = rect.GetWidth() / Settings::obstacleStats[type].size[0].x;
+			float startX = rect.left + ((Settings::obstacleStats[type].size[0].x / 2)-1) * tileWidth;
+			float startY = rect.top + (Settings::obstacleStats[type].size[0].y-0.5) * tileWidth;
+			gfx.DrawSurface(RectI(Vei2(startX, startY),tileWidth*3,tileWidth), resC->tC.frames[1].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.75f), 0);
+			//gfx.DrawSurface(RectI(Vei2(startX, startY), tileWidth * 3, tileWidth), resC->tC.frames[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
+			gfx.DrawSurface(RectI(Vei2(startX, startY), (tileWidth * 3) * percentage, tileWidth), RectI(Vei2(0, 0), (float)(30) * percentage, 10), resC->tC.frames[2].GetCurSurface(),SpriteEffect::Transparent(Colors::Magenta,0.75f));
+			//gfx.DrawSurface(RectI(Vei2(startX, startY), tileWidth * 3, tileWidth), resC->tC.frames[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
 		}
 	}
 	void UpdateRect(RectF tileRect, Vei2 tilePos, RectF chunkRect)

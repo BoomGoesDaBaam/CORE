@@ -20,6 +20,10 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	{
 		frames[0].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(i * 71, 51), 70, 70)));
 	}
+	frames.push_back(Animation(0.5f));
+	frames[1].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(810,1), 30, 10)));
+	frames.push_back(Animation(0.5f));
+	frames[2].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(810, 12), 30, 10)));
 	//	window - Frames
 	float delay = rng.GetNormalDist() * 3 + 1;
 	windowsFrame.push_back(Animation(delay));					//standart design

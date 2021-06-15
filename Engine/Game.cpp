@@ -315,6 +315,11 @@ void Game::HandleFrameLogic(FrameEvent& e)
 					hitSlot = igwH.GetHitInventoryStorage(mP);
 					giver = curW->GetStorageObstacle();
 			}
+			if (e.GetAction().find("wrought") != std::string::npos)
+			{
+				hitSlot = igwH.GetHitInventoryWrought(mP);
+				giver = curW->GetStorageObstacle();
+			}
 			//
 			
 			int releasedHitSlot;
@@ -333,7 +338,11 @@ void Game::HandleFrameLogic(FrameEvent& e)
 				reciever = curW->GetStorageObstacle();
 				releasedHitSlot = igwH.GetHitInventoryStorage(mP);
 			}
-			
+			if (igwH.GetHitInventoryWrought(mP) != -1)
+			{
+				reciever = curW->GetStorageObstacle();
+				releasedHitSlot = igwH.GetHitInventoryWrought(mP);
+			}
 			//
 			if (reciever != nullptr)
 			{

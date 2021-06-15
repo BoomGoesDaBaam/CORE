@@ -2,6 +2,7 @@
 #include "Rect.h"
 #include <map>
 #include <vector>
+#include "Settings.h"
 struct Materials
 {
 	std::map<std::string, float> values;
@@ -112,8 +113,9 @@ private:
 	Type type = Slot::Type::Empty;
 public:
 	Slot() { type = Slot::Type::Empty; }
-	Slot(int id, int durability = -1) :itemId(id), durability(durability)
+	Slot(int id) :itemId(id)
 	{
+		durability = Settings::itemStats[id].durability;
 		type = Empty;
 		if (id == 0)
 		{

@@ -65,7 +65,7 @@ private:
 
 	bool grit = false;						//show grit
 	bool buildMode = false;					//place something
-	int placeObstacle = 27;
+	int placeObstacle = 30;
 	int placeObstaclen90Rot = 0;
 	Matrix<int> placeCondMat = Matrix<int>(1, 1, -3);
 	bool posAllowed = true;

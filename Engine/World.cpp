@@ -190,9 +190,9 @@ void World::SpawnPlayer()
 	std::vector<Obstacle*> box = GenerateObstacleExplosion(spawnpoint,1, 5, 6, player, -1, 25);
 	for (int i = 0; i < genObsts.size(); i++)
 	{
-		genObsts[i]->inv->SetItem(std::make_unique<Slot>(0, 40),4);
-		genObsts[i]->inv->SetItem(std::make_unique<Slot>(4, 40),5);
-		genObsts[i]->inv->SetItem(std::make_unique<Slot>(12, 40),6);
+		genObsts[i]->inv->SetItem(std::make_unique<Slot>(0),4);
+		genObsts[i]->inv->SetItem(std::make_unique<Slot>(4),5);
+		genObsts[i]->inv->SetItem(std::make_unique<Slot>(12),6);
 	}
 	auto cctPos = Chunk::Flat2ChunkPos(spawnpoint, s.wSizeInTiles);
 	mChunk = cctPos.x;

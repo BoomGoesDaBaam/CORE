@@ -7,6 +7,14 @@ class ButtonFunctions;
 class PageFrame;
 class FrameHandle;
 class Component;
+class Text;
+class Frame;
+class PageFrame;
+class Button;
+class Image;
+class GrabImage;
+class CheckBox;
+class TextBox;
 
 class FrameEvent
 {
@@ -102,8 +110,10 @@ public:
 		}
 		return pos + parentC->GetPos().GetTopLeft<float>(); }
 	RectF pos;
+	int curState = 0;
 	int extra1 = 0;
 	int extra2 = 0;
+	int nStates = 1;
 	bool extraB1 = false;
 	std::string extraS1 = "";
 	Color c = Colors::Black;
@@ -114,6 +124,18 @@ public:
 	virtual void Draw(Graphics& gfx)
 	{
 		gfx.DrawFilledRect(GetPos(), c, SpriteEffect::Nothing());
+	}
+	virtual void DrawComps(Graphics& gfx)
+	{
+		for (int prio = 10; prio >= 0; prio--)
+		{
+			std::for_each(comps.begin(), comps.end(), [&](auto& comp)		//auto = something like 'std::pair<std::string, std::unique_ptr<Component>>'
+				{
+					if (comp.second->GetPrio() == prio && comp.second->activInStates[curState] == 1 && comp.second->IsVisible()) {
+						comp.second->Draw(gfx);
+					}
+				});
+		}
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
@@ -148,6 +170,15 @@ public:
 	{
 		return prio;
 	}
+	std::vector<int> FillWith1WhenSize0(std::vector<int> activInStates, int nStages);
+
+	Text* AddText(std::string text, RectF pos, int size, Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0);
+	TextBox* AddTextBox(std::string text, RectF pos, int size, Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0);
+	Button* AddButton(RectF pos, Animation* a, Animation* aHover, std::string key, Font* f, std::vector<int> activInStates = {});
+	CheckBox* AddCheckBox(RectF pos, std::queue<FrameEvent>* buffer, sharedResC resC, std::string key, std::vector<int> activInStates = {});
+	Image* AddImage(RectF pos, Animation* a, Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {});
+	GrabImage* AddGrabImage(RectF pos, Animation* a, Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {});
+	Frame* AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {});
 };
 class Text: public Component
 {
@@ -329,18 +360,51 @@ class Image : public Component
 {
 	Animation* a;
 	Animation* aHover;
+	Vec2 drawPercent = Vec2(1.f, 1.f);
+	float alpha = 1.f;
 public:
 	Image(RectF pos, Animation* a, Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates);
 	void Draw(Graphics& gfx) override
 	{
+		const Surface* draw = nullptr;
 		if (mouseHovers && aHover != nullptr)
 		{
-			gfx.DrawSurface((RectI)GetPos(), aHover->GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+			draw = &aHover->GetCurSurface();
 		}
 		else if(a != nullptr)
 		{
-			gfx.DrawSurface((RectI)GetPos(), a->GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+			draw = &a->GetCurSurface();
 		}
+		if (draw != nullptr)
+		{
+			assert(alpha >= 0f && alpha <= 1.f);
+			if (drawPercent == Vec2(1.f, 1.f))
+			{
+				if (alpha == 1.f)
+				{
+					gfx.DrawSurface((RectI)GetPos(), *draw, SpriteEffect::Chroma(Colors::Magenta));
+				}
+				else
+				{
+					gfx.DrawSurface((RectI)GetPos(), *draw, SpriteEffect::Transparent(Colors::Magenta,alpha));
+				}
+			}
+			else
+			{
+				RectF pos = GetPos();
+				Vec2 surfaceSize = (Vec2)aHover->GetCurSurface().GetSize();
+				RectF sourceR = RectF(Vec2(0, 0), surfaceSize.x * drawPercent.x, surfaceSize.y * drawPercent.y);
+				if (alpha == 1.f)
+				{
+					gfx.DrawSurface(RectI(Vei2(pos.left, pos.top), pos.GetWidth() * drawPercent.x, pos.GetHeight() * drawPercent.y), (RectI)sourceR, *draw, SpriteEffect::Chroma(Colors::Magenta));
+				}
+				else
+				{
+					gfx.DrawSurface(RectI(Vei2(pos.left, pos.top), pos.GetWidth() * drawPercent.x, pos.GetHeight() * drawPercent.y), (RectI)sourceR, *draw, SpriteEffect::Transparent(Colors::Magenta, 0.5f));
+				}
+			}
+		}
+		DrawComps(gfx);
 	}
 	void SetAnimation(Animation* a)
 	{
@@ -355,6 +419,14 @@ public:
 	void SetHoverAnimation(Animation* a)
 	{
 		this->a = a;
+	}
+	void SetDrawPercent(Vec2 drawPercent)
+	{
+		this->drawPercent = drawPercent;
+	}
+	void SetAlpha(float alpha)
+	{
+		this->alpha = alpha;
 	}
 };
 class GrabImage : public Image
@@ -409,7 +481,7 @@ protected:
 	bool moveable = true;
 	Vec2 lastMouseP = Vec2(0, 0);
 	Vec2 posOfLastPress = Vec2(-1, -1);
-	int type = 0, curState = 0, nStates = 1;
+	int type = 0;
 public:
 	const Surface* s = nullptr;
 	Frame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer);
@@ -420,18 +492,6 @@ public:
 		this->moveable = moveable;
 	}
 
-	virtual void DrawComps(Graphics& gfx)
-	{
-		for (int prio = 10; prio >= 0; prio--)
-		{
-			std::for_each(comps.begin(), comps.end(), [&](auto& comp)		//auto = something like 'std::pair<std::string, std::unique_ptr<Component>>'
-				{
-					if (comp.second->GetPrio() == prio && comp.second->activInStates[curState] == 1 && comp.second->IsVisible()) {
-						comp.second->Draw(gfx);
-					}
-				});
-		}
-	}
 	virtual void Draw(Graphics& gfx)override {
 		if (IsVisible())
 		{
@@ -588,60 +648,6 @@ public:
 	int GetCurState() { return curState; }
 	int GetExtendedHeight();
 	bool IsExtended();
-	std::vector<int> FillWith1WhenSize0(std::vector<int> activInStates, int nStages);
-
-	virtual Text* AddText(std::string text, RectF pos, int size, Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0) 
-	{
-		activInStates = FillWith1WhenSize0(activInStates, nStates);
-		//assert(activInStates.size() == nStates);
-		comps[key] = std::make_unique<Text>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
-		return static_cast<Text*>(comps[key].get());
-	}
-	virtual TextBox* AddTextBox(std::string text, RectF pos, int size, Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0)
-	{
-		activInStates = FillWith1WhenSize0(activInStates, nStates);
-		//assert(activInStates.size() == nStates);
-		comps[key] = std::make_unique<TextBox>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
-		return static_cast<TextBox*>(comps[key].get());
-	}
-	virtual Button* AddButton(RectF pos, Animation* a, Animation* aHover, std::string key, Font* f, std::vector<int> activInStates = {})
-	{
-		activInStates = FillWith1WhenSize0(activInStates, nStates);
-		//assert(activInStates.size() == nStates);
-		comps[key] = std::make_unique<Button>(pos, a, aHover, activInStates,f, this, buffer);
-		return static_cast<Button*>(comps[key].get());
-	}
-	virtual CheckBox* AddCheckBox(RectF pos, std::queue<FrameEvent>* buffer, sharedResC resC, std::string key, std::vector<int> activInStates = {})
-	{
-		activInStates = FillWith1WhenSize0(activInStates, nStates);
-		//assert(activInStates.size() == nStates);
-		comps[key] = std::make_unique<CheckBox>(pos, this, buffer, resC, activInStates);
-		return static_cast<CheckBox*>(comps[key].get());
-	}
-	virtual Image* AddImage(RectF pos, Animation* a, Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {})
-	{
-		//RectF pos, Animation* a, Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates
-		activInStates = FillWith1WhenSize0(activInStates, nStates);
-		//assert(activInStates.size() == nStates);
-		comps[key] = std::make_unique<Image>(pos, a, aHover, this, buffer, activInStates);
-		return static_cast<Image*>(comps[key].get());
-	}
-	virtual GrabImage* AddGrabImage(RectF pos, Animation* a, Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {})
-	{
-		//(RectF pos, Animation * a, Animation * aHover, Component * parentC, std::queue<FrameEvent>*buffer, std::vector<int> activInStates);
-		activInStates = FillWith1WhenSize0(activInStates, nStates);
-		//assert(activInStates.size() == nStates);
-		comps[key] = std::make_unique<GrabImage>(pos, a, aHover, this, buffer, activInStates);
-		return static_cast<GrabImage*>(comps[key].get());
-	}
-	virtual Frame* AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {})
-	{
-		activInStates = FillWith1WhenSize0(activInStates, nStates);
-		//assert(activInStates.size() == nStates);
-		comps[key] = std::make_unique<Frame>(pos, type,resC,this, buffer);
-		comps[key]->activInStates = activInStates;
-		return static_cast<Frame*>(comps[key].get());
-	}
 	/*
 	virtual Composition* AddComposition(RectF pos, sharedResC resC, std::string key, std::vector<int> activInStates = {}, int type = 0)
 	{
@@ -676,32 +682,32 @@ public:
 		static_assert (fail<T>::value, "Do not use!");
 	}
 	template<typename T = bool>
-	void AddButton(RectF pos, Animation* a, Animation* aHover, std::vector<int> activInStates = {})
+	void AddButtonPF(RectF pos, Animation* a, Animation* aHover, std::vector<int> activInStates = {})
 	{
 		static_assert (fail<T>::value, "Do not use!");
 	}
 
-	Text* AddText(std::string text, RectF pos, int size, Font* f, Color c, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {}, int textLoc = 0)
+	Text* AddTextPF(std::string text, RectF pos, int size, Font* f, Color c, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {}, int textLoc = 0)
 	{
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
 		compActivOnPages[key] = activOnPages;
-		return Frame::AddText(text, pos, size, f, c, key, activInStates, textLoc);
+		return Component::AddText(text, pos, size, f, c, key, activInStates, textLoc);
 	}
-	Button* AddButton(RectF pos, Animation* a, Animation* aHover, std::string key, Font* f, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
+	Button* AddButtonPF(RectF pos, Animation* a, Animation* aHover, std::string key, Font* f, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
 	{
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
 		compActivOnPages[key] = activOnPages;
-		return Frame::AddButton(pos, a, aHover, key, f, activInStates);
+		return Component::AddButton(pos, a, aHover, key, f, activInStates);
 	}
 	
-	Frame* AddFrame(RectF pos, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
+	Frame* AddFramePF(RectF pos, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
 	{
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
 		compActivOnPages[key] = activOnPages;
-		return Frame::AddFrame(pos,type,resC,this,buffer, key, activInStates);
+		return Component::AddFrame(pos,type,resC,this,buffer, key, activInStates);
 	}
 	/*
 	Composition* AddComposition(RectF pos, sharedResC resC, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
@@ -985,86 +991,86 @@ public:
 			// #2
 			// #3
 			// Page 1
-			p3->AddText(Settings::lang_constructionMaterials[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "h_f3");
+			p3->AddTextPF(Settings::lang_constructionMaterials[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "h_f3");
 
-			p3->AddText(Settings::lang_resources[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "sh_resourcen", { 0,1 }, { 1, 0, 0 });
-			p3->AddText(Settings::lang_materials[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "sh_materials", { 0,1 }, { 0, 1, 0 });
-			p3->AddText(Settings::lang_organic[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "sh_organic", { 0,1 }, { 0, 0, 1 });
+			p3->AddTextPF(Settings::lang_resources[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "sh_resourcen", { 0,1 }, { 1, 0, 0 });
+			p3->AddTextPF(Settings::lang_materials[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "sh_materials", { 0,1 }, { 0, 1, 0 });
+			p3->AddTextPF(Settings::lang_organic[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "sh_organic", { 0,1 }, { 0, 0, 1 });
 
-			p3->AddText(Settings::lang_wood[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_wood", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText(Settings::lang_iron[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_iron", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText(Settings::lang_sand[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_sand", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText(Settings::lang_stone[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_stone", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText(Settings::lang_copper[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_copper", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText(Settings::lang_gold[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_gold", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText(Settings::lang_aluminum[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_aluminum", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText(Settings::lang_emerald[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_emerald", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText(Settings::lang_sapphire[Settings::lang] + ":", RectF(Vec2(5, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_sapphire", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText(Settings::lang_robin[Settings::lang] + ":", RectF(Vec2(5, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_robin", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText(Settings::lang_diamond[Settings::lang] + ":", RectF(Vec2(5, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_dimond", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText(Settings::lang_amber[Settings::lang] + ":", RectF(Vec2(5, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_amber", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF(Settings::lang_wood[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_wood", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF(Settings::lang_iron[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_iron", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF(Settings::lang_sand[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_sand", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF(Settings::lang_stone[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_stone", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF(Settings::lang_copper[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_copper", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF(Settings::lang_gold[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_gold", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF(Settings::lang_aluminum[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_aluminum", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF(Settings::lang_emerald[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_emerald", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF(Settings::lang_sapphire[Settings::lang] + ":", RectF(Vec2(5, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_sapphire", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF(Settings::lang_robin[Settings::lang] + ":", RectF(Vec2(5, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_robin", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF(Settings::lang_diamond[Settings::lang] + ":", RectF(Vec2(5, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_dimond", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF(Settings::lang_amber[Settings::lang] + ":", RectF(Vec2(5, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_amber", { 0,1 }, { 1, 0, 0 }, 1);
 
-			p3->AddText(Settings::lang_kilogram[Settings::lang], RectF(Vec2(100, 40), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_kilogram", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nWood", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nIron", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSand", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nStone", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCopper", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText("24", RectF(Vec2(100, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nGold", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText("3", RectF(Vec2(100, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nAluminum", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText("4", RectF(Vec2(100, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nEmerald", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSapphire", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText("4", RectF(Vec2(100, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nRobin", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText("24", RectF(Vec2(100, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nDimond", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddText("24", RectF(Vec2(100, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nAmber", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF(Settings::lang_kilogram[Settings::lang], RectF(Vec2(100, 40), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_kilogram", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nWood", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nIron", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSand", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nStone", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCopper", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF("24", RectF(Vec2(100, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nGold", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF("3", RectF(Vec2(100, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nAluminum", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF("4", RectF(Vec2(100, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nEmerald", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSapphire", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF("4", RectF(Vec2(100, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nRobin", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF("24", RectF(Vec2(100, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nDimond", { 0,1 }, { 1, 0, 0 }, 1);
+			p3->AddTextPF("24", RectF(Vec2(100, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nAmber", { 0,1 }, { 1, 0, 0 }, 1);
 
 			//Page 2
-			p3->AddText(Settings::lang_steel[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_steel", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText(Settings::lang_plastic[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_plastic", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText(Settings::lang_concrete[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_concrete", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText(Settings::lang_glass[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_glass", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText(Settings::lang_ceramics[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_ceramics", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText(Settings::lang_snow[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_snow", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText(Settings::lang_bricks[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_bricks", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText(Settings::lang_slate[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_slate", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF(Settings::lang_steel[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_steel", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF(Settings::lang_plastic[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_plastic", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF(Settings::lang_concrete[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_concrete", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF(Settings::lang_glass[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_glass", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF(Settings::lang_ceramics[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_ceramics", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF(Settings::lang_snow[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_snow", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF(Settings::lang_bricks[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_bricks", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF(Settings::lang_slate[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_slate", { 0,1 }, { 0, 1, 0 }, 1);
 
-			p3->AddText("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSteel", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nPlastic", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nConcrete", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nGlass", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCeramics", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSnow", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nBricks", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSlate", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSteel", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nPlastic", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nConcrete", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nGlass", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCeramics", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSnow", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nBricks", { 0,1 }, { 0, 1, 0 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSlate", { 0,1 }, { 0, 1, 0 }, 1);
 
 			//Page 3
-			p3->AddText(Settings::lang_corals[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_corals", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText(Settings::lang_sticks[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_sticks", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText(Settings::lang_leaves[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_leaves", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText(Settings::lang_wool[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_wool", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText(Settings::lang_leather[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_leather", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText(Settings::lang_fur[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_fur", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText(Settings::lang_meat[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_meat", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText(Settings::lang_fish[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_fish", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText(Settings::lang_berrys[Settings::lang] + ":", RectF(Vec2(5, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_berrys", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText(Settings::lang_apples[Settings::lang] + ":", RectF(Vec2(5, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_apples", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText(Settings::lang_cactus[Settings::lang] + ":", RectF(Vec2(5, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_cactus", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText(Settings::lang_units[Settings::lang] + ":", RectF(Vec2(5, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_units", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText(Settings::lang_maxUnits[Settings::lang] + ":", RectF(Vec2(5, 170), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_maxUnits", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF(Settings::lang_corals[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_corals", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF(Settings::lang_sticks[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_sticks", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF(Settings::lang_leaves[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_leaves", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF(Settings::lang_wool[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_wool", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF(Settings::lang_leather[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_leather", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF(Settings::lang_fur[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_fur", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF(Settings::lang_meat[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_meat", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF(Settings::lang_fish[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_fish", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF(Settings::lang_berrys[Settings::lang] + ":", RectF(Vec2(5, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_berrys", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF(Settings::lang_apples[Settings::lang] + ":", RectF(Vec2(5, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_apples", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF(Settings::lang_cactus[Settings::lang] + ":", RectF(Vec2(5, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_cactus", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF(Settings::lang_units[Settings::lang] + ":", RectF(Vec2(5, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_units", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF(Settings::lang_maxUnits[Settings::lang] + ":", RectF(Vec2(5, 170), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_maxUnits", { 0,1 }, { 0, 0, 1 }, 1);
 
-			p3->AddText("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCorals", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSticks", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nLeaves", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nWool", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nLeather", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText("24", RectF(Vec2(100, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nFur", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText("3", RectF(Vec2(100, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nMeat", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText("4", RectF(Vec2(100, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nFish", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText("2", RectF(Vec2(100, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nBerrys", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText("4", RectF(Vec2(100, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nApples", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText("24", RectF(Vec2(100, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCactus", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText("24", RectF(Vec2(100, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nUnits", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddText("24", RectF(Vec2(100, 170), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nMaxUnits", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCorals", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nSticks", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nLeaves", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nWool", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nLeather", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF("24", RectF(Vec2(100, 100), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nFur", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF("3", RectF(Vec2(100, 110), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nMeat", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF("4", RectF(Vec2(100, 120), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nFish", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF("2", RectF(Vec2(100, 130), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nBerrys", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF("4", RectF(Vec2(100, 140), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nApples", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF("24", RectF(Vec2(100, 150), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nCactus", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF("24", RectF(Vec2(100, 160), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nUnits", { 0,1 }, { 0, 0, 1 }, 1);
+			p3->AddTextPF("24", RectF(Vec2(100, 170), 50, 10), 7, &resC->tC.fonts[0], Colors::Black, "t_nMaxUnits", { 0,1 }, { 0, 0, 1 }, 1);
 			
 
 			Frame* fUnity = AddFrame("f_Unit", RectF(Vec2(100, 150), 140, 280), 0);																			//Unit Frame
@@ -1181,40 +1187,40 @@ public:
 			fInventory->s = &resC->tC.windowsFrame[8].GetCurSurface();
 			fInventory->SetVisible(false);
 
-			GrabImage* hand1 = fInventory->AddGrabImage(RectF(Vec2(70, 10), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer,"gI_Hand1", { 1,1 });
-			hand1->SetVisible(false);
+			GrabImage* hand1 = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 10), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer,"gI_item0", { 1,1 });
 			hand1->extra1 = 0;
 			hand1->extraS1 = "inventory swap unit";
-			GrabImage* hand2 = fInventory->AddGrabImage(RectF(Vec2(130, 10), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Bonus2", { 1,1 });
+
+			GrabImage* hand2 = fInventory->AddGrabImage(RectF(Vec2(130, 10), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item1", { 1,1 });
 			hand2->SetVisible(false);
 			hand2->extra1 = 1;
 			hand2->extraS1 = "inventory swap unit";
-			GrabImage* armor = fInventory->AddGrabImage(RectF(Vec2(70, 70), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Armor", { 1,1 });
+			GrabImage* armor = fInventory->AddGrabImage(RectF(Vec2(70, 70), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item2", { 1,1 });
 			armor->SetVisible(false);
 			armor->extra1 = 2;
 			armor->extraS1 = "inventory swap unit";
-			GrabImage* bonus = fInventory->AddGrabImage(RectF(Vec2(130, 70), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Bonus", { 1,1 });
+			GrabImage* bonus = fInventory->AddGrabImage(RectF(Vec2(130, 70), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item3", { 1,1 });
 			bonus->SetVisible(false);
 			bonus->extra1 = 3;
 			bonus->extraS1 = "inventory swap unit";
 
-			GrabImage* item1 = fInventory->AddGrabImage(RectF(Vec2(10, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item1", { 1,1 });
+			GrabImage* item1 = fInventory->AddGrabImage(RectF(Vec2(10, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item4", { 1,1 });
 			item1->SetVisible(false);
 			item1->extra1 = 4;
 			item1->extraS1 = "inventory swap unit";
-			GrabImage* item2 = fInventory->AddGrabImage(RectF(Vec2(70, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item2", { 1,1 });
+			GrabImage* item2 = fInventory->AddGrabImage(RectF(Vec2(70, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item5", { 1,1 });
 			item2->SetVisible(false);
 			item2->extra1 = 5;
 			item2->extraS1 = "inventory swap unit";
-			GrabImage* item3 = fInventory->AddGrabImage(RectF(Vec2(130, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item3", { 1,1 });
+			GrabImage* item3 = fInventory->AddGrabImage(RectF(Vec2(130, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item6", { 1,1 });
 			item3->SetVisible(false);
 			item3->extra1 = 6;
 			item3->extraS1 = "inventory swap unit";
-			GrabImage* item4 = fInventory->AddGrabImage(RectF(Vec2(190, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_Item4", { 1,1 });
+			GrabImage* item4 = fInventory->AddGrabImage(RectF(Vec2(190, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item7", { 1,1 });
 			item4->SetVisible(false);
 			item4->extra1 = 7;
 			item4->extraS1 = "inventory swap unit";
-
+			
 			Frame* fInventoryBox = AddFrame("f_InventoryBox", RectF(Vec2(Graphics::ScreenWidth / 8 * 5, Graphics::ScreenHeight / 12), 190, 190), 1);
 			fInventoryBox->s = &resC->tC.windowsFrame[9].GetCurSurface();
 			fInventoryBox->SetVisible(false);
@@ -1239,9 +1245,22 @@ public:
 				image->extraS1 = "inventory swap storage";
 			}
 
-			//Frame* fInventorySrought = AddFrame("f_InventoryWrought", RectF(Vec2(Graphics::ScreenWidth / 8 * 5, Graphics::ScreenHeight / 12), 190, 190), 1);
-			//fInventoryBox->s = &resC->tC.windowsFrame[10].GetCurSurface();
-			//fInventoryBox->SetVisible(false);
+			Frame* fInventoryWrought = AddFrame("f_InventoryWrought", RectF(Vec2(Graphics::ScreenWidth / 8 * 5, Graphics::ScreenHeight / 12), 190, 190), 1);
+			fInventoryWrought->s = &resC->tC.windowsFrame[11].GetCurSurface();
+			fInventoryWrought->SetVisible(false);
+
+			text = fInventoryWrought->AddText(Settings::lang_craftedItem[Settings::lang] + ":", RectF(Vec2(10, 15), 50, 8), 14, &resC->tC.fonts[0], Colors::Black, "t_craft", { 1,1 }, 1);
+			text->SetVisible(true);
+			text = fInventoryWrought->AddText(Settings::lang_reparation[Settings::lang] + ":", RectF(Vec2(10, 110), 50, 8), 14, &resC->tC.fonts[0], Colors::Black, "t_rep", { 1,1 }, 1);
+			text->SetVisible(true);
+
+			for (int i = 0; i < 6; i++)
+			{
+				GrabImage* image = fInventoryWrought->AddGrabImage(RectF(Vec2(10 + (i % 3) * 60, 40 + (i / 3) * 90), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
+				image->SetVisible(false);
+				image->extra1 = i;
+				image->extraS1 = "inventory swap wrought";
+			}
 		}
 		else if(scene == 1)
 		{
@@ -1252,9 +1271,9 @@ public:
 			fBuildSelection->SetMoveable(false);
 			fBuildSelection->GetComp("b_left")->pos = RectF(Vec2(25, 25), 100, 25);
 			fBuildSelection->GetComp("b_right")->pos = RectF(Vec2(Graphics::ScreenWidth - 125, 25), 100, 25);
-			fBuildSelection->AddText(Settings::lang_housing[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->tC.fonts[0], Colors::Black, "HousingH", { 1 }, { 1,0,0,0 });
+			fBuildSelection->AddTextPF(Settings::lang_housing[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->tC.fonts[0], Colors::Black, "HousingH", { 1 }, { 1,0,0,0 });
 
-			Button* b_back = fBuildSelection->AddButton(RectF(Vec2(30, 60), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_buildback", &resC->tC.fonts[0], { 1 }, { 1,1,1,1 });
+			Button* b_back = fBuildSelection->AddButtonPF(RectF(Vec2(30, 60), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_buildback", &resC->tC.fonts[0], { 1 }, { 1,1,1,1 });
 			b_back->bFunc = BOpenGamefield;
 			b_back->text = Settings::lang_back[Settings::lang];
 
@@ -1269,7 +1288,7 @@ public:
 
 			CreateBuildOption(RectF(Vec2(250, 190), 180, 60), 26, fBuildSelection, { 1,0,0,0 }, world);
 
-			fBuildSelection->AddText(Settings::lang_productions[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->tC.fonts[0], Colors::Black, "roductionH", { 1 }, { 0,1,0,0 });
+			fBuildSelection->AddTextPF(Settings::lang_productions[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->tC.fonts[0], Colors::Black, "roductionH", { 1 }, { 0,1,0,0 });
 
 			CreateBuildOption(RectF(Vec2(60, 120), 180, 60), 27, fBuildSelection, { 0,1,0,0 }, world);
 			CreateBuildOption(RectF(Vec2(60, 190), 180, 60), 28, fBuildSelection, { 0,1,0,0 }, world);
@@ -1299,7 +1318,7 @@ public:
 	Frame* CreateBuildOption(RectF pos, int obstacleType, PageFrame* parentC, std::vector<int> activOnPages, World* world)
 	{
 		std::string key = Settings::GetObstacleString(obstacleType);
-		Frame* frame = parentC->AddFrame(pos, key, { 1 }, activOnPages);
+		Frame* frame = parentC->AddFramePF(pos, key, { 1 }, activOnPages);
 		frame->s = &resC->tC.windowsFrame[7].GetCurSurface();
 		frame->extra1 = obstacleType;
 		frame->bFunc = BBuildMode;
@@ -1322,7 +1341,15 @@ public:
 		//Frame* frame = AddFrame(key, pos, 0);
 		return nullptr;// static_cast<Frame*>(comps[key].get());
 	}
+	GrabImage* CreateGIWithHpBar(Component* parentC, RectF pos, Animation* a, Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
+	{
+		GrabImage* gi = parentC->AddGrabImage(pos,a,aHover,buffer,key,activInStates);
+		gi->SetVisible(false);
 
+		Image* image = gi->AddImage(RectF(Vec2(0, pos.GetHeight() / 5 * 4), pos.GetWidth(), pos.GetHeight() / 5), &resC->tC.frames[1], &resC->tC.frames[1], buffer, key+"Hp");
+		image = gi->AddImage(RectF(Vec2(0, pos.GetHeight() / 5 * 4), pos.GetWidth(), pos.GetHeight() / 5), &resC->tC.frames[2], &resC->tC.frames[2], buffer, key + "HpIs");
+		image->SetDrawPercent(Vec2(0.5f, 1));
+	}
 	// ### Update components of existing Frames ###
 
 	// ###### Update existing Frames ######
@@ -1427,87 +1454,20 @@ public:
 				f_Inventory->SetVisible(true);
 				
 				Inventory& inv = *obst->inv;
-				//### hand1
-				if (inv.GetItem(0)->get() != nullptr)
+
+				for (int i = 0; i < 8; i++)
 				{
-					f_Inventory->GetComp("gI_Hand1")->SetVisible(true);
-					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Hand1"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(0)->get()->GetId()]);
+					std::string key = "gI_item" + std::to_string(i);
+					if (inv.GetItem(i)->get() != nullptr)
+					{
+						f_Inventory->GetComp(key)->SetVisible(true);
+						static_cast<GrabImage*>(f_Inventory->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
+					}
+					else
+					{
+						f_Inventory->GetComp(key)->SetVisible(false);
+					}
 				}
-				else
-				{
-					f_Inventory->GetComp("gI_Hand1")->SetVisible(false);
-				}
-				//### bonus2
-				if (inv.GetItem(1)->get() != nullptr)
-				{
-					f_Inventory->GetComp("gI_Bonus2")->SetVisible(true);
-					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Bonus2"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(1)->get()->GetId()]);
-				}
-				else
-				{
-					f_Inventory->GetComp("gI_Bonus2")->SetVisible(false);
-				}
-				//### armor
-				if (inv.GetItem(2)->get() != nullptr)
-				{
-					f_Inventory->GetComp("gI_Armor")->SetVisible(true);
-					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Armor"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(2)->get()->GetId()]);
-				}
-				else
-				{
-					f_Inventory->GetComp("gI_Armor")->SetVisible(false);
-				}
-				//### bonus
-				if (inv.GetItem(3)->get() != nullptr)
-				{
-					f_Inventory->GetComp("gI_Bonus")->SetVisible(true);
-					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Bonus"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(3)->get()->GetId()]);
-				}
-				else
-				{
-					f_Inventory->GetComp("gI_Bonus")->SetVisible(false);
-				}
-				//### item1
-				if (inv.GetItem(4)->get() != nullptr)
-				{
-					f_Inventory->GetComp("gI_Item1")->SetVisible(true);
-					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item1"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(4)->get()->GetId()]);
-				}
-				else
-				{
-					f_Inventory->GetComp("gI_Item1")->SetVisible(false);
-				}
-				//### item2
-				if (inv.GetItem(5)->get() != nullptr)
-				{
-					f_Inventory->GetComp("gI_Item2")->SetVisible(true);
-					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item2"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(5)->get()->GetId()]);
-				}
-				else
-				{
-					f_Inventory->GetComp("gI_Item2")->SetVisible(false);
-				}
-				//### item3
-				if (inv.GetItem(6)->get() != nullptr)
-				{
-					f_Inventory->GetComp("gI_Item3")->SetVisible(true);
-					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item3"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(6)->get()->GetId()]);
-				}
-				else
-				{
-					f_Inventory->GetComp("gI_Item3")->SetVisible(false);
-				}
-				//### item4
-				if (inv.GetItem(7)->get() != nullptr)
-				{
-					f_Inventory->GetComp("gI_Item4")->SetVisible(true);
-					static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item4"))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(7)->get()->GetId()]);
-				}
-				else
-				{
-					f_Inventory->GetComp("gI_Item4")->SetVisible(false);
-				}
-				//###
 			}
 			if (obst->type == 3)
 			{
@@ -1573,6 +1533,24 @@ public:
 					}
 				}
 			}
+			if (storage->type == 30)
+			{
+				f_InventoryWrought->SetVisible(true);
+				Inventory& inv = *storage->inv;
+				for (int i = 0; i < 6; i++)
+				{
+					std::string key = "gI_item" + std::to_string(i);
+					if (inv.GetItem(i)->get() != nullptr)
+					{
+						f_InventoryWrought->GetComp(key)->SetVisible(true);
+						static_cast<GrabImage*>(f_InventoryWrought->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
+					}
+					else
+					{
+						f_InventoryWrought->GetComp(key)->SetVisible(false);
+					}
+				}
+			}
 			if (storage->type == 50)
 			{
 				f_InventoryStorage->SetVisible(true);
@@ -1591,26 +1569,6 @@ public:
 					}
 				}
 			}
-			if (storage->type == 30)
-			{
-				//f_InventoryWrought->SetVisible(true);
-				/*
-				Inventory& inv = *storage->inv;
-				for (int i = 0; i < 25; i++)
-				{
-					std::string key = "gI_item" + std::to_string(i);
-					if (inv.GetItem(i)->get() != nullptr)
-					{
-						f_InventoryStorage->GetComp(key)->SetVisible(true);
-						static_cast<GrabImage*>(f_InventoryStorage->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
-					}
-					else
-					{
-						f_InventoryStorage->GetComp(key)->SetVisible(false);
-					}
-				}
-				*/
-			}
 		}
 	}
 	int GetHitInventorySpace(Vec2 mP)
@@ -1618,37 +1576,13 @@ public:
 		Frame* f_Inventory = static_cast<Frame*>(comps["f_Inventory"].get());
 		if (f_Inventory->IsVisible())
 		{
-			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Hand1"))->GetPos().Contains(mP))
+			for (int i = 0; i < 8; i++)
 			{
-				return 0;
-			}
-			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Bonus2"))->GetPos().Contains(mP))
-			{
-				return 1;
-			}
-			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Armor"))->GetPos().Contains(mP))
-			{
-				return 2;
-			}
-			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Bonus"))->GetPos().Contains(mP))
-			{
-				return 3;
-			}
-			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item1"))->GetPos().Contains(mP))
-			{
-				return 4;
-			}
-			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item2"))->GetPos().Contains(mP))
-			{
-				return 5;
-			}
-			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item3"))->GetPos().Contains(mP))
-			{
-				return 6;
-			}
-			if (static_cast<GrabImage*>(f_Inventory->GetComp("gI_Item4"))->GetPos().Contains(mP))
-			{
-				return 7;
+				std::string key = "gI_item" + std::to_string(i);
+				if (static_cast<GrabImage*>(f_Inventory->GetComp(key))->GetPos().Contains(mP))
+				{
+					return f_Inventory->GetComp(key)->extra1;
+				}
 			}
 		}
 		return -1;
@@ -1680,6 +1614,22 @@ public:
 				if (static_cast<GrabImage*>(f_InventoryStorage->GetComp(key))->GetPos().Contains(mP))
 				{
 					return f_InventoryStorage->GetComp(key)->extra1;
+				}
+			}
+		}
+		return -1;
+	}
+	int GetHitInventoryWrought(Vec2 mP)//f_InventoryBox    f_InventoryStorage
+	{
+		Frame* f_InventoryWrought = static_cast<Frame*>(comps["f_InventoryWrought"].get());
+		if (f_InventoryWrought->IsVisible())
+		{
+			for (int i = 0; i < 6; i++)
+			{
+				std::string key = "gI_item" + std::to_string(i);
+				if (static_cast<GrabImage*>(f_InventoryWrought->GetComp(key))->GetPos().Contains(mP))
+				{
+					return f_InventoryWrought->GetComp(key)->extra1;
 				}
 			}
 		}

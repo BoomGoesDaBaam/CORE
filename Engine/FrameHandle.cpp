@@ -1,6 +1,59 @@
 #pragma once
 #include "FrameHandle.h"
 //		### Componente ###
+Text* Component::AddText(std::string text, RectF pos, int size, Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
+{
+	activInStates = FillWith1WhenSize0(activInStates, nStates);
+	//assert(activInStates.size() == nStates);
+	comps[key] = std::make_unique<Text>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
+	return static_cast<Text*>(comps[key].get());
+}
+TextBox* Component::AddTextBox(std::string text, RectF pos, int size, Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
+{
+	activInStates = FillWith1WhenSize0(activInStates, nStates);
+	//assert(activInStates.size() == nStates);
+	comps[key] = std::make_unique<TextBox>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
+	return static_cast<TextBox*>(comps[key].get());
+}
+Button* Component::AddButton(RectF pos, Animation* a, Animation* aHover, std::string key, Font* f, std::vector<int> activInStates)
+{
+	activInStates = FillWith1WhenSize0(activInStates, nStates);
+	//assert(activInStates.size() == nStates);
+	comps[key] = std::make_unique<Button>(pos, a, aHover, activInStates, f, this, buffer);
+	return static_cast<Button*>(comps[key].get());
+}
+CheckBox* Component::AddCheckBox(RectF pos, std::queue<FrameEvent>* buffer, sharedResC resC, std::string key, std::vector<int> activInStates)
+{
+	activInStates = FillWith1WhenSize0(activInStates, nStates);
+	//assert(activInStates.size() == nStates);
+	comps[key] = std::make_unique<CheckBox>(pos, this, buffer, resC, activInStates);
+	return static_cast<CheckBox*>(comps[key].get());
+}
+Image* Component::AddImage(RectF pos, Animation* a, Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
+{
+	//RectF pos, Animation* a, Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates
+	activInStates = FillWith1WhenSize0(activInStates, nStates);
+	//assert(activInStates.size() == nStates);
+	comps[key] = std::make_unique<Image>(pos, a, aHover, this, buffer, activInStates);
+	return static_cast<Image*>(comps[key].get());
+}
+GrabImage* Component::AddGrabImage(RectF pos, Animation* a, Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
+{
+	//(RectF pos, Animation * a, Animation * aHover, Component * parentC, std::queue<FrameEvent>*buffer, std::vector<int> activInStates);
+	activInStates = FillWith1WhenSize0(activInStates, nStates);
+	//assert(activInStates.size() == nStates);
+	comps[key] = std::make_unique<GrabImage>(pos, a, aHover, this, buffer, activInStates);
+	return static_cast<GrabImage*>(comps[key].get());
+}
+Frame* Component::AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
+{
+	activInStates = FillWith1WhenSize0(activInStates, nStates);
+	//assert(activInStates.size() == nStates);
+	comps[key] = std::make_unique<Frame>(pos, type, resC, this, buffer);
+	comps[key]->activInStates = activInStates;
+	return static_cast<Frame*>(comps[key].get());
+}
+//
 Text::Text(std::string text, RectF pos, int size, Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer)
 	:
 	Component(pos, parentC, buffer),
@@ -109,7 +162,7 @@ PageFrame::PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, i
 	{
 		activOnPagesL.push_back(1);
 	}
-	Button* b1 = AddButton(RectF(Vec2(5, 18), 34, 9), &resC->tC.buttons[0], &resC->tC.buttons[1], "b_left", &resC->tC.fonts[0],a, activOnPagesL);
+	Button* b1 = AddButtonPF(RectF(Vec2(5, 18), 34, 9), &resC->tC.buttons[0], &resC->tC.buttons[1], "b_left", &resC->tC.fonts[0],a, activOnPagesL);
 	b1->bFunc = B1;
 	std::vector<int> activOnPagesR;
 	for (int i = 0; i < nPages - 1; i++)
@@ -117,7 +170,7 @@ PageFrame::PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, i
 		activOnPagesR.push_back(1);
 	}
 	activOnPagesR.push_back(0);
-	Button* b2 = AddButton(RectF(Vec2(99, 18), 34, 9), &resC->tC.buttons[2], &resC->tC.buttons[3], "b_right", &resC->tC.fonts[0],a, activOnPagesR);
+	Button* b2 = AddButtonPF(RectF(Vec2(99, 18), 34, 9), &resC->tC.buttons[2], &resC->tC.buttons[3], "b_right", &resC->tC.fonts[0],a, activOnPagesR);
 	b2->bFunc = B2;
 }
 
@@ -252,7 +305,8 @@ void Frame::Release()
 {
 	grabbed = false;
 }
-std::vector<int> Frame::FillWith1WhenSize0(std::vector<int> activInStates, int nStages)
+
+std::vector<int> Component::FillWith1WhenSize0(std::vector<int> activInStates, int nStages)
 {
 	if (activInStates.size() == 0)
 	{
@@ -268,6 +322,7 @@ std::vector<int> Frame::FillWith1WhenSize0(std::vector<int> activInStates, int n
 	}
 	return activInStates;
 }
+
 //  ### Framehandle::PageFrame ###
 
 

@@ -125,7 +125,7 @@ namespace Settings
 	static const std::vector<int> anyOfPlantsVec = { 1,4,5,8};
 	static const std::vector<int> anyOfAnimalsVec = { 11,12,13,14,15,16,17,18,19,20 };
 	static const std::vector<int> anyUnitsVec = { 10 };
-	static const std::vector<int> anyStorageVec = { 6,50 };
+	static const std::vector<int> anyStorageVec = { 6, 30, 50 };
 	//Graphic options
 	//static bool displayObstacles = true;
 	static int probToGrow = 50;
@@ -243,6 +243,8 @@ namespace Settings
 	const std::string lang_attacksLeft[] = { "attacks left", "Verb. angriffe" };
 	const std::string lang_chopsLeft[] = { "chops left", "schlaege über" };
 	const std::string lang_chop[] = { "chops", "zerhacken" };
+	const std::string lang_craftedItem[] = { "crafted items", "Erstellte Items" };
+	const std::string lang_reparation[] = { "reparation", "Reperatur" };
 
 	//Animals
 	const std::string lang_deer[] = { "deer", "Hirsch" };
@@ -850,7 +852,6 @@ namespace Settings
 		float dmgAgainstAir;
 		float dmgAgainstArmored;
 	};
-
 	static const ObstacleStats obstacleStats[] =
 	{ 
 		ObstacleStats(				//#0
@@ -1063,5 +1064,35 @@ namespace Settings
 		1,{Vei2(4,4)},100,-1,0,0, 0,3,
 		{{"stone",200},{"wood",200}},
 		{{"stone",100},{"wood",100}})
+	};
+	struct ItemStats
+	{
+		ItemStats(int durability = 10)
+		{}
+
+		int durability;
+	};
+	static const ItemStats itemStats[] = {
+		ItemStats(), //#0
+		ItemStats(),
+		ItemStats(),
+		ItemStats(),
+		ItemStats(),
+		ItemStats(),// #5
+		ItemStats(),
+		ItemStats(),
+		ItemStats(),
+		ItemStats(),
+		ItemStats(),// #10
+		ItemStats(),
+		ItemStats(),
+		ItemStats(),
+		ItemStats(),
+		ItemStats(),// #15
+		ItemStats(),
+		ItemStats(),
+		ItemStats(),
+		ItemStats(),
+		ItemStats()//#20
 	};
 };
