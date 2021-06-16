@@ -178,6 +178,10 @@ public:
 	{
 		return durability == 0;
 	}
+	int GetDurability()
+	{
+		return durability;
+	}
 	bool Used()
 	{
 		if (durability > 0)

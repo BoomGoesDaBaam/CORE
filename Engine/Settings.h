@@ -1067,25 +1067,27 @@ namespace Settings
 	};
 	struct ItemStats
 	{
-		ItemStats(int durability = 10)
+		ItemStats(int durability = -1)
+			:
+			durability(durability)
 		{}
 
 		int durability;
 	};
 	static const ItemStats itemStats[] = {
-		ItemStats(), //#0
-		ItemStats(),
-		ItemStats(),
-		ItemStats(),
-		ItemStats(),
+		ItemStats(10), //#0
+		ItemStats(10),
+		ItemStats(10),
+		ItemStats(10),
+		ItemStats(10),
 		ItemStats(),// #5
 		ItemStats(),
 		ItemStats(),
-		ItemStats(),
-		ItemStats(),
-		ItemStats(),// #10
-		ItemStats(),
-		ItemStats(),
+		ItemStats(10),
+		ItemStats(10),
+		ItemStats(10),// #10
+		ItemStats(10),
+		ItemStats(10),
 		ItemStats(),
 		ItemStats(),
 		ItemStats(),// #15

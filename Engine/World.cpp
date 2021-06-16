@@ -192,7 +192,7 @@ void World::SpawnPlayer()
 	{
 		genObsts[i]->inv->SetItem(std::make_unique<Slot>(0),4);
 		genObsts[i]->inv->SetItem(std::make_unique<Slot>(4),5);
-		genObsts[i]->inv->SetItem(std::make_unique<Slot>(12),6);
+		genObsts[i]->inv->SetItem(std::make_unique<Slot>(11),6);
 	}
 	auto cctPos = Chunk::Flat2ChunkPos(spawnpoint, s.wSizeInTiles);
 	mChunk = cctPos.x;
@@ -675,7 +675,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 			{
 				dist2lastclick.x += s.wSizeInTiles.x;
 			}
-			if (attackMode && fctPos != oldCtPos && chunks(fctPos.x).GetObstacleMapAt(fctPos.y) != -1 && sqrt(pow(dist2lastclick.x, 2) + pow(dist2lastclick.y, 2)) <= focusedObst->GetAttackRange())
+			if (attackMode && fctPos != oldCtPos && chunks(fctPos.x).GetObstacleMapAt(fctPos.y) != -1 && sqrt(pow(dist2lastclick.x, 2) + pow(dist2lastclick.y, 2)) <= focusedObst->GetAttackRange() && focusedObst->attack->GetAttacksLeft())
 			{
 				chunks(fctPos.x).AttackTile(Chunk::CtPos2CctPos(fctPos), focusedObst);
 				focusedObst->attack->Attacked();
@@ -969,7 +969,7 @@ void World::Draw(Graphics& gfx) const
 			}
 		}
 	}
-	if (attackMode)
+	if (attackMode && focusedObst->attack->GetAttacksLeft())
 	{
 		CtPos obstacleMidPos = Chunk::GetMidPosOfObstacle(CtPos(focusedObst->chunkPos,focusedObst->tilePos), focusedObst->type, chunks.GetSize());
 		DrawCircle(obstacleMidPos, focusedObst->GetAttackRange(), Colors::Red, gfx);
@@ -1481,7 +1481,7 @@ void World::GenerateExplosion(Vei2 pos, int maxLineLength, int type,int ontoType
 	{
 		float rad = (float)rng.Calc(360) * 0.0174533f;
 		Vec2 p1 = (Vec2) GigaMath::RotPointToOrigin<float>(1.0f,0.0f, rad);
-		Vei2 scaled = pos + Vei2(p1 * (int)(maxLineLength*1/2+ rng.Calc(maxLineLength*1/2)));
+		Vei2 scaled = pos + Vei2(p1 * (float)(maxLineLength*1/2+ rng.Calc(maxLineLength*1/2)));
 		if (CellIsInWorld(scaled))
 		{
 			GenerateLine(Vec2(pos), Vec2(scaled), type, ontoType, 1, surrBy);

@@ -132,10 +132,18 @@ public:
 			std::for_each(comps.begin(), comps.end(), [&](auto& comp)		//auto = something like 'std::pair<std::string, std::unique_ptr<Component>>'
 				{
 					if (comp.second->GetPrio() == prio && comp.second->activInStates[curState] == 1 && comp.second->IsVisible()) {
-						comp.second->Draw(gfx);
+						comp.second->   Draw(gfx);
 					}
 				});
 		}
+	}
+	Component* GetComp(std::string key) {
+		std::map<std::string, std::unique_ptr<Component>>::iterator it = comps.find(key);
+		if (it != comps.end())
+		{
+			return it->second.get();
+		}
+		return nullptr;
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
@@ -377,7 +385,7 @@ public:
 		}
 		if (draw != nullptr)
 		{
-			assert(alpha >= 0f && alpha <= 1.f);
+			assert(alpha >= 0.f && alpha <= 1.f);
 			if (drawPercent == Vec2(1.f, 1.f))
 			{
 				if (alpha == 1.f)
@@ -636,14 +644,6 @@ public:
 			curState = 0;
 		}
 	}
-	Component* GetComp(std::string key) {
-		std::map<std::string, std::unique_ptr<Component>>::iterator it = comps.find(key);
-		if (it != comps.end())
-		{
-			return it->second.get();
-		}
-		return nullptr;
-	}
 	int GetNumberOfComps() { return comps.size(); }
 	int GetCurState() { return curState; }
 	int GetExtendedHeight();
@@ -879,7 +879,7 @@ public:
 						if (extended[innerFrame->first] != (bool)innerFrame->second->GetCurState())
 						{
 							changed = innerFrame->first;
-							n = frames.size();
+							n = (int)frames.size();
 							if (extended[innerFrame->first])
 							{
 								yMove -= frame->second->GetExtendedHeight();
@@ -1191,32 +1191,36 @@ public:
 			hand1->extra1 = 0;
 			hand1->extraS1 = "inventory swap unit";
 
-			GrabImage* hand2 = fInventory->AddGrabImage(RectF(Vec2(130, 10), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item1", { 1,1 });
-			hand2->SetVisible(false);
-			hand2->extra1 = 1;
-			hand2->extraS1 = "inventory swap unit";
-			GrabImage* armor = fInventory->AddGrabImage(RectF(Vec2(70, 70), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item2", { 1,1 });
+			GrabImage* bonus2 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 10), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item1", { 1,1 });
+			bonus2->extra1 = 1;
+			bonus2->extraS1 = "inventory swap unit";
+			
+			GrabImage* armor = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 70), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item2", { 1,1 });
 			armor->SetVisible(false);
 			armor->extra1 = 2;
 			armor->extraS1 = "inventory swap unit";
-			GrabImage* bonus = fInventory->AddGrabImage(RectF(Vec2(130, 70), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item3", { 1,1 });
-			bonus->SetVisible(false);
-			bonus->extra1 = 3;
-			bonus->extraS1 = "inventory swap unit";
+			
+			GrabImage* bonus1 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 70), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item3", { 1,1 });
+			bonus1->SetVisible(false);
+			bonus1->extra1 = 3;
+			bonus1->extraS1 = "inventory swap unit";
 
-			GrabImage* item1 = fInventory->AddGrabImage(RectF(Vec2(10, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item4", { 1,1 });
+			GrabImage* item1 = CreateGIWithHpBar(fInventory, RectF(Vec2(10, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item4", { 1,1 });
 			item1->SetVisible(false);
 			item1->extra1 = 4;
 			item1->extraS1 = "inventory swap unit";
-			GrabImage* item2 = fInventory->AddGrabImage(RectF(Vec2(70, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item5", { 1,1 });
+			
+			GrabImage* item2 = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item5", { 1,1 });
 			item2->SetVisible(false);
 			item2->extra1 = 5;
 			item2->extraS1 = "inventory swap unit";
-			GrabImage* item3 = fInventory->AddGrabImage(RectF(Vec2(130, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item6", { 1,1 });
+			
+			GrabImage* item3 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item6", { 1,1 });
 			item3->SetVisible(false);
 			item3->extra1 = 6;
 			item3->extraS1 = "inventory swap unit";
-			GrabImage* item4 = fInventory->AddGrabImage(RectF(Vec2(190, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item7", { 1,1 });
+			
+			GrabImage* item4 = CreateGIWithHpBar(fInventory, RectF(Vec2(190, 130), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item7", { 1,1 });
 			item4->SetVisible(false);
 			item4->extra1 = 7;
 			item4->extraS1 = "inventory swap unit";
@@ -1227,7 +1231,7 @@ public:
 
 			for (int i = 0; i < 9; i++)
 			{
-				GrabImage* image = fInventoryBox->AddGrabImage(RectF(Vec2(10 + (i%3) * 60, 10 + (i / 3) * 60), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item"+std::to_string(i), { 1,1 });
+				GrabImage* image = fInventoryBox->AddGrabImage(RectF(Vec2(10.f + (int)(i%3) * 60.f, 10.f + (int)(i / 3) * 60.f), 50.f, 50.f), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item"+std::to_string(i), { 1,1 });
 				image->SetVisible(false);
 				image->extra1 = i;
 				image->extraS1 = "inventory swap box";
@@ -1239,7 +1243,7 @@ public:
 
 			for (int i = 0; i < 25; i++)
 			{
-				GrabImage* image = fInventoryStorage->AddGrabImage(RectF(Vec2(10 + (i % 5) * 60, 10 + (i / 5) * 60), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
+				GrabImage* image = fInventoryStorage->AddGrabImage(RectF(Vec2(10.f + (int)(i % 5) * 60, 10.f + (int)(i / 5) * 60), 50.f, 50.f), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
 				image->SetVisible(false);
 				image->extra1 = i;
 				image->extraS1 = "inventory swap storage";
@@ -1256,7 +1260,7 @@ public:
 
 			for (int i = 0; i < 6; i++)
 			{
-				GrabImage* image = fInventoryWrought->AddGrabImage(RectF(Vec2(10 + (i % 3) * 60, 40 + (i / 3) * 90), 50, 50), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
+				GrabImage* image = fInventoryWrought->AddGrabImage(RectF(Vec2(10.f + (int)(i % 3) * 60.f, 40.f + (int)(i / 3) * 90.f), 50.f, 50.f), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
 				image->SetVisible(false);
 				image->extra1 = i;
 				image->extraS1 = "inventory swap wrought";
@@ -1334,7 +1338,7 @@ public:
 				frame->AddText("-"+res->first+": x"+std::to_string(res->second)+" "+ Settings::lang_kilogram[Settings::lang], RectF(Vec2(70, 20+i*10), 50, 8), 7, &resC->tC.fonts[0], Colors::Green, key + "res"+std::to_string(i), { 1 });
 			else
 			{
-				frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(70, 20 + i * 10), 50, 8), 7, &resC->tC.fonts[0], Colors::Red, key + "res" + std::to_string(i), { 1 });
+				frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(70.f, 20.f + i * 10.f), 50.f, 8.f), 7, &resC->tC.fonts[0], Colors::Red, key + "res" + std::to_string(i), { 1 });
 			}
 			i++;
 		}
@@ -1348,7 +1352,7 @@ public:
 
 		Image* image = gi->AddImage(RectF(Vec2(0, pos.GetHeight() / 5 * 4), pos.GetWidth(), pos.GetHeight() / 5), &resC->tC.frames[1], &resC->tC.frames[1], buffer, key+"Hp");
 		image = gi->AddImage(RectF(Vec2(0, pos.GetHeight() / 5 * 4), pos.GetWidth(), pos.GetHeight() / 5), &resC->tC.frames[2], &resC->tC.frames[2], buffer, key + "HpIs");
-		image->SetDrawPercent(Vec2(0.5f, 1));
+		return gi;
 	}
 	// ### Update components of existing Frames ###
 
@@ -1462,6 +1466,11 @@ public:
 					{
 						f_Inventory->GetComp(key)->SetVisible(true);
 						static_cast<GrabImage*>(f_Inventory->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
+						if (inv.GetItem(i)->get()->GetDurability() != -1)
+						{
+							float percentage = (float)inv.GetItem(i)->get()->GetDurability() / Settings::itemStats[inv.GetItem(i)->get()->GetId()].durability;
+							static_cast<Image*>(f_Inventory->GetComp(key)->GetComp(key + "HpIs"))->SetDrawPercent(Vec2(percentage, 1.f));
+						}
 					}
 					else
 					{

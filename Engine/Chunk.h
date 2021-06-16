@@ -298,9 +298,9 @@ public:
 			float tileWidth = rect.GetWidth() / Settings::obstacleStats[type].size[0].x;
 			float startX = rect.left + ((Settings::obstacleStats[type].size[0].x / 2)-1) * tileWidth;
 			float startY = rect.top + (Settings::obstacleStats[type].size[0].y-0.5) * tileWidth;
-			gfx.DrawSurface(RectI(Vei2(startX, startY),tileWidth*3,tileWidth), resC->tC.frames[1].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.75f), 0);
+			gfx.DrawSurface(RectI(Vei2((int)startX, (int)startY), (int)tileWidth*3, (int)tileWidth), resC->tC.frames[1].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.75f), 0);
 			//gfx.DrawSurface(RectI(Vei2(startX, startY), tileWidth * 3, tileWidth), resC->tC.frames[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
-			gfx.DrawSurface(RectI(Vei2(startX, startY), (tileWidth * 3) * percentage, tileWidth), RectI(Vei2(0, 0), (float)(30) * percentage, 10), resC->tC.frames[2].GetCurSurface(),SpriteEffect::Transparent(Colors::Magenta,0.75f));
+			gfx.DrawSurface(RectI(Vei2((int)startX, (int)startY), (int)((tileWidth * 3) * percentage), (int)tileWidth), RectI(Vei2(0, 0), (int)((float)(30) * percentage), 10), resC->tC.frames[2].GetCurSurface(),SpriteEffect::Transparent(Colors::Magenta,0.75f));
 			//gfx.DrawSurface(RectI(Vei2(startX, startY), tileWidth * 3, tileWidth), resC->tC.frames[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
 		}
 	}
@@ -412,7 +412,7 @@ public:
 				attacker->inv->ItemUsed(2);
 			}
 		}
-		hp -= dmgAdjusted;
+		hp -= (int)dmgAdjusted;
 		return dmgAdjusted;
 	}
 	virtual void Poop() {}

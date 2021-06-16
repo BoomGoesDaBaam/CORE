@@ -58,7 +58,7 @@ namespace GigaMath
 		float dist = d(gen);
 		while (!(dist >= 0 && dist <= 1))
 		{
-			dist = d(gen);
+			dist = (float)d(gen);
 		}
 		return dist;
 	}
