@@ -169,7 +169,7 @@ std::vector<Obstacle*> World::SpawnUnits(int n, int type, Team* team, Vei2 tileP
 	{
 		float rad = (float)rng.Calc(360) * 0.0174533f;
 		Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin<float>(1.0f, 0.0f, rad);
-		Vei2 spawnPos = tilePos + Vei2(p1 * rng.Calc(10));
+		Vei2 spawnPos = tilePos + Vei2(p1 * (float)rng.Calc(10));
   		if (chunks(Vei2(0, 0)).PlaceObstacle(spawnPos, type, team))
 		{
 			assert(chunks(Vei2(0, 0)).GetObstacleOutOfBounds(spawnPos) != nullptr);
@@ -660,7 +660,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 	CtPos oldCtPos = fctPos;
 	Vec2 mP = (Vec2)e.GetPos();
 	fcctPosHover = GetHitTile(mP);
-	if (e.GetType() == Mouse::Event::LRelease && !gH.IsLocked())
+	if (e.GetType() == Mouse::Event::Type::LRelease && !gH.IsLocked())
 	{
 		fcctPos = GetHitTile(mP);
 		fctPos = GetHitTileCtPos(mP);
@@ -692,7 +692,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 				grit = false;
 			}
 		}
-		if (moveMode && focusedObst != nullptr && TileIsInRange(Chunk::CtPos2CctPos(fctPos), Chunk::CtPos2CctPos(focusedObst->GetCtPos()), focusedObst->stepsLeft))
+		if (moveMode && focusedObst != nullptr && TileIsInRange(Chunk::CtPos2CctPos(fctPos), Chunk::CtPos2CctPos(focusedObst->GetCtPos()), (float)focusedObst->stepsLeft))
 		{
 			if (chunks(focusedObst->chunkPos).MoveObstacle(ObstacleMapAt(focusedObst->GetCtPos()), fctPos))
 			{
@@ -733,6 +733,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		{
 			updateFrameInfo = true;
 			focusedObst = nullptr;
+			attackMode = false;
 			moveMode = false;
 			storageObst = nullptr;
 		}
@@ -769,11 +770,11 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 			}
 		}
 	}
-	if (e.GetType() == Mouse::Event::WheelDown)
+	if (e.GetType() == Mouse::Event::Type::WheelDown)
 	{
 		Zoom(Vei2(-100, -100));
 	}
-	if (e.GetType() == Mouse::Event::WheelUp)
+	if (e.GetType() == Mouse::Event::Type::WheelUp)
 	{
 		Zoom(Vei2(100, 100));
 	}
@@ -1091,7 +1092,7 @@ void World::Generate(WorldSettings& s)
 		}
 		for (int i = 0; i < s.wSizeInCells.x * 5; i++)	//snow
 		{
-			GenerateExplosion(Vei2(rng.Calc(s.wSizeInCells.x), (int)(rng.GetNormalDist() * subArcticSize)), rng.GetNormalDist() * 3, 5, -1);
+			GenerateExplosion(Vei2(rng.Calc(s.wSizeInCells.x), (int)(rng.GetNormalDist() * subArcticSize)), (int)(rng.GetNormalDist() * 3), 5, -1);
 			GenerateExplosion(Vei2(rng.Calc(s.wSizeInCells.x), s.wSizeInCells.y - (int)(rng.GetNormalDist() * subArcticSize)), (int)(rng.GetNormalDist() * 3), 5, -1);
 		}
 		for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) / 200; i++)	//coral reef

@@ -29,7 +29,7 @@ public:
 	class Event
 	{
 	public:
-		enum Type
+		enum class Type
 		{
 			Press,
 			Release,
@@ -51,15 +51,15 @@ public:
 		{}
 		bool IsPress() const
 		{
-			return type == Press;
+			return type == Type::Press;
 		}
 		bool IsRelease() const
 		{
-			return type == Release;
+			return type == Type::Release;
 		}
 		bool IsValid() const
 		{
-			return type != Invalid;
+			return type != Type::Invalid;
 		}
 		unsigned char GetCode() const
 		{

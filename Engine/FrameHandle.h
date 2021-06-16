@@ -3,6 +3,7 @@
 #include <memory>
 #include <map>
 #include <algorithm>
+#include "Graphics.h"
 class ButtonFunctions;
 class PageFrame;
 class FrameHandle;
@@ -19,7 +20,7 @@ class TextBox;
 class FrameEvent
 {
 public:
-	enum Type
+	enum class Type
 	{
 		ButtonPressed,
 		ItemDragReleased,
@@ -45,7 +46,7 @@ public:
 	}
 	bool IsValid() const
 	{
-		return type != Invalid;
+		return type != Type::Invalid;
 	}
 	Type GetType() const
 	{
@@ -79,7 +80,7 @@ protected:
 	}
 	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)
 	{
-		if (e.GetType() == Mouse::Event::LRelease && interact && GetPos().Contains((Vec2)e.GetPos()))
+		if (e.GetType() == Mouse::Event::Type::LRelease && interact && GetPos().Contains((Vec2)e.GetPos()))
 		{
 			mouseHovers = true;
 			return true;
@@ -92,7 +93,7 @@ protected:
 		bool hitComp = false;
 		std::for_each(comps.begin(), comps.end(), [&](auto& comp)
 			{
-				hitComp = e.GetType() == Mouse::Event::LRelease && comp.second->IsVisible() && comp.second->HandleMouseInput(e, interact && !hitComp) || hitComp;
+				hitComp = e.GetType() == Mouse::Event::Type::LRelease && comp.second->IsVisible() && comp.second->HandleMouseInput(e, interact && !hitComp) || hitComp;
 			});
 
 		if (hitComp && interact)
@@ -130,11 +131,11 @@ public:
 		for (int prio = 10; prio >= 0; prio--)
 		{
 			std::for_each(comps.begin(), comps.end(), [&](auto& comp)		//auto = something like 'std::pair<std::string, std::unique_ptr<Component>>'
-				{
-					if (comp.second->GetPrio() == prio && comp.second->activInStates[curState] == 1 && comp.second->IsVisible()) {
-						comp.second->   Draw(gfx);
-					}
-				});
+			{
+				if (comp.second->GetPrio() == prio && comp.second->activInStates[curState] == 1 && comp.second->IsVisible()) {
+					comp.second->Draw(gfx);
+				}
+			});
 		}
 	}
 	Component* GetComp(std::string key) {
@@ -278,7 +279,7 @@ public:
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)override
 	{
 		IncreasePrio();
-		if (Component::HandleMouseInputFrame(e, interact) && e.GetType() == Mouse::Event::LRelease)
+		if (Component::HandleMouseInputFrame(e, interact) && e.GetType() == Mouse::Event::Type::LRelease)
 		{
 			ticked = !ticked;
 			extraB1 = false;
@@ -320,7 +321,7 @@ protected:
 	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)override
 	{
 		Component::HandleMouseInputFrame(e, interact);
-		if (GetPos().Contains((Vec2)e.GetPos()) && e.GetType() == Mouse::Event::LRelease && interact)
+		if (GetPos().Contains((Vec2)e.GetPos()) && e.GetType() == Mouse::Event::Type::LRelease && interact)
 		{
 			if (bFunc != nullptr)
 			{
@@ -404,11 +405,11 @@ public:
 				RectF sourceR = RectF(Vec2(0, 0), surfaceSize.x * drawPercent.x, surfaceSize.y * drawPercent.y);
 				if (alpha == 1.f)
 				{
-					gfx.DrawSurface(RectI(Vei2(pos.left, pos.top), pos.GetWidth() * drawPercent.x, pos.GetHeight() * drawPercent.y), (RectI)sourceR, *draw, SpriteEffect::Chroma(Colors::Magenta));
+					gfx.DrawSurface(RectI(Vei2((int)pos.left, (int)pos.top), (int)(pos.GetWidth() * drawPercent.x), (int)(pos.GetHeight() * drawPercent.y)), (RectI)sourceR, *draw, SpriteEffect::Chroma(Colors::Magenta));
 				}
 				else
 				{
-					gfx.DrawSurface(RectI(Vei2(pos.left, pos.top), pos.GetWidth() * drawPercent.x, pos.GetHeight() * drawPercent.y), (RectI)sourceR, *draw, SpriteEffect::Transparent(Colors::Magenta, 0.5f));
+					gfx.DrawSurface(RectI(Vei2((int)pos.left, (int)pos.top), (int)(pos.GetWidth() * drawPercent.x), (int)(pos.GetHeight() * drawPercent.y)), (RectI)sourceR, *draw, SpriteEffect::Transparent(Colors::Magenta, 0.5f));
 				}
 			}
 		}
@@ -449,10 +450,10 @@ public:
 		if (IsVisible())
 		{
 			Vec2 mP = (Vec2)e.GetPos();
-			if (e.GetType() == Mouse::Event::LRelease && gH.IsLocked())
+			if (e.GetType() == Mouse::Event::Type::LRelease && gH.IsLocked())
 			{
 				if (delta != Vec2(0, 0))
-					buffer->push(FrameEvent(FrameEvent::ItemDragReleased, extraS1, extra1, this));
+					buffer->push(FrameEvent(FrameEvent::Type::ItemDragReleased, extraS1, extra1, this));
 				gH.Release();
 				delta = Vec2(0, 0);
 				return true;
@@ -570,7 +571,7 @@ public:
 
 			if (grabbed && moveable)
 			{
-				if (e.GetType() == Mouse::Event::LRelease)
+				if (e.GetType() == Mouse::Event::Type::LRelease)
 				{
 					Release();
 				}
@@ -579,19 +580,19 @@ public:
 					Move(mP);
 				}
 			}
-			if (e.GetType() == Mouse::Event::LPress && hit && moveable)
+			if (e.GetType() == Mouse::Event::Type::LPress && hit && moveable)
 			{
 				Grab(mP);
 				posOfLastPress = mP;
 			}
 			Vei2 delta((posOfLastPress - mP).GetAbsVec());
-			if (nStates > 1 && hit && e.GetType() == Mouse::Event::LRelease && delta.GetLength() < 15)
+			if (nStates > 1 && hit && e.GetType() == Mouse::Event::Type::LRelease && delta.GetLength() < 15)
 			{
 				NextState();
 			}
 			if (hit)
 			{
-				if (bFunc != nullptr && e.GetType() == Mouse::Event::LRelease)
+				if (bFunc != nullptr && e.GetType() == Mouse::Event::Type::LRelease)
 				{
 					bFunc(buffer, this);
 				}
@@ -644,7 +645,7 @@ public:
 			curState = 0;
 		}
 	}
-	int GetNumberOfComps() { return comps.size(); }
+	int GetNumberOfComps() { return (int)comps.size(); }
 	int GetCurState() { return curState; }
 	int GetExtendedHeight();
 	bool IsExtended();
@@ -751,7 +752,7 @@ public:
 	}
 	virtual bool HandleMouseInputComps(Mouse::Event& e, bool interact)
 	{
-		if (e.GetType() == Mouse::Event::LRelease)
+		if (e.GetType() == Mouse::Event::Type::LRelease)
 		{
 			int k = 23;
 		}
@@ -1335,7 +1336,7 @@ public:
 		{
 			//std::map<st::string,float> check ={{}}
 			if (world->GetPlayer()->GetMaterials().Has({ { res->first,res->second } }))
-				frame->AddText("-"+res->first+": x"+std::to_string(res->second)+" "+ Settings::lang_kilogram[Settings::lang], RectF(Vec2(70, 20+i*10), 50, 8), 7, &resC->tC.fonts[0], Colors::Green, key + "res"+std::to_string(i), { 1 });
+				frame->AddText("-"+res->first+": x"+std::to_string(res->second)+" "+ Settings::lang_kilogram[Settings::lang], RectF(Vec2(70.f, 20.f +i*10.f), 50.f, 8.f), 7, &resC->tC.fonts[0], Colors::Green, key + "res"+std::to_string(i), { 1 });
 			else
 			{
 				frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(70.f, 20.f + i * 10.f), 50.f, 8.f), 7, &resC->tC.fonts[0], Colors::Red, key + "res" + std::to_string(i), { 1 });

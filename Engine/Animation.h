@@ -57,7 +57,7 @@ public:
 	}
 	int GetNumberOfFrames()
 	{
-		return frames.size();
+		return (int)frames.size();
 	}
 	std::vector<Surface>& GetFrames()
 	{

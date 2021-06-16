@@ -194,7 +194,7 @@ void Game::HandleFrameChanges()
 }
 void Game::HandleFrameLogic(FrameEvent& e)
 {
-	if (e.GetType() == FrameEvent::ButtonPressed)
+	if (e.GetType() == FrameEvent::Type::ButtonPressed)
 	{
 		if (e.GetAction() == "priv page")
 		{
@@ -291,7 +291,7 @@ void Game::HandleFrameLogic(FrameEvent& e)
 			}
 		}
 	}
-	else if (e.GetType() == FrameEvent::ItemDragReleased)
+	else if (e.GetType() == FrameEvent::Type::ItemDragReleased)
 	{
 		if (curW->GetFocusedObstacle() != nullptr || curW->GetStorageObstacle() != nullptr)
 		{

@@ -136,7 +136,7 @@ public:
 	//Obstacle(Obstacle&& obst) {}
 	Obstacle& operator=(const Obstacle& other)
 	{
-		resC = std::move(other.resC);
+		resC = other.resC;
 		tilePos = other.tilePos;
 		chunkPos = other.chunkPos;
 		type = other.type;
@@ -297,7 +297,7 @@ public:
 			assert(percentage >= 0 && percentage <= 100);
 			float tileWidth = rect.GetWidth() / Settings::obstacleStats[type].size[0].x;
 			float startX = rect.left + ((Settings::obstacleStats[type].size[0].x / 2)-1) * tileWidth;
-			float startY = rect.top + (Settings::obstacleStats[type].size[0].y-0.5) * tileWidth;
+			float startY = rect.top + (float)(Settings::obstacleStats[type].size[0].y-0.5f) * tileWidth;
 			gfx.DrawSurface(RectI(Vei2((int)startX, (int)startY), (int)tileWidth*3, (int)tileWidth), resC->tC.frames[1].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.75f), 0);
 			//gfx.DrawSurface(RectI(Vei2(startX, startY), tileWidth * 3, tileWidth), resC->tC.frames[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
 			gfx.DrawSurface(RectI(Vei2((int)startX, (int)startY), (int)((tileWidth * 3) * percentage), (int)tileWidth), RectI(Vei2(0, 0), (int)((float)(30) * percentage), 10), resC->tC.frames[2].GetCurSurface(),SpriteEffect::Transparent(Colors::Magenta,0.75f));
@@ -353,7 +353,7 @@ public:
 	}
 	int GetDmg(const Obstacle* victim)
 	{
-		float dmg = Settings::obstacleStats[type].attackDmg; //* ( (float)hp / Settings::obstacleStats[type].baseHp);
+		float dmg = (float)Settings::obstacleStats[type].attackDmg; //* ( (float)hp / Settings::obstacleStats[type].baseHp);
 		if (Settings::anyOfPlants(victim->type))
 		{
 			dmg *= Settings::obstacleStats[type].dmgAgainstPlants;
@@ -381,11 +381,11 @@ public:
 				inv->ItemUsed(0);
 			}
 		}
-		return dmg;
+		return (int)dmg;
 	}
 	int GetAttackRange()
 	{
-		float attackRange = Settings::obstacleStats[type].attackRange;
+		float attackRange = (float)Settings::obstacleStats[type].attackRange;
 		if (inv->HasItemNotBroken(11))	//bow
 		{
 			attackRange = 10;
@@ -394,7 +394,7 @@ public:
 		{
 			attackRange = 20;
 		}
-		return attackRange;
+		return (int)attackRange;
 	}
 	float AttackObstacle(Obstacle* attacker, float dmg)
 	{
@@ -608,7 +608,7 @@ public:
 	bool ObstaclePosAllowed(Vei2 tilePos, Vei2 size, int except = -1, Matrix<int> placeCondMat = Matrix<int>(1, 1, -3)) const;
 	int GetObstacleIndex(Vei2 tilePos)const;
 	RectF GetTileRect(Vei2 tilePos) const;
-	int GetObstacleCount() { return obstacles.size(); }
+	int GetObstacleCount() { return (int)obstacles.size(); }
 	void SetTypeAt(Vei2 pos, int type);
 
 	void DrawObstacleOutlines(Vei2 tilePos, int type, RectF chunkRect, Color c, Graphics& gfx) const;

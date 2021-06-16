@@ -99,7 +99,7 @@ struct Materials
 class Slot
 {
 public:
-	enum Type
+	enum class Type
 	{
 		Holdable,
 		Armor,
@@ -108,66 +108,66 @@ public:
 		Empty
 	};
 private:
-	int itemId;
-	int durability;	//-1 == Item has no durability	0 == Item has no durability left
+	int itemId = -1;
+	int durability = -1;	//-1 == Item has no durability	0 == Item has no durability left
 	Type type = Slot::Type::Empty;
 public:
 	Slot() { type = Slot::Type::Empty; }
 	Slot(int id) :itemId(id)
 	{
 		durability = Settings::itemStats[id].durability;
-		type = Empty;
+		type = Type::Empty;
 		if (id == 0)
 		{
-			type = Holdable;
+			type = Type::Holdable;
 		}
 		if (id == 1)
 		{
-			type = Holdable;
+			type = Type::Holdable;
 		}
 		if (id == 2)
 		{
-			type = Armor;
+			type = Type::Armor;
 		}
 		if (id == 3)
 		{
-			type = Bonus;
+			type = Type::Bonus;
 		}
 		if (id == 4)
 		{
-			type = Bonus;
+			type = Type::Bonus;
 		}
 		if (id == 5)
 		{
-			type = Armor;
+			type = Type::Armor;
 		}
 		if (id == 6)
 		{
-			type = Simple;
+			type = Type::Simple;
 		}
 		if (id == 7)
 		{
-			type = Simple;
+			type = Type::Simple;
 		}
 		if (id == 8)
 		{
-			type = Simple;
+			type = Type::Simple;
 		}
 		if (id == 9)
 		{
-			type = Armor;
+			type = Type::Armor;
 		}
 		if (id == 10)
 		{
-			type = Holdable;
+			type = Type::Holdable;
 		}
 		if (id == 11)
 		{
-			type = Holdable;
+			type = Type::Holdable;
 		}
 		if (id == 12)
 		{
-			type = Holdable;
+			type = Type::Holdable;
 		}
 	}
 	int GetId()

@@ -68,7 +68,7 @@ Text::Text(std::string text, RectF pos, int size, Font* f, Color c, std::vector<
 TextBox::TextBox(std::string text, RectF pos, int size, Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer)
 	:
 	Text("text should be shown",pos,size,f,c,activInStates, parentC,0, buffer),
-	lines(f->SplitTextToLines(text, size, pos.GetWidth()))
+	lines(f->SplitTextToLines(text, size, (int)pos.GetWidth()))
 {
 
 }
@@ -203,8 +203,8 @@ bool Frame::Hit(Vec2 mP)
 			break;
 		case 1:
 			Vec2 scale = Vec2(s->GetSize()) / Vec2(pos.GetSize());
-			mpRel.x = mpRel.x * scale.x;
-			mpRel.y = mpRel.y * scale.y;
+			mpRel.x = (int)(mpRel.x * scale.x);
+			mpRel.y = (int)(mpRel.y * scale.y);
 
 			return s->TestIfHitOnScreen((Vec2)mpRel);
 			break;
@@ -248,51 +248,51 @@ void Frame::Grab(Vec2 mP)
 }
 bool B1(std::queue<FrameEvent>* buffer, Component* caller)
 {
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "priv page", -1, caller));
+	buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "priv page", -1, caller));
 	//pF->PriviousPage();
 	return true;
 }
 bool B2(std::queue<FrameEvent>* buffer, Component* caller)
 {
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "next page", -1, caller));
+	buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "next page", -1, caller));
 	//pF->NextPage();
 	return true;
 }
 bool BBuildMode(std::queue<FrameEvent>* buffer, Component* caller)
 {
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "enable buildmode", caller->extra1, caller));
+	buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "enable buildmode", caller->extra1, caller));
 	//curW.SetBuildMode(0);
 	return true;
 }
 bool BNextTurn(std::queue<FrameEvent>* buffer, Component* caller)
 {
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "next turn", -1, caller));
+	buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "next turn", -1, caller));
 	//curW.NextTurn();
 	return true;
 }
 bool BBuildMenu(std::queue<FrameEvent>* buffer, Component* caller)
 {
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "load scene", 1, caller));
+	buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "load scene", 1, caller));
 	//curW.LoadBuildMenu();
 	return true;
 }
 bool BOpenGamefield(std::queue<FrameEvent>* buffer, Component* caller)
 {
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "load scene", 0, caller));
+	buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "load scene", 0, caller));
 	//curW.LoadBuildMenu();
 	return true;
 }
 bool BSetAttackMode(std::queue<FrameEvent>* buffer, Component* caller)
 {
-	buffer->push(FrameEvent(FrameEvent::ButtonPressed, "set attackMode", -1, caller));
+	buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "set attackMode", -1, caller));
 	return true;
 }
 bool BSetObstacleState(std::queue<FrameEvent>* buffer, Component* caller)
 {
 	if(caller->extraB1)
-		buffer->push(FrameEvent(FrameEvent::ButtonPressed, "set obstacle state "+ caller->extraS1, caller->extra1, caller));
+		buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "set obstacle state "+ caller->extraS1, caller->extra1, caller));
 	else
-		buffer->push(FrameEvent(FrameEvent::ButtonPressed, "set obstacle state "+ caller->extraS1, caller->extra2, caller));
+		buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "set obstacle state "+ caller->extraS1, caller->extra2, caller));
 	return true;
 }
 void Frame::Move(Vec2 mP)
@@ -400,6 +400,7 @@ Frame* FrameHandle::AddFrame(std::string key, RectF pos, int type)
 		comps[key] = std::make_unique<Frame>(pos, type, resC, nullptr,&buffer);
 		return static_cast<Frame*>(comps[key].get());
 	}
+	return nullptr;
 }
 PageFrame* FrameHandle::AddPageFrame(std::string key, RectF pos, int type, int nPages)
 {
@@ -408,6 +409,7 @@ PageFrame* FrameHandle::AddPageFrame(std::string key, RectF pos, int type, int n
 		comps[key] = std::make_unique<PageFrame>(pos, type, resC, nullptr, nPages, &buffer);
 		return static_cast<PageFrame*>(comps[key].get());
 	}
+	return nullptr;
 }
 MultiFrame* FrameHandle::AddMultiFrame(std::string key, RectF pos, int type, int nStates)
 {
@@ -421,6 +423,7 @@ MultiFrame* FrameHandle::AddMultiFrame(std::string key, RectF pos, int type, int
 		comps[key] = std::make_unique<MultiFrame>(pos, resC, nullptr, &buffer);
 		return static_cast<MultiFrame*>(comps[key].get());
 	}
+	return nullptr;
 }
 
 

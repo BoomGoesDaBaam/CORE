@@ -842,8 +842,8 @@ namespace Settings
 		int constructionTime = 10;
 		std::vector<Vei2> size = {};
 		std::vector<Vei2> obstacleStartPos = { Vei2(0,0) };
-		std::map<std::string, float> neededResToBuild = { {"leather",50},{"sticks",30} };
-		std::map<std::string, float> lootForDestroying = { {"leather",25},{"sticks",15} };
+		std::map<std::string, float> neededResToBuild = { {"leather",50.f},{"sticks",30.f} };
+		std::map<std::string, float> lootForDestroying = { {"leather",25.f},{"sticks",15.f} };
 		int healNumber = 10;
 		int healRange = 10;
 		float dmgAgainstPlants;
@@ -856,48 +856,48 @@ namespace Settings
 	{ 
 		ObstacleStats(				//#0
 		1,{Vei2(2,2)},100,-1,0,0,0,1,
-		{{"leather",50},{"sticks",30}},
-		{{"leather",25},{"sticks",15}}),
+		{{"leather",50.f},{"sticks",30.f}},
+		{{"leather",25.f},{"sticks",15.f}}),
 		ObstacleStats(				//#1
 		2,{Vei2(1,1),Vei2(5,5)},100,-1,0,0,0,1,
-		{{"sapling",1}},
-		{{"wood",200},{"sticks",50},{"leafes",2},{"apples",5}},
+		{{"sapling",1.f}},
+		{{"wood",200.f},{"sticks",50.f},{"leafes",2.f},{"apples",5.f}},
 		{Vei2(0,0),Vei2(-2,-2) }),
 		ObstacleStats(				//#2
 		1,{Vei2(1,1)},100,-1,0,0,0,1,
-		{{"wood",10},{"sticks",30}},
-		{{"wood",5},{"sticks",15}},{Vei2(0,0)},
+		{{"wood",10.f},{"sticks",30.f}},
+		{{"wood",5.f},{"sticks",15.f}},{Vei2(0,0)},
 			10,5),
 		ObstacleStats(				//#3
 		1,{Vei2(4,4)},100,-1,10,10,3,3,
-		{{"stone",60},{"wood",100}},
-		{{"stone",30},{"wood",15}},{Vei2(0,0)},
+		{{"stone",60.f},{"wood",100.f}},
+		{{"stone",30.f},{"wood",15.f}},{Vei2(0,0)},
 			20,10),
 		ObstacleStats(				//#4
 		2,{Vei2(1,1),Vei2(5,5)},100,-1,0,0,0,1,
-		{{"sapling",1}},
-		{{"wood",200},{"sticks",50},{"leafes",2},{"apples",5}},
+		{{"sapling",1.f}},
+		{{"wood",200.f},{"sticks",50.f},{"leafes",2.f},{"apples",5.f}},
 		{Vei2(0,0),Vei2(-2,-2) }),
 		ObstacleStats(				//#5
 		1,{Vei2(1,1)},100,-1,0,0,0,1,
-		{{"cactus",6}},
-		{{"cactus",3}}),
+		{{"cactus",6.f}},
+		{{"cactus",3.f}}),
 		ObstacleStats(				//#6
 		1,{Vei2(1,1)},100,-1,0,0,0,1,
 		{},
-		{{"iron",3},{"gold",0.1}}),
+		{{"iron",3.f},{"gold",0.1f}}),
 		ObstacleStats(				//#7
 		1,{Vei2(1,1)},100,-1,0,0,0,1,
-		{{"stone",60}},
-		{{"stone",20},{"iron",0.5}}),
+		{{"stone",60.f}},
+		{{"stone",20.f},{"iron",0.5f}}),
 		ObstacleStats(				//#8
 		1,{Vei2(2,2)},100,-1,0,0,0,1,
-		{{"sapling",1}},
-		{{"wood",150},{"sticks",30},{"leafes",2}}),
+		{{"sapling",1.f}},
+		{{"wood",150.f},{"sticks",30.f},{"leafes",2.f}}),
 		ObstacleStats(				//#9
 		1,{Vei2(4,4)},100,-1,0,0,0,3,
-		{{"stone",80}},
-		{{"stone",40},{"iron",2},{"copper",1}}),
+		{{"stone",80.f}},
+		{{"stone",40.f},{"iron",2.f},{"copper",1.f}}),
 		ObstacleStats(				//#10
 		1,{Vei2(1,1)},100,10,1,10,1,0,
 		{},
@@ -905,133 +905,133 @@ namespace Settings
 		ObstacleStats(				//#11
 		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
-		{{"leather",25},{"meat",20}}),
+		{{"leather",25.f},{"meat",20.f}}),
 		ObstacleStats(				//#12
 		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
-		{{"leather",25},{"meat",20}}),
+		{{"leather",25.f},{"meat",20.f}}),
 		ObstacleStats(				//#13
 		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
-		{{"leather",25},{"meat",20}}),
+		{{"leather",25.f},{"meat",20.f}}),
 		ObstacleStats(				//#14
 		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
-		{{"fur",25},{"meat",20}}),
+		{{"fur",25.f},{"meat",20.f}}),
 		ObstacleStats(				//#15
 		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
-		{{"wool",3},{"meat",10}}),
+		{{"wool",3.f},{"meat",10.f}}),
 		ObstacleStats(				//#16
 		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
-		{{"feather",1},{"meat",20}}),
+		{{"feather",1.f},{"meat",20.f}}),
 		ObstacleStats(				//#17
 		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
-		{{"meat",20}}),
+		{{"meat",20.f}}),
 		ObstacleStats(				//#18
 		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
-		{{"feather",1},{"meat",20}}),
+		{{"feather",1.f},{"meat",20.f}}),
 		ObstacleStats(				//#19
 		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
-		{{"meat",20}}),
+		{{"meat",20.f}}),
 		ObstacleStats(				//#20
 		1,{Vei2(1,1)},100,5,1,10,1,0,
 		{},
-		{{"meat",20}}),
+		{{"meat",20.f}}),
 		ObstacleStats(				//#21
 		1,{Vei2(3,3)},100,-1,0,0,0,3,
-		{{"snow",50},{"wood",20}},
-		{{"snow",25},{"wood",10}}),
+		{{"snow",50.f},{"wood",20.f}},
+		{{"snow",25.f},{"wood",10.f}}),
 		ObstacleStats(				//#22
 		1,{Vei2(3,3)},100,-1,0,0,0,4,
-		{{"wood",700}},
-		{{"wood",350}}),
+		{{"wood",700.f}},
+		{{"wood",350.f}}),
 		ObstacleStats(				//#23
 		1,{Vei2(4,4)},100,-1,0,0,0,4,
-		{{"stone",400},{"wood",200}},
-		{{"stone",200},{"wood",100}}),
+		{{"stone",400.f},{"wood",200.f}},
+		{{"stone",200.f},{"wood",100.f}}),
 		ObstacleStats(				//#24
 		1,{Vei2(4,4)},100,-1,0,0, 0,4,
-		{{"bricks",200},{"wood",100},{"stone",100}},
-		{{"bricks",100},{"wood",50},{"stone",50} }),
+		{{"bricks",200.f},{"wood",100.f},{"stone",100.f}},
+		{{"bricks",100.f},{"wood",50.f},{"stone",50.f} }),
 		ObstacleStats(				//#25
 		1,{Vei2(4,4)},100,-1,0,0, 0,6,
-		{{"concrete",500} },
-		{{"concrete",250} }),
+		{{"concrete",500.f} },
+		{{"concrete",250.f} }),
 		ObstacleStats(				//#26
 		1,{Vei2(5,5)},100,-1,0,0, 0,6,
-		{{"slate",100},{"bricks",200},{"concrete",200} },
-		{{"slate",50},{"bricks",100},{"concrete",100} }),
+		{{"slate",100.f},{"bricks",200.f},{"concrete",200.f} },
+		{{"slate",50.f},{"bricks",100.f},{"concrete",100.f} }),
 		ObstacleStats(				//#27
 		1,{Vei2(4,4)},100,-1,15,5,3,3,
-		{{"wood",100}},
-		{{"wood",50}},
+		{{"wood",100.f}},
+		{{"wood",50.f}},
 			{ Vei2(0,0) },
 		0,0,8.f),
 		ObstacleStats(				//#28
 		1,{Vei2(3,3)},100,-1,0,0, 0,3,
-		{{"sapling",50},{"wood",50},{"stone",50} },
-		{{"sapling",25},{"wood",25},{"stone",25} }),
+		{{"sapling",50.f},{"wood",50.f},{"stone",50.f} },
+		{{"sapling",25.f},{"wood",25.f},{"stone",25.f} }),
 		ObstacleStats(				//#29
 		1,{Vei2(4,4)},100,-1,0,0, 0,3,
-		{{"wood",50},{"stone",30}},
-		{ {"wood",25},{"stone",25} }),
+		{{"wood",50.f},{"stone",30.f}},
+		{ {"wood",25.f},{"stone",25.f} }),
 		ObstacleStats(				//#30
 		1,{Vei2(3,3)},100,-1,0,0, 0,3,
-		{{"iron",10},{"stone",100},{"sticks",30}},
-		{ {"iron",5},{"stone",50},{"sticks",15} }),
+		{{"iron",10.f},{"stone",100.f},{"sticks",30.f}},
+		{ {"iron",5.f},{"stone",50.f},{"sticks",15.f} }),
 		ObstacleStats(				//#31
 		1,{Vei2(5,5)},100,-1,0,0,0,6,
-		{ {"iron",5},{"wood",200},{"stone",130}},
-		{ {"iron",2.5},{"wood",100},{"stone",65} }),
+		{ {"iron",5.f},{"wood",200.f},{"stone",130.f}},
+		{ {"iron",2.5f},{"wood",100.f},{"stone",65.f} }),
 		ObstacleStats(				//#32
 		1,{Vei2(3,3)},100,-1,0,0, 0,3,
-		{{"wood",100},{"feather",2}},
-		{{"wood",50},{"feather",1}}),
+		{{"wood",100.f},{"feather",2.f}},
+		{{"wood",50.f},{"feather",1.f}}),
 		ObstacleStats(				//#33
 		1,{Vei2(5,5)},100,-1,0,0, 0,6,
-		{{"stone",100},{"wood",200},{"concrete",80} },
-		{{"stone",50},{"wood",100},{"concrete",40} }),
+		{{"stone",100.f},{"wood",200.f},{"concrete",80.f} },
+		{{"stone",50.f},{"wood",100.f},{"concrete",40.f} }),
 		ObstacleStats(				//#34
 		1,{Vei2(3,3)},100,-1,0,0, 0,3,
-		{{"steel",50},{"wood",150}},
-		{{"steel",25},{"wood",75}}),
+		{{"steel",50.f},{"wood",150.f}},
+		{{"steel",25.f},{"wood",75.f}}),
 		ObstacleStats(				//#35
 		1,{Vei2(5,5)},100,-1,0,0, 0,6,
-		{{"steel",50},{"stone",150}},
-		{{"steel",25},{"stone",75}}),
+		{{"steel",50.f},{"stone",150.f}},
+		{{"steel",25.f},{"stone",75.f}}),
 		ObstacleStats(				//#36
 		1,{Vei2(5,5)},100,-1,0,0, 0,3,
-		{{"steel",50},{"iron",30},{"stone",100} },
-		{{"steel",25},{"iron",15},{"stone",50} }),
+		{{"steel",50.f},{"iron",30.f},{"stone",100.f} },
+		{{"steel",25.f},{"iron",15.f},{"stone",50.f} }),
 		ObstacleStats(				//#37
 		1,{Vei2(4,4)},100,-1,0,0, 0,6,
-		{{"steel",100},{"stone",100}},
-		{{"steel",50},{"stone",75}}),
+		{{"steel",100.f},{"stone",100.f}},
+		{{"steel",50.f},{"stone",75.f}}),
 		ObstacleStats(				//#38
 		1,{Vei2(5,5)},100,-1,0,0, 0,3,
-		{{"steel",50},{"iron",30},{"stone",100} },
-		{{"steel",25},{"iron",15},{"stone",50} }),
+		{{"steel",50.f},{"iron",30.f},{"stone",100.f} },
+		{{"steel",25.f},{"iron",15.f},{"stone",50.f} }),
 		ObstacleStats(				//#39
 		1,{Vei2(4,4)},100,-1,0,0, 0,6,
-		{{"steel",50},{"iron",30},{"stone",150} },
-		{{"steel",25},{"iron",15},{"stone",75} }),
+		{{"steel",50.f},{"iron",30.f},{"stone",150.f} },
+		{{"steel",25.f},{"iron",15.f},{"stone",75.f} }),
 		ObstacleStats(				//#40
 		1,{Vei2(3,3)},100,-1,0,0, 0,3,
-		{{"silicon",50},{"plastic",30}, {"copper",3}},
-		{{"silicon",25},{"plastic",15}, {"copper",1.5} }),
+		{{"silicon",50.f},{"plastic",30.f}, {"copper",3.f}},
+		{{"silicon",25.f},{"plastic",15.f}, {"copper",1.5f} }),
 		ObstacleStats(				//#41
 		1,{Vei2(3,3)},100,-1,0,0, 0,3,
-		{{"iron",50},{"plastic",30}, {"copper",3} },
-		{{"iron",25},{"plastic",15}, {"copper",3} }),
+		{{"iron",50.f},{"plastic",30.f}, {"copper",3.f} },
+		{{"iron",25.f},{"plastic",15.f}, {"copper",3.f} }),
 		ObstacleStats(				//#42
 		1,{Vei2(5,5)},100,-1,0,0, 0,6,
-		{{"concrete",250},{"computer chips",30}},
-		{{"concrete",125},{"computer chips",15}}),
+		{{"concrete",250.f},{"computer chips",30.f}},
+		{{"concrete",125.f},{"computer chips",15.f}}),
 		ObstacleStats(				//#43
 		1,{Vei2(1,1)},100,-1,0,0, 0,0,
 		{},
@@ -1054,16 +1054,16 @@ namespace Settings
 		{}),
 		ObstacleStats(				//#48
 		1,{Vei2(2,2)},100,-1,0,0, 0,3,
-		{{"lithium",50},{"copper",30},{"concrete",30} },
-		{{"lithium",25},{"copper",15},{"concrete",15} }),
+		{{"lithium",50.f},{"copper",30.f},{"concrete",30.f} },
+		{{"lithium",25.f},{"copper",15.f},{"concrete",15.f} }),
 		ObstacleStats(				//#49
 		1,{Vei2(5,5)},100,-1,0,0, 0,6,
-		{{"concrete",250},{"computer chips",30} },
-		{{"concrete",125},{"computer chips",15} }),
+		{{"concrete",250.f},{"computer chips",30.f} },
+		{{"concrete",125.f},{"computer chips",15.f} }),
 		ObstacleStats(				//#50
 		1,{Vei2(4,4)},100,-1,0,0, 0,3,
-		{{"stone",200},{"wood",200}},
-		{{"stone",100},{"wood",100}})
+		{{"stone",200.f},{"wood",200.f}},
+		{{"stone",100.f},{"wood",100.f}})
 	};
 	struct ItemStats
 	{

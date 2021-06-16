@@ -312,7 +312,7 @@ RectF Chunk::GetTileRect(Vei2 tilePos) const
 		return tilesRect(tilePos);
 	}
 	CtPos ctPos = PutCtPosInWorld(CtPos(chunkPos, tilePos), chunks->GetSize());
-	chunks->operator()(ctPos.x).GetTileRect(ctPos.y);
+	return chunks->operator()(ctPos.x).GetTileRect(ctPos.y);
 }
 bool Chunk::ObstaclePosAllowed(Vei2 tilePos, int type, int except, Matrix<int> placeCondMat) const
 {
@@ -852,12 +852,12 @@ bool Chunk::PlaceObstacle(Vei2 tilePos, Obstacle* o)
 }
 bool Chunk::PlaceObstacleWithoutCheck(Vei2 tilePos, Obstacle* o)
 {
-	if (Settings::obstaclesOn)
+	if (Settings::obstaclesOn && o != nullptr)
 	{
 		assert(TileIsInChunk(tilePos));
 		if (obstaclesIndexNotUsed.size() == 0)
 		{
-			int index = obstacles.size();
+			int index = (int)obstacles.size();
 			MarkObstacleMap(tilePos, Settings::obstacleStats[o->type].size[0], index);
 
 			if (ConstructionSite* conObst = dynamic_cast<ConstructionSite*>(o))
@@ -1117,7 +1117,7 @@ void Chunk::PlantExpand(CtPos ctPos, int type, int radius, int maxInRange, Team*
 	{
 		Vec2 dir = GigaMath::GetRandomPointOnUnitCircle<float>();
 		//dir = GigaMath::RotPointToOrigin<float>(dir.x, dir.y, )
-		Vei2 newPos = ctPos.y + (Vei2)(dir * 4 + dir * radius * GigaMath::GetRandomNormDistribution());
+		Vei2 newPos = ctPos.y + (Vei2)(dir * 4.f) + (Vei2)(dir * (float)radius * GigaMath::GetRandomNormDistribution());
 		CtPos ctPosSpawn = GetTilePosOutOfBounds(newPos);
 
 		Obstacle obstacle = Obstacle(ctPosSpawn.y, ctPosSpawn.x, type, resC, team);
@@ -1145,20 +1145,20 @@ void Chunk::ApplyObstacleEffect(Obstacle* obstacle)
 		CastHeal(CtPos(obstacle->chunkPos, obstacle->tilePos), 20, 10);
 break;
 	case 10:
-		team->GetMaterials().Add({ {"units",1} });
+		team->GetMaterials().Add({ {"units",1.f} });
 		break;
 	case 0:
 	case 21:
-		team->GetMaterials().Add({ {"maxUnits",2} });
+		team->GetMaterials().Add({ {"maxUnits",2.f} });
 		break;
 	case 22:
 	case 23:
 	case 24:
-		team->GetMaterials().Add({ {"maxUnits",4} });
+		team->GetMaterials().Add({ {"maxUnits",4.f} });
 		break;
 	case 25:
 	case 26:
-		team->GetMaterials().Add({ {"maxUnits",6} });
+		team->GetMaterials().Add({ {"maxUnits",6.f} });
 		break;
 	case 28:
 		for (int i = 0; i < rr.Calc(3); i++)
@@ -1171,7 +1171,7 @@ break;
 		}
 		break;
 	case 29:
-		team->GetMaterials().Add({ {"fish",2} });
+		team->GetMaterials().Add({ {"fish",2.f} });
 		break;
 	case 32:
 		if(rr.Calc(10)==0)
@@ -1225,7 +1225,7 @@ void Chunk::MakeRadomMove(Obstacle* obstacle)
 bool Chunk::MoveObstacle(Obstacle* obstacle, Vec2 dir)
 {
 	CtPos ctPos = obstacle->GetCtPos();
-	Vei2 newPos = ctPos.y + (Vei2)(dir * 4 + dir * obstacle->stepsLeft * GigaMath::GetRandomNormDistribution());
+	Vei2 newPos = ctPos.y + (Vei2)(dir * 4.f + dir * (float)obstacle->stepsLeft * GigaMath::GetRandomNormDistribution());
 	CtPos moveTo = PutCtPosInWorld(CtPos(ctPos.x,newPos),chunks->GetSize());
 	
 	if (chunks->operator()(moveTo.x).ObstaclePosAllowed(moveTo.y, Settings::obstacleStats[obstacle->type].size[0]))
@@ -1243,7 +1243,7 @@ void Chunk::AttackTile(CctPos pos, Obstacle* attacker)
 	Vei2 tilePos = pos.y * Settings::CellSplitUpIn + pos.z;
 	if (obstacleMap(tilePos) != -1)
 	{
-		obstacles[obstacleMap(tilePos)]->AttackObstacle(attacker, attacker->GetDmg(obstacles[obstacleMap(tilePos)].get()));
+		obstacles[obstacleMap(tilePos)]->AttackObstacle(attacker, (float)attacker->GetDmg(obstacles[obstacleMap(tilePos)].get()));
 
 		if (obstacles[obstacleMap(tilePos)]->hp <= 0)
 		{
