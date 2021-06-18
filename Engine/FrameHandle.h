@@ -68,9 +68,9 @@ public:
 
 class Component
 {
+protected:
 	bool visible = true;
 	int prio = 5;	//prio range [0-10] lower means first handled
-protected:
 	std::queue<FrameEvent>* buffer;
 	std::map<std::string, std::unique_ptr<Component>> comps;
 	void IncreasePrio()
@@ -128,14 +128,21 @@ public:
 	}
 	virtual void DrawComps(Graphics& gfx)
 	{
-		for (int prio = 10; prio >= 0; prio--)
+		std::vector<Component*> drawOrder;
+
+		std::for_each(comps.begin(), comps.end(), [&](auto& comp)		//auto = something like 'std::pair<std::string, std::unique_ptr<Component>>'
 		{
-			std::for_each(comps.begin(), comps.end(), [&](auto& comp)		//auto = something like 'std::pair<std::string, std::unique_ptr<Component>>'
-			{
-				if (comp.second->GetPrio() == prio && comp.second->activInStates[curState] == 1 && comp.second->IsVisible()) {
-					comp.second->Draw(gfx);
-				}
-			});
+			if (comp.second->activInStates[curState] == 1 && comp.second->IsVisible()) {
+				drawOrder.push_back(comp.second.get());
+			}
+		});
+		std::sort(drawOrder.begin(), drawOrder.end(), [&](Component* obst1, Component* obst2)
+		{
+			return obst1->GetPrio() > obst2->GetPrio();
+		});
+		for (int i = 0; i < drawOrder.size(); i++)
+		{
+			drawOrder[i]->Draw(gfx);
 		}
 	}
 	Component* GetComp(std::string key) {
@@ -175,7 +182,7 @@ public:
 	{
 		this->prio = prio;
 	}
-	int GetPrio()
+	int GetPrio()const
 	{
 		return prio;
 	}
@@ -320,16 +327,19 @@ protected:
 	Animation* aHover = nullptr;
 	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)override
 	{
-		Component::HandleMouseInputFrame(e, interact);
-		if (GetPos().Contains((Vec2)e.GetPos()) && e.GetType() == Mouse::Event::Type::LRelease && interact)
+		if (visible)
 		{
-			if (bFunc != nullptr)
+			Component::HandleMouseInputFrame(e, interact);
+			if (GetPos().Contains((Vec2)e.GetPos()) && e.GetType() == Mouse::Event::Type::LRelease && interact)
 			{
-				return bFunc(buffer, this);
-			}
-			else if (ppF != nullptr)
-			{
-				return true;
+				if (bFunc != nullptr)
+				{
+					return bFunc(buffer, this);
+				}
+				else if (ppF != nullptr)
+				{
+					return true;
+				}
 			}
 		}
 		return false;
@@ -342,15 +352,18 @@ public:
 	Button(RectF pos, Animation* a, Animation* aHover, std::vector<int> activInStates, Font* f, Component* parentC, std::queue<FrameEvent>* buffer);
 	void Draw(Graphics& gfx) override
 	{
-		if (mouseHovers)
+		if (visible)
 		{
-			gfx.DrawSurface((RectI)GetPos(), aHover->GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+			if (mouseHovers)
+			{
+				gfx.DrawSurface((RectI)GetPos(), aHover->GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+			}
+			else
+			{
+				gfx.DrawSurface((RectI)GetPos(), a->GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+			}
+			Text::Draw(gfx);
 		}
-		else
-		{
-			gfx.DrawSurface((RectI)GetPos(), a->GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-		}
-		Text::Draw(gfx);
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
@@ -812,11 +825,12 @@ public:
 
 bool B1(std::queue<FrameEvent>* buffer, Component* caller);
 bool B2(std::queue<FrameEvent>* buffer, Component* caller);
-bool BBuildMode(std::queue<FrameEvent>* buffer, Component* caller);
+
+bool BBuildMode(std::queue<FrameEvent>* buffer, Component* caller); 
+bool BCraftingQueue(std::queue<FrameEvent>* buffer, Component* caller);
 
 bool BNextTurn(std::queue<FrameEvent>* buffer, Component* caller);
-bool BBuildMenu(std::queue<FrameEvent>* buffer, Component* caller);
-bool BOpenGamefield(std::queue<FrameEvent>* buffer, Component* caller);
+bool BLoadScene(std::queue<FrameEvent>* buffer, Component* caller);
 bool BSetAttackMode(std::queue<FrameEvent>* buffer, Component* caller);
 
 bool BSetObstacleState(std::queue<FrameEvent>* buffer, Component* caller);
@@ -1177,8 +1191,17 @@ public:
 			static_cast<Button*>(comps["b_NextTurn"].get())->bFunc = BNextTurn;
 
 			comps["b_buildScene"] = std::make_unique<Button>(Button(RectF(Vec2(30, 60), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], { 0,0 }, &resC->tC.fonts[0], nullptr, &buffer));
-			static_cast<Button*>(comps["b_buildScene"].get())->bFunc = BBuildMenu;
-			static_cast<Button*>(comps["b_buildScene"].get())->text = Settings::lang_build[Settings::lang];
+			Button* button = static_cast<Button*>(comps["b_buildScene"].get());
+			button->extra1 = 1;
+			button->bFunc = BLoadScene;
+			button->text = Settings::lang_build[Settings::lang];
+
+			comps["b_wroughScene"] = std::make_unique<Button>(Button(RectF(Vec2(30, 100), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], { 0,0 }, &resC->tC.fonts[0], nullptr, &buffer));
+			button = static_cast<Button*>(comps["b_wroughScene"].get());
+			button->extra1 = 2;
+			button->SetVisible(false);
+			button->bFunc = BLoadScene;
+			button->text = Settings::lang_forge[Settings::lang];
 			/*
 			Frame* fButtonBuild = AddFrame(RectF(Vec2(30, 30), 60, 30), 1);																			//BUILD MENU BUTTON
 			fButtonBuild->s = &resC->tC.windowsFrame[4].GetCurSurface();
@@ -1232,7 +1255,7 @@ public:
 
 			for (int i = 0; i < 9; i++)
 			{
-				GrabImage* image = fInventoryBox->AddGrabImage(RectF(Vec2(10.f + (int)(i%3) * 60.f, 10.f + (int)(i / 3) * 60.f), 50.f, 50.f), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item"+std::to_string(i), { 1,1 });
+				GrabImage* image = CreateGIWithHpBar(fInventoryBox, RectF(Vec2(10.f + (int)(i % 3) * 60.f, 10.f + (int)(i / 3) * 60.f), 50.f, 50.f), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
 				image->SetVisible(false);
 				image->extra1 = i;
 				image->extraS1 = "inventory swap box";
@@ -1244,7 +1267,7 @@ public:
 
 			for (int i = 0; i < 25; i++)
 			{
-				GrabImage* image = fInventoryStorage->AddGrabImage(RectF(Vec2(10.f + (int)(i % 5) * 60, 10.f + (int)(i / 5) * 60), 50.f, 50.f), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
+				GrabImage* image = CreateGIWithHpBar(fInventoryStorage, RectF(Vec2(10.f + (int)(i % 5) * 60, 10.f + (int)(i / 5) * 60), 50.f, 50.f), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
 				image->SetVisible(false);
 				image->extra1 = i;
 				image->extraS1 = "inventory swap storage";
@@ -1261,7 +1284,7 @@ public:
 
 			for (int i = 0; i < 6; i++)
 			{
-				GrabImage* image = fInventoryWrought->AddGrabImage(RectF(Vec2(10.f + (int)(i % 3) * 60.f, 40.f + (int)(i / 3) * 90.f), 50.f, 50.f), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
+				GrabImage* image = CreateGIWithHpBar(fInventoryWrought, RectF(Vec2(10.f + (int)(i % 3) * 60.f, 40.f + (int)(i / 3) * 90.f), 50.f, 50.f), &resC->tC.items[0], &resC->tC.items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
 				image->SetVisible(false);
 				image->extra1 = i;
 				image->extraS1 = "inventory swap wrought";
@@ -1269,7 +1292,6 @@ public:
 		}
 		else if(scene == 1)
 		{
-		
 			std::vector<int> a = { 0,1 };  
 			PageFrame * fBuildSelection = AddPageFrame("f_bg",RectF(Vec2(0, 0), Graphics::ScreenWidth, Graphics::ScreenHeight), 1, 4);															//build selection menu
 			fBuildSelection->s = &resC->tC.windowsFrame[5].GetCurSurface();
@@ -1279,7 +1301,8 @@ public:
 			fBuildSelection->AddTextPF(Settings::lang_housing[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->tC.fonts[0], Colors::Black, "HousingH", { 1 }, { 1,0,0,0 });
 
 			Button* b_back = fBuildSelection->AddButtonPF(RectF(Vec2(30, 60), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_buildback", &resC->tC.fonts[0], { 1 }, { 1,1,1,1 });
-			b_back->bFunc = BOpenGamefield;
+			b_back->extra1 = 0;
+			b_back->bFunc = BLoadScene;
 			b_back->text = Settings::lang_back[Settings::lang];
 
 			CreateBuildOption(RectF(Vec2(60, 120), 180, 60), 0, fBuildSelection, { 1,0,0,0 },world);
@@ -1318,6 +1341,26 @@ public:
 			CreateBuildOption(RectF(Vec2(440, 260), 180, 60), 50, fBuildSelection, { 0,1,0,0 }, world);
 
 		}
+		else if (scene == 2)
+		{
+			std::vector<int> a = { 0,1 };
+			Frame* fCraftSelection = AddFrame("f_craftMenu", RectF(Vec2(0, 0), Graphics::ScreenWidth, Graphics::ScreenHeight), 1);//AddPageFrame("f_bg", RectF(Vec2(0, 0), Graphics::ScreenWidth, Graphics::ScreenHeight), 1, 4);															//build selection menu
+			fCraftSelection->s = &resC->tC.windowsFrame[5].GetCurSurface();
+			fCraftSelection->SetMoveable(false);
+			fCraftSelection->AddText(Settings::lang_forge[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->tC.fonts[0], Colors::Black, "ForgeH", { 1 });
+
+			Button* b_back = fCraftSelection->AddButton(RectF(Vec2(30, 100), 60, 30), &resC->tC.windowsFrame[6], &resC->tC.windowsFrame[6], "b_buildback", &resC->tC.fonts[0], { 1 });
+			b_back->extra1 = 0;
+			b_back->bFunc = BLoadScene;
+			b_back->text = Settings::lang_back[Settings::lang];
+
+			CreateCraftOption(RectF(Vec2(60, 190), 180, 60), 0, fCraftSelection, { 1,0,0,0 }, world);
+			CreateCraftOption(RectF(Vec2(60, 260), 180, 60), 1, fCraftSelection, { 1,0,0,0 }, world);
+			CreateCraftOption(RectF(Vec2(60, 330), 180, 60), 2, fCraftSelection, { 1,0,0,0 }, world);
+			CreateCraftOption(RectF(Vec2(60, 400), 180, 60), 9, fCraftSelection, { 1,0,0,0 }, world);
+			CreateCraftOption(RectF(Vec2(60, 470), 180, 60), 10, fCraftSelection, { 1,0,0,0 }, world);
+			CreateCraftOption(RectF(Vec2(60, 540), 180, 60), 11, fCraftSelection, { 1,0,0,0 }, world);
+		}
 	}
 	//HELP CREATE FUNCTIONS
 	Frame* CreateBuildOption(RectF pos, int obstacleType, PageFrame* parentC, std::vector<int> activOnPages, World* world)
@@ -1337,6 +1380,33 @@ public:
 			//std::map<st::string,float> check ={{}}
 			if (world->GetPlayer()->GetMaterials().Has({ { res->first,res->second } }))
 				frame->AddText("-"+res->first+": x"+std::to_string(res->second)+" "+ Settings::lang_kilogram[Settings::lang], RectF(Vec2(70.f, 20.f +i*10.f), 50.f, 8.f), 7, &resC->tC.fonts[0], Colors::Green, key + "res"+std::to_string(i), { 1 });
+			else
+			{
+				frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(70.f, 20.f + i * 10.f), 50.f, 8.f), 7, &resC->tC.fonts[0], Colors::Red, key + "res" + std::to_string(i), { 1 });
+			}
+			i++;
+		}
+		//Frame* frame = AddFrame(key, pos, 0);
+		return nullptr;// static_cast<Frame*>(comps[key].get());
+	}
+	Frame* CreateCraftOption(RectF pos, int itemType, Frame* parentC, std::vector<int> activOnPages, World* world)
+	{
+		std::string key = Settings::GetItemString(itemType);
+		//Frame* frame = parentC->AddFramePF(pos, key, { 1 }, activOnPages);
+		Frame* frame = parentC->AddFrame(pos,1,resC,parentC,&buffer, key, { 1 });
+		frame->s = &resC->tC.windowsFrame[7].GetCurSurface();
+		frame->extra1 = itemType;
+		frame->bFunc = BCraftingQueue;
+		frame->hitable = true;
+		frame->AddText(Settings::GetItemString(itemType), RectF(Vec2(60, 5), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, key + "H", { 1 });
+		std::map<std::string, float> neededRes = Settings::itemStats[itemType].neededResToCraft;
+		std::map<std::string, float>::iterator res;
+		int i = 0;
+		for (res = neededRes.begin(); res != neededRes.end(); res++)
+		{
+			//std::map<st::string,float> check ={{}}
+			if (world->GetPlayer()->GetMaterials().Has({ { res->first,res->second } }))
+				frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(70.f, 20.f + i * 10.f), 50.f, 8.f), 7, &resC->tC.fonts[0], Colors::Green, key + "res" + std::to_string(i), { 1 });
 			else
 			{
 				frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(70.f, 20.f + i * 10.f), 50.f, 8.f), 7, &resC->tC.fonts[0], Colors::Red, key + "res" + std::to_string(i), { 1 });
@@ -1437,6 +1507,10 @@ public:
 		Frame* f_InventoryWrought = static_cast<Frame*>(comps["f_InventoryWrought"].get());
 		f_InventoryWrought->SetVisible(false);
 
+		//buttons
+		Button* b_wroughScene = static_cast<Button*>(comps["b_wroughScene"].get());
+		b_wroughScene->SetVisible(false);
+
 		if (obst != nullptr)
 		{
 			if (Settings::anyOfCreature(obst->type))
@@ -1460,24 +1534,7 @@ public:
 				
 				Inventory& inv = *obst->inv;
 
-				for (int i = 0; i < 8; i++)
-				{
-					std::string key = "gI_item" + std::to_string(i);
-					if (inv.GetItem(i)->get() != nullptr)
-					{
-						f_Inventory->GetComp(key)->SetVisible(true);
-						static_cast<GrabImage*>(f_Inventory->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
-						if (inv.GetItem(i)->get()->GetDurability() != -1)
-						{
-							float percentage = (float)inv.GetItem(i)->get()->GetDurability() / Settings::itemStats[inv.GetItem(i)->get()->GetId()].durability;
-							static_cast<Image*>(f_Inventory->GetComp(key)->GetComp(key + "HpIs"))->SetDrawPercent(Vec2(percentage, 1.f));
-						}
-					}
-					else
-					{
-						f_Inventory->GetComp(key)->SetVisible(false);
-					}
-				}
+				UpdateInventoryComps(obst->inv.get(), f_Inventory);
 			}
 			if (obst->type == 3)
 			{
@@ -1528,56 +1585,47 @@ public:
 			if (storage->type == 6)
 			{
 				f_InventoryBox->SetVisible(true);
-				Inventory& inv = *storage->inv;
-				for (int i = 0; i < 9; i++)
-				{
-					std::string key = "gI_item" + std::to_string(i);
-					if (inv.GetItem(i)->get() != nullptr)
-					{
-						f_InventoryBox->GetComp(key)->SetVisible(true);
-						static_cast<GrabImage*>(f_InventoryBox->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
-					}
-					else
-					{
-						f_InventoryBox->GetComp(key)->SetVisible(false);
-					}
-				}
+				UpdateInventoryComps(storage->inv.get(), f_InventoryBox);
 			}
 			if (storage->type == 30)
 			{
 				f_InventoryWrought->SetVisible(true);
-				Inventory& inv = *storage->inv;
-				for (int i = 0; i < 6; i++)
-				{
-					std::string key = "gI_item" + std::to_string(i);
-					if (inv.GetItem(i)->get() != nullptr)
-					{
-						f_InventoryWrought->GetComp(key)->SetVisible(true);
-						static_cast<GrabImage*>(f_InventoryWrought->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
-					}
-					else
-					{
-						f_InventoryWrought->GetComp(key)->SetVisible(false);
-					}
-				}
+				b_wroughScene->SetVisible(true);
+				UpdateInventoryComps(storage->inv.get(), f_InventoryWrought);
+
 			}
 			if (storage->type == 50)
 			{
 				f_InventoryStorage->SetVisible(true);
-				Inventory& inv = *storage->inv;
-				for (int i = 0; i < 25; i++)
+				UpdateInventoryComps(storage->inv.get(), f_InventoryStorage);
+			}
+		}
+	}
+	void UpdateInventoryComps(Inventory* inv, Component* parentC)
+	{
+		for (int i = 0; i < inv->GetSize(); i++)
+		{
+			std::string key = "gI_item" + std::to_string(i);
+			if (inv->GetItem(i)->get() != nullptr)
+			{
+				parentC->GetComp(key)->SetVisible(true);
+				static_cast<GrabImage*>(parentC->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv->GetItem(i)->get()->GetId()]);
+				if (inv->GetItem(i)->get()->GetDurability() != -1 && inv->GetItem(i)->get()->GetDurability() != Settings::itemStats[inv->GetItem(i)->get()->GetId()].durability)
 				{
-					std::string key = "gI_item" + std::to_string(i);
-					if (inv.GetItem(i)->get() != nullptr)
-					{
-						f_InventoryStorage->GetComp(key)->SetVisible(true);
-						static_cast<GrabImage*>(f_InventoryStorage->GetComp(key))->SetAnimationOfBouth(&resC->tC.items[inv.GetItem(i)->get()->GetId()]);
-					}
-					else
-					{
-						f_InventoryStorage->GetComp(key)->SetVisible(false);
-					}
+					static_cast<Image*>(parentC->GetComp(key)->GetComp(key + "HpIs"))->SetVisible(true);
+					static_cast<Image*>(parentC->GetComp(key)->GetComp(key + "Hp"))->SetVisible(true);
+					float percentage = (float)inv->GetItem(i)->get()->GetDurability() / Settings::itemStats[inv->GetItem(i)->get()->GetId()].durability;
+					static_cast<Image*>(parentC->GetComp(key)->GetComp(key + "HpIs"))->SetDrawPercent(Vec2(percentage, 1.f));
 				}
+				else
+				{
+					static_cast<Image*>(parentC->GetComp(key)->GetComp(key + "HpIs"))->SetVisible(false);
+					static_cast<Image*>(parentC->GetComp(key)->GetComp(key + "Hp"))->SetVisible(false);
+				}
+			}
+			else
+			{
+				parentC->GetComp(key)->SetVisible(false);
 			}
 		}
 	}

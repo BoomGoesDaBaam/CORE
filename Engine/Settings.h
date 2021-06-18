@@ -126,6 +126,8 @@ namespace Settings
 	static const std::vector<int> anyOfAnimalsVec = { 11,12,13,14,15,16,17,18,19,20 };
 	static const std::vector<int> anyUnitsVec = { 10 };
 	static const std::vector<int> anyStorageVec = { 6, 30, 50 };
+	static const std::vector<int> anyAxeBonusVec = { 0,1,2,4,5,6,8,27,28,29,30,31,32,33,34, };
+	static const std::vector<int> anyPickaxeBonusVec = { 0,2,3,5,6,7,8,9,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50 };
 	//Graphic options
 	//static bool displayObstacles = true;
 	static int probToGrow = 50;
@@ -153,6 +155,7 @@ namespace Settings
 	const std::string lang_decoration[] = { "Decoration", "Dekoration" };
 	const std::string lang_back[] = { "back", "Zurueck" };
 	const std::string lang_build[] = { "build", "bauen" };
+	const std::string lang_forge[] = { "forge", "Schmieden" };
 	const std::string lang_attack[] = { "attack", "Angreifen" };
 
 	const std::string lang_constructionMaterials[] = { "Construction materials", "Baumaterialien" };
@@ -184,7 +187,9 @@ namespace Settings
 	const std::string lang_ceramics[] = { "ceramics", "Keramik" };
 	const std::string lang_bricks[] = { "bricks", "Ziegeln" };
 	const std::string lang_slate[] = { "slate", "schiefer" };
-	
+	const std::string lang_gunpowder[] = { "gunpowder", "Schiesspulver" };
+	const std::string lang_silk[] = { "silk", "Seide" };
+
 	const std::string lang_leafes[] = { "leafes", "Blaetter" };
 	const std::string lang_corals[] = { "corals", "Korallen" };
 	const std::string lang_sticks[] = { "sticks", "Stoecke" };
@@ -245,6 +250,21 @@ namespace Settings
 	const std::string lang_chop[] = { "chops", "zerhacken" };
 	const std::string lang_craftedItem[] = { "crafted items", "Erstellte Items" };
 	const std::string lang_reparation[] = { "reparation", "Reperatur" };
+	
+	//Items
+	const std::string lang_ironAxe[] = { "iron axe", "Eisenaxt" };
+	const std::string lang_ironSword[] = { "iron sword", "Eisenschwert" };
+	const std::string lang_ironShield[] = { "iron shield", "Eisenschild" };
+	const std::string lang_chainOfEase[] = { "chain of ease", "Kette der Leichtigkeit" };
+	const std::string lang_RingOfRejuvenation[] = { "ring of rejuvenation", "Ring der verjuengung" };
+	const std::string lang_naturalWonder[] = { "natural wonder", "Naturwunder" };
+	const std::string lang_tulip[] = { "tulip", "Tulpe" };
+	const std::string lang_rose[] = { "rose ", "Rose" };
+	const std::string lang_lily[] = { "lily", "Lilie" };
+	const std::string lang_ironArmor[] = { "iron armor", "Eisenruestung" };
+	const std::string lang_ironPickaxe[] = { "iron pickaxe", "Eisenspitzhacke" };
+	const std::string lang_bow[] = { "bow", "Bogen" };
+	const std::string lang_sniper[] = { "sniper", "Scharfschuetzengewehr" };
 
 	//Animals
 	const std::string lang_deer[] = { "deer", "Hirsch" };
@@ -442,6 +462,14 @@ namespace Settings
 		{
 		return lang_feather[lang];
 		}
+		else if (ressource == "silk")
+		{
+		return lang_silk[lang];
+		}
+		else if (ressource == "gunpowder")
+		{
+		return lang_gunpowder[lang];
+		}
 		else
 		{
 		return "ERROR:"+ressource + " not supported in Method TranslateRessources!";
@@ -457,6 +485,14 @@ namespace Settings
 	static bool anyOfStorage(int type)
 	{
 		return std::any_of(std::begin(anyStorageVec), std::end(anyStorageVec), [&](const int val) {return type == val; });
+	}
+	static bool anyOfAxeBonus(int type)
+	{
+		return std::any_of(std::begin(anyAxeBonusVec), std::end(anyAxeBonusVec), [&](const int val) {return type == val; });
+	}
+	static bool anyOfPickaxeBonus(int type)
+	{
+		return std::any_of(std::begin(anyPickaxeBonusVec), std::end(anyPickaxeBonusVec), [&](const int val) {return type == val; });
 	}
 	static bool anyOfChangeSizeWhenNear(int type)		//trees that have a diffrent look when unit is nearby
 	{
@@ -794,10 +830,61 @@ namespace Settings
 			return lang_storage[lang];
 			break;
 		default:
-			return "Settings::GetObstacleString needs an update";
+			return "Settings::GetObstacleString needs an update for Type: " + type;
 			break;
 		}
 		return lang_unknown[lang];
+	}
+	static std::string GetItemString(int type)
+	{
+		switch (type)
+		{
+		case -1:
+			return lang_noInformation[lang];
+			break;
+		case 0:
+			return lang_ironAxe[lang];
+			break;
+		case 1:
+			return lang_ironSword[lang];
+			break;
+		case 2:
+			return lang_ironShield[lang];
+			break;
+		case 3:
+			return lang_chainOfEase[lang];
+			break;
+		case 4:
+			return lang_RingOfRejuvenation[lang];
+			break;
+		case 5:
+			return lang_naturalWonder[lang];
+			break;
+		case 6:
+			return lang_tulip[lang];
+			break;
+		case 7:
+			return lang_rose[lang];
+			break;
+		case 8:
+			return lang_lily[lang];
+			break;
+		case 9:
+			return lang_ironArmor[lang];
+			break;
+		case 10:
+			return lang_ironPickaxe[lang];
+			break;
+		case 11:
+			return lang_bow[lang];
+			break;
+		case 12:
+			return lang_sniper[lang];
+			break;
+		default:
+			return "Settings::GetItemString needs an update for Type: "+type;
+			break;
+		}
 	}
 	struct ObstacleStats
 	{
@@ -1067,34 +1154,105 @@ namespace Settings
 	};
 	struct ItemStats
 	{
-		ItemStats(int durability = -1)
+		ItemStats(int durability, std::map<std::string, float> neededResToCraft, int turns2Craft, std::map<std::string, float> neededResToRepair, int durabilityHealPerRepair)
 			:
-			durability(durability)
+			durability(durability),
+			neededResToCraft(neededResToCraft),
+			turns2Craft(turns2Craft),
+			neededResToRepair(neededResToRepair),
+			durabilityHealPerRepair(durabilityHealPerRepair)
 		{}
 
 		int durability;
+		std::map<std::string, float> neededResToCraft = { {"leather",50.f},{"sticks",30.f} };
+		int turns2Craft;
+		std::map<std::string, float> neededResToRepair = { {"leather",50.f},{"sticks",30.f} };
+		int durabilityHealPerRepair = 5;
 	};
 	static const ItemStats itemStats[] = {
-		ItemStats(10), //#0
-		ItemStats(10),
-		ItemStats(10),
-		ItemStats(10),
-		ItemStats(10),
-		ItemStats(),// #5
-		ItemStats(),
-		ItemStats(),
-		ItemStats(10),
-		ItemStats(10),
-		ItemStats(10),// #10
-		ItemStats(10),
-		ItemStats(10),
-		ItemStats(),
-		ItemStats(),
-		ItemStats(),// #15
-		ItemStats(),
-		ItemStats(),
-		ItemStats(),
-		ItemStats(),
-		ItemStats()//#20
+		ItemStats(10,//#0
+			{ {"wood",1.f},{"iron",1.f} },5,
+			{ {"wood",0.5f},{"iron",0.25f} },
+			5),
+		ItemStats(10,
+			{ {"wood",1.f},{"iron",1.f} },5,
+			{ {"wood",0.5f},{"iron",0.25f} },
+			5),
+		ItemStats(10,
+			{ {"iron",2.f} },5,
+			{ {"iron",0.5f} },
+			5),
+		ItemStats(10,
+			{ {"iron",1.f} },5,
+			{ {"iron",0.5f} },
+			5),
+		ItemStats(10,
+			{ {"gold",1.f},{"emerald",1.f} },5,
+			{ {"gold",0.25f} },
+			5),
+		ItemStats(-1,// #5
+			{ {"sticks",1.f},{"sapling",1.f} },5,
+			{ {"sticks",0.5f},{"sapling",0.25f} },
+			5),
+		ItemStats(-1,
+			{ {"wood",1.f},{"iron",1.f} },5,
+			{ {"wood",0.5f},{"iron",0.25f} },
+			5),
+		ItemStats(-1,
+			{ {"wood",1.f},{"iron",1.f} },5,
+			{ {"wood",0.5f},{"iron",0.25f} },
+			5),
+		ItemStats(10,
+			{ {"wood",1.f},{"iron",1.f} },5,
+			{ {"wood",0.5f},{"iron",0.25f} },
+			5),
+		ItemStats(10,
+			{ {"iron",3.f} },5,
+			{ {"iron",1.f} },
+			5),
+		ItemStats(10,// #10
+			{ {"iron",1.f} },5,
+			{ {"iron",0.25f} },
+			5),
+		ItemStats(10,
+			{ {"wood",1.f},{"silk",1.f} },5,
+			{ {"wood",0.5f},{"silk",0.25f} },
+			5),
+		ItemStats(10,
+			{ {"gunpowder",1.f},{"iron",2.f} },5,
+			{ {"gunpowder",0.5f},{"iron",1.f} },
+			5),
+		ItemStats(-1,
+			{ {"wood",1.f},{"iron",1.f} },5,
+			{ {"wood",0.5f},{"iron",0.25f} },
+			5),
+		ItemStats(-1,
+			{ {"wood",1.f},{"iron",1.f} },5,
+			{ {"wood",0.5f},{"iron",0.25f} },
+			5),
+		ItemStats(-1,
+			{ {"wood",1.f},{"iron",1.f} },5,
+			{ {"wood",0.5f},{"iron",0.25f} },
+			5),// #15
+		ItemStats(-1,
+			{ {"wood",1.f},{"iron",1.f} },5,
+			{ {"wood",0.5f},{"iron",0.25f} },
+			5),
+		ItemStats(-1,
+			{ {"wood",1.f},{"iron",1.f} },5,
+			{ {"wood",0.5f},{"iron",0.25f} },
+			5),
+		ItemStats(-1,
+			{ {"wood",1.f},{"iron",1.f} },5,
+			{ {"wood",0.5f},{"iron",0.25f} },
+			5),
+		ItemStats(-1,
+			{ {"wood",1.f},{"iron",1.f} },5,
+			{ {"wood",0.5f},{"iron",0.25f} },
+			5),
+		ItemStats(-1,
+			{ {"wood",1.f},{"iron",1.f} },5,
+			{ {"wood",0.5f},{"iron",0.25f} },
+			5)//#20
 	};
 };

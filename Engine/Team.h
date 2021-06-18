@@ -27,6 +27,7 @@ struct Materials
 		values["amber"] = 200;
 		values["silicon"] = 200; //not added to showresorrces
 		values["lithium"] = 200; //not added to showresorrces
+		values["gunpowder"] = 200; //not added to showresorrces
 
 		//Materials
 		values["steel"] = 200;
@@ -36,7 +37,7 @@ struct Materials
 		values["ceramics"] = 200;
 		values["snow"] = 100;
 		values["bricks"] = 2000; 
-		values["slate"] = 1011; 
+		values["slate"] = 1011;
 
 		//Organics
 		values["corals"] = 200;
@@ -54,6 +55,7 @@ struct Materials
 		values["feather"] = 200;		//not added to showresorrces
 		values["maxUnits"] = 5;		//not added to showresorrces
 		values["units"] = 5;		//not added to showresorrces
+		values["silk"] = 100;		//not added to showresorrces
 	}
 	bool Has(std::map<std::string, float> lookFor)
 	{
@@ -182,6 +184,17 @@ public:
 	{
 		return durability;
 	}
+	void Repair(int deltaDur)
+	{
+		if (durability + deltaDur >= Settings::itemStats[itemId].durability)
+		{
+			durability = Settings::itemStats[itemId].durability;
+		}
+		else
+		{
+			durability += deltaDur;
+		}
+	}
 	bool Used()
 	{
 		if (durability > 0)
@@ -203,7 +216,7 @@ class Inventory
 	int type = -1;
 public:
 	Inventory() = delete;
-	Inventory(int type)			//type == 0 => Unit Inventory		type == 1 => Box Inventory		type == 2 => Storage Inventory
+	Inventory(int type)			//type == 0 => Unit Inventory		1 => Box Inventory		2 => Storage Inventory		3 => Wrough
 		:
 		type(type)
 	{
@@ -230,6 +243,14 @@ public:
 		if (type == 2)
 		{
 			for (int i = 0; i < 25; i++)
+			{
+				slotsType.push_back(Slot::Type::Simple);
+				slots.push_back(nullptr);
+			}
+		}
+		if (type == 3)
+		{
+			for (int i = 0; i < 6; i++)
 			{
 				slotsType.push_back(Slot::Type::Simple);
 				slots.push_back(nullptr);
@@ -301,6 +322,10 @@ public:
 			}
 		}
 		return false;
+	}
+	int GetSize()
+	{
+		return (int)slots.size();
 	}
 };
 class Team

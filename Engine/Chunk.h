@@ -65,6 +65,44 @@ public:
 		return heals;
 	}
 };
+class CraftTrait
+{
+protected:
+	int itemID = -1;
+	int turnsLeft = -1;
+	bool isCrafting = false;
+public:
+	CraftTrait() = default;
+	void SetItem2Craft(int itemID)
+	{
+		this->itemID = itemID;
+		turnsLeft = Settings::itemStats[itemID].turns2Craft;
+		isCrafting = true;
+	}
+	int TurnsLeft()
+	{
+		return turnsLeft;
+	}
+	void TurnPassed()
+	{
+		if (turnsLeft > 0)
+		{
+			turnsLeft--;
+		}
+	}
+	int GetItemID()
+	{
+		return itemID;
+	}
+	bool IsCrafting()
+	{
+		return isCrafting;
+	}
+	void StoppedCrafting()
+	{
+		isCrafting = false;
+	}
+};
 class AttackTrait
 {
 protected:
@@ -125,7 +163,8 @@ public:
 	std::unique_ptr<EducationTrait> education = nullptr;
 	std::unique_ptr<HealTrait> heal = nullptr;
 	std::unique_ptr<AttackTrait> attack = nullptr;
-	
+	std::unique_ptr<CraftTrait> craft = nullptr;
+
 	//
 	std::unique_ptr<Inventory> inv = nullptr;
 	//Obstacle() {}
@@ -154,6 +193,8 @@ public:
 			heal = std::make_unique<HealTrait>(*other.heal.get());
 		if (other.attack != nullptr)
 			attack = std::make_unique<AttackTrait>(*other.attack.get());
+		if (other.craft != nullptr)
+			craft = std::make_unique<CraftTrait>(*other.craft.get());
 		//Inventory
 		if (other.inv != nullptr)
 			inv = std::make_unique<Inventory>(*other.inv.get());
@@ -208,6 +249,10 @@ public:
 				attack->SetReloadNextTurn(false);
 			}
 		}
+		if (type == 30)
+		{
+			craft = std::make_unique<CraftTrait>();
+		}
 		//Add Inventory
 		if (Settings::anyOfCreature(type))
 		{
@@ -226,7 +271,7 @@ public:
 		if (type == 30)
 		{
 			RandyRandom rr;
-			inv = std::make_unique<Inventory>(1);
+			inv = std::make_unique<Inventory>(3);
 			int nItem = 1;
 			for (int i = 0; i < nItem; i++)
 			{
@@ -347,6 +392,10 @@ public:
 	{
 		return CtPos(chunkPos, tilePos);
 	}
+	Vei2 GetPosFlat()
+	{
+		return chunkPos * Settings::CellSplitUpIn * Settings::chunkHasNCells + tilePos;
+	}
 	CctPos GetCctPos()
 	{
 		return CctPos(chunkPos, tilePos / Settings::CellSplitUpIn, tilePos % Settings::CellSplitUpIn);
@@ -354,62 +403,91 @@ public:
 	int GetDmg(const Obstacle* victim)
 	{
 		float dmg = (float)Settings::obstacleStats[type].attackDmg; //* ( (float)hp / Settings::obstacleStats[type].baseHp);
+		if (inv->HasItemNotBroken(0))						//axe
+		{
+			if (Settings::anyOfAxeBonus(victim->type))
+			{
+				dmg *= 3.f;
+				inv->ItemUsed(0);
+			}
+			else if (Settings::anyOfCreature(victim->type))
+			{
+				dmg *= 1.5f;
+				inv->ItemUsed(0);
+			}
+		}
 		if (Settings::anyOfPlants(victim->type))
 		{
 			dmg *= Settings::obstacleStats[type].dmgAgainstPlants;
 		}
 		if (inv->HasItemNotBroken(1) && Settings::anyOfCreature(victim->type))	//iron sword
 		{
-			dmg *= 1.5f;
+			dmg *= 2.5f;
 			inv->ItemUsed(1);
+		}
+		if (inv->HasItemNotBroken(10))						//axe
+		{
+			if (Settings::anyOfPickaxeBonus(victim->type))
+			{
+				dmg *= 3.f;
+				inv->ItemUsed(10);
+			}
+			else if (Settings::anyOfCreature(victim->type))
+			{
+				dmg *= 1.5f;
+				inv->ItemUsed(10);
+			}
+		}
+		if (inv->HasItemNotBroken(11) && Settings::anyOfCreature(victim->type))	//bow
+		{
+			dmg *= 2;
+			inv->ItemUsed(11);
+		}
+		else if(inv->HasItemNotBroken(11))
+		{
+			inv->ItemUsed(11);
 		}
 		if (inv->HasItemNotBroken(12) && Settings::anyOfCreature(victim->type))	//sniper
 		{
 			dmg *= 3;
 			inv->ItemUsed(12);
 		}
-		if (inv->HasItemNotBroken(0))						//axe
+		else if (inv->HasItemNotBroken(12))
 		{
-			if (Settings::anyOfPlants(victim->type))		
-			{
-				dmg *= 3;
-				inv->ItemUsed(0);
-			}
-			if (Settings::anyOfCreature(victim->type))		
-			{
-				dmg *= 1.5f;
-				inv->ItemUsed(0);
-			}
+			inv->ItemUsed(12);
 		}
 		return (int)dmg;
 	}
 	int GetAttackRange()
 	{
 		float attackRange = (float)Settings::obstacleStats[type].attackRange;
-		if (inv->HasItemNotBroken(11))	//bow
+		if (inv != nullptr)
 		{
-			attackRange = 10;
-		}
-		if (inv->HasItemNotBroken(12))	//sniper
-		{
-			attackRange = 20;
+			if (inv->HasItemNotBroken(11))	//bow
+			{
+				attackRange = 10;
+			}
+			if (inv->HasItemNotBroken(12))	//sniper
+			{
+				attackRange = 20;
+			}
 		}
 		return (int)attackRange;
 	}
-	float AttackObstacle(Obstacle* attacker, float dmg)
+	float AttackObstacle(Obstacle* attacker, float dmg, int range)
 	{
 		float dmgAdjusted = dmg;
-		if (attacker->inv != nullptr)
+		if (inv != nullptr)
 		{
-			if (attacker->inv->HasItemNotBroken(9))
+			if (inv->HasItemNotBroken(9))
 			{
 				dmgAdjusted *= 0.5f;
-				attacker->inv->ItemUsed(9);
+				inv->ItemUsed(9);
 			}
-			if (attacker->inv->HasItemNotBroken(2))
+			if (inv->HasItemNotBroken(2))
 			{
 				dmgAdjusted *= 0.75f;
-				attacker->inv->ItemUsed(2);
+				inv->ItemUsed(2);
 			}
 		}
 		hp -= (int)dmgAdjusted;
@@ -773,6 +851,25 @@ public:
 	}
 	static double GetDistBetween2tiles(Vei2 tilePos1, Vei2 tilePos2, int worldWidth)
 	{
+		Vec2 delta = (Vec2)tilePos1 - (Vec2)tilePos2;
+		if (delta.x > worldWidth / 2)
+		{
+			delta.x -= worldWidth;
+		}
+		if (delta.x < -worldWidth / 2)
+		{
+			delta.x += worldWidth;
+		}
+		return (double)std::abs(sqrt(pow(delta.x, 2) + pow(delta.y, 2)));
+	}
+	static double GetDistBetween2Obstacles(Obstacle* obstacle1, Obstacle* obstacle2, int worldWidth, Vei2 worldHasNChunks)
+	{
+		CtPos tileCtPos1 = GetMidPosOfObstacle(obstacle1->GetCtPos(), obstacle1->type, worldHasNChunks);
+		CtPos tileCtPos2 = GetMidPosOfObstacle(obstacle2->GetCtPos(), obstacle2->type, worldHasNChunks);
+
+		Vei2 tilePos1 = chunkPos2Flat(tileCtPos1);
+		Vei2 tilePos2 = chunkPos2Flat(tileCtPos2);
+
 		Vec2 delta = (Vec2)tilePos1 - (Vec2)tilePos2;
 		if (delta.x > worldWidth / 2)
 		{

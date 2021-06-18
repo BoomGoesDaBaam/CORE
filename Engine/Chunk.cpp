@@ -1072,13 +1072,38 @@ void Chunk::NextTurnSecond(std::map<std::string, Team*> teams)
 				for (int attack = 0; attack < Settings::obstacleStats[obstacles[i]->type].attacksPerTurn; attack++)
 				{
 					if (obstacles[i]->attack->GetAutomaticMode() != CtPos(Vei2(-3, -3), Vei2(-3, -3)))
+					{
+
 						AttackTile(CtPos2CctPos(attackPos), obstacles[i].get());
+					}
 					ApplyAutoAttackPosWhenNeeded(obstacles[i].get());
 					attackPos = obstacles[i]->attack->GetAutomaticMode();
 				}
 			}
+			if (obstacles[i]->craft != nullptr && obstacles[i]->craft->IsCrafting())
+			{
+				obstacles[i]->craft->TurnPassed();
+				if (obstacles[i]->craft->TurnsLeft() == 0)
+				{
+					int craftedItemID = obstacles[i]->craft->GetItemID();
+					for (int indexInv = 0; indexInv < 3; indexInv++)
+					{
+						if (obstacles[i]->type == 30)
+						{
+							bool b = obstacles[i]->inv->GetItem(indexInv)->get() == nullptr;
+							bool c = obstacles[i]->inv->GetItem(indexInv) == nullptr;
 
-
+							if (obstacles[i]->inv->GetItem(indexInv)->get() == nullptr && obstacles[i]->team->GetMaterials().Has(Settings::itemStats[craftedItemID].neededResToCraft))
+							{
+								obstacles[i]->team->GetMaterials().Remove(Settings::itemStats[craftedItemID].neededResToCraft);
+								obstacles[i]->inv->SetItem(std::make_unique<Slot>(craftedItemID),indexInv);
+								obstacles[i]->craft->StoppedCrafting();
+								break;
+							}
+						}
+					}
+				}
+			}
 			//Obstacle expandation
 			if (Settings::anyOfPlants(obstacles[i]->type) && rr.Calc(Settings::probToGrow) == 1)
 			{
@@ -1088,7 +1113,7 @@ void Chunk::NextTurnSecond(std::map<std::string, Team*> teams)
 			{
 				PlantExpand(obstacles[i]->GetCtPos(), obstacles[i]->type, 45, Settings::animalDensity, teams["Fuer die Natur"]);
 			}
-			//Add meterials
+			//Add meterials and apply Obstacle effects
 			if (obstacles[i]->team != nullptr)
 				ApplyObstacleEffect(obstacles[i].get());
 			//COnstructions finished
@@ -1173,6 +1198,23 @@ break;
 	case 29:
 		team->GetMaterials().Add({ {"fish",2.f} });
 		break;
+	case 30:
+		for (int i = 0; i < 3; i++)
+		{
+			Slot* item = obstacle->inv->GetItem(3 + i)->get();
+			if (item != nullptr)
+			{
+				if (item->GetDurability() != -1 && item->GetDurability() != Settings::itemStats[item->GetId()].durability)
+				{
+					if (obstacle->team->GetMaterials().Has(Settings::itemStats[item->GetId()].neededResToRepair))
+					{
+						obstacle->team->GetMaterials().Remove(Settings::itemStats[item->GetId()].neededResToRepair);
+						item->Repair(Settings::itemStats[item->GetId()].durabilityHealPerRepair);
+					}
+				}
+			}
+		}
+		break;
 	case 32:
 		if(rr.Calc(10)==0)
 			AttractObstacles(obstacle->GetCtPos(),50,Settings::anyOfAnimalsVec);
@@ -1243,7 +1285,7 @@ void Chunk::AttackTile(CctPos pos, Obstacle* attacker)
 	Vei2 tilePos = pos.y * Settings::CellSplitUpIn + pos.z;
 	if (obstacleMap(tilePos) != -1)
 	{
-		obstacles[obstacleMap(tilePos)]->AttackObstacle(attacker, (float)attacker->GetDmg(obstacles[obstacleMap(tilePos)].get()));
+		obstacles[obstacleMap(tilePos)]->AttackObstacle(attacker, (float)attacker->GetDmg(obstacles[obstacleMap(tilePos)].get()), GetDistBetween2Obstacles(obstacles[obstacleMap(tilePos)].get(),attacker,chunks->GetSize().x * Settings::chunkHasNTiles,chunks->GetSize()));
 
 		if (obstacles[obstacleMap(tilePos)]->hp <= 0)
 		{

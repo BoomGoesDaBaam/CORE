@@ -264,21 +264,21 @@ bool BBuildMode(std::queue<FrameEvent>* buffer, Component* caller)
 	//curW.SetBuildMode(0);
 	return true;
 }
+bool BCraftingQueue(std::queue<FrameEvent>* buffer, Component* caller)
+{
+	buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "set crafting queue", caller->extra1, caller));
+	//curW.SetBuildMode(0);
+	return true;
+}
 bool BNextTurn(std::queue<FrameEvent>* buffer, Component* caller)
 {
 	buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "next turn", -1, caller));
 	//curW.NextTurn();
 	return true;
 }
-bool BBuildMenu(std::queue<FrameEvent>* buffer, Component* caller)
+bool BLoadScene(std::queue<FrameEvent>* buffer, Component* caller)
 {
-	buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "load scene", 1, caller));
-	//curW.LoadBuildMenu();
-	return true;
-}
-bool BOpenGamefield(std::queue<FrameEvent>* buffer, Component* caller)
-{
-	buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "load scene", 0, caller));
+	buffer->push(FrameEvent(FrameEvent::Type::ButtonPressed, "load scene", caller->extra1, caller));
 	//curW.LoadBuildMenu();
 	return true;
 }
@@ -382,15 +382,20 @@ void FrameHandle::Draw(Graphics& gfx)
 {
 	if (Settings::framesOn)
 	{
-		for (int prio = 10; prio >= 0; prio--)
-		{
+		std::vector<Component*> drawOrder;
 			std::map<std::string, std::unique_ptr<Component>>::iterator i;
 			for (i = comps.begin(); i != comps.end(); i++)
 			{
-				if(i->second->GetPrio() == prio)
-					i->second->Draw(gfx);
+				drawOrder.push_back(i->second.get());
 			}
-		}
+			std::sort(drawOrder.begin(), drawOrder.end(), [&](Component* obst1, Component* obst2)
+			{
+				return obst1->GetPrio() > obst2->GetPrio();
+			});
+			for (int i = 0; i < drawOrder.size(); i++)
+			{
+				drawOrder[i]->Draw(gfx);
+			}
 	}
 }
 Frame* FrameHandle::AddFrame(std::string key, RectF pos, int type)

@@ -190,8 +190,8 @@ void World::SpawnPlayer()
 	std::vector<Obstacle*> box = GenerateObstacleExplosion(spawnpoint,1, 5, 6, player, -1, 25);
 	for (int i = 0; i < genObsts.size(); i++)
 	{
-		genObsts[i]->inv->SetItem(std::make_unique<Slot>(0),4);
-		genObsts[i]->inv->SetItem(std::make_unique<Slot>(4),5);
+		genObsts[i]->inv->SetItem(std::make_unique<Slot>(9),4);
+		genObsts[i]->inv->SetItem(std::make_unique<Slot>(10),5);
 		genObsts[i]->inv->SetItem(std::make_unique<Slot>(11),6);
 	}
 	auto cctPos = Chunk::Flat2ChunkPos(spawnpoint, s.wSizeInTiles);
@@ -227,6 +227,18 @@ void World::SetBuildMode(int obstacle)
 	{
 		//Vei2 size = Settings::obstacleStats[obstacle]
 		placeCondMat = Matrix<int>(1, 1, -3);
+	}
+}
+void World::SetCraftMode(int itemID)
+{
+	Obstacle* builder = nullptr;
+	if (storageObst->type == 30)
+	{
+		builder = storageObst;
+	}
+	if (builder->craft.get() != nullptr)
+	{
+		builder->craft->SetItem2Craft(itemID);
 	}
 }
 void World::NextTurn()
@@ -970,7 +982,7 @@ void World::Draw(Graphics& gfx) const
 			}
 		}
 	}
-	if (attackMode && focusedObst->attack->GetAttacksLeft())
+	if (attackMode && focusedObst->attack != nullptr && focusedObst->attack->GetAttacksLeft())
 	{
 		CtPos obstacleMidPos = Chunk::GetMidPosOfObstacle(CtPos(focusedObst->chunkPos,focusedObst->tilePos), focusedObst->type, chunks.GetSize());
 		DrawCircle(obstacleMidPos, focusedObst->GetAttackRange(), Colors::Red, gfx);

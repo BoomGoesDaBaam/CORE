@@ -165,6 +165,7 @@ public:
 	std::vector<SubAnimation> GetConnectionsOfTypes(Vei2 pos, int* types);
 	bool NeedsConnections(Vei2 curXY)const;
 	void SetBuildMode(int obstacle);
+	void SetCraftMode(int itemID);
 	void SetMoveMode(bool moveMode)
 	{
 		if (focusedObst != nullptr)

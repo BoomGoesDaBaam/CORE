@@ -215,6 +215,14 @@ void Game::HandleFrameLogic(FrameEvent& e)
 				igwH.LoadScene(0,curW.get());
 			}
 		}
+		if (e.GetAction() == "set crafting queue")
+		{
+			if (curW->GetPlayer()->GetMaterials().Has(Settings::itemStats[e.GetExtra()].neededResToCraft))
+			{
+				curW->SetCraftMode(e.GetExtra());
+				igwH.LoadScene(0, curW.get());
+			}
+		}
 		if (e.GetAction() == "next turn")
 		{
 			curW->NextTurn();
