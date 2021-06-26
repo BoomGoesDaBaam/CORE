@@ -356,7 +356,7 @@ FrameEvent FrameHandle::Read()
 FrameHandle::FrameHandle(sharedResC resC)
 	:resC(std::move(resC))
 {
-	
+	UpdateHandleOrder();
 }
 
 bool FrameHandle::HandleMouseInput(Mouse::Event& e)
@@ -382,21 +382,26 @@ void FrameHandle::Draw(Graphics& gfx)
 {
 	if (Settings::framesOn)
 	{
-		std::vector<Component*> drawOrder;
-			std::map<std::string, std::unique_ptr<Component>>::iterator i;
-			for (i = comps.begin(); i != comps.end(); i++)
-			{
-				drawOrder.push_back(i->second.get());
-			}
-			std::sort(drawOrder.begin(), drawOrder.end(), [&](Component* obst1, Component* obst2)
-			{
-				return obst1->GetPrio() > obst2->GetPrio();
-			});
-			for (int i = 0; i < drawOrder.size(); i++)
-			{
-				drawOrder[i]->Draw(gfx);
-			}
+		UpdateHandleOrder();
+		for (int i = 0; i < handleOrder.size(); i++)
+		{
+			handleOrder[i]->Draw(gfx);
+		}
 	}
+}
+void FrameHandle::UpdateHandleOrder()
+{
+	handleOrder.clear();
+	std::map<std::string, std::unique_ptr<Component>>::iterator i;
+	for (i = comps.begin(); i != comps.end(); i++)
+	{
+		if(i->second->IsVisible())
+			handleOrder.push_back(i->second.get());
+	}
+	std::sort(handleOrder.begin(), handleOrder.end(), [&](Component* obst1, Component* obst2)
+	{
+		return obst1->GetPrio() > obst2->GetPrio();
+	});
 }
 Frame* FrameHandle::AddFrame(std::string key, RectF pos, int type)
 {

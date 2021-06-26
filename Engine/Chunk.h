@@ -69,7 +69,7 @@ class CraftTrait
 {
 protected:
 	int itemID = -1;
-	int turnsLeft = -1;
+	float turnsLeft = -1;
 	bool isCrafting = false;
 public:
 	CraftTrait() = default;
@@ -79,15 +79,19 @@ public:
 		turnsLeft = Settings::itemStats[itemID].turns2Craft;
 		isCrafting = true;
 	}
-	int TurnsLeft()
+	int TurnsLeft(float productivity)
 	{
-		return turnsLeft;
+		return (int)std::ceil(turnsLeft / productivity);
 	}
-	void TurnPassed()
+	void TurnPassed(float productivity)
 	{
 		if (turnsLeft > 0)
 		{
-			turnsLeft--;
+			turnsLeft -= productivity;
+			if (turnsLeft <= 0)
+			{
+				turnsLeft = 0;
+			}
 		}
 	}
 	int GetItemID()
@@ -156,6 +160,7 @@ public:
 	int n90rot = 0;
 	int hp=50;
 	int stepsLeft = 0;
+	float productivity = 1.0f;
 	Team* team = nullptr;
 	RectF rect = RectF(Vec2(0,0),0,0);
 	std::vector<Animation> animations;	//index runs through states
@@ -262,10 +267,16 @@ public:
 		{
 			RandyRandom rr;
 			inv = std::make_unique<Inventory>(1);
+			/*
 			int nItem = rr.Calc(2) + 3;
 			for (int i = 0; i < nItem; i++)
 			{
 				inv->SetItem(std::make_unique<Slot>(rr.Calc(12)), i);
+			}
+			*/
+			for (int i = 0; i < 7; i++)
+			{
+				inv->SetItem(std::make_unique<Slot>(i), i);
 			}
 		}
 		if (type == 30)
@@ -294,7 +305,7 @@ public:
 		{
 		case 1:
 		case 4:
-			state = 1;
+			//state = 1;
 			animations.push_back(Animation(this->resC->tC.multiObstacles[Settings::Obstacle2MultiObstacle(type)]));
 			break;
 
@@ -403,58 +414,61 @@ public:
 	int GetDmg(const Obstacle* victim)
 	{
 		float dmg = (float)Settings::obstacleStats[type].attackDmg; //* ( (float)hp / Settings::obstacleStats[type].baseHp);
-		if (inv->HasItemNotBroken(0))						//axe
+		if (inv != nullptr)
 		{
-			if (Settings::anyOfAxeBonus(victim->type))
+			if (inv->HasItemNotBroken(0))						//axe
 			{
-				dmg *= 3.f;
-				inv->ItemUsed(0);
+				if (Settings::anyOfAxeBonus(victim->type))
+				{
+					dmg *= 3.f;
+					inv->ItemUsed(0);
+				}
+				else if (Settings::anyOfCreature(victim->type))
+				{
+					dmg *= 1.5f;
+					inv->ItemUsed(0);
+				}
 			}
-			else if (Settings::anyOfCreature(victim->type))
+			if (Settings::anyOfPlants(victim->type))
 			{
-				dmg *= 1.5f;
-				inv->ItemUsed(0);
+				dmg *= Settings::obstacleStats[type].dmgAgainstPlants;
 			}
-		}
-		if (Settings::anyOfPlants(victim->type))
-		{
-			dmg *= Settings::obstacleStats[type].dmgAgainstPlants;
-		}
-		if (inv->HasItemNotBroken(1) && Settings::anyOfCreature(victim->type))	//iron sword
-		{
-			dmg *= 2.5f;
-			inv->ItemUsed(1);
-		}
-		if (inv->HasItemNotBroken(10))						//axe
-		{
-			if (Settings::anyOfPickaxeBonus(victim->type))
+			if (inv->HasItemNotBroken(1) && Settings::anyOfCreature(victim->type))	//iron sword
 			{
-				dmg *= 3.f;
-				inv->ItemUsed(10);
+				dmg *= 2.5f;
+				inv->ItemUsed(1);
 			}
-			else if (Settings::anyOfCreature(victim->type))
+			if (inv->HasItemNotBroken(10))						//axe
 			{
-				dmg *= 1.5f;
-				inv->ItemUsed(10);
+				if (Settings::anyOfPickaxeBonus(victim->type))
+				{
+					dmg *= 3.f;
+					inv->ItemUsed(10);
+				}
+				else if (Settings::anyOfCreature(victim->type))
+				{
+					dmg *= 1.5f;
+					inv->ItemUsed(10);
+				}
 			}
-		}
-		if (inv->HasItemNotBroken(11) && Settings::anyOfCreature(victim->type))	//bow
-		{
-			dmg *= 2;
-			inv->ItemUsed(11);
-		}
-		else if(inv->HasItemNotBroken(11))
-		{
-			inv->ItemUsed(11);
-		}
-		if (inv->HasItemNotBroken(12) && Settings::anyOfCreature(victim->type))	//sniper
-		{
-			dmg *= 3;
-			inv->ItemUsed(12);
-		}
-		else if (inv->HasItemNotBroken(12))
-		{
-			inv->ItemUsed(12);
+			if (inv->HasItemNotBroken(11) && Settings::anyOfCreature(victim->type))	//bow
+			{
+				dmg *= 2;
+				inv->ItemUsed(11);
+			}
+			else if (inv->HasItemNotBroken(11))
+			{
+				inv->ItemUsed(11);
+			}
+			if (inv->HasItemNotBroken(12) && Settings::anyOfCreature(victim->type))	//sniper
+			{
+				dmg *= 3;
+				inv->ItemUsed(12);
+			}
+			else if (inv->HasItemNotBroken(12))
+			{
+				inv->ItemUsed(12);
+			}
 		}
 		return (int)dmg;
 	}
@@ -569,6 +583,7 @@ class Chunk
 		return chunks->GetSize() * cells.GetSize() * Settings::CellSplitUpIn;
 	}
 	void CastHeal(CtPos pos, int deltaHP, int radius);
+	void IncreaseProductivity(CtPos pos, float deltaProd, int radius);
 	void UnitKilled(CtPos killerPos, CtPos victimPos);
 	void PlantExpand(CtPos ctPos, int type, int radius, int maxInRange, Team* team);
 	void MakeRadomMove(Obstacle* obstacle);

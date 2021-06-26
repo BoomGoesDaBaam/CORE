@@ -72,14 +72,37 @@ CctPos Chunk::CtPos2CctPos(CtPos pos, int chunkHasNCells)
 }
 void Chunk::CastHeal(CtPos pos, int deltaHP, int radius)
 {
+	std::vector<Obstacle*> healed;
 	for (int y = -radius; y <= radius; y++)
 	{
 		for (int x = -radius; x <= radius; x++)
 		{
 			CtPos ctDelta = { Vei2(0,0),Vei2(x,y) };
 			CtPos ctPos = PutCtPosInWorld(pos + ctDelta,chunks->GetSize());
-			if(chunks->operator()(ctPos.x).GetObstacleMapAt(ctPos.y) != -1 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius)
+			Obstacle* obst = chunks->operator()(ctPos.x).GetObstacleAt(ctPos.y);
+			if (chunks->operator()(ctPos.x).GetObstacleMapAt(ctPos.y) != -1 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius && std::none_of(healed.begin(), healed.end(), [&](const Obstacle* val) {return val == obst; }))
+			{
 				chunks->operator()(ctPos.x).GetObstacleAt(ctPos.y)->Heal(deltaHP);
+				healed.push_back(obst);
+			}
+		}
+	}
+}
+void Chunk::IncreaseProductivity(CtPos pos, float deltaProd, int radius)
+{
+	std::vector<Obstacle*> increased;
+	for (int y = -radius; y <= radius; y++)
+	{
+		for (int x = -radius; x <= radius; x++)
+		{
+			CtPos ctDelta = { Vei2(0,0),Vei2(x,y) };
+			CtPos ctPos = PutCtPosInWorld(pos + ctDelta, chunks->GetSize());
+			Obstacle* obst = chunks->operator()(ctPos.x).GetObstacleAt(ctPos.y);
+			if (chunks->operator()(ctPos.x).GetObstacleMapAt(ctPos.y) != -1 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius && std::none_of(increased.begin(), increased.end(), [&](const Obstacle* val) {return val == obst; }))
+			{
+				obst->productivity += deltaProd;
+				increased.push_back(obst);
+			}
 		}
 	}
 }
@@ -414,7 +437,7 @@ void Chunk::DrawObstacleOutlines(Vei2 tilePos, int type, RectF chunkRect, Color 
 	if (Settings::obstaclesOn)
 	{
 		Vec2 tileSize = GetTileSize(chunkRect);
-		RectF drawPos = GetTileRect(chunkRect, tilePos);
+		RectF drawPos = GetTileRect(tilePos);
 		drawPos.top -= (Settings::obstacleStats[type].size[0].y - 1) * tileSize.y;
 		drawPos.right += (Settings::obstacleStats[type].size[0].x - 1) * tileSize.x;
 		gfx.DrawFilledRect(drawPos, c, SpriteEffect::Transparent(0.5f));
@@ -1041,9 +1064,9 @@ void Chunk::NextTurnSecond(std::map<std::string, Team*> teams)
 	for (int i = 0; i < obstacles.size(); i++)
 	{
 		if (std::none_of(obstaclesIndexNotUsed.begin(), obstaclesIndexNotUsed.end(), [&](const int& val) {return val == i; })) {
-			obstacles[i]->stepsLeft = Settings::obstacleStats[obstacles[i]->type].movesPerTurn;
-			obstacles[i]->Heal(2);
-			//Apply Items
+			obstacles[i]->stepsLeft = Settings::obstacleStats[obstacles[i]->type].movesPerTurn * obstacles[i]->productivity;
+			obstacles[i]->Heal(std::ceil(2 * obstacles[i]->productivity));
+			//Apply Items effects
 			if (obstacles[i]->inv.get() != nullptr)
 			{
 				if (obstacles[i]->inv->HasItemNotBroken(3))		//range chain
@@ -1082,17 +1105,14 @@ void Chunk::NextTurnSecond(std::map<std::string, Team*> teams)
 			}
 			if (obstacles[i]->craft != nullptr && obstacles[i]->craft->IsCrafting())
 			{
-				obstacles[i]->craft->TurnPassed();
-				if (obstacles[i]->craft->TurnsLeft() == 0)
+				obstacles[i]->craft->TurnPassed(obstacles[i]->productivity);
+				if (obstacles[i]->craft->TurnsLeft(obstacles[i]->productivity) == 0)
 				{
 					int craftedItemID = obstacles[i]->craft->GetItemID();
 					for (int indexInv = 0; indexInv < 3; indexInv++)
 					{
 						if (obstacles[i]->type == 30)
 						{
-							bool b = obstacles[i]->inv->GetItem(indexInv)->get() == nullptr;
-							bool c = obstacles[i]->inv->GetItem(indexInv) == nullptr;
-
 							if (obstacles[i]->inv->GetItem(indexInv)->get() == nullptr && obstacles[i]->team->GetMaterials().Has(Settings::itemStats[craftedItemID].neededResToCraft))
 							{
 								obstacles[i]->team->GetMaterials().Remove(Settings::itemStats[craftedItemID].neededResToCraft);
@@ -1114,6 +1134,7 @@ void Chunk::NextTurnSecond(std::map<std::string, Team*> teams)
 				PlantExpand(obstacles[i]->GetCtPos(), obstacles[i]->type, 45, Settings::animalDensity, teams["Fuer die Natur"]);
 			}
 			//Add meterials and apply Obstacle effects
+			obstacles[i]->productivity = 1.0f;
 			if (obstacles[i]->team != nullptr)
 				ApplyObstacleEffect(obstacles[i].get());
 			//COnstructions finished
@@ -1215,9 +1236,14 @@ break;
 			}
 		}
 		break;
+	case 31:
+		IncreaseProductivity(obstacle->GetCtPos(), 2.f, 20);
+		break;
 	case 32:
 		if(rr.Calc(10)==0)
 			AttractObstacles(obstacle->GetCtPos(),50,Settings::anyOfAnimalsVec);
+		break;
+	case 33:
 		break;
 	}
 	if (Settings::anyOfAnimals(obstacle->type))

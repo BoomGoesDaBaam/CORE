@@ -135,6 +135,7 @@ namespace Settings
 	static bool obstaclesOn = true;
 	static bool spawnObstacles = true;
 	static bool testMode = false;
+	static bool zoomingEnabled = false;
 
 	static bool framesOn = true;
 
@@ -310,6 +311,13 @@ namespace Settings
 	const std::string lang_powerStorage[] = { "power storage", "Stromspeicher" };
 	const std::string lang_carFactory[] = { "car factory", "Autofabrik" };
 	const std::string lang_storage[] = { "storage", "Lagerhalle" };
+
+	//Statustexte
+	const std::string lang_status[] = { "status", "Status" };
+	const std::string lang_ressourcesAreMissing[] = { "ressources are missing", "Ressourcen fehlen" };
+	const std::string lang_finishedIn[] = { "finished in", "fertig in" };
+	const std::string lang_rounds[] = { "rounds", "Runden" };
+	const std::string lang_nothingSelected[] = { "nothing Selected", "Nichts ausgewaehlt" };
 
 	//Beschreibungen
 	const std::string lang_TownhallInfo[] = { "This is the main building of your town. Use it to heal your surrounding units, train units or defent your town from enemies. Choose one every turn!", "Lagerhalle" };

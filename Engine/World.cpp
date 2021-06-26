@@ -210,6 +210,7 @@ void World::SetBuildMode(int obstacle)
 {
 	buildMode = true;
 	placeObstacle = obstacle;
+	placeObstaclen90Rot = 0;
 	if (obstacle == 29)
 	{
 		placeCondMat = Matrix<int>(4, 4, 1);
@@ -268,6 +269,7 @@ void World::NextTurn()
 	{
 		focusedObst = GetObstacleAt(lastFocused);
 	}
+	updateFrameInfo = true;
 }
 Vei2 World::AbstractTilePos(CctPos chunkPos)const
 {
@@ -706,7 +708,8 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		}
 		if (moveMode && focusedObst != nullptr && TileIsInRange(Chunk::CtPos2CctPos(fctPos), Chunk::CtPos2CctPos(focusedObst->GetCtPos()), (float)focusedObst->stepsLeft))
 		{
-			if (chunks(focusedObst->chunkPos).MoveObstacle(ObstacleMapAt(focusedObst->GetCtPos()), fctPos))
+			chunks(focusedObst->chunkPos).MoveObstacle(ObstacleMapAt(focusedObst->GetCtPos()), fctPos);
+			/*if (chunks(focusedObst->chunkPos).MoveObstacle(ObstacleMapAt(focusedObst->GetCtPos()), fctPos))
 			{
 				for (int y = -1; y < 2; y++)
 				{
@@ -718,7 +721,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 				}
 				updateChunkGraphics = true;
 			}
-		
+			*/
 		}
 		if (ObstacleMapAt(fctPos) != -1)
 		{
@@ -729,7 +732,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 				{
 					storageObst = nullptr;
 				}
-				else
+				else if(focusedObst != nullptr)
 				{
 					storageObst = hitObstacle;
 				}
@@ -743,11 +746,17 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		}
 		else
 		{
+			if (focusedObst != nullptr && storageObst != nullptr)
+			{
+				storageObst = nullptr;
+			}
+			else if (storageObst == nullptr)
+			{
+				focusedObst = nullptr;
+				attackMode = false;
+				moveMode = false;
+			}
 			updateFrameInfo = true;
-			focusedObst = nullptr;
-			attackMode = false;
-			moveMode = false;
-			storageObst = nullptr;
 		}
 
 		CtPos obstacleMidPos = Chunk::PutCursorInMidOfObstacle(Chunk::CctPos2CtPos(fcctPosHover), placeObstacle, chunks.GetSize());
@@ -782,15 +791,17 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 			}
 		}
 	}
-	if (e.GetType() == Mouse::Event::Type::WheelDown)
+	if (Settings::zoomingEnabled)
 	{
-		Zoom(Vei2(-100, -100));
+		if (e.GetType() == Mouse::Event::Type::WheelDown)
+		{
+			Zoom(Vei2(-100, -100));
+		}
+		if (e.GetType() == Mouse::Event::Type::WheelUp)
+		{
+			Zoom(Vei2(100, 100));
+		}
 	}
-	if (e.GetType() == Mouse::Event::Type::WheelUp)
-	{
-		Zoom(Vei2(100, 100));
-	}
-
 	posAllowed = ObstaclePosAllowed(fTile, placeObstacle);
 	Vec2 cDelta = gH.MoveCamera(e);
 	
@@ -895,7 +906,7 @@ void World::Draw(Graphics& gfx) const
 #endif
 	
 	
-	for (int layer = 0; layer < 4; layer++)
+	for (int layer = 0; layer < 3; layer++)
 	{
 		for (int y = yStart; y <= yStop; y++)
 		{
@@ -927,7 +938,7 @@ void World::Draw(Graphics& gfx) const
 					{
 						//chunks(curChunk).DrawSurfaceAt(curChunkPos, fcctPos.y, s.chunkSize.x / Settings::chunkHasNCells, 1.5f, resC->tC.frames.at(0).GetCurSurface(), gfx);
 					}
-					gfx.DrawRect(GetChunkRectDelta(Vei2(0,1)), Colors::Red);
+					//gfx.DrawRect(GetChunkRectDelta(Vei2(0,1)), Colors::Red);
 					break;
 				}
 			}
@@ -945,6 +956,10 @@ void World::Draw(Graphics& gfx) const
 			chunks(obstacleMidPos.x).DrawObstacleOutlines(obstacleMidPos.y, placeObstacle, GetChunkRect(obstacleMidPos.x), Colors::Red, gfx);
 		}
 		chunks(obstacleMidPos.x).DrawObstacle(obstacleMidPos.y, placeObstacle, GetChunkRect(obstacleMidPos.x),placeObstaclen90Rot, gfx);
+	}
+	if (storageObst != nullptr)
+	{
+		chunks(storageObst->chunkPos).DrawObstacleOutlines(storageObst->tilePos, storageObst->type, GetChunkRect(storageObst->chunkPos), Colors::Purple, gfx);
 	}
 	if (focusedObst != nullptr)
 	{

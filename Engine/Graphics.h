@@ -378,17 +378,22 @@ public:
 		}
 
 		n90rot %= 4;
-		int width = inFpos.GetWidth();
-		int height = inFpos.GetHeight();
+		int drawWidth = inFpos.GetWidth();
+		int drawHeight = inFpos.GetHeight();
 
-		//double percentX = 0;
-		//double pixelPercX = 0;
-		for (int y = 0; y < height; y++)
+		int sourceWidth = sourceR.GetWidth();
+		int sourceHeight = sourceR.GetHeight();
+
+		int posWidth = pos.GetWidth();
+		int posHeight = pos.GetHeight();
+
+		int sWidth = s.GetRect().GetWidth();
+		int sHeight = s.GetRect().GetHeight();
+
+		for (int y = 0; y < drawHeight; y++)
 		{
-			//percentX = (float)1.f / pos.GetWidth();
-			//pixelPercX = (float)skippedLeft / pos.GetWidth();
 
-			for (int x = 0; x < width; x++)
+			for (int x = 0; x < drawWidth; x++)
 			{
 				assert(PixelInFrame({ x + inFpos.left, y + inFpos.top }));
 				
@@ -399,41 +404,35 @@ public:
 
 					if (n90rot == 0)
 					{
-						//sPixelX = (int)(sourceR.left + (pixelPercX) * sourceR.GetWidth());
-						sPixelX = (int)(sourceR.left + ((float)(x + skippedLeft) / pos.GetWidth()) * sourceR.GetWidth());
-						sPixelY = (int)(sourceR.top + ((float)(y + skippedTop) / pos.GetHeight()) * sourceR.GetHeight());
+						//sPixelX = (int)(sourceR.left + (pixelPercX) * sourceWidth);
+						sPixelX = (int)(sourceR.left + ((float)(x + skippedLeft) / posWidth) * sourceWidth);
+						sPixelY = (int)(sourceR.top + ((float)(y + skippedTop) / posHeight) * sourceHeight);
 					}
 					else if (n90rot == 1)
 					{ 
-						sPixelX = (int)std::ceil(sourceR.right - 1 - ((float)(y + skippedTop) / pos.GetWidth()) * sourceR.GetWidth());
-						sPixelY = (int)(sourceR.top + ((float)(x + skippedLeft) / pos.GetHeight()) * sourceR.GetHeight());
+						sPixelX = (int)std::ceil(sourceR.right - 1 - ((float)(y + skippedTop) / posWidth) * sourceWidth);
+						sPixelY = (int)(sourceR.top + ((float)(x + skippedLeft) / posHeight) * sourceHeight);
 					} 
 					else if (n90rot == 2)
 					{
-						sPixelX = (int)std::ceil(sourceR.right - 1 - ((float)(x + skippedLeft) / pos.GetWidth()) * sourceR.GetWidth());
-						sPixelY = (int)std::ceil(sourceR.bottom - 1 - ((float)(y + skippedTop) / pos.GetHeight()) * sourceR.GetHeight());
+						sPixelX = (int)std::ceil(sourceR.right - 1 - ((float)(x + skippedLeft) / posWidth) * sourceWidth);
+						sPixelY = (int)std::ceil(sourceR.bottom - 1 - ((float)(y + skippedTop) / posHeight) * sourceHeight);
 					}
 					else if (n90rot == 3)
 					{
-						sPixelX = (int)(sourceR.left + ((float)(y + skippedTop) / pos.GetWidth()) * sourceR.GetWidth());
-						sPixelY = (int)std::ceil(sourceR.bottom - 1 -((float)(x) / pos.GetHeight()) * sourceR.GetHeight());
+						sPixelX = (int)(sourceR.left + ((float)(y + skippedTop) / posWidth) * sourceWidth);
+						sPixelY = (int)std::ceil(sourceR.bottom - 1 -((float)(x + skippedLeft) / posHeight) * sourceHeight);
 					}
-
-					int sWidth = s.GetRect().GetWidth();
-					int sHeight = s.GetRect().GetWidth();
-
-					int posWidth = pos.GetWidth();
-					int posHeight = pos.GetHeight();
 
 					assert(sPixelX >= 0);
 					assert(sPixelY >= 0);
 					assert(sPixelX < s.GetRect().GetWidth());
 					assert(sPixelY < s.GetRect().GetHeight());
-					if (sPixelX >= 0 && sPixelY >= 0 && sPixelX < s.GetRect().GetWidth() && sPixelY < s.GetRect().GetHeight())
-					{
+					//if (sPixelX >= 0 && sPixelY >= 0 && sPixelX < sWidth && sPixelY < sHeight)
+					//{
 						Color sourceP = s.GetPixel(sPixelX, sPixelY);
 						effect(x + inFpos.left, y + inFpos.top, sourceP, *this);
-					}
+					//}
 					//pixelPercX += percentX;
 				//}
 			}
