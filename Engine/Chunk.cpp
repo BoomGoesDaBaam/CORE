@@ -542,14 +542,21 @@ void Chunk::DrawType(Graphics& gfx)const
 			RectF curCellRect = cellsRect(curXY); //GetCellRect(chunkRect, curXY); 
 
 			assert(cells(curXY).type >= 0 && cells(curXY).type < Settings::nDiffFieldTypes);
-			gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+			if(cells(curXY).type != 1)
+				gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+			else
+				gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.newFields.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 
 			for (int i = 0; i < Settings::nDiffFieldTypes; i++)
 			{
 				int order = Settings::typeLayer[i];
 				if (conMap[order][curXY.x][curXY.y] == 1)
 				{
-					gfx.DrawConnections(order, Vei2((int)curCellRect.left, (int)curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+					if (order != 1)
+						gfx.DrawConnections(order, Vei2((int)curCellRect.left, (int)curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+					else
+						gfx.DrawConnectionsNew(order, Vei2((int)curCellRect.left, (int)curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.newFields[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+					//gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.newFields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 				}
 			}
 		}

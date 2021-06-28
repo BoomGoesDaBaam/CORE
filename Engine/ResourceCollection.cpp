@@ -272,6 +272,18 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 			}
 		}
 	}
+	Surface cur = Surface("Textures/field0.bmp");
+	//new fields
+	for (int i = 0; i < 1; i++)				//i diffrent Fields
+	{
+		float delay = rng.GetNormalDist() * 3 + 1;
+		newFields.push_back(Animation(delay));
+		for (int f = 0; f < 1; f++)			//f diffent animations
+		{
+			newFields[i].Push(cur.GetSupSurface(RectI(Vei2(0, f * 201), 1004, 200)));
+		}
+	}
+
 	//Delay anpassen
 	fields[6].SetKeepTime(0.3f);
 	fields[7].SetKeepTime(0.4f);
@@ -375,7 +387,6 @@ std::vector<RectI> FramesizeCollection::GetConOffset(Vei2 cSize)const
 void FramesizeCollection::Update(Vei2 cSize)
 {
 	FieldCon = GetConOffset(cSize);
-
 }
 std::vector<SubAnimation> FramesizeCollection::GetConnectionAnimationVec(int lookFor, bool masked, Matrix<int> aMat)const
 {

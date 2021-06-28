@@ -17,6 +17,7 @@ public:
 	Surface spriteSHEEP = { "Textures/Spritesheet.bmp" };
 	//Surface s_Items[1];
 	std::vector<Animation>	fields;			//new vectors need to be added in update function
+	std::vector<Animation>	newFields;			//new vectors need to be added in update function
 	std::vector<Animation>	maskedFields;	//types that need speacial masking (smurpf for example)
 	std::vector<Animation>	frames;			//focused Cell 
 	std::vector<Animation>	windowsFrame;	//Frames
@@ -32,7 +33,7 @@ class FramesizeCollection
 {
 	TexturesCollection* tC;
 public:
-	std::vector<RectI> FieldCon;					//precalculations fpr better performance
+	std::vector<RectI> FieldCon;					//precalculations of connections
 
 	FramesizeCollection(TexturesCollection* tC);
 	void Update(Vei2 cellSize);

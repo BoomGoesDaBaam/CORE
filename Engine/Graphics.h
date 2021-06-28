@@ -293,6 +293,92 @@ public:
 			}
 		}
 	}
+	template <typename T>
+	void DrawConnectionsNew(int lookFor, Vei2 topLeft, Matrix<int> aMat, std::vector<RectI> drawOffset, const Surface& surface, T effect)
+	{
+		using namespace Settings;
+		assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
+
+		if (FIDF(aMat[1][1], lookFor))
+		{
+			if (aMat[1][2] == lookFor)
+			{
+				if (aMat[0][1] == lookFor)	// 1
+				{
+					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(201, 0), 100, 100), surface, effect);
+				}
+				else if (aMat[0][1] != lookFor)	// 13
+				{
+					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(804, 0), 100, 100), surface, effect);
+				}
+				if (aMat[2][1] == lookFor)	// 2
+				{
+					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(301, 0), 100, 100), surface, effect);
+				}
+				else if (aMat[2][1] != lookFor)	// 14
+				{
+					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(904, 0), 100, 100), surface, effect);
+				}
+			}
+			else if (aMat[1][2] != lookFor)
+			{
+				if (aMat[0][1] == lookFor)	//9
+				{
+					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(603, 0), 100, 100), surface, effect);
+				}
+				else if (FIDF(aMat[0][1], lookFor) && aMat[0][2] == lookFor)	// 5
+				{
+					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(402, 0), 100, 100), surface, effect);
+				}
+				if (aMat[2][1] == lookFor)	//10
+				{
+					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(703, 0), 100, 100), surface, effect);
+				}
+				else if (FIDF(aMat[2][1], lookFor) && aMat[2][2] == lookFor)	// 6
+				{
+					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(502, 0), 100, 100), surface, effect);
+				}
+			}
+			if (aMat[1][0] == lookFor)
+			{
+				if (aMat[0][1] == lookFor)	// 3
+				{
+					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(201, 100), 100, 100), surface, effect);
+				}
+				else if (aMat[0][1] != lookFor)	// 15
+				{
+					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(804, 100), 100, 100), surface, effect);
+				}
+				if (aMat[2][1] == lookFor)	// 4
+				{
+					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(301, 100), 100, 100), surface, effect);
+				}
+				else if (aMat[2][1] != lookFor)	// 16
+				{
+					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(904, 100), 100, 100), surface, effect);
+				}
+			}
+			else if (aMat[1][0] != lookFor)
+			{
+				if (FIDF(aMat[0][1], lookFor) && aMat[0][0] == lookFor)	// 7
+				{
+					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(402, 25), 100, 100), surface, effect);
+				}
+				else if (aMat[0][1] == lookFor)	// 11
+				{
+					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(603, 25), 100, 100), surface, effect);
+				}
+				if (FIDF(aMat[2][1], lookFor) && aMat[2][0] == lookFor)	// 8
+				{
+					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(502, 25), 100, 100), surface, effect);
+				}
+				else if (aMat[2][1] == lookFor)	// 12
+				{
+					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(703, 25), 100, 100), surface, effect);
+				}
+			}
+		}
+	}
 	/*
 	template<typename E>
 	void DrawSurface(RectI pos, RectI sourceR, RectI clip, const Surface& s, E effect)
