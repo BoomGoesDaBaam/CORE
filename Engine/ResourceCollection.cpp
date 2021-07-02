@@ -272,15 +272,30 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 			}
 		}
 	}
-	Surface cur = Surface("Textures/field0.bmp");
 	//new fields
-	for (int i = 0; i < 1; i++)				//i diffrent Fields
+	delay = 0.3f;
+	int maskedIndex = 0;
+	for (int i = 0; i < 15; i++)				//i diffrent Fields
 	{
-		float delay = rng.GetNormalDist() * 3 + 1;
+		Surface cur = Surface("Textures/FieldsObstacles/field"+std::to_string(i)+".bmp");
+		int nAnim = 1;
+		if (i == 0 || i == 6 || i == 8 || i == 14)
+		{
+			nAnim = 5;
+		}
 		newFields.push_back(Animation(delay));
-		for (int f = 0; f < 1; f++)			//f diffent animations
+		for (int f = 0; f < nAnim; f++)			//f diffent animations
 		{
 			newFields[i].Push(cur.GetSupSurface(RectI(Vei2(0, f * 201), 1004, 200)));
+		}
+		if (Settings::anyMaskedType(i))
+		{
+			newMaskedFields.push_back(Animation(delay));
+			for (int f = 0; f < nAnim; f++)			//f diffent animations
+			{
+				newMaskedFields[maskedIndex].Push(cur.GetSupSurface(RectI(Vei2(0, f * 201), 1004, 200)));
+			}
+			maskedIndex++;
 		}
 	}
 
@@ -313,6 +328,19 @@ void TexturesCollection::IdkCallOnce()
 			}
 		}
 	}
+	for (int f = 0; f < 5; f++)
+	{
+		for (int y = 0; y < 200; y++)
+		{
+			for (int x = 0; x < 1004; x++)
+			{
+				if (newFields[14].GetPixel(f, x, y) == Colors::Magenta)
+				{
+					newFields[14].PutPixel(f, x, y, newFields[0].GetPixel(f, x % 201, y));
+				}
+			}
+		}
+	}
 	for (int i = 1; i < Settings::nDiffFieldTypes; i++)
 	{
 		fields[i].SetKeepTime(fields[0].GetKeepTime());
@@ -323,6 +351,10 @@ void TexturesCollection::Update(float dt)
 	for (int i = 0; i < (int)fields.size(); i++)
 	{
 		fields.at(i).Update(dt);
+	}
+	for (int i = 0; i < (int)newFields.size(); i++)
+	{
+		newFields.at(i).Update(dt);
 	}
 	for (int i = 0; i < (int)maskedFields.size(); i++)
 	{
@@ -476,6 +508,99 @@ std::vector<SubAnimation> FramesizeCollection::GetConnectionAnimationVec(int loo
 			if (aMat[2][1] == lookFor)	// 12
 			{
 				vec.push_back(SubAnimation(v, RectI(Vei2(178, 25), 25, 25), posInGrit[3]));
+			}
+		}
+	}
+	return vec;
+}
+std::vector<SubAnimation> FramesizeCollection::GetConnectionAnimationVecNew(int lookFor, bool masked, Matrix<int> aMat)const
+{
+	using namespace Settings;
+	std::vector<SubAnimation> vec;
+	std::vector<RectI> posInGrit = GetConOffset(Vei2(50, 50));
+	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
+	Animation& v = tC->newFields.at(lookFor);
+	if (masked)
+	{
+		v = tC->newMaskedFields.at(translateIntoMaskedType(lookFor));
+	}
+
+	if (FIDF(aMat[1][1], lookFor))
+	{
+		if (aMat[1][2] == lookFor)
+		{
+			if (aMat[0][1] == lookFor)	// 1
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(201, 0), 100, 100), posInGrit[0]));
+			}
+			if (aMat[0][1] != lookFor)	// 13
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(804, 0), 100, 100), posInGrit[0]));
+			}
+			if (aMat[2][1] == lookFor)	// 2
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(301, 0), 100, 100), posInGrit[1]));
+			}
+			if (aMat[2][1] != lookFor)	// 14
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(904, 0), 100, 100), posInGrit[1]));
+			}
+		}
+		else if (aMat[1][2] != lookFor)
+		{
+			if (aMat[0][1] == lookFor)	//9
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(603, 0), 100, 100), posInGrit[0]));
+			}
+			if (FIDF(aMat[0][1], lookFor) && aMat[0][2] == lookFor)	// 5
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(402, 0), 100, 100), posInGrit[0]));
+			}
+			if (aMat[2][1] == lookFor)	//10
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(703, 0), 100, 100), posInGrit[1]));
+			}
+			if (FIDF(aMat[2][1], lookFor) && aMat[2][2] == lookFor)	// 6
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(502, 0), 100, 100), posInGrit[1]));
+			}
+		}
+		if (aMat[1][0] == lookFor)
+		{
+			if (aMat[0][1] == lookFor)	// 3
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(201, 100), 100, 100), posInGrit[2]));
+			}
+			if (aMat[0][1] != lookFor)	// 15
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(804, 100), 100, 100), posInGrit[2]));
+			}
+			if (aMat[2][1] == lookFor)	// 4
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(301, 100), 100, 100), posInGrit[3]));
+			}
+			if (aMat[2][1] != lookFor)	// 16
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(904, 100), 100, 100), posInGrit[3]));
+			}
+		}
+		else if (aMat[1][0] != lookFor)
+		{
+			if (FIDF(aMat[0][1], lookFor) && aMat[0][0] == lookFor)	// 7
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(402, 100), 100, 100), posInGrit[2]));
+			}
+			if (aMat[0][1] == lookFor)	// 11
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(603, 100), 100, 100), posInGrit[2]));
+			}
+			if (FIDF(aMat[2][1], lookFor) && aMat[2][0] == lookFor)	// 8
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(502, 100), 100, 100), posInGrit[3]));
+			}
+			if (aMat[2][1] == lookFor)	// 12
+			{
+				vec.push_back(SubAnimation(v, RectI(Vei2(703, 100), 100, 100), posInGrit[3]));
 			}
 		}
 	}

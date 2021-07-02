@@ -140,6 +140,18 @@ public:
 		bottom += rhs.y;
 		return *this;
 	}
+	Rect_<T>& operator*=(const T& rhs)
+	{
+		left *= rhs;
+		right *= rhs;
+		top *= rhs;
+		bottom *= rhs;
+		return *this;
+	}
+	Rect_<T> operator*(const T& rhs)
+	{
+		return *this *= rhs;
+	}
 	Rect_<T>& operator-=(const Vec2_<T>& rhs)
 	{
 		left -= rhs.x;

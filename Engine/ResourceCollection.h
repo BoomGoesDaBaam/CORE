@@ -19,6 +19,7 @@ public:
 	std::vector<Animation>	fields;			//new vectors need to be added in update function
 	std::vector<Animation>	newFields;			//new vectors need to be added in update function
 	std::vector<Animation>	maskedFields;	//types that need speacial masking (smurpf for example)
+	std::vector<Animation>	newMaskedFields;	//types that need speacial masking (smurpf for example)
 	std::vector<Animation>	frames;			//focused Cell 
 	std::vector<Animation>	windowsFrame;	//Frames
 	std::vector<Animation>	buttons;
@@ -39,6 +40,7 @@ public:
 	void Update(Vei2 cellSize);
 	std::vector<RectI> GetConOffset(Vei2 cSize)const;	//gets the rects for every connection from the conSpritesheet
 	std::vector<SubAnimation> GetConnectionAnimationVec(int lookFor, bool masked = false, Matrix<int> aMat = Matrix<int>(3,3,0))const;
+	std::vector<SubAnimation> GetConnectionAnimationVecNew(int lookFor, bool masked, Matrix<int> aMat)const;
 	bool FIDF(int first, int second)const;
 };
 class ResourceCollection

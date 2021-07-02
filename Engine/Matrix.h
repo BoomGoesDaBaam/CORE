@@ -296,6 +296,38 @@ public:
 		}
 		ReInit(newM);
 	}
+	void EighthSize(Matrix<int> oldM, int valOfMixed)
+	{
+		Matrix<int> newM = Matrix<int>(oldM.GetColums() / 8, oldM.GetRows() / 8, 0);
+		for (int y = 0; y < newM.GetRows(); y++)
+		{
+			for (int x = 0; x < newM.GetColums(); x++)
+			{
+				bool hasMixed = false;
+				int last = oldM[(__int64)x * 8][(__int64)y * 8];
+
+				for (int yInner = 0; yInner < 8; yInner++)
+				{
+					for (int xInner = 0; xInner < 8; xInner++)
+					{
+						if (oldM[(__int64)x * 8 + xInner][(__int64)y * 8 + yInner] != last)
+						{
+							hasMixed = true;
+						}
+					}
+				}
+				if (hasMixed)
+				{
+					newM[x][y] = valOfMixed;
+				}
+				else
+				{
+					newM[x][y] = oldM[(__int64)x * 8][(__int64)y * 8];
+				}
+			}
+		}
+		ReInit(newM);
+	}
 	void MirrowVertical()
 	{
 		Matrix<int> oldM = Matrix<int>(*this);

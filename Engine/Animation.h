@@ -131,6 +131,10 @@ public:
 		Matrix<int> newM = Matrix<int>(dim.x, dim.y, 0);
 		RectI size = RectI(Vei2(0, 0), dim.x, dim.y);
 
+		for (int i = 0; i < (int)oldM.size(); i++)
+		{
+			oldM[i].posIn50x50grit *= 4;
+		}
 
 		for (int y = 0; y < dim.y; y++)
 		{
@@ -140,7 +144,6 @@ public:
 				for (int i = 0; i < (int)oldM.size(); i++)
 				{
 					int solid = 0;
-
 					if (oldM[i].posIn50x50grit.Contains(Vei2(x, y)) && oldM[i].chromaM[(__int64)x - oldM[i].posIn50x50grit.left][(__int64)y - oldM[i].posIn50x50grit.top] == keep)
 					{
 						value = keep;
@@ -153,6 +156,10 @@ public:
 				}
 				newM[x][y] = value;
 			}
+		}
+		for (int i = 0; i < (int)oldM.size(); i++)
+		{
+			oldM[i].posIn50x50grit *= 0.25;
 		}
 		return newM;
 	}

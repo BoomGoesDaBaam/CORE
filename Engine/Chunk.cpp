@@ -137,11 +137,11 @@ void Chunk::UnitKilled(CtPos killerPos, CtPos victimPos)
 }
 void Chunk::PlaceTilesForMaskedField(Vei2 cellPos, int value, int valOfMixed, int valueOfZero, int type)
 {
-	SubAnimation sa = SubAnimation(resC->tC.maskedFields[Settings::translateIntoMaskedType(type)], RectI(Vei2(0, 0), 50, 50), RectI(Vei2(0, 0), 50, 50));
+	SubAnimation sa = SubAnimation(resC->tC.newMaskedFields[Settings::translateIntoMaskedType(type)], RectI(Vei2(0, 0), 200, 200), RectI(Vei2(0, 0), 200, 200));
 
 	Matrix<int> chromaM1 = sa.chromaM;
 	chromaM1.Sort(value, valueOfZero);
-	chromaM1.HalfSize(chromaM1, valOfMixed);
+	chromaM1.EighthSize(chromaM1, valOfMixed);
 	chromaM1.MirrowVertical();
 	//
 	auto a = aMats(cellPos);
@@ -157,11 +157,11 @@ void Chunk::PlaceTilesForMaskedField(Vei2 cellPos, int value, int valOfMixed, in
 				std::vector<SubAnimation> newVecs;
 				if (Settings::anyMaskedType(curType))
 				{
-					newVecs = resC->fsC.GetConnectionAnimationVec(curType, true, a);
+					newVecs = resC->fsC.GetConnectionAnimationVecNew(curType, true, a);
 				}
 				else
 				{
-					newVecs = resC->fsC.GetConnectionAnimationVec(curType, false, a);
+					newVecs = resC->fsC.GetConnectionAnimationVecNew(curType, false, a);
 				}
 				for (int c = 0; c < (int)newVecs.size(); c++)
 				{
@@ -170,9 +170,9 @@ void Chunk::PlaceTilesForMaskedField(Vei2 cellPos, int value, int valOfMixed, in
 			}
 		}
 	}
-	Matrix<int> chromaM2 = SubAnimation::PutOnTopOfEachOther(sAVec, Vei2(50, 50), 1, 0);
+	Matrix<int> chromaM2 = SubAnimation::PutOnTopOfEachOther(sAVec, Vei2(200, 200), 1, 0);
 	chromaM2.Sort(value, valueOfZero);
-	chromaM2.HalfSize(chromaM2, valOfMixed);
+	chromaM2.EighthSize(chromaM2, valOfMixed);
 	chromaM2.MirrowVertical();
 
 	SetTilesAT(CtPos(chunkPos, cellPos), chromaM1);
@@ -193,11 +193,11 @@ void Chunk::PlaceConnectionsIntoCelltiles(Vei2 cellPos, int value, int valOfMixe
 				std::vector<SubAnimation> newVecs;
 				if (Settings::anyMaskedType(curType))
 				{
-					newVecs = resC->fsC.GetConnectionAnimationVec(curType, true, a);
+					newVecs = resC->fsC.GetConnectionAnimationVecNew(curType, true, a);
 				}
 				else
 				{
-					newVecs = resC->fsC.GetConnectionAnimationVec(curType, false, a);
+					newVecs = resC->fsC.GetConnectionAnimationVecNew(curType, false, a);
 				}
 				for (int c = 0; c < (int)newVecs.size(); c++)
 				{
@@ -206,11 +206,14 @@ void Chunk::PlaceConnectionsIntoCelltiles(Vei2 cellPos, int value, int valOfMixe
 			}
 		}
 	}
-	Matrix<int> chromaM = SubAnimation::PutOnTopOfEachOther(sAVec, Vei2(50, 50), 1, 0);
-	chromaM.Sort(value, valueOfZero);
-	chromaM.HalfSize(chromaM, valOfMixed);
-	chromaM.MirrowVertical();
-	SetTilesAT(CtPos(chunkPos, cellPos), chromaM);
+	if (sAVec.size() > 0)
+	{
+		Matrix<int> chromaM = SubAnimation::PutOnTopOfEachOther(sAVec, Vei2(200, 200), 1, 0);
+		chromaM.Sort(value, valueOfZero);
+		chromaM.EighthSize(chromaM, valOfMixed);
+		chromaM.MirrowVertical();
+		SetTilesAT(CtPos(chunkPos, cellPos), chromaM);
+	}
 }
 void Chunk::SetTilesAT(CtPos ctPos, int value)
 {
@@ -542,21 +545,27 @@ void Chunk::DrawType(Graphics& gfx)const
 			RectF curCellRect = cellsRect(curXY); //GetCellRect(chunkRect, curXY); 
 
 			assert(cells(curXY).type >= 0 && cells(curXY).type < Settings::nDiffFieldTypes);
-			if(cells(curXY).type != 1)
+			if(cells(curXY).type > 14 )
 				gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 			else
-				gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.newFields.at(0).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+				gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 200, 200), resC->tC.newFields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 
 			for (int i = 0; i < Settings::nDiffFieldTypes; i++)
 			{
 				int order = Settings::typeLayer[i];
 				if (conMap[order][curXY.x][curXY.y] == 1)
 				{
-					if (order != 1)
-						gfx.DrawConnections(order, Vei2((int)curCellRect.left, (int)curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+					if (Settings::anyMaskedType(order))
+					{
+						gfx.DrawConnectionsNew(order, Vei2((int)curCellRect.left, (int)curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.newMaskedFields[Settings::translateIntoMaskedType(order)].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+					}
 					else
-						gfx.DrawConnectionsNew(order, Vei2((int)curCellRect.left, (int)curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.newFields[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-					//gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.newFields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+					{
+						if (order > 14)
+							gfx.DrawConnections(order, Vei2((int)curCellRect.left, (int)curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						else
+							gfx.DrawConnectionsNew(order, Vei2((int)curCellRect.left, (int)curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.newFields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+					}//gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.newFields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 				}
 			}
 		}
@@ -1039,7 +1048,7 @@ Obstacle* Chunk::GetObstacleOutOfBounds(Vei2 tilePos) const
 }
 void Chunk::SetTypeAt(Vei2 pos, int type)
 {
-	cells(pos) = type;
+	cells(pos).type = type;
 }
 void Chunk::NextTurnFirst(std::map<std::string, Team*> teams)
 {

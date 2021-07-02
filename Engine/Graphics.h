@@ -362,19 +362,19 @@ public:
 			{
 				if (FIDF(aMat[0][1], lookFor) && aMat[0][0] == lookFor)	// 7
 				{
-					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(402, 25), 100, 100), surface, effect);
+					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(402, 100), 100, 100), surface, effect);
 				}
 				else if (aMat[0][1] == lookFor)	// 11
 				{
-					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(603, 25), 100, 100), surface, effect);
+					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(603, 100), 100, 100), surface, effect);
 				}
 				if (FIDF(aMat[2][1], lookFor) && aMat[2][0] == lookFor)	// 8
 				{
-					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(502, 25), 100, 100), surface, effect);
+					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(502, 100), 100, 100), surface, effect);
 				}
 				else if (aMat[2][1] == lookFor)	// 12
 				{
-					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(703, 25), 100, 100), surface, effect);
+					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(703, 100), 100, 100), surface, effect);
 				}
 			}
 		}
