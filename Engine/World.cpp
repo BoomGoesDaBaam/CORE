@@ -678,8 +678,8 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 	{
 		fcctPos = GetHitTile(mP);
 		fctPos = GetHitTileCtPos(mP);
-		chunks(fctPos.x).SetTypeAt(fcctPos.y, 3);
-		UpdateConMap();
+		//chunks(fctPos.x).SetTypeAt(fcctPos.y, 3);
+		//UpdateConMap();
 		if (attackMode)
 		{
 			Vei2 dist2lastclick = Chunk::chunkPos2Flat(Chunk::CtPos2CctPos(Chunk::GetMidPosOfObstacle(focusedObst->GetCtPos(),focusedObst->type,chunks.GetSize()))) - Chunk::chunkPos2Flat(fctPos);
