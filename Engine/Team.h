@@ -96,6 +96,36 @@ struct Materials
 			values[x.first] = set[x.first];
 		}
 	}
+	bool HasFood(float kg)
+	{
+		float has = 0.0f;
+		has += values["meat"];
+		has += values["fish"];
+		has += values["berrys"];
+		has += values["apples"];
+		return has;
+	}
+	void RemoveFood(float kg)
+	{
+		assert(HasFood(kg));
+		RemoveFood("meat", kg);
+		RemoveFood("fish", kg);
+		RemoveFood("berrys", kg);
+		RemoveFood("apples", kg);
+	}
+	void RemoveFood(std::string key, float& kg)
+	{
+		if (kg > 0 && kg >= values[key])
+		{
+			kg -= values[key];
+			values[key] = 0.0f;
+		}
+		else
+		{
+			kg = 0.0f;
+			values[key] -= kg;
+		}
+	}
 };
 
 class Slot

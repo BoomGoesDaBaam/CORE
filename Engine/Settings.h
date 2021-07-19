@@ -5,6 +5,11 @@
 #include <algorithm>
 namespace Settings
 {
+	/*
+	to do list:
+		-animals consume food every turn finish
+	
+	*/
 	/*		### Types ###
 			0 = water				5 = snow				10 = mountains (high)
 			1 = dirt				6 = coral reef			11 = canjon	   (high)
@@ -128,6 +133,9 @@ namespace Settings
 	static const std::vector<int> anyStorageVec = { 6, 30, 50 };
 	static const std::vector<int> anyAxeBonusVec = { 0,1,2,4,5,6,8,27,28,29,30,31,32,33,34, };
 	static const std::vector<int> anyPickaxeBonusVec = { 0,2,3,5,6,7,8,9,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50 };
+	static const std::vector<int> anyOfBuildingVec = {0,2,3,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,40};
+	static const std::vector<int> anySawmillBoostedObstacles = { 27,30,33,35,36,37,42,43,44,45,46,47,49 };
+	static const std::vector<int> anyWindmillBoostedObstacles = {  };
 	//Graphic options
 	//static bool displayObstacles = true;
 	static int probToGrow = 50;
@@ -141,6 +149,7 @@ namespace Settings
 
 	static int forestDensity = 8;
 	static int animalDensity = 4;
+	static float animalFoodCostPerTurn = 0.1f;
 
 
 	//
@@ -894,6 +903,28 @@ namespace Settings
 			break;
 		}
 	}
+	class OPB//ObstacleProductivityBoost
+	{
+		float prodDelta=0.0f;
+		std::vector<int> boostProdOfType = {};
+		int prodBoostRange = 0;
+		bool boostsProd = false;
+	public:
+		OPB() = default;
+		OPB(float prodDelta, std::vector<int> boostProdOfType, int prodBoostRange)
+			:
+			prodDelta(prodDelta),
+			boostProdOfType(boostProdOfType),
+			prodBoostRange(prodBoostRange),
+			boostsProd(true)
+		{}
+		bool BoostsProd()const { return boostsProd; }
+		float GetProdDelta()const { return prodDelta; }
+		const std::vector<int>& GetBoostedTypes()const { return boostProdOfType; }
+		int GetProdBoostrange()const { return prodBoostRange; }
+
+	};
+
 	struct ObstacleStats
 	{
 		ObstacleStats(int nStates, std::vector<Vei2> size, int baseHp, int movesPerTurn,
@@ -907,7 +938,8 @@ namespace Settings
 			float dmgAgainstWater = 1.0f,
 			float dmgAgainstLand = 1.0f,
 			float dmgAgainstAir = 1.0f,
-			float dmgAgainstArmored = 1.0f)
+			float dmgAgainstArmored = 1.0f,
+			OPB opb = OPB())
 			:
 			nStates(nStates),
 			size(size),
@@ -925,7 +957,8 @@ namespace Settings
 			dmgAgainstWater(dmgAgainstWater),
 			dmgAgainstLand(dmgAgainstLand),
 			dmgAgainstAir(dmgAgainstAir),
-			dmgAgainstArmored(dmgAgainstArmored)
+			dmgAgainstArmored(dmgAgainstArmored),
+			opb(opb)
 		{}
 
 		int nStates = 1;
@@ -946,13 +979,16 @@ namespace Settings
 		float dmgAgainstLand;
 		float dmgAgainstAir;
 		float dmgAgainstArmored;
+		OPB opb;
 	};
 	static const ObstacleStats obstacleStats[] =
 	{ 
 		ObstacleStats(				//#0
 		1,{Vei2(2,2)},100,-1,0,0,0,1,
 		{{"leather",50.f},{"sticks",30.f}},
-		{{"leather",25.f},{"sticks",15.f}}),
+		{{"leather",25.f},{"sticks",15.f}},
+		{Vei2(0,0)},
+		0,0,1.0f,1.0f,1.0f,1.0f,1.0f,OPB()),
 		ObstacleStats(				//#1
 		2,{Vei2(1,1),Vei2(5,5)},100,-1,0,0,0,1,
 		{{"sapling",1.f}},
@@ -1082,7 +1118,8 @@ namespace Settings
 		ObstacleStats(				//#31
 		1,{Vei2(5,5)},100,-1,0,0,0,6,
 		{ {"iron",5.f},{"wood",200.f},{"stone",130.f}},
-		{ {"iron",2.5f},{"wood",100.f},{"stone",65.f} }),
+		{ {"iron",2.5f},{"wood",100.f},{"stone",65.f} },
+		{ Vei2(0,0) }, 0, 0, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, OPB(1.0f, anyWindmillBoostedObstacles,20)),
 		ObstacleStats(				//#32
 		1,{Vei2(3,3)},100,-1,0,0, 0,3,
 		{{"wood",100.f},{"feather",2.f}},
@@ -1094,7 +1131,8 @@ namespace Settings
 		ObstacleStats(				//#34
 		1,{Vei2(3,3)},100,-1,0,0, 0,3,
 		{{"steel",50.f},{"wood",150.f}},
-		{{"steel",25.f},{"wood",75.f}}),
+		{{"steel",25.f},{"wood",75.f}},
+		{ Vei2(0,0) }, 0, 0, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, OPB(1.0f, anySawmillBoostedObstacles, 20)),
 		ObstacleStats(				//#35
 		1,{Vei2(5,5)},100,-1,0,0, 0,6,
 		{{"steel",50.f},{"stone",150.f}},

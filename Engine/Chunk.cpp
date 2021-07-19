@@ -88,8 +88,12 @@ void Chunk::CastHeal(CtPos pos, int deltaHP, int radius)
 		}
 	}
 }
-void Chunk::IncreaseProductivity(CtPos pos, float deltaProd, int radius)
+void Chunk::IncreaseProductivity(CtPos pos,const Settings::OPB& opb)// float deltaProd, int radius)
 {
+	int radius = opb.GetProdBoostrange();
+	int deltaProd = opb.GetProdDelta();
+	const std::vector<int>& boostedTypes = opb.GetBoostedTypes();
+
 	std::vector<Obstacle*> increased;
 	for (int y = -radius; y <= radius; y++)
 	{
@@ -98,7 +102,8 @@ void Chunk::IncreaseProductivity(CtPos pos, float deltaProd, int radius)
 			CtPos ctDelta = { Vei2(0,0),Vei2(x,y) };
 			CtPos ctPos = PutCtPosInWorld(pos + ctDelta, chunks->GetSize());
 			Obstacle* obst = chunks->operator()(ctPos.x).GetObstacleAt(ctPos.y);
-			if (chunks->operator()(ctPos.x).GetObstacleMapAt(ctPos.y) != -1 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius && std::none_of(increased.begin(), increased.end(), [&](const Obstacle* val) {return val == obst; }))
+			if (chunks->operator()(ctPos.x).GetObstacleMapAt(ctPos.y) != -1 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius && std::none_of(increased.begin(), increased.end(), [&](const Obstacle* val) {return val == obst; }) &&
+				std::any_of(boostedTypes.begin(), boostedTypes.end(), [&](const int& val) {return val == obst->type; }))
 			{
 				obst->productivity += deltaProd;
 				increased.push_back(obst);
@@ -1055,7 +1060,8 @@ void Chunk::NextTurnFirst(std::map<std::string, Team*> teams)
 	for (int i = 0; i < obstacles.size(); i++)			//Update Map
 	{
 		if (std::none_of(obstaclesIndexNotUsed.begin(), obstaclesIndexNotUsed.end(), [&](const int& val) {return val == i; })) {
-
+			obstacles[i]->productivity = 1.0f;
+			ApplyObstacleEffectFirst(obstacles[i].get());
 			if (obstacles[i]->education != nullptr && obstacles[i]->education->Educates())
 			{
 				obstacles[i]->education->TurnPassed();
@@ -1112,7 +1118,6 @@ void Chunk::NextTurnSecond(std::map<std::string, Team*> teams)
 				{
 					if (obstacles[i]->attack->GetAutomaticMode() != CtPos(Vei2(-3, -3), Vei2(-3, -3)))
 					{
-
 						AttackTile(CtPos2CctPos(attackPos), obstacles[i].get());
 					}
 					ApplyAutoAttackPosWhenNeeded(obstacles[i].get());
@@ -1150,9 +1155,8 @@ void Chunk::NextTurnSecond(std::map<std::string, Team*> teams)
 				PlantExpand(obstacles[i]->GetCtPos(), obstacles[i]->type, 45, Settings::animalDensity, teams["Fuer die Natur"]);
 			}
 			//Add meterials and apply Obstacle effects
-			obstacles[i]->productivity = 1.0f;
 			if (obstacles[i]->team != nullptr)
-				ApplyObstacleEffect(obstacles[i].get());
+				ApplyObstacleEffectSecond(obstacles[i].get());
 			//COnstructions finished
 			if (ConstructionSite* conObst = dynamic_cast<ConstructionSite*>(obstacles[i].get()))
 			{
@@ -1197,7 +1201,19 @@ void Chunk::ApplyAutoAttackPosWhenNeeded(Obstacle* obstacle)
 		obstacle->attack->SetAutomaticMode(attackPos);
 	}
 }
-void Chunk::ApplyObstacleEffect(Obstacle* obstacle)
+void Chunk::ApplyObstacleEffectFirst(Obstacle* obstacle)
+{
+	switch (obstacle->type)
+	{
+	case 31:
+		IncreaseProductivity(obstacle->GetCtPos(), Settings::obstacleStats[31].opb);
+		break;
+	case 34:
+		IncreaseProductivity(obstacle->GetCtPos(), Settings::obstacleStats[34].opb);
+		break;
+	}
+}
+void Chunk::ApplyObstacleEffectSecond(Obstacle* obstacle)
 {
 	Team* team = obstacle->team;
 	switch (obstacle->type)
@@ -1252,12 +1268,9 @@ break;
 			}
 		}
 		break;
-	case 31:
-		IncreaseProductivity(obstacle->GetCtPos(), 2.f, 20);
-		break;
 	case 32:
 		if(rr.Calc(10)==0)
-			AttractObstacles(obstacle->GetCtPos(),50,Settings::anyOfAnimalsVec);
+			AttractObstacles(obstacle, obstacle->GetCtPos(),50,Settings::anyOfAnimalsVec,true);
 		break;
 	case 33:
 		break;
@@ -1275,8 +1288,34 @@ break;
 		}
 	}
 }
-void Chunk::AttractObstacles(const CtPos& attractTo, const int& radius, const std::vector<int>& allowedTypes)
+void Chunk::AttractObstacles(Obstacle* attracer, const CtPos& attractTo, const int& radius, const std::vector<int>& allowedTypes, bool costsFood)
 {
+	if (costsFood)
+	{
+		float foodCost = 0.0f;
+		for (int y = -radius; y <= radius; y++)
+		{
+			for (int x = -radius; x <= radius; x++)
+			{
+				CtPos ctDelta = { Vei2(0,0),Vei2(x,y) };
+				CtPos ctPos = PutCtPosInWorld(attractTo + ctDelta, chunks->GetSize());
+				Obstacle* obstacle = chunks->operator()(ctPos.x).GetObstacleAt(ctPos.y);
+				if (obstacle != nullptr && std::any_of(allowedTypes.begin(), allowedTypes.end(), [&](const int type) {return type == obstacle->type; }) && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius)
+				{
+					foodCost += Settings::animalFoodCostPerTurn;
+				}
+			}
+		}
+		if (attracer->team->GetMaterials().HasFood(foodCost))
+		{
+			attracer->team->GetMaterials().RemoveFood(foodCost);
+		}
+		else
+		{
+			return;
+		}
+	}
+
 	for (int y = -radius; y <= radius; y++)
 	{
 		for (int x = -radius; x <= radius; x++)

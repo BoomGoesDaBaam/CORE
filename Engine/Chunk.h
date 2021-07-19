@@ -470,6 +470,10 @@ public:
 				inv->ItemUsed(12);
 			}
 		}
+		if (type == 27 && Settings::anyOfPlants(victim->type))
+		{
+			dmg *= productivity;
+		}
 		return (int)dmg;
 	}
 	int GetAttackRange()
@@ -512,9 +516,10 @@ public:
 
 class ConstructionSite : public Obstacle
 {
-	int turnsLeft, typeWhenFinished;
+	int typeWhenFinished;
+	float turnsLeft;
 public:
-	ConstructionSite(int turnsLeft, int typeWhenFinished, Vei2 tilePos, Vei2 chunkPos, int type, sharedResC resC, Team* team = nullptr)
+	ConstructionSite(float turnsLeft, int typeWhenFinished, Vei2 tilePos, Vei2 chunkPos, int type, sharedResC resC, Team* team = nullptr)
 		:
 		Obstacle( tilePos, chunkPos, type, resC, team),
 		turnsLeft(turnsLeft),
@@ -525,7 +530,7 @@ public:
 	virtual void Poop()override {}
 	void TurnPassed()
 	{
-		turnsLeft--;
+		turnsLeft-=productivity;
 	}
 	bool BuildingFinished()
 	{
@@ -583,17 +588,18 @@ class Chunk
 		return chunks->GetSize() * cells.GetSize() * Settings::CellSplitUpIn;
 	}
 	void CastHeal(CtPos pos, int deltaHP, int radius);
-	void IncreaseProductivity(CtPos pos, float deltaProd, int radius);
+	void IncreaseProductivity(CtPos pos,const Settings::OPB& opb);
 	void UnitKilled(CtPos killerPos, CtPos victimPos);
 	void PlantExpand(CtPos ctPos, int type, int radius, int maxInRange, Team* team);
 	void MakeRadomMove(Obstacle* obstacle);
 	void MakeMoveTowardsHunting(Obstacle* obstacle);
-	void AttractObstacles(const CtPos& attractTo, const int& radius, const std::vector<int>& allowedTypes);
+	void AttractObstacles(Obstacle* attracer, const CtPos& attractTo, const int& radius, const std::vector<int>& allowedTypes, bool costsFood = false);
 
 	CtPos FindNearestObstacle(CtPos pos,std::vector<int> allowedTypes, int radius);
 	CtPos FindNearestPositionThatFits(Vei2 tilePos, int type);
 	void ApplyAutoAttackPosWhenNeeded(Obstacle* obstacle);
-	void ApplyObstacleEffect(Obstacle* obstacle);
+	void ApplyObstacleEffectFirst(Obstacle* obstacle);
+	void ApplyObstacleEffectSecond(Obstacle* obstacle);
 
 
 	void MarkObstacleMap(Vei2 tilePos, Vei2 size, int index);
