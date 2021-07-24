@@ -114,7 +114,7 @@ void Game::ComposeFrame()
 		resC->tC.Update(0.015f);
 		std::ostringstream oss3;
 		oss3 << "FPS: " << fps_d;
-		resC->tC.fonts.at(0).DrawText(oss3.str().c_str(), 5, 5, 13, Colors::Black);
+		resC->tC.fonts.at(0).DrawText(oss3.str().c_str(), 5, 5, 25, Colors::Black);
 
 		if (debugInfoOn)
 		{
@@ -124,14 +124,14 @@ void Game::ComposeFrame()
 			{
 				oss1 << curW->GetFocusedObstacle()->n90rot;
 			}
-			oss1 << " obstaclesOnCHunk:" << curW->GetObstacleCount();
-			oss2 << "fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CellSize:" << curW->GetcSize().x << "   x-Felder:" << curW->GetRenderRect().left;
+			oss1 << " obstaclesOnCHunk:" << curW->GetObstacleCount() << " PlaceFieldType: "<<Settings::GetTypeString(curW->GetPlaceField());
+			oss2 << "fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CellSize:" << curW->GetcSize().x << "   x-Felder:" << curW->GetRenderRect().left << " Markerpos:" << debugMarkerPos << " Markpos:" << markPos << "Dist: " << Vei2(std::abs(debugMarkerPos.x - markPos.x)+1, std::abs(debugMarkerPos.y - markPos.y)+1);
 			oss4 << "Type:" << curW->GetfCellType() << "  use count tC:" << resC.use_count() << " ignoreMouse:" << ignoreMouse << " opt1:" << Settings::obstaclesOn << " updatedGraphics:" << curW->updatedGraphics;
 			resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 14, Colors::Red);
 			resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 14, Colors::Red);
 			resC->tC.fonts.at(0).DrawText(oss4.str().c_str(), 25, 65, 14, Colors::Red);
 			Vei2 mos = Graphics::GetMidOfScreen();
-			gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
+			//gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
 			for (int y = 1; y <= 7; y++)
 			{
 				gfx.DrawLine(Vec2((float)(y * 100), 0.f), Vec2((float)(y * 100), 600.f), Colors::Red);
@@ -141,43 +141,72 @@ void Game::ComposeFrame()
 				gfx.DrawLine(Vec2(0.f, (float)(x * 100)), Vec2(800.f, (float)(x * 100)), Colors::Red);
 			}
 			//gfx.DrawLine((Vec2)wnd.mouse.GetPos(), (Vec2)wnd.mouse.GetPos() + Vec2(curW->GetcSize().x, curW->GetcSize().y), Colors::Red);
-			gfx.PutPixel((int)mP.x, (int)mP.y, Colors::Black);
+			//gfx.PutPixel((int)mP.x, (int)mP.y, Colors::Black);
+			gfx.PutPixel((int)debugMarkerPos.x, (int)debugMarkerPos.y, Colors::Black);
+			gfx.PutPixel((int)markPos.x, (int)markPos.y, Colors::Black);
 		}
+
+		//gfx.DrawSurface(RectI(Vei2(100, 100), 400, 400), RectI(Vei2(0, 0), 200, 200), resC->tC.newFields[1].GetCurSurface(), SpriteEffect::Chroma(), 0);
 	}
 	else
 	{
-
 	}
 	igwH.Draw(gfx);
 }
 //Handle
 void Game::HandleMouseInput(Mouse::Event& e)
 {
-	
-		if (ignoreMouse && e.GetType() == Mouse::Event::Type::LRelease)
+	if (debugInfoOn && e.GetType() == Mouse::Event::Type::LRelease)
+	{
+		debugMarkerPos = (Vei2)e.GetPos();
+	}
+	if (ignoreMouse && e.GetType() == Mouse::Event::Type::LRelease)
+	{
+		ignoreMouse = false;
+		igwH.HandleMouseInput(e);
+		return;
+	}
+	if (igwH.HandleMouseInput(e))
+	{
+		gH.Release();
+		if (e.GetType() == Mouse::Event::Type::LPress)
 		{
-			ignoreMouse = false;
-			igwH.HandleMouseInput(e);
-			return;
+			ignoreMouse = true;
 		}
-		if (igwH.HandleMouseInput(e))
-		{
-			gH.Release();
-			if (e.GetType() == Mouse::Event::Type::LPress)
-			{
-				ignoreMouse = true;
-			}
-		}
-		else
-		{
-			curW->HandleMouseEvents(e, gH);
-			World& w = *curW.get();
-			igwH.UpdateFieldinformation(w, &player);
-		}
-		HandleFrameChanges();
+	}
+	else
+	{
+		curW->HandleMouseEvents(e, gH);
+		World& w = *curW.get();
+		igwH.UpdateFieldinformation(w, &player);
+	}
+	HandleFrameChanges();
 }
 void Game::HandleKeyboardInput(Keyboard::Event& e)
 {
+	if (debugInfoOn && e.IsRelease())
+	{
+		if (e.GetCode() == 'W')
+		{
+			debugMarkerPos.y--;
+		}
+		if (e.GetCode() == 'A')
+		{
+			debugMarkerPos.x--;
+		}
+		if (e.GetCode() == 'S')
+		{
+			debugMarkerPos.y++;
+		}
+		if (e.GetCode() == 'F')
+		{
+			debugMarkerPos.x++;
+		}
+		if (e.GetCode() == 'M')
+		{
+			markPos = debugMarkerPos;
+		}
+	}
 	curW->HandleKeyboardEvents(e);
 }
 void Game::HandleFrameChanges()
@@ -221,6 +250,7 @@ void Game::HandleFrameLogic(FrameEvent& e)
 			{
 				curW->SetCraftMode(e.GetExtra());
 				igwH.LoadScene(0, curW.get());
+				igwH.UpdateFrames(curW->GetFocusedObstacle(),curW->GetStorageObstacle());
 			}
 		}
 		if (e.GetAction() == "next turn")

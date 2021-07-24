@@ -548,12 +548,11 @@ void Chunk::DrawType(Graphics& gfx)const
 			//const Cell& curCell = cells(curXY);
 			//int cellType = curCell->type;
 			RectF curCellRect = cellsRect(curXY); //GetCellRect(chunkRect, curXY); 
+			int width = curCellRect.GetWidth();
+			int height = curCellRect.GetHeight();
 
 			assert(cells(curXY).type >= 0 && cells(curXY).type < Settings::nDiffFieldTypes);
-			if(cells(curXY).type > 14 )
-				gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.fields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-			else
-				gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 200, 200), resC->tC.newFields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+			gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 200, 200), resC->tC.newFields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 
 			for (int i = 0; i < Settings::nDiffFieldTypes; i++)
 			{
@@ -566,10 +565,7 @@ void Chunk::DrawType(Graphics& gfx)const
 					}
 					else
 					{
-						if (order > 14)
-							gfx.DrawConnections(order, Vei2((int)curCellRect.left, (int)curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.fields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-						else
-							gfx.DrawConnectionsNew(order, Vei2((int)curCellRect.left, (int)curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.newFields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						gfx.DrawConnectionsNew(order, Vei2((int)curCellRect.left, (int)curCellRect.top), aMats(curXY), resC->fsC.FieldCon, resC->tC.newFields[order].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 					}//gfx.DrawSurface((RectI)curCellRect, RectI(Vei2(0, 0), 50, 50), resC->tC.newFields.at(cells(curXY).type).GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
 				}
 			}
@@ -1220,8 +1216,8 @@ void Chunk::ApplyObstacleEffectSecond(Obstacle* obstacle)
 	{
 	
 	case 2:
-		CastHeal(CtPos(obstacle->chunkPos, obstacle->tilePos), 20, 10);
-break;
+		CastHeal(CtPos(obstacle->chunkPos, obstacle->tilePos), obstacle->GetHealAmount(), obstacle->GetHealRange());
+		break;
 	case 10:
 		team->GetMaterials().Add({ {"units",1.f} });
 		break;

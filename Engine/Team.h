@@ -108,10 +108,10 @@ struct Materials
 	void RemoveFood(float kg)
 	{
 		assert(HasFood(kg));
-		RemoveFood("meat", kg);
-		RemoveFood("fish", kg);
 		RemoveFood("berrys", kg);
 		RemoveFood("apples", kg);
+		RemoveFood("meat", kg);
+		RemoveFood("fish", kg);
 	}
 	void RemoveFood(std::string key, float& kg)
 	{
@@ -122,8 +122,8 @@ struct Materials
 		}
 		else
 		{
-			kg = 0.0f;
 			values[key] -= kg;
+			kg = 0.0f;
 		}
 	}
 };

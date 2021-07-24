@@ -326,7 +326,7 @@ public:
 				{
 					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(603, 0), 100, 100), surface, effect);
 				}
-				else if (FIDF(aMat[0][1], lookFor) && aMat[0][2] == lookFor)	// 5
+				else if (/*FIDF(aMat[0][1], lookFor) &&*/ aMat[0][2] == lookFor)	// 5
 				{
 					DrawSurface(drawOffset[0] + topLeft, RectI(Vei2(402, 0), 100, 100), surface, effect);
 				}
@@ -334,7 +334,7 @@ public:
 				{
 					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(703, 0), 100, 100), surface, effect);
 				}
-				else if (FIDF(aMat[2][1], lookFor) && aMat[2][2] == lookFor)	// 6
+				else if (/*FIDF(aMat[2][1], lookFor) &&*/ aMat[2][2] == lookFor)	// 6
 				{
 					DrawSurface(drawOffset[1] + topLeft, RectI(Vei2(502, 0), 100, 100), surface, effect);
 				}
@@ -360,22 +360,20 @@ public:
 			}
 			else if (aMat[1][0] != lookFor)
 			{
-				if (FIDF(aMat[0][1], lookFor) && aMat[0][0] == lookFor)	// 7
+				if (aMat[0][1] == lookFor)	// 11
+				{
+					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(603, 100), 100, 100), surface, effect);
+				}else if (/*FIDF(aMat[0][1], lookFor) && */aMat[0][0] == lookFor)	// 7
 				{
 					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(402, 100), 100, 100), surface, effect);
 				}
-				else if (aMat[0][1] == lookFor)	// 11
-				{
-					DrawSurface(drawOffset[2] + topLeft, RectI(Vei2(603, 100), 100, 100), surface, effect);
-				}
-				if (FIDF(aMat[2][1], lookFor) && aMat[2][0] == lookFor)	// 8
-				{
-					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(502, 100), 100, 100), surface, effect);
-				}
-				else if (aMat[2][1] == lookFor)	// 12
+				if (aMat[2][1] == lookFor)	// 12
 				{
 					DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(703, 100), 100, 100), surface, effect);
-				}
+				}else if (/*FIDF(aMat[2][1], lookFor) &&*/ aMat[2][0] == lookFor)	// 8
+					{
+						DrawSurface(drawOffset[3] + topLeft, RectI(Vei2(502, 100), 100, 100), surface, effect);
+					}
 			}
 		}
 	}
@@ -435,10 +433,12 @@ public:
 	template<typename E>
 	void DrawSurface(RectI pos, RectI sourceR, const Surface& s, E effect, int n90rot=0)
 	{
-		if (pos.right < screenRect.left && pos.left > screenRect.right && pos.bottom < screenRect.top && pos.top > screenRect.bottom)
+		if (pos.right < screenRect.left || pos.left > screenRect.right || pos.bottom < screenRect.top || pos.top > screenRect.bottom)
 		{
 			return;
 		}
+		pos.right--;
+		pos.bottom--;
 
 		RectI inFpos = pos;
 		int skippedLeft = 0, skippedRight = 0, skippedTop = 0, skippedBottom = 0;
@@ -467,47 +467,57 @@ public:
 		int drawWidth = inFpos.GetWidth();
 		int drawHeight = inFpos.GetHeight();
 
-		int sourceWidth = sourceR.GetWidth();
-		int sourceHeight = sourceR.GetHeight();
+		int sourceWidth = sourceR.GetWidth()-1;
+		int sourceHeight = sourceR.GetHeight()-1;
 
 		int posWidth = pos.GetWidth();
 		int posHeight = pos.GetHeight();
 
 		int sWidth = s.GetRect().GetWidth();
 		int sHeight = s.GetRect().GetHeight();
-
-		for (int y = 0; y < drawHeight; y++)
+		using namespace std;
+		for (int y = 0; y < drawHeight + 1; y++)
 		{
-
-			for (int x = 0; x < drawWidth; x++)
+			int sPixelX = 0;
+			int sPixelY = 0;
+			if (n90rot == 0)
+			{
+				sPixelY = (int)(sourceR.top + ((float)(y + skippedTop) / (posHeight)) * sourceHeight + 0.5f);
+			}
+			else if (n90rot == 1)
+			{
+				sPixelX = (int)(sourceR.right - 1 - ((float)(y + skippedTop) / posWidth) * sourceWidth + 0.5f);
+			}
+			else if (n90rot == 2)
+			{
+				sPixelY = (int)(sourceR.bottom - 1 - ((float)(y + skippedTop) / posHeight) * sourceHeight + 0.5f);
+			}
+			else if (n90rot == 3)
+			{
+				sPixelX = (int)(sourceR.left + ((float)(y + skippedTop) / posWidth) * sourceWidth + 0.5f);
+			}
+			for (int x = 0; x < drawWidth + 1; x++)
 			{
 				assert(PixelInFrame({ x + inFpos.left, y + inFpos.top }));
 				
 				//if (PixelInFrame({ x + inFpos.left, y + inFpos.top }))
 				//{
-					int sPixelX=0;
-					int sPixelY=0;
 
 					if (n90rot == 0)
 					{
-						//sPixelX = (int)(sourceR.left + (pixelPercX) * sourceWidth);
-						sPixelX = (int)(sourceR.left + ((float)(x + skippedLeft) / posWidth) * sourceWidth);
-						sPixelY = (int)(sourceR.top + ((float)(y + skippedTop) / posHeight) * sourceHeight);
+						sPixelX = (int)(sourceR.left + ((float)(x + skippedLeft) / (posWidth)) * sourceWidth + 0.5f);
 					}
 					else if (n90rot == 1)
 					{ 
-						sPixelX = (int)std::ceil(sourceR.right - 1 - ((float)(y + skippedTop) / posWidth) * sourceWidth);
-						sPixelY = (int)(sourceR.top + ((float)(x + skippedLeft) / posHeight) * sourceHeight);
+						sPixelY = (int)(sourceR.top + ((float)(x + skippedLeft) / posHeight) * sourceHeight + 0.5f);
 					} 
 					else if (n90rot == 2)
 					{
-						sPixelX = (int)std::ceil(sourceR.right - 1 - ((float)(x + skippedLeft) / posWidth) * sourceWidth);
-						sPixelY = (int)std::ceil(sourceR.bottom - 1 - ((float)(y + skippedTop) / posHeight) * sourceHeight);
+						sPixelX = (int)(sourceR.right - 1 - ((float)(x + skippedLeft) / posWidth) * sourceWidth + 0.5f);
 					}
 					else if (n90rot == 3)
 					{
-						sPixelX = (int)(sourceR.left + ((float)(y + skippedTop) / posWidth) * sourceWidth);
-						sPixelY = (int)std::ceil(sourceR.bottom - 1 -((float)(x + skippedLeft) / posHeight) * sourceHeight);
+						sPixelY = (int)(sourceR.bottom - 1 -((float)(x + skippedLeft) / posHeight) * sourceHeight + 0.5f);
 					}
 
 					assert(sPixelX >= 0);
@@ -521,6 +531,16 @@ public:
 					//}
 					//pixelPercX += percentX;
 				//}
+			}
+		}
+		for (int y = 0; y < 5; y++)
+		{
+			for (int x = 0; x < 5; x++)
+			{
+				if (PixelInFrame(Vei2(pos.left + x, pos.top + y)))
+				{
+					//PutPixel((int)pos.left + x, (int)pos.top + y, Colors::Black);
+				}
 			}
 		}
 	}

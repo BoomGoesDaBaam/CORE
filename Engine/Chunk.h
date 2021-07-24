@@ -337,11 +337,27 @@ public:
 		}
 
 	}
+	int GetHealRange()
+	{
+		if (heal != nullptr)
+		{
+			return Settings::obstacleStats[type].healRange * productivity;
+		}
+		return 0;
+	}
+	int GetHealAmount()
+	{
+		if (heal != nullptr)
+		{
+			return Settings::obstacleStats[type].healNumber * productivity;
+		}
+		return 0;
+	}
 	void Draw(Graphics& gfx)const			//	'tileRect' = Rect of tile where (Vei2(0, -1) && Vei2(-1, 0) != index) == true
 	{
 		if (state == 0)
 		{
-			gfx.DrawSurface((RectI)rect, animations[0].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta),n90rot);
+			gfx.DrawSurface((RectI)rect, animations[0].GetCurSurface(), SpriteEffect::Chroma(),n90rot);
 		}
 		else
 		{

@@ -188,9 +188,13 @@ bool Frame::Hit(Vec2 mP)
 	{
 		assert(type == 0 || type == 1 || type == -1);
 		Vei2 mpRel = (Vei2)(mP - GetPos().GetTopLeft<float>());
+		Vec2 scale;
 		switch (type)
 		{
 		case 0:
+			scale = Vec2(resC->tC.windowsFrame[1].GetSize()) / Vec2(pos.GetSize());
+			mpRel.x = (int)(mpRel.x * scale.x);
+			mpRel.y = (int)(mpRel.y * scale.y);
 			switch (curState)
 			{
 			case 0:
@@ -202,7 +206,7 @@ bool Frame::Hit(Vec2 mP)
 			}
 			break;
 		case 1:
-			Vec2 scale = Vec2(s->GetSize()) / Vec2(pos.GetSize());
+			scale = Vec2(s->GetSize()) / Vec2(pos.GetSize());
 			mpRel.x = (int)(mpRel.x * scale.x);
 			mpRel.y = (int)(mpRel.y * scale.y);
 
@@ -361,6 +365,11 @@ FrameHandle::FrameHandle(sharedResC resC)
 
 bool FrameHandle::HandleMouseInput(Mouse::Event& e)
 {
+	if (e.GetType() == Mouse::Event::Type::LRelease)
+	{
+		int k = 23;
+	}
+
 	if (Settings::framesOn)
 	{
 		for (int prio = 0; prio <= 10; prio++)

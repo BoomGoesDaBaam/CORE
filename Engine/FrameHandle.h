@@ -579,6 +579,10 @@ public:
 	}
 	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)
 	{
+			if (e.GetType() == Mouse::Event::Type::LRelease)
+			{
+				int k = 23;
+			}
 			Vec2 mP = (Vec2)e.GetPos();
 			bool hit = Hit(mP);
 
@@ -1160,7 +1164,7 @@ public:
 				b_THsetAttack->size = 7;
 				b_THsetAttack->hitable = true;
 
-				Frame* fLumberjackHut = AddFrame("f_LumberjackHut", RectF(Vec2(100, 150), 140, 280), 0);																			//Lumberjack Frame
+				Frame* fLumberjackHut = AddFrame("f_LumberjackHut", RectF(Vec2(100, 150), 210, 420), 0);																			//Lumberjack Frame
 				fLumberjackHut->SetState(1);
 				fLumberjackHut->AddText(Settings::lang_lumberjackHut[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_h");
 				fLumberjackHut->AddText(Settings::lang_hp[Settings::lang] + ":", RectF(Vec2(2, 95), 50, 8), 7, &resC->tC.fonts[0], Colors::Black, "t_hp", a, 1);
@@ -1211,7 +1215,7 @@ public:
 				fButtonBuild->s = &resC->tC.windowsFrame[4].GetCurSurface();
 				fButtonBuild->bFunc = BBuildMenu;
 				*/
-				Frame* fInventory = AddFrame("f_Inventory", RectF(Vec2(Graphics::ScreenWidth / 2 - 125, Graphics::ScreenHeight / 12), 250, 191), 1);
+				Frame* fInventory = AddFrame("f_Inventory", RectF(Vec2(Graphics::ScreenWidth / 2 - 125, Graphics::ScreenHeight / 12), 250, 190), 1);
 				fInventory->s = &resC->tC.windowsFrame[8].GetCurSurface();
 				fInventory->SetVisible(false);
 

@@ -66,6 +66,8 @@ private:
 	bool grit = false;						//show grit
 	bool buildMode = false;					//place something
 	int placeObstacle = 30;
+	bool buildFieldMode = false;
+	int placeField = 14;
 	int placeObstaclen90Rot = 0;
 	Matrix<int> placeCondMat = Matrix<int>(1, 1, -3);
 	bool posAllowed = true;
@@ -224,6 +226,7 @@ public:
 	bool GetBuildMode() { return buildMode; }
 	void SetBuildMode(bool val) { buildMode = val; }
 	int GetPlaceObstacle() { return placeObstacle; }
+	int GetPlaceField() { return placeField; }
 	int GetObstacleCount()
 	{
 		return chunks(fctPos.x).GetObstacleCount();

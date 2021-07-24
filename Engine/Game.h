@@ -59,6 +59,9 @@ private:
 	Tim t;
 	float passedTime = 0;
 	bool debugInfoOn = false,ignoreMouse=false;			//Ignores the Mouseiput for curW unless eventtype is LRelease
+	Vei2 debugMarkerPos = Vei2(Graphics::ScreenWidth / 2, Graphics::ScreenHeight / 2);
+	Vei2 markPos = Vei2(Graphics::ScreenWidth / 2, Graphics::ScreenHeight / 2);
+
 
 	std::shared_ptr<ResourceCollection> resC = nullptr;
 	GraphicObjects go;

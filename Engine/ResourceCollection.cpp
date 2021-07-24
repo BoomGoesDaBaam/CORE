@@ -519,10 +519,10 @@ std::vector<SubAnimation> FramesizeCollection::GetConnectionAnimationVecNew(int 
 	std::vector<SubAnimation> vec;
 	std::vector<RectI> posInGrit = GetConOffset(Vei2(50, 50));
 	assert(aMat.GetSize().x == 3 && aMat.GetSize().y == 3);
-	Animation& v = tC->newFields.at(lookFor);
+	Animation* v = &tC->newFields.at(lookFor);
 	if (masked)
 	{
-		v = tC->newMaskedFields.at(translateIntoMaskedType(lookFor));
+		v = &tC->newMaskedFields.at(translateIntoMaskedType(lookFor));
 	}
 
 	if (FIDF(aMat[1][1], lookFor))
@@ -531,76 +531,75 @@ std::vector<SubAnimation> FramesizeCollection::GetConnectionAnimationVecNew(int 
 		{
 			if (aMat[0][1] == lookFor)	// 1
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(201, 0), 100, 100), posInGrit[0]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(201, 0), 100, 100), posInGrit[0]));
 			}
 			if (aMat[0][1] != lookFor)	// 13
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(804, 0), 100, 100), posInGrit[0]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(804, 0), 100, 100), posInGrit[0]));
 			}
 			if (aMat[2][1] == lookFor)	// 2
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(301, 0), 100, 100), posInGrit[1]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(301, 0), 100, 100), posInGrit[1]));
 			}
 			if (aMat[2][1] != lookFor)	// 14
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(904, 0), 100, 100), posInGrit[1]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(904, 0), 100, 100), posInGrit[1]));
 			}
 		}
 		else if (aMat[1][2] != lookFor)
 		{
 			if (aMat[0][1] == lookFor)	//9
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(603, 0), 100, 100), posInGrit[0]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(603, 0), 100, 100), posInGrit[0]));
 			}
-			if (FIDF(aMat[0][1], lookFor) && aMat[0][2] == lookFor)	// 5
+			if (/*FIDF(aMat[0][1], lookFor) &&*/ aMat[0][2] == lookFor)	// 5
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(402, 0), 100, 100), posInGrit[0]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(402, 0), 100, 100), posInGrit[0]));
 			}
 			if (aMat[2][1] == lookFor)	//10
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(703, 0), 100, 100), posInGrit[1]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(703, 0), 100, 100), posInGrit[1]));
 			}
 			if (FIDF(aMat[2][1], lookFor) && aMat[2][2] == lookFor)	// 6
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(502, 0), 100, 100), posInGrit[1]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(502, 0), 100, 100), posInGrit[1]));
 			}
 		}
 		if (aMat[1][0] == lookFor)
 		{
 			if (aMat[0][1] == lookFor)	// 3
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(201, 100), 100, 100), posInGrit[2]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(201, 100), 100, 100), posInGrit[2]));
 			}
 			if (aMat[0][1] != lookFor)	// 15
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(804, 100), 100, 100), posInGrit[2]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(804, 100), 100, 100), posInGrit[2]));
 			}
 			if (aMat[2][1] == lookFor)	// 4
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(301, 100), 100, 100), posInGrit[3]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(301, 100), 100, 100), posInGrit[3]));
 			}
 			if (aMat[2][1] != lookFor)	// 16
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(904, 100), 100, 100), posInGrit[3]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(904, 100), 100, 100), posInGrit[3]));
 			}
 		}
 		else if (aMat[1][0] != lookFor)
 		{
-			if (FIDF(aMat[0][1], lookFor) && aMat[0][0] == lookFor)	// 7
-			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(402, 100), 100, 100), posInGrit[2]));
-			}
 			if (aMat[0][1] == lookFor)	// 11
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(603, 100), 100, 100), posInGrit[2]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(603, 100), 100, 100), posInGrit[2]));
+			}else if (/*FIDF(aMat[0][1], lookFor) &&*/ aMat[0][0] == lookFor)	// 7
+			{
+				vec.push_back(SubAnimation(*v, RectI(Vei2(402, 100), 100, 100), posInGrit[2]));
 			}
 			if (FIDF(aMat[2][1], lookFor) && aMat[2][0] == lookFor)	// 8
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(502, 100), 100, 100), posInGrit[3]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(502, 100), 100, 100), posInGrit[3]));
 			}
 			if (aMat[2][1] == lookFor)	// 12
 			{
-				vec.push_back(SubAnimation(v, RectI(Vei2(703, 100), 100, 100), posInGrit[3]));
+				vec.push_back(SubAnimation(*v, RectI(Vei2(703, 100), 100, 100), posInGrit[3]));
 			}
 		}
 	}
