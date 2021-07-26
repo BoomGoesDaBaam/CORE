@@ -41,12 +41,12 @@ MainWindow::MainWindow( HINSTANCE hInst,wchar_t * pArgs )
 
 	// create window & get hWnd
 	RECT wr;
-	wr.left = 350;
+	wr.left = 0;
 	wr.right = Graphics::ScreenWidth + wr.left;
 	wr.top = 100;
 	wr.bottom = Graphics::ScreenHeight + wr.top;
 	AdjustWindowRect( &wr,WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,FALSE );
-	hWnd = CreateWindow( wndClassName,L"Chili DirectX Framework",
+	hWnd = CreateWindow( wndClassName,L"Farting is healthy!",
 		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
 		wr.left,wr.top,wr.right - wr.left,wr.bottom - wr.top,
 		nullptr,nullptr,hInst,this );
@@ -141,10 +141,18 @@ LRESULT MainWindow::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam )
 		if( !(lParam & 0x40000000) || kbd.AutorepeatIsEnabled() ) // no thank you on the autorepeat
 		{
 			kbd.OnKeyPressed( static_cast<unsigned char>(wParam) );
+			if (wParam == VK_SHIFT)
+			{
+				mouse.shiftIsPressed = true;
+			}
 		}
 		break;
 	case WM_KEYUP:
 		kbd.OnKeyReleased( static_cast<unsigned char>(wParam) );
+		if (wParam == VK_SHIFT)
+		{
+			mouse.shiftIsPressed = false;
+		}
 		break;
 	case WM_CHAR:
 		kbd.OnChar( static_cast<unsigned char>(wParam) );
@@ -167,19 +175,19 @@ LRESULT MainWindow::HandleMsg( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam )
 		}
 		else
 		{
-			if( wParam & (MK_LBUTTON | MK_RBUTTON) )
+			if( wParam & (MK_LBUTTON | MK_RBUTTON))
 			{
 				x = std::max( 0,x );
 				x = std::min( int( Graphics::ScreenWidth ) - 1,x );
 				y = std::max( 0,y );
 				y = std::min( int( Graphics::ScreenHeight ) - 1,y );
-				mouse.OnMouseMove( x,y );
+				mouse.OnMouseMoveOutOfScreen( x,y );
 			}
 			else
 			{
 				ReleaseCapture();
 				mouse.OnMouseLeave();
-				mouse.OnLeftReleased( x,y );
+				//mouse.OnLeftReleased( x,y );
 				mouse.OnRightReleased( x,y );
 			}
 		}

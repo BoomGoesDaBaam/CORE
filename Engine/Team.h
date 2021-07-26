@@ -1,0 +1,374 @@
+#pragma once
+#include "Rect.h"
+#include <map>
+#include <vector>
+#include "Settings.h"
+struct Materials
+{
+	std::map<std::string, float> values;
+	Materials()
+	{
+		//New Ressources need to be added in TranslateRessources
+
+		//IT
+		values["computer chips"] = 2500.f;//not added to showresorrces
+		//Ressources
+		values["wood"] = 2500.f;
+		values["iron"] = 1000;
+		values["sand"] = 200;
+		values["stone"] = 2000;
+		values["copper"] = 200;
+		values["gold"] = 200;
+		values["aluminum"] = 200;
+		values["emerald"] = 200;
+		values["sapphire"] = 200;
+		values["robin"] = 200;
+		values["diamond"] = 200;
+		values["amber"] = 200;
+		values["silicon"] = 200; //not added to showresorrces
+		values["lithium"] = 200; //not added to showresorrces
+		values["gunpowder"] = 200; //not added to showresorrces
+
+		//Materials
+		values["steel"] = 200;
+		values["plastic"] = 200;
+		values["concrete"] = 2000;
+		values["glass"] = 200;
+		values["ceramics"] = 200;
+		values["snow"] = 100;
+		values["bricks"] = 2000; 
+		values["slate"] = 1011;
+
+		//Organics
+		values["corals"] = 200;
+		values["sticks"] = 205.f;
+		values["leafes"] = 200;
+		values["wool"] = 200;
+		values["leather"] = 120.f;
+		values["fur"] = 200;
+		values["meat"] = 5;
+		values["fish"] = 5;
+		values["berrys"] = 5;
+		values["apples"] = 200;
+		values["cactus"] = 200;
+		values["sapling"] = 200;		//not added to showresorrces
+		values["feather"] = 200;		//not added to showresorrces
+		values["maxUnits"] = 5;		//not added to showresorrces
+		values["units"] = 5;		//not added to showresorrces
+		values["silk"] = 100;		//not added to showresorrces
+	}
+	bool Has(std::map<std::string, float> lookFor)
+	{
+		for (auto const& x : lookFor)
+		{
+			if (values[x.first] < lookFor[x.first])
+			{
+				return false;
+			}
+			/*
+			std::cout << x.first  // string (key)
+				<< ':'
+				<< x.second // string's value 
+				<< std::endl;
+				*/
+		}
+		return true;
+	}
+	void Remove(std::map<std::string, float> remove)
+	{
+		for (auto const& x : remove)
+		{
+			assert(values[x.first] > remove[x.first]);
+			values[x.first] -= remove[x.first];
+		}
+	}
+	void Add(std::map<std::string, float> add)
+	{
+		for (auto const& x : add)
+		{
+			values[x.first] += add[x.first];
+		}
+	}
+	void Set(std::map<std::string, float> set)
+	{
+		for (auto const& x : set)
+		{
+			values[x.first] = set[x.first];
+		}
+	}
+	bool HasFood(float kg)
+	{
+		float has = 0.0f;
+		has += values["meat"];
+		has += values["fish"];
+		has += values["berrys"];
+		has += values["apples"];
+		return has;
+	}
+	void RemoveFood(float kg)
+	{
+		assert(HasFood(kg));
+		RemoveFood("berrys", kg);
+		RemoveFood("apples", kg);
+		RemoveFood("meat", kg);
+		RemoveFood("fish", kg);
+	}
+	void RemoveFood(std::string key, float& kg)
+	{
+		if (kg > 0 && kg >= values[key])
+		{
+			kg -= values[key];
+			values[key] = 0.0f;
+		}
+		else
+		{
+			values[key] -= kg;
+			kg = 0.0f;
+		}
+	}
+};
+
+class Slot
+{
+public:
+	enum class Type
+	{
+		Holdable,
+		Armor,
+		Bonus,
+		Simple,
+		Empty
+	};
+private:
+	int itemId = -1;
+	int durability = -1;	//-1 == Item has no durability	0 == Item has no durability left
+	Type type = Slot::Type::Empty;
+public:
+	Slot() { type = Slot::Type::Empty; }
+	Slot(int id) :itemId(id)
+	{
+		durability = Settings::itemStats[id].durability;
+		type = Type::Empty;
+		if (id == 0)
+		{
+			type = Type::Holdable;
+		}
+		if (id == 1)
+		{
+			type = Type::Holdable;
+		}
+		if (id == 2)
+		{
+			type = Type::Armor;
+		}
+		if (id == 3)
+		{
+			type = Type::Bonus;
+		}
+		if (id == 4)
+		{
+			type = Type::Bonus;
+		}
+		if (id == 5)
+		{
+			type = Type::Armor;
+		}
+		if (id == 6)
+		{
+			type = Type::Simple;
+		}
+		if (id == 7)
+		{
+			type = Type::Simple;
+		}
+		if (id == 8)
+		{
+			type = Type::Simple;
+		}
+		if (id == 9)
+		{
+			type = Type::Armor;
+		}
+		if (id == 10)
+		{
+			type = Type::Holdable;
+		}
+		if (id == 11)
+		{
+			type = Type::Holdable;
+		}
+		if (id == 12)
+		{
+			type = Type::Holdable;
+		}
+	}
+	int GetId()
+	{
+		return itemId;
+	}
+	bool IsBroken()
+	{
+		return durability == 0;
+	}
+	int GetDurability()
+	{
+		return durability;
+	}
+	void Repair(int deltaDur)
+	{
+		if (durability + deltaDur >= Settings::itemStats[itemId].durability)
+		{
+			durability = Settings::itemStats[itemId].durability;
+		}
+		else
+		{
+			durability += deltaDur;
+		}
+	}
+	bool Used()
+	{
+		if (durability > 0)
+		{
+			durability--;
+			return true;
+		}
+		return false;
+	}
+	Slot::Type GetType()
+	{
+		return type;
+	}
+};
+class Inventory
+{
+	std::vector<std::unique_ptr<Slot>> slots = {};
+	std::vector<Slot::Type> slotsType;
+	int type = -1;
+public:
+	Inventory() = delete;
+	Inventory(int type)			//type == 0 => Unit Inventory		1 => Box Inventory		2 => Storage Inventory		3 => Wrough
+		:
+		type(type)
+	{
+		if (type == 0)
+		{
+			for (int i = 0; i < 8; i++)
+			{
+				slotsType.push_back(Slot::Type::Simple);
+				slots.push_back(nullptr);
+			}
+			slotsType[0] = Slot::Type::Holdable;
+			slotsType[1] = Slot::Type::Bonus;
+			slotsType[2] = Slot::Type::Armor;
+			slotsType[3] = Slot::Type::Bonus;
+		}
+		if (type == 1)
+		{
+			for (int i = 0; i < 9; i++)
+			{
+				slotsType.push_back(Slot::Type::Simple);
+				slots.push_back(nullptr);
+			}
+		}
+		if (type == 2)
+		{
+			for (int i = 0; i < 25; i++)
+			{
+				slotsType.push_back(Slot::Type::Simple);
+				slots.push_back(nullptr);
+			}
+		}
+		if (type == 3)
+		{
+			for (int i = 0; i < 6; i++)
+			{
+				slotsType.push_back(Slot::Type::Simple);
+				slots.push_back(nullptr);
+			}
+		}
+	}
+	Inventory(Inventory& other)
+	{
+		*this = other;
+	}
+	//Obstacle(Obstacle&& obst) {}
+	Inventory& operator=(const Inventory& other)
+	{
+		slotsType = other.slotsType;
+		for (int i = 0; i < other.slots.size(); i++)
+		{
+			if (other.slots[i].get() != nullptr)
+				slots.push_back(std::make_unique<Slot>(*other.slots[i].get()));
+			else
+				slots.push_back(nullptr);
+		}
+		type = other.type;
+		return *this;
+	}
+	bool SetItem(std::unique_ptr<Slot>&& item, int flatID)
+	{
+		assert(flatID >= 0 && flatID < slots.size());
+		if (ItemFitsForSlotFlat(&item, flatID))
+		{
+			slots[flatID] = std::move(item);
+			return true;
+		}
+		return false;
+	}
+	bool ItemFitsForSlotFlat(std::unique_ptr<Slot>* item, int flatID)
+	{
+		assert(flatID >= 0 && flatID < slots.size());
+		return (slotsType[flatID] == item->get()->GetType() || slotsType[flatID] == Slot::Type::Simple) && slots[flatID].get() == nullptr;
+	}
+	bool WouldFitWhenEmptyFlat(std::unique_ptr<Slot>* item, int flatID)
+	{
+		assert(item->get() != nullptr);
+		return item->get()->GetType() == slotsType[flatID] || slotsType[flatID] == Slot::Type::Simple;
+	}
+	std::unique_ptr<Slot>* GetItem(int flatID)
+	{
+		assert(flatID >= 0 && flatID < slots.size());
+		return &slots[flatID];
+		return nullptr;
+	}
+	void ItemUsed(int itemID)
+	{
+		for (int i = 0; i < slots.size(); i++)
+		{
+			if (slots[i].get() != nullptr && slots[i].get()->GetId() == itemID && !slots[i].get()->IsBroken() && slotsType[i] != Slot::Type::Simple)
+			{
+				slots[i].get()->Used();
+				return;
+			}
+		}
+	}
+	bool HasItemNotBroken(int itemID)
+	{
+		for (int i = 0; i < slots.size(); i++)
+		{
+			if (slots[i].get() != nullptr && slots[i].get()->GetId() == itemID && !slots[i].get()->IsBroken() && slotsType[i] != Slot::Type::Simple)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	int GetSize()
+	{
+		return (int)slots.size();
+	}
+};
+class Team
+{
+	std::string teamname = "kein Name";
+	Materials m;
+public:
+
+	Team(std::string teamname)
+	{
+		this->teamname = teamname;
+	}
+	Materials& GetMaterials() { return m; }
+	std::string GetTeamName() { return teamname; }
+};
+

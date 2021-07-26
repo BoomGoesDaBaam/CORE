@@ -19,7 +19,7 @@
  *	along with The Chili DirectX Framework.  If not, see <http://www.gnu.org/licenses/>.  *
  ******************************************************************************************/
 #pragma once
-
+#define _USE_MATH_DEFINES
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "Graphics.h"
@@ -28,6 +28,10 @@
 #include "GraphicObjects.h"
 #include "Matrix.h"
 #include "Tim.h"
+#include "World.h"
+#include "ResourceCollection.h"
+#include "GrabHandle.h"
+#include "FrameHandle.h"
 class Game
 {
 public:
@@ -40,18 +44,33 @@ private:
 	void UpdateModel();
 	/********************************/
 	/*  User Functions              */
+	void Game::HandleMouseInput(Mouse::Event& e);
+	void Game::HandleKeyboardInput(Keyboard::Event& e);
+	void Game::HandleFrameLogic(FrameEvent& e);
+	void Game::HandleFrameChanges();
 	/********************************/
 private:
 	MainWindow& wnd;
 	Graphics gfx;
 	/********************************/
 	/*  User Variables              */
-	Font f = { "Spritesheet.bmp",9,11,9,13,'!','~',gfx };
-	Surface s = { "Textures/3.bmp" };
-	GraphicObjects go;
+
 	RandyRandom rr;
 	Tim t;
-	Matrix<int> mat=Matrix<int>(6, 6, 1);
-	Matrix<int> mat2;
+	float passedTime = 0;
+	bool debugInfoOn = false,ignoreMouse=false;			//Ignores the Mouseiput for curW unless eventtype is LRelease
+	Vei2 debugMarkerPos = Vei2(Graphics::ScreenWidth / 2, Graphics::ScreenHeight / 2);
+	Vei2 markPos = Vei2(Graphics::ScreenWidth / 2, Graphics::ScreenHeight / 2);
+
+
+	std::shared_ptr<ResourceCollection> resC = nullptr;
+	GraphicObjects go;
+	std::unique_ptr<World> curW;
+	FrameHandle igwH;
+
+	GrabHandle gH;
+	Vec2 c = { 0,0 };
+	Team player = Team("Die reichlich raeudigen Raucher");;
+	int fps_c = 0, fps_d = 0;
 	/********************************/
 };

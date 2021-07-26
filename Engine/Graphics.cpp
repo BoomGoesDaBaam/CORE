@@ -25,7 +25,7 @@
 #include <assert.h>
 #include <string>
 #include <array>
-
+#include "GigaMath.h"
 // Ignore the intellisense error "cannot open source file" for .shh files.
 // They will be created during the build sequence before the preprocessor runs.
 namespace FramebufferShaders
@@ -43,7 +43,7 @@ using Microsoft::WRL::ComPtr;
 Graphics::Graphics(HWNDKey& key)
 {
 	assert(key.hWnd != nullptr);
-
+	
 	//////////////////////////////////////////////////////
 	// create device and swap chain/get render target view
 	DXGI_SWAP_CHAIN_DESC sd = {};
@@ -315,6 +315,14 @@ void Graphics::PutPixel(int x, int y, Color c)
 	assert(y < int(Graphics::ScreenHeight));
 	pSysBuffer[Graphics::ScreenWidth * y + x] = c;
 }
+Color Graphics::GetPixel(int x, int y)
+{
+	assert(x >= 0);
+	assert(x < int(Graphics::ScreenWidth));
+	assert(y >= 0);
+	assert(y < int(Graphics::ScreenHeight));
+	return pSysBuffer[Graphics::ScreenWidth * y + x];
+}
 void Graphics::RainbowPutPixel(int x, int y)
 {
 	assert(x >= 0);
@@ -322,13 +330,13 @@ void Graphics::RainbowPutPixel(int x, int y)
 	assert(y >= 0);
 	assert(y < int(Graphics::ScreenHeight));
 
-	float dist0 = (GiMa::GetDist<float>(ScreenWidth/2	, ScreenHeight / 4, x, y) / 500);
-	float dist1 = (GiMa::GetDist<float>(ScreenWidth/4	, ScreenHeight / 4*3, x, y) / 500);
-	float dist2 = (GiMa::GetDist<float>(ScreenWidth/4*3	, ScreenHeight / 4 * 3, x, y) / 500);
+	float dist0 = (GiMa::GetDist<float>(ScreenWidth/2	, ScreenHeight / 4, (float)x, (float)y) / 500);
+	float dist1 = (GiMa::GetDist<float>(ScreenWidth/4	, ScreenHeight / 4*3, (float)x, (float)y) / 500);
+	float dist2 = (GiMa::GetDist<float>(ScreenWidth/4*3	, ScreenHeight / 4 * 3, (float)x, (float)y) / 500);
 
-	unsigned char r = ((1 - dist0)	* 255);
-	unsigned char g = ((1 - dist1)	* 255);
-	unsigned char b = ((1 - dist2)  * 255);
+	unsigned char r = unsigned char((1 - dist0)	* 255);
+	unsigned char g = unsigned char((1 - dist1)	* 255);
+	unsigned char b = unsigned char((1 - dist2)  * 255);
 
 	Color c = Colors::MakeRGB(r, g, b);
 	pSysBuffer[Graphics::ScreenWidth * y + x] = c;
@@ -429,7 +437,7 @@ void Graphics::DrawLine(Vec2 p0, Vec2 p1, Color c, int thickness)
 		}
 	}
 }
-void Graphics::DrawRect(Vec2 pos, Vec2 size, Color c, float radiant)
+void Graphics::DrawFilledRect(Vec2 pos, Vec2 size, Color c, float radiant)
 {	
 	Vec2 p0 = (Vec2)GigaMath::RotPointToOrigin(-size.x / 2, -size.y / 2, radiant);
 	Vec2 p1 = (Vec2)GigaMath::RotPointToOrigin(size.x / 2, size.y / -2, radiant);
@@ -444,6 +452,20 @@ void Graphics::DrawRect(Vec2 pos, Vec2 size, Color c, float radiant)
 	DrawLine(p1, p2, Colors::Red, 3);
 	DrawLine(p2, p3, Colors::Red, 3);
 	DrawLine(p3, p0, Colors::Red, 3);
+}
+bool Graphics::FIDF(int first, int second)const
+{
+	if (first != second)
+	{
+		for (int i = 0; i < Settings::nDiffFieldTypes; i++)
+		{
+			if (Settings::typeLayer[i] == first || Settings::typeLayer[i] == second)
+			{
+				return Settings::typeLayer[i] == first;
+			}
+		}
+	}
+	return false;
 }
 //
 //////////////////////////////////////////////////

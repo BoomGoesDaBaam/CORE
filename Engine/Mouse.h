@@ -28,7 +28,7 @@ public:
 	class Event
 	{
 	public:
-		enum Type
+		enum class Type
 		{
 			LPress,
 			LRelease,
@@ -45,10 +45,11 @@ public:
 		bool rightIsPressed;
 		int x;
 		int y;
+		bool shiftIsPressed = false;
 	public:
 		Event()
 			:
-			type( Invalid ),
+			type( Type::Invalid ),
 			leftIsPressed( false ),
 			rightIsPressed( false ),
 			x( 0 ),
@@ -60,11 +61,13 @@ public:
 			leftIsPressed( parent.leftIsPressed ),
 			rightIsPressed( parent.rightIsPressed ),
 			x( parent.x ),
-			y( parent.y )
-		{}
+			y( parent.y ),
+			shiftIsPressed(parent.shiftIsPressed)
+		{
+		}
 		bool IsValid() const
 		{
-			return type != Invalid;
+			return type != Type::Invalid;
 		}
 		Type GetType() const
 		{
@@ -90,6 +93,10 @@ public:
 		{
 			return rightIsPressed;
 		}
+		bool ShiftIsPressed() const
+		{
+			return shiftIsPressed;
+		}
 	};
 public:
 	Mouse() = default;
@@ -100,6 +107,7 @@ public:
 	int GetPosY() const;
 	bool LeftIsPressed() const;
 	bool RightIsPressed() const;
+	bool ShiftIsPressed()const { return shiftIsPressed; };
 	bool IsInWindow() const;
 	Mouse::Event Read();
 	bool IsEmpty() const
@@ -109,6 +117,7 @@ public:
 	void Flush();
 private:
 	void OnMouseMove( int x,int y );
+	void OnMouseMoveOutOfScreen(int newx, int newy);
 	void OnMouseLeave();
 	void OnMouseEnter();
 	void OnLeftPressed( int x,int y );
@@ -118,7 +127,10 @@ private:
 	void OnWheelUp( int x,int y );
 	void OnWheelDown( int x,int y );
 	void TrimBuffer();
+
+	void ShiftPressed() { shiftIsPressed = true; }
 private:
+	bool shiftIsPressed = false;
 	static constexpr unsigned int bufferSize = 4u;
 	int x;
 	int y;

@@ -1,8 +1,10 @@
 #pragma once
 #include "GraphicObjects.h"
 
-GraphicObjects::GraphicObjects(Graphics& gfx):gfx(gfx)
+GraphicObjects::GraphicObjects(Graphics& gfx, std::shared_ptr<ResourceCollection> resC):gfx(gfx), resC(std::move(resC))
 {
+	tC = &resC->GetSurf();
+	fsC = &resC->GetFrameSize();
 }
 
 void GraphicObjects::Update(float dt)
@@ -12,7 +14,7 @@ void GraphicObjects::Update(float dt)
 	{
 		obj->Update(dt);
 	}
-	for (int i = 0; i < objects.size(); i++)
+	for (int i = 0; i < (int)objects.size(); i++)
 	{
 		if (objects[i]->ChoosenToDie())
 		{
@@ -35,9 +37,9 @@ void GraphicObjects::Object::Update(float dt)
 {
 	configs.pos += configs.vel*dt;
 	configs.vel += configs.gravity*dt;
-	for (int i = 0; i < configs.body.size(); i++)
+	for (int i = 0; i < (int)configs.body.size(); i++)
 	{
-		configs.body[i] = (Vec2)GigaMath::RotPointToOrigin(configs.body[i].x, configs.body[i].y, dt * configs.angleVel / 15);
+		configs.body[i] = (Vec2)GigaMath::RotPointToOrigin(configs.body[i].x, configs.body[i].y,(double)dt * configs.angleVel / 15);
 	}
 	if (!(Graphics::GetScreenRect<int>().Contains((Vei2)configs.pos)))
 	{
@@ -46,10 +48,9 @@ void GraphicObjects::Object::Update(float dt)
 }
 GraphicObjects::Object::Object(PartConf& configs) : configs(configs){}
 
-void GraphicObjects::AddVoc(Object* obj,const PartConf* configsTemplate, int size, int spreadSpeed)	//Function changes 
+void GraphicObjects::AddVoc(Object* obj,const PartConf* configsTemplate, int size, int spreadSpeed)
 {
 	PartConf configs= PartConf(*configsTemplate);
-	configs.width = 1;
 	configs.size = (float)rr.Calc(size) + 1;
 	configs.ScaleBody((float)rr.Calc(size) + 1);
 	configs.vel=Vec2((float)rr.Calc(spreadSpeed) - (spreadSpeed / 2), (float)rr.Calc(spreadSpeed) - (spreadSpeed / 2));
@@ -58,12 +59,17 @@ void GraphicObjects::AddVoc(Object* obj,const PartConf* configsTemplate, int siz
 	Add(obj);
 }
 
-
 /*
 //######################## BLUEPRINTS
 void GraphicObjects::AddVolcano(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors)
 {
-	Add(&GraphicObjects::Particle(p0, (float)rr.Calc(size / 3) + 1, Vec2((float)rr.Calc(spreadSpeed) - (spreadSpeed / 2), (float)rr.Calc(spreadSpeed) - (spreadSpeed / 2)), Vec2(0, 3), colors));
+	PartConf configs = PartConf();
+	configs.pos = p0;
+	configs.size = size;
+	configs.colors = colors;
+	configs.vel = colors;
+	Add(&GraphicObjects::Particle(PartConf()));
+	//Add(&GraphicObjects::Particle(p0, (float)rr.Calc(size / 3) + 1, Vec2((float)rr.Calc(spreadSpeed) - (spreadSpeed / 2), (float)rr.Calc(spreadSpeed) - (spreadSpeed / 2)), Vec2(0, 3), colors));
 }
 void GraphicObjects::AddSpark(Vec2 p0, int size, int spreadSpeed, Vec2_<Color> colors)
 {

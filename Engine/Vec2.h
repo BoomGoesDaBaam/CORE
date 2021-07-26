@@ -67,10 +67,30 @@ public:
 	{
 		return Vec2_(x / rhs, y / rhs);
 	}
+	Vec2_ operator/(Vec2_ rhs) const
+	{
+		return Vec2_(x / rhs.x, y / rhs.y);
+	}
+	Vec2_ operator%(int rhs) const
+	{
+		return Vec2_(x % rhs, y % rhs);
+	}
 	Vec2_& operator/=(int rhs)
 	{
 		return *this = *this / rhs;
 	}
+
+
+	bool operator==(const Vec2_& rhs)const
+	{
+		return x == rhs.x && y == rhs.y;
+	}
+	bool operator!=(const Vec2_& rhs)
+	{
+		return !(*this==rhs);
+	}
+
+	
 	T GetLength() const
 	{
 		return (T)std::sqrt(GetLengthSq());
@@ -78,6 +98,10 @@ public:
 	T GetLengthSq() const
 	{
 		return x * x + y * y;
+	}
+	Vec2_ GetAbsVec()
+	{
+		return Vec2_<T>(std::abs(x), std::abs(y));
 	}
 	Vec2_& Normalize()
 	{
@@ -92,10 +116,22 @@ public:
 		}
 		return *this;
 	}
+	template <typename T>
+	static bool IsPositivFactor(Vec2_<T> v)
+	{
+		return v.x >= 0 && v.x <= 1.0f && v.y >= 0 && v.y <= 1;
+	}
 public:
 	T x;
 	T y;
 };
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Vec2_<T>& obj)
+{
+	os << "(" << obj.x << "|" << obj.y << ")";
+	return os;
+}
 
 typedef Vec2_<float> Vec2;
 typedef Vec2_<int> Vei2;
+typedef Vec2_<Vei2> CtPos;

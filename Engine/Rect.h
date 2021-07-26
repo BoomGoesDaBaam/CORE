@@ -1,11 +1,19 @@
 #pragma once
 
 #include "Vec2.h"
+#include <cassert>
 
 template<typename T>
 class Rect_
 {
 public:
+	Rect_()
+		:
+		left(0),
+		right(0),
+		top(0),
+		bottom(0)
+	{}
 	Rect_(T left_in, T right_in, T top_in, T bottom_in)
 		:
 		left(left_in),
@@ -44,14 +52,56 @@ public:
 		return right > other.left&& left < other.right
 			&& bottom > other.top&& top < other.bottom;
 	}
-	bool IsContainedBy(const Rect_& other) const
+	bool IsContainedBy(const Rect_& other) const		// this is inside of other
 	{
 		return left >= other.left && right <= other.right &&
 			top >= other.top && bottom <= other.bottom;
 	}
-	bool Contains(const Vec2_<T>& point) const
+	template <typename T>
+	Vec2_<T> GetTopLeft() const		
+	{
+		return Vec2_<T>((const T)left, (const T)top);
+	}
+	Rect_ PutInto(const Rect_& other)
+	{
+		assert(this->IsOverlappingWith(other));
+		if (other.left > left)
+		{
+			left = other.left;
+		}
+		if (other.right < right)
+		{
+			right = other.right;
+		}
+		if (other.top > top)
+		{
+			top = other.top;
+		}
+		if (other.bottom < bottom)
+		{
+			bottom = other.bottom;
+		}
+		return *this;
+	}
+	bool Contains(const Vec2_<T>& point) const		
 	{
 		return point.x >= left && point.x < right && point.y >= top && point.y < bottom;
+	}
+	bool HasLeftProtrud(const Rect_& other)				// other lays on the left line of "this" 
+	{
+		return IsOverlappingWith(other) && other.left < left && other.right > left;
+	}
+	bool HasRightProtrud(const Rect_& other)
+	{
+		return IsOverlappingWith(other) && other.right > right && other.left < right;
+	}
+	bool HasTopProtrud(const Rect_& other)
+	{
+		return IsOverlappingWith(other) && other.top < top && other.bottom > top;
+	}
+	bool HasBottomProtrud(const Rect_& other)
+	{
+		return IsOverlappingWith(other) && other.bottom > bottom && other.top < bottom;
 	}
 	Rect_ FromCenter(const Vec2_<T>& center, T halfWidth, T halfHeight)
 	{
@@ -74,10 +124,45 @@ public:
 	{
 		return bottom - top;
 	}
-
+	Vei2 GetSize()
+	{
+		return Vei2((int)GetWidth(), (int)GetHeight());
+	}
 	Rect_<T> operator+(const Vec2_<T>& rhs) const
 	{
 		return Rect_<T>(left + rhs.x,right + rhs.x ,top + rhs.y,bottom + rhs.y);
+	}
+	Rect_<T>& operator+=(const Vec2_<T>& rhs)
+	{
+		left += rhs.x;
+		right += rhs.x;
+		top += rhs.y;
+		bottom += rhs.y;
+		return *this;
+	}
+	Rect_<T>& operator*=(const T& rhs)
+	{
+		left *= rhs;
+		right *= rhs;
+		top *= rhs;
+		bottom *= rhs;
+		return *this;
+	}
+	Rect_<T> operator*(const T& rhs)
+	{
+		return *this *= rhs;
+	}
+	Rect_<T>& operator-=(const Vec2_<T>& rhs)
+	{
+		left -= rhs.x;
+		right -= rhs.x;
+		top -= rhs.y;
+		bottom -= rhs.y;
+		return *this;
+	}
+	Rect_<T> operator-(const Vec2_<T>& rhs) const
+	{
+		return Rect_<T>(left - rhs.x, right - rhs.x, top - rhs.y, bottom - rhs.y);
 	}
 public:
 	T left;

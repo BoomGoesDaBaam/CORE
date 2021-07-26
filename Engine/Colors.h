@@ -59,6 +59,17 @@ public:
 	{ 
 		return !(*this == rhs);
 	}
+	Color operator*(float rhs)
+	{
+		SetR((unsigned char)(GetR() * rhs));
+		SetG((unsigned char)(GetG() * rhs));
+		SetB((unsigned char)(GetB() * rhs));
+		return *this;
+	}
+	Color& operator*=(float rhs)
+	{
+		return *this = *this * rhs;
+	}
 	constexpr unsigned char GetX() const
 	{
 		return dword >> 24u;
@@ -116,5 +127,11 @@ namespace Colors
 	static constexpr Color Blue = MakeRGB( 0u,0u,255u );
 	static constexpr Color Yellow = MakeRGB( 255u,255u,0u );
 	static constexpr Color Cyan = MakeRGB( 0u,255u,255u );
+	static constexpr Color Purple = MakeRGB(50u, 0u, 255u);
 	static constexpr Color Magenta = MakeRGB( 255u,0u,255u );
+
+	static constexpr Color FontDelimitor = MakeRGB(29u, 0u, 180u);
+	static constexpr Color FontNewLine = MakeRGB(28u, 70u, 19u);
+
+	static constexpr Color OtherMagenta = MakeRGB(255u, 1u, 255u);
 }

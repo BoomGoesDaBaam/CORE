@@ -101,19 +101,45 @@ RectI Surface::GetRect() const
 {
 	return{ 0,width,0,height };
 }
-
+Vei2 Surface::GetSize() const
+{
+	return Vei2(width,height);
+}
 const Color* Surface::Data() const
 {
 	return pixels.data();
 }
+bool Surface::IsInBounds(int x, int y)const
+{
+	return y * width + x < (int)pixels.size();
+}
+Surface Surface::GetSupSurface(RectI where)
+{
+	assert(where.left >= 0 && where.GetWidth() <= width);
+	assert(where.top >= 0 && where.GetHeight() <= height);
 
+	Surface sup = { where.GetWidth(),where.GetHeight() };
+	for (int y = 0; y < sup.GetHeight(); y++)
+	{
+		for (int x = 0; x < sup.GetWidth(); x++)
+		{
+			sup.PutPixel(x, y, pixels.at(where.top * width + y * width + x + where.left));
+		}
+	}
+	return sup;
+}
 void Surface::PutPixel(int x, int y, Color c)
 {
 	pixels[y * width + x] = c;
 }
 Color Surface::GetPixel(int x, int y) const
 {
-	return pixels[y * width + x];
+	assert(IsInBounds(x, y));
+	return pixels[(__int64)y * width + x];
+}
+Color Surface::GetPixel(Vei2 pos) const
+{
+	return GetPixel(pos.x, pos.y);
 }
 void Surface::Fill(Color c)
 {
@@ -124,4 +150,32 @@ void Surface::Fill(Color c)
 			pixels[y * width + x] = c;
 		}
 	}
+}
+Matrix<int> Surface::GetChromaMatrix(Color chroma)const
+{
+	Matrix<int> matrix = Matrix<int>(width, height, 0);
+	for (int y = 0; y < height; y++)
+	{
+		for (int x = 0; x < width; x++)
+		{
+			if (pixels[y * width + x].dword != chroma.dword)
+			{
+				matrix[x][y] = 1;
+			}
+		}
+	}
+	return matrix;
+}
+bool Surface::TestIfHitOnScreen(Vec2 mpRel, Vei2 size)const
+{
+	Vei2 surSize = GetSize() + Vei2(-1,-1);
+	/*
+	if (size != Vei2(-1, -1))
+	{
+		mpRel.x *= surSize.x / size.x;
+		mpRel.y *= surSize.y / size.y;
+	}
+	*/
+	Matrix<int> chromaM = GetChromaMatrix(Colors::Magenta);
+	return Vec2::IsPositivFactor(Vec2((float)mpRel.x / width, (float)mpRel.y / height)) && chromaM(Vei2((int)(((float)mpRel.x / width) * surSize.x),(int)( ((float)mpRel.y / height) * surSize.y))) == 1;
 }
