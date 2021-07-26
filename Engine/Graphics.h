@@ -546,12 +546,12 @@ public:
 		}
 	}
 	template<typename E>
-	void DrawText(std::string text,Vei2 pos, int size, const Font* font, E effect)
+	void DrawText(std::string text,Vei2 pos, int size, const BoomFont* font, E effect)
 	{
 		DrawText(text, pos.x, pos.y, size, font, effect);
 	}
 	template<typename E>
-	void DrawText(std::string text, int x, int y, int size, const Font* font, E effect)
+	void DrawText(std::string text, int x, int y, int size, const BoomFont* font, E effect)
 	{
 		int xM = 0;
 		int yM = 0;
@@ -579,12 +579,12 @@ public:
 		}
 	}
 	template<typename E>
-	void DrawTextCentered(std::string text, Vei2 pos, int size, const Font* font, E effect)
+	void DrawTextCentered(std::string text, Vei2 pos, int size, const BoomFont* font, E effect)
 	{
 		DrawTextCentered(text, pos.x, pos.y, size, font, effect);
 	}
 	template<typename E>
-	void DrawTextCentered(std::string text, int x, int y, int size, const Font* font, E effect)
+	void DrawTextCentered(std::string text, int x, int y, int size, const BoomFont* font, E effect)
 	{
 		int xM = 0;
 		int yM = 0;

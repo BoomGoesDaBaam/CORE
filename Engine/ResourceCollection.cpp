@@ -322,8 +322,11 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	fields[0].SetKeepTime(0.3f);
 	fields[12].SetKeepTime(0.3f);
 	//Fonts
-	fonts.push_back(Font("Textures/Font5.bmp", 112, '!', '~', Colors::FontDelimitor, Colors::FontNewLine));
+	fonts.push_back(BoomFont("Textures/Font5.bmp", 112, '!', '~', Colors::FontDelimitor, Colors::FontNewLine));
+	FontFamily ff = FontFamily();
 
+	std::complex<double> mycomplex(10.0, 1.0);
+	Font f = Font(&ff,std::real(mycomplex),INT(23), Unit::UnitPixel);
 
 	//Items
 	for (int i = 0; i < 13; i++)

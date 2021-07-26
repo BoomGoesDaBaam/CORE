@@ -199,9 +199,9 @@ public:
 class Text: public Component
 {
 public:
-	const Font* f;
+	const BoomFont* f;
 	int size, textLoc;			//		'0' = centered			 '1' = left
-	Text(std::string text, RectF pos, int size,const Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer);
+	Text(std::string text, RectF pos, int size,const BoomFont* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer);
 	void Draw(Graphics& gfx) override
 	{
 		if (textLoc == 0)
@@ -240,7 +240,7 @@ class TextBox : public Text
 protected:
 	std::vector<std::string> lines;
 public:
-	TextBox(std::string text, RectF pos, int size, const Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer);
+	TextBox(std::string text, RectF pos, int size, const BoomFont* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer);
 	void Draw(Graphics& gfx) override
 	{
 		for (int i = 0; i < (int)lines.size(); i++)
@@ -257,7 +257,7 @@ public:
 			gfx.DrawText(lines[i], (int)(drawPos.left), (int)(drawPos.top) + i * (size + 2), size, f, SpriteEffect::ChromaColor(Colors::Magenta, c));
 		}
 	}
-	std::vector<std::string> SplitTextToLines(const Font* font,std::string text, int size, int width);
+	std::vector<std::string> SplitTextToLines(const BoomFont* font,std::string text, int size, int width);
 	//
 	const std::vector<std::string>& GetLines()const;
 };
@@ -706,14 +706,14 @@ public:
 		static_assert (fail<T>::value, "Do not use!");
 	}
 
-	Text* AddTextPF(std::string text, RectF pos, int size,const Font* f, Color c, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {}, int textLoc = 0)
+	Text* AddTextPF(std::string text, RectF pos, int size,const BoomFont* f, Color c, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {}, int textLoc = 0)
 	{
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
 		compActivOnPages[key] = activOnPages;
 		return Component::AddText(text, pos, size, f, c, key, activInStates, textLoc);
 	}
-	Button* AddButtonPF(RectF pos,const Animation* a, const Animation* aHover, std::string key,const Font* f, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
+	Button* AddButtonPF(RectF pos,const Animation* a, const Animation* aHover, std::string key,const BoomFont* f, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
 	{
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
@@ -975,11 +975,11 @@ private:
 	Frame* CreateBuildOption(RectF pos, int obstacleType, PageFrame* parentC, std::vector<int> activOnPages, World* world);
 	Frame* CreateCraftOption(RectF pos, int itemType, Frame* parentC, std::vector<int> activOnPages, World* world);
 	GrabImage* CreateGIWithHpBar(Component* parentC, RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates);
-	void AddHeadline(Component* parentC, std::string text, const Font* f, Color c);
-	int AddObstacleInfo(Component* parentC, int top, const Font* f, Color c, std::string key);
-	int AddObstacleInfoTextBox(Component* parentC, std::string text, int top, const Font* f, Color c, std::string key);
-	int AddObstacleAttackButton(Component* parentC, int top, const Font* f, Color c);
-	int AddObstacleCheckBox(Component* parentC, int top, const Font* f, Color c, std::string text, std::string key);
+	void AddHeadline(Component* parentC, std::string text, const BoomFont* f, Color c);
+	int AddObstacleInfo(Component* parentC, int top, const BoomFont* f, Color c, std::string key);
+	int AddObstacleInfoTextBox(Component* parentC, std::string text, int top, const BoomFont* f, Color c, std::string key);
+	int AddObstacleAttackButton(Component* parentC, int top, const BoomFont* f, Color c);
+	int AddObstacleCheckBox(Component* parentC, int top, const BoomFont* f, Color c, std::string text, std::string key);
 
 	std::string GetInfoString(std::string key);
 	bool FrameEnabledForObstacle(Obstacle* obstacle, std::string key);

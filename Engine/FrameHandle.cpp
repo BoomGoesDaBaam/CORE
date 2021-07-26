@@ -1,21 +1,21 @@
 #pragma once
 #include "FrameHandle.h"
 //		### Componente ###
-Text* Component::AddText(std::string text, RectF pos, int size,const Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
+Text* Component::AddText(std::string text, RectF pos, int size,const BoomFont* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
 	comps[key] = std::make_unique<Text>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
 	return static_cast<Text*>(comps[key].get());
 }
-TextBox* Component::AddTextBox(std::string text, RectF pos, int size, const Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
+TextBox* Component::AddTextBox(std::string text, RectF pos, int size, const BoomFont* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
 	comps[key] = std::make_unique<TextBox>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
 	return static_cast<TextBox*>(comps[key].get());
 }
-Button* Component::AddButton(RectF pos,const Animation* a,const Animation* aHover, std::string key,const Font* f, std::vector<int> activInStates)
+Button* Component::AddButton(RectF pos,const Animation* a,const Animation* aHover, std::string key,const BoomFont* f, std::vector<int> activInStates)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
@@ -54,7 +54,7 @@ Frame* Component::AddFrame(RectF pos, int type, sharedResC resC, Component* pare
 	return static_cast<Frame*>(comps[key].get());
 }
 //
-Text::Text(std::string text, RectF pos, int size,const Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer)
+Text::Text(std::string text, RectF pos, int size,const BoomFont* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer)
 	:
 	Component(pos, parentC, buffer),
 	f(f),
@@ -65,14 +65,14 @@ Text::Text(std::string text, RectF pos, int size,const Font* f, Color c, std::ve
 	this->text = text;
 	this->c = c;
 }
-TextBox::TextBox(std::string text, RectF pos, int size, const Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer)
+TextBox::TextBox(std::string text, RectF pos, int size, const BoomFont* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer)
 	:
 	Text("text should be shown",pos,size,f,c,activInStates, parentC,0, buffer),
 	lines(SplitTextToLines(f,text, size, (int)pos.GetWidth()))
 {
 
 }
-std::vector<std::string> TextBox::SplitTextToLines(const Font* font, std::string text, int size, int width)
+std::vector<std::string> TextBox::SplitTextToLines(const BoomFont* font, std::string text, int size, int width)
 {
 	std::vector<std::string> lines;
 	const std::vector<RectI>& cRects = font->GetCharRects();
@@ -121,7 +121,7 @@ const std::vector<std::string>& TextBox::GetLines()const
 {
 	return lines;
 }
-Button::Button(RectF pos, const Animation* a, const Animation* aHover, std::vector<int> activInStates, const Font* f, Component* parentC, std::queue<FrameEvent>* buffer)
+Button::Button(RectF pos, const Animation* a, const Animation* aHover, std::vector<int> activInStates, const BoomFont* f, Component* parentC, std::queue<FrameEvent>* buffer)
 	:
 	Text("",pos, 10,f,Colors::Black,activInStates, parentC,0, buffer)
 {
@@ -596,12 +596,12 @@ GrabImage* FrameHandle::CreateGIWithHpBar(Component* parentC, RectF pos, const A
 	image = gi->AddImage(RectF(Vec2(0, pos.GetHeight() / 5 * 4), pos.GetWidth(), pos.GetHeight() / 5), &resC->GetSurf().frames[2], &resC->GetSurf().frames[2], buffer, key + "HpIs");
 	return gi;
 }
-void FrameHandle::AddHeadline(Component* parentC, std::string text, const Font* f, Color c)
+void FrameHandle::AddHeadline(Component* parentC, std::string text, const BoomFont* f, Color c)
 {
 	parentC->AddText(text, (RectF)resC->GetFrameSize().GetFramePos("frameHeadline"), 14*resC->GetFrameSize().GetGuiScale(),f, Colors::Black, "tHeadline");
 
 }
-int FrameHandle::AddObstacleInfo(Component* parentC, int top, const Font* f, Color c, std::string key)
+int FrameHandle::AddObstacleInfo(Component* parentC, int top, const BoomFont* f, Color c, std::string key)
 {
 	RectF parentRect = parentC->GetPos();
 	int xStart = (int)((float)(parentRect.GetWidth()) / 40);
@@ -613,7 +613,7 @@ int FrameHandle::AddObstacleInfo(Component* parentC, int top, const Font* f, Col
 	parentC->AddText(infoString, RectF(Vec2(xStart, top), halfParentWidth, 14), textSize, &resC->GetSurf().fonts[0], Colors::Black, key, { 0,1 }, 1);
 	return top + textSize + 10;
 }
-int FrameHandle::AddObstacleInfoTextBox(Component* parentC,std::string text, int top, const Font* f, Color c, std::string key)
+int FrameHandle::AddObstacleInfoTextBox(Component* parentC,std::string text, int top, const BoomFont* f, Color c, std::string key)
 {
 
 	RectF parentRect = parentC->GetPos();
@@ -622,7 +622,7 @@ int FrameHandle::AddObstacleInfoTextBox(Component* parentC,std::string text, int
 	TextBox* tB_townHall = parentC->AddTextBox(Settings::lang_TownhallInfo[Settings::lang], RectF(Vec2(xStart, top), parentRect.GetWidth() - xStart*2, 40), textSize, &resC->GetSurf().fonts[0], Colors::Black, "tB_townhallInfo", { 0,1 });
 	return top + textSize * (tB_townHall->GetLines().size() + 2);
 }
-int FrameHandle::AddObstacleAttackButton(Component* parentC, int top, const Font* f, Color c)
+int FrameHandle::AddObstacleAttackButton(Component* parentC, int top, const BoomFont* f, Color c)
 {
 	RectF parentRect = parentC->GetPos();
 	int xStart = (int)((float)(parentRect.GetWidth()) / 40);
@@ -637,7 +637,7 @@ int FrameHandle::AddObstacleAttackButton(Component* parentC, int top, const Font
 	b_setAttack->hitable = true;
 	return top + halfParentWidth / 2 + 10;
 }
-int FrameHandle::AddObstacleCheckBox(Component* parentC, int top, const Font* f, Color c,std::string text, std::string key)
+int FrameHandle::AddObstacleCheckBox(Component* parentC, int top, const BoomFont* f, Color c,std::string text, std::string key)
 {
 	RectF parentRect = parentC->GetPos();
 	int xStart = (int)((float)(parentRect.GetWidth()) / 40);

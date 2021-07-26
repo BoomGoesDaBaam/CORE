@@ -1,7 +1,7 @@
 #pragma once
 #include "Surface.h"
 //#include "Graphics.h"
-class Font
+class BoomFont
 {
 	Surface surface;
 	int nRaws = 0, nColums = 0, charWidth = 0, charHeight = 0;
@@ -10,8 +10,8 @@ class Font
 	std::vector<RectI> cRects;
 	//Graphics& gfx;
 public:
-	Font(std::string filename, int nRaws, int nColoms, int charWidth, int charHeight, char first, char last);
-	Font(std::string filename, int charHeight, char first, char last, Color delimiter, Color newLine);
+	BoomFont(std::string filename, int nRaws, int nColoms, int charWidth, int charHeight, char first, char last);
+	BoomFont(std::string filename, int charHeight, char first, char last, Color delimiter, Color newLine);
 	void DrawText(std::string text, int x, int y, int size, Color c);
 	void DrawTextCentered(std::string text, Vei2 pos, int size, Color c);
 
