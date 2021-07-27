@@ -138,7 +138,7 @@ namespace Settings
 	static const std::vector<int> anySawmillBoostedObstacles = { 27,30,33,35,36,37,42,43,44,45,46,47,49 };
 	static const std::vector<int> anyWindmillBoostedObstacles = {  };
 	//available Frames
-	static const std::vector<std::string> frameKeys = { "fUnit","fTownhall","fLumberjackHut"};
+	static const std::vector<std::string> frameKeys = { "fUnit","fTownhall","fLumberjackHut","fInventory","fInventoryBox", "fInventoryStorage","fInventoryWrought"};
 	//Graphic options
 	//static bool displayObstacles = true;
 	static int probToGrow = 50;

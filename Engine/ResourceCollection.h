@@ -7,9 +7,6 @@
 #include "RandyRandom.h"
 #include "Matrix.h"
 #include "SpriteEffect.h"
-#include <gdiplusheaders.h>
-#include <gdiplusenums.h>
-#include <complex>
 
 class TexturesCollection
 {
@@ -30,7 +27,7 @@ public:
 	std::vector<Animation>	obstacles;
 	std::vector<Animation>	multiObstacles;
 	std::vector<Animation>	items;
-	std::vector<BoomFont>		fonts;		
+	std::vector<Font>		fonts;		
 	void Update(float dt);
 };
 

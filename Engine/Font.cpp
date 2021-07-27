@@ -1,7 +1,7 @@
 #pragma once
 #include "Font.h"
 #include "SpriteEffect.h"
-BoomFont::BoomFont(std::string filename, int nRaws, int nColums, int charWidth, int charHeight,char first, char last):
+Font::Font(std::string filename, int nRaws, int nColums, int charWidth, int charHeight,char first, char last):
 	surface(filename),
 	nRaws(nRaws),nColums(nColums), charWidth(charWidth),charHeight(charHeight), first(first),last(last)
 {
@@ -17,7 +17,7 @@ BoomFont::BoomFont(std::string filename, int nRaws, int nColums, int charWidth, 
 		}
 	}
 }//94
-BoomFont::BoomFont(std::string filename, int charHeight, char first, char last, Color delimiter, Color newLine) :
+Font::Font(std::string filename, int charHeight, char first, char last, Color delimiter, Color newLine) :
 	surface(filename),
 	charHeight(charHeight), first(first), last(last)
 {
@@ -45,7 +45,7 @@ BoomFont::BoomFont(std::string filename, int charHeight, char first, char last, 
 	}
 	costumWidth = true;
 }
-void BoomFont::DrawText(std::string text, int x, int y, int size, Color c)
+void Font::DrawText(std::string text, int x, int y, int size, Color c)
 {
 	int xM = 0;
 	int yM = 0;
@@ -83,7 +83,7 @@ void BoomFont::DrawText(std::string text, int x, int y, int size, Color c)
 		}
 	}
 }
-void BoomFont::DrawTextCentered(std::string text, Vei2 pos, int size, Color c)
+void Font::DrawTextCentered(std::string text, Vei2 pos, int size, Color c)
 {
 	int x = pos.x;
 	int y = pos.y;
@@ -140,13 +140,13 @@ void BoomFont::DrawTextCentered(std::string text, Vei2 pos, int size, Color c)
 	}
 	*/
 }
-int BoomFont::GetFirst()const { return first; }
-int BoomFont::GetLast()const { return last; }
-const std::vector<RectI>& BoomFont::GetCharRects()const
+int Font::GetFirst()const { return first; }
+int Font::GetLast()const { return last; }
+const std::vector<RectI>& Font::GetCharRects()const
 {
 	return cRects;
 }
-const Surface& BoomFont::GetSurface()const
+const Surface& Font::GetSurface()const
 {
 	return surface;
 }

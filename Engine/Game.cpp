@@ -348,46 +348,34 @@ void Game::HandleFrameLogic(FrameEvent& e)
 			//
 			if (e.GetAction().find("unit") != std::string::npos)
 			{
-				hitSlot = igwH.GetHitInventorySpace(mP);
+				hitSlot = igwH.GetHitInventorySlot("unit",mP);
 				giver = curW->GetFocusedObstacle();
 			}
-			if (e.GetAction().find("box") != std::string::npos)
+			std::vector<std::string> keyStorage = { "box","storage","wrought" };
+			for (int i = 0; i < 3; i++)
 			{
-				hitSlot = igwH.GetHitInventoryBox(mP);
-				giver = curW->GetStorageObstacle();
-			}
-			if (e.GetAction().find("storage") != std::string::npos)
-			{
-					hitSlot = igwH.GetHitInventoryStorage(mP);
+				std::string curKey = keyStorage[i];
+				if (e.GetAction().find(curKey) != std::string::npos)
+				{
+					hitSlot = igwH.GetHitInventorySlot(curKey, mP);
 					giver = curW->GetStorageObstacle();
+				}
 			}
-			if (e.GetAction().find("wrought") != std::string::npos)
-			{
-				hitSlot = igwH.GetHitInventoryWrought(mP);
-				giver = curW->GetStorageObstacle();
-			}
-			//
 			
 			int releasedHitSlot;
-			if (igwH.GetHitInventorySpace(mP) != -1)
+			if (igwH.GetHitInventorySlot("unit",mP) != -1)
 			{
 				reciever = curW->GetFocusedObstacle();
-				releasedHitSlot = igwH.GetHitInventorySpace(mP);
+				releasedHitSlot = igwH.GetHitInventorySlot("unit",mP);
 			}
-			if (igwH.GetHitInventoryBox(mP) != -1)
+			for (int i = 0; i < 3; i++)
 			{
-				reciever = curW->GetStorageObstacle();
-				releasedHitSlot = igwH.GetHitInventoryBox(mP);
-			}
-			if (igwH.GetHitInventoryStorage(mP) != -1)
-			{
-				reciever = curW->GetStorageObstacle();
-				releasedHitSlot = igwH.GetHitInventoryStorage(mP);
-			}
-			if (igwH.GetHitInventoryWrought(mP) != -1)
-			{
-				reciever = curW->GetStorageObstacle();
-				releasedHitSlot = igwH.GetHitInventoryWrought(mP);
+				std::string curKey = keyStorage[i];
+				if (igwH.GetHitInventorySlot(curKey, mP) != -1)
+				{
+					reciever = curW->GetStorageObstacle();
+					releasedHitSlot = igwH.GetHitInventorySlot(curKey, mP);
+				}
 			}
 			//
 			if (reciever != nullptr)

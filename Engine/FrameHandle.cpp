@@ -1,21 +1,21 @@
 #pragma once
 #include "FrameHandle.h"
 //		### Componente ###
-Text* Component::AddText(std::string text, RectF pos, int size,const BoomFont* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
+Text* Component::AddText(std::string text, RectF pos, int size,const Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
 	comps[key] = std::make_unique<Text>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
 	return static_cast<Text*>(comps[key].get());
 }
-TextBox* Component::AddTextBox(std::string text, RectF pos, int size, const BoomFont* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
+TextBox* Component::AddTextBox(std::string text, RectF pos, int size, const Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
 	comps[key] = std::make_unique<TextBox>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
 	return static_cast<TextBox*>(comps[key].get());
 }
-Button* Component::AddButton(RectF pos,const Animation* a,const Animation* aHover, std::string key,const BoomFont* f, std::vector<int> activInStates)
+Button* Component::AddButton(RectF pos,const Animation* a,const Animation* aHover, std::string key,const Font* f, std::vector<int> activInStates)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
@@ -54,7 +54,7 @@ Frame* Component::AddFrame(RectF pos, int type, sharedResC resC, Component* pare
 	return static_cast<Frame*>(comps[key].get());
 }
 //
-Text::Text(std::string text, RectF pos, int size,const BoomFont* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer)
+Text::Text(std::string text, RectF pos, int size,const Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer)
 	:
 	Component(pos, parentC, buffer),
 	f(f),
@@ -65,14 +65,14 @@ Text::Text(std::string text, RectF pos, int size,const BoomFont* f, Color c, std
 	this->text = text;
 	this->c = c;
 }
-TextBox::TextBox(std::string text, RectF pos, int size, const BoomFont* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer)
+TextBox::TextBox(std::string text, RectF pos, int size, const Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer)
 	:
 	Text("text should be shown",pos,size,f,c,activInStates, parentC,0, buffer),
 	lines(SplitTextToLines(f,text, size, (int)pos.GetWidth()))
 {
 
 }
-std::vector<std::string> TextBox::SplitTextToLines(const BoomFont* font, std::string text, int size, int width)
+std::vector<std::string> TextBox::SplitTextToLines(const Font* font, std::string text, int size, int width)
 {
 	std::vector<std::string> lines;
 	const std::vector<RectI>& cRects = font->GetCharRects();
@@ -121,7 +121,7 @@ const std::vector<std::string>& TextBox::GetLines()const
 {
 	return lines;
 }
-Button::Button(RectF pos, const Animation* a, const Animation* aHover, std::vector<int> activInStates, const BoomFont* f, Component* parentC, std::queue<FrameEvent>* buffer)
+Button::Button(RectF pos, const Animation* a, const Animation* aHover, std::vector<int> activInStates, const Font* f, Component* parentC, std::queue<FrameEvent>* buffer)
 	:
 	Text("",pos, 10,f,Colors::Black,activInStates, parentC,0, buffer)
 {
@@ -470,65 +470,42 @@ void FrameHandle::UpdateInventoryComps(Inventory* inv, Component* parentC)
 		}
 	}
 }
-int FrameHandle::GetHitInventorySpace(Vec2 mP)
+int FrameHandle::GetHitInventorySlot(std::string who, Vec2 mP)
 {
-	Frame* f_Inventory = static_cast<Frame*>(comps["f_Inventory"].get());
-	if (f_Inventory->IsVisible())
+	int nSlots = 0;
+	Frame* frame = nullptr;
+	if (who == "unit")
 	{
-		for (int i = 0; i < 8; i++)
-		{
-			std::string key = "gI_item" + std::to_string(i);
-			if (static_cast<GrabImage*>(f_Inventory->GetComp(key))->GetPos().Contains(mP))
-			{
-				return f_Inventory->GetComp(key)->extra1;
-			}
-		}
+		nSlots = 8;
+		frame = static_cast<Frame*>(comps["fInventory"].get());
 	}
-	return -1;
-}
-int FrameHandle::GetHitInventoryBox(Vec2 mP)//f_InventoryBox    f_InventoryStorage
-{
-	Frame* f_InventoryBox = static_cast<Frame*>(comps["f_InventoryBox"].get());
-	if (f_InventoryBox->IsVisible())
+	if (who == "box")
 	{
-		for (int i = 0; i < 9; i++)
-		{
-			std::string key = "gI_item" + std::to_string(i);
-			if (static_cast<GrabImage*>(f_InventoryBox->GetComp(key))->GetPos().Contains(mP))
-			{
-				return f_InventoryBox->GetComp(key)->extra1;
-			}
-		}
+		nSlots = 9;
+		frame = static_cast<Frame*>(comps["fInventoryBox"].get());
 	}
-	return -1;
-}
-int FrameHandle::GetHitInventoryStorage(Vec2 mP)//f_InventoryBox    f_InventoryStorage
-{
-	Frame* f_InventoryStorage = static_cast<Frame*>(comps["f_InventoryStorage"].get());
-	if (f_InventoryStorage->IsVisible())
+	if (who == "storage")
 	{
-		for (int i = 0; i < 25; i++)
-		{
-			std::string key = "gI_item" + std::to_string(i);
-			if (static_cast<GrabImage*>(f_InventoryStorage->GetComp(key))->GetPos().Contains(mP))
-			{
-				return f_InventoryStorage->GetComp(key)->extra1;
-			}
-		}
+		nSlots = 25;
+		frame = static_cast<Frame*>(comps["fInventoryStorage"].get());
 	}
-	return -1;
-}
-int FrameHandle::GetHitInventoryWrought(Vec2 mP)//f_InventoryBox    f_InventoryStorage
-{
-	Frame* f_InventoryWrought = static_cast<Frame*>(comps["f_InventoryWrought"].get());
-	if (f_InventoryWrought->IsVisible())
+	if (who == "wrought")
 	{
-		for (int i = 0; i < 6; i++)
+		nSlots = 6;
+		frame = static_cast<Frame*>(comps["fInventoryWrought"].get());
+	}
+	if (frame == nullptr)
+	{
+		return -1;
+	}
+	if (frame->IsVisible())
+	{
+		for (int i = 0; i < nSlots; i++)
 		{
 			std::string key = "gI_item" + std::to_string(i);
-			if (static_cast<GrabImage*>(f_InventoryWrought->GetComp(key))->GetPos().Contains(mP))
+			if (static_cast<GrabImage*>(frame->GetComp(key))->GetPos().Contains(mP))
 			{
-				return f_InventoryWrought->GetComp(key)->extra1;
+				return frame->GetComp(key)->extra1;
 			}
 		}
 	}
@@ -596,24 +573,33 @@ GrabImage* FrameHandle::CreateGIWithHpBar(Component* parentC, RectF pos, const A
 	image = gi->AddImage(RectF(Vec2(0, pos.GetHeight() / 5 * 4), pos.GetWidth(), pos.GetHeight() / 5), &resC->GetSurf().frames[2], &resC->GetSurf().frames[2], buffer, key + "HpIs");
 	return gi;
 }
-void FrameHandle::AddHeadline(Component* parentC, std::string text, const BoomFont* f, Color c)
+void FrameHandle::AddHeadline(Component* parentC, std::string text, const Font* f, Color c)
 {
 	parentC->AddText(text, (RectF)resC->GetFrameSize().GetFramePos("frameHeadline"), 14*resC->GetFrameSize().GetGuiScale(),f, Colors::Black, "tHeadline");
 
 }
-int FrameHandle::AddObstacleInfo(Component* parentC, int top, const BoomFont* f, Color c, std::string key)
+int FrameHandle::AddObstacleInfo(Component* parentC, int top, const Font* f, Color c, std::string key, std::string infoText)
 {
+	if (infoText == "###")
+	{
+		infoText = Settings::lang_noInformation[Settings::lang];
+	}
 	RectF parentRect = parentC->GetPos();
 	int xStart = (int)((float)(parentRect.GetWidth()) / 40);
 	int halfParentWidth = parentRect.GetWidth() / 2;
 	int textSize = (int)((float)(14) * resC->GetFrameSize().GetGuiScale());
 	std::string infoString = GetInfoString(key);
-
-	parentC->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(halfParentWidth, top), halfParentWidth, 14), textSize, &resC->GetSurf().fonts[0], c, key+"Is", {0,1}, 1);
-	parentC->AddText(infoString, RectF(Vec2(xStart, top), halfParentWidth, 14), textSize, &resC->GetSurf().fonts[0], Colors::Black, key, { 0,1 }, 1);
-	return top + textSize + 10;
+	//parentC->AddTextBox()
+	TextBox* tb1 = parentC->AddTextBox(infoText, RectF(Vec2(halfParentWidth, top), halfParentWidth, 14), textSize, &resC->GetSurf().fonts[0], c, key+"Is", {0,1}, 1);
+	TextBox* tb2 = parentC->AddTextBox(infoString, RectF(Vec2(xStart, top), halfParentWidth, 14), textSize, &resC->GetSurf().fonts[0], Colors::Black, key, { 0,1 }, 1);
+	int nLines = tb1->GetLines().size();
+	if (tb1->GetLines().size() > nLines)
+	{
+		nLines = tb1->GetLines().size();
+	}
+	return top + textSize*nLines + 10;
 }
-int FrameHandle::AddObstacleInfoTextBox(Component* parentC,std::string text, int top, const BoomFont* f, Color c, std::string key)
+int FrameHandle::AddObstacleInfoTextBox(Component* parentC,std::string text, int top, const Font* f, Color c, std::string key)
 {
 
 	RectF parentRect = parentC->GetPos();
@@ -622,7 +608,7 @@ int FrameHandle::AddObstacleInfoTextBox(Component* parentC,std::string text, int
 	TextBox* tB_townHall = parentC->AddTextBox(Settings::lang_TownhallInfo[Settings::lang], RectF(Vec2(xStart, top), parentRect.GetWidth() - xStart*2, 40), textSize, &resC->GetSurf().fonts[0], Colors::Black, "tB_townhallInfo", { 0,1 });
 	return top + textSize * (tB_townHall->GetLines().size() + 2);
 }
-int FrameHandle::AddObstacleAttackButton(Component* parentC, int top, const BoomFont* f, Color c)
+int FrameHandle::AddObstacleAttackButton(Component* parentC, int top, const Font* f, Color c)
 {
 	RectF parentRect = parentC->GetPos();
 	int xStart = (int)((float)(parentRect.GetWidth()) / 40);
@@ -637,7 +623,7 @@ int FrameHandle::AddObstacleAttackButton(Component* parentC, int top, const Boom
 	b_setAttack->hitable = true;
 	return top + halfParentWidth / 2 + 10;
 }
-int FrameHandle::AddObstacleCheckBox(Component* parentC, int top, const BoomFont* f, Color c,std::string text, std::string key)
+int FrameHandle::AddObstacleCheckBox(Component* parentC, int top, const Font* f, Color c,std::string text, std::string key)
 {
 	RectF parentRect = parentC->GetPos();
 	int xStart = (int)((float)(parentRect.GetWidth()) / 40);
@@ -707,6 +693,22 @@ bool FrameHandle::FrameEnabledForObstacle(Obstacle* obstacle, std::string key)
 	{
 		return obstacle->type == 27;
 	}
+	if (key == "fInventory")
+	{
+		return Settings::anyOfCreature(obstacle->type);
+	}
+	if (key == "fInventoryBox")
+	{
+		return obstacle->type == 6;
+	}
+	if (key == "fInventoryStorage")
+	{
+		return obstacle->type == 50;
+	}
+	if (key == "fInventoryWrought")
+	{
+		return obstacle->type == 30;
+	}
 	return false;
 }
 void FrameHandle::SetCheckboxDisabling(std::vector<CheckBox*> checkboxes)
@@ -726,20 +728,7 @@ void FrameHandle::LoadFrame(std::string key)
 {
 	if (key == "fUnit")
 	{
-		std::vector<int> a = { 0,1 };
-		Frame* fUnity = AddFrame("fUnit", (RectF)resC->GetFrameSize().GetFramePos("framePos"), 0);
-		fUnity->SetState(1);																		//Unit Frame
-
-		AddHeadline(fUnity, Settings::lang_unitInfo[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
-
-		int start = fUnity->GetPos().GetHeight() * Settings::percentForGrab + 5;
-
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitName");
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitHp");
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitTeam");
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitStepsLeft");
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitAttacksLeft");
-		start = AddObstacleAttackButton(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black);
+		CreateFrameUnit();
 	}
 	else if (key == "fTownhall")
 	{
@@ -783,6 +772,95 @@ void FrameHandle::LoadFrame(std::string key)
 		start = AddObstacleAttackButton(fLumberjackHut, start, &resC->GetSurf().fonts[0], Colors::Black);
 		static_cast<Button*>(comps[key]->GetComp("bSetAttack"))->text = Settings::lang_chop[Settings::lang];
 	}
+	else if (key == "fInventory")
+	{
+		Frame* fInventory = AddFrame("fInventory", RectF(Vec2(Graphics::ScreenWidth / 2 - 125, Graphics::ScreenHeight / 12), 250, 190), 1);
+		fInventory->s = &resC->GetSurf().windowsFrame[8].GetCurSurface();
+		
+		GrabImage* hand1 = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 10), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item0", { 1,1 });
+		hand1->extra1 = 0;
+		hand1->extraS1 = "inventory swap unit";
+
+		GrabImage* bonus2 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 10), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item1", { 1,1 });
+		bonus2->extra1 = 1;
+		bonus2->extraS1 = "inventory swap unit";
+
+		GrabImage* armor = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 70), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item2", { 1,1 });
+		armor->SetVisible(false);
+		armor->extra1 = 2;
+		armor->extraS1 = "inventory swap unit";
+
+		GrabImage* bonus1 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 70), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item3", { 1,1 });
+		bonus1->SetVisible(false);
+		bonus1->extra1 = 3;
+		bonus1->extraS1 = "inventory swap unit";
+
+		GrabImage* item1 = CreateGIWithHpBar(fInventory, RectF(Vec2(10, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item4", { 1,1 });
+		item1->SetVisible(false);
+		item1->extra1 = 4;
+		item1->extraS1 = "inventory swap unit";
+
+		GrabImage* item2 = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item5", { 1,1 });
+		item2->SetVisible(false);
+		item2->extra1 = 5;
+		item2->extraS1 = "inventory swap unit";
+
+		GrabImage* item3 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item6", { 1,1 });
+		item3->SetVisible(false);
+		item3->extra1 = 6;
+		item3->extraS1 = "inventory swap unit";
+
+		GrabImage* item4 = CreateGIWithHpBar(fInventory, RectF(Vec2(190, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item7", { 1,1 });
+		item4->SetVisible(false);
+		item4->extra1 = 7;
+		item4->extraS1 = "inventory swap unit";
+	}
+	else if (key == "fInventoryBox")
+	{
+		Frame* fInventoryBox = AddFrame("fInventoryBox", RectF(Vec2(Graphics::ScreenWidth / 8 * 5, Graphics::ScreenHeight / 12), 190, 190), 1);
+		fInventoryBox->s = &resC->GetSurf().windowsFrame[9].GetCurSurface();
+
+		for (int i = 0; i < 9; i++)
+		{
+			GrabImage* image = CreateGIWithHpBar(fInventoryBox, RectF(Vec2(10.f + (int)(i % 3) * 60.f, 10.f + (int)(i / 3) * 60.f), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
+			image->SetVisible(false);
+			image->extra1 = i;
+			image->extraS1 = "inventory swap box";
+		}
+	}
+	else if (key == "fInventoryStorage")
+	{
+		Frame* fInventoryStorage = AddFrame("fInventoryStorage", RectF(Vec2(Graphics::ScreenWidth / 8 * 5, Graphics::ScreenHeight / 12), 310, 310), 1);
+		fInventoryStorage->s = &resC->GetSurf().windowsFrame[10].GetCurSurface();
+
+		for (int i = 0; i < 25; i++)
+		{
+			GrabImage* image = CreateGIWithHpBar(fInventoryStorage, RectF(Vec2(10.f + (int)(i % 5) * 60, 10.f + (int)(i / 5) * 60), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
+			image->SetVisible(false);
+			image->extra1 = i;
+			image->extraS1 = "inventory swap storage";
+		}
+	}
+	else if (key == "fInventoryWrought")
+	{
+		Frame* fInventoryWrought = AddFrame("fInventoryWrought", RectF(Vec2(Graphics::ScreenWidth / 8 * 5, Graphics::ScreenHeight / 12), 190, 190), 1);
+		fInventoryWrought->s = &resC->GetSurf().windowsFrame[11].GetCurSurface();
+		Text* text;
+		text = fInventoryWrought->AddText(Settings::lang_craftedItem[Settings::lang] + ":", RectF(Vec2(10, 10), 50, 8), 14, &resC->GetSurf().fonts[0], Colors::Black, "t_craft", { 1,1 }, 1);
+		text->SetVisible(true);
+		text = fInventoryWrought->AddText(Settings::lang_status[Settings::lang] + ":", RectF(Vec2(10, 28), 50, 8), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_craftStatus", { 1,1 }, 1);
+
+		text = fInventoryWrought->AddText(Settings::lang_reparation[Settings::lang] + ":", RectF(Vec2(10, 110), 50, 8), 14, &resC->GetSurf().fonts[0], Colors::Black, "t_rep", { 1,1 }, 1);
+		text->SetVisible(true);
+
+		for (int i = 0; i < 6; i++)
+		{
+			GrabImage* image = CreateGIWithHpBar(fInventoryWrought, RectF(Vec2(10.f + (int)(i % 3) * 60.f, 40.f + (int)(i / 3) * 90.f), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
+			image->SetVisible(false);
+			image->extra1 = i;
+			image->extraS1 = "inventory swap wrought";
+		}
+	}
 }
 void FrameHandle::UpdateFrame(Obstacle* obstacle, std::string key)
 {
@@ -790,23 +868,38 @@ void FrameHandle::UpdateFrame(Obstacle* obstacle, std::string key)
 	{
 		if (comps[key]->GetComp("tUnitNameIs")!= nullptr)
 		{
-			static_cast<Text*>(comps[key]->GetComp("tUnitNameIs"))->text = Settings::GetObstacleString(obstacle->type);
+			static_cast<TextBox*>(comps[key]->GetComp("tUnitNameIs"))->Settext(Settings::GetObstacleString(obstacle->type));
 		}
 		if (comps[key]->GetComp("tUnitHpIs") != nullptr)
 		{
-			static_cast<Text*>(comps[key]->GetComp("tUnitHpIs"))->text = std::to_string(obstacle->hp) + " / " + std::to_string(Settings::obstacleStats[obstacle->type].baseHp);
+			static_cast<TextBox*>(comps[key]->GetComp("tUnitHpIs"))->Settext(std::to_string(obstacle->hp) + " / " + std::to_string(Settings::obstacleStats[obstacle->type].baseHp));
 		}
 		if (comps[key]->GetComp("tUnitTeamIs") != nullptr)
 		{
-			static_cast<Text*>(comps[key]->GetComp("tUnitTeamIs"))->text = obstacle->team->GetTeamName();
+			static_cast<TextBox*>(comps[key]->GetComp("tUnitTeamIs"))->Settext(obstacle->team->GetTeamName());
 		}
 		if (comps[key]->GetComp("tUnitStepsLeftIs") != nullptr)
 		{
-			static_cast<Text*>(comps[key]->GetComp("tUnitStepsLeftIs"))->text = std::to_string(obstacle->stepsLeft);
+			static_cast<TextBox*>(comps[key]->GetComp("tUnitStepsLeftIs"))->Settext(std::to_string(obstacle->stepsLeft));
 		}
 		if (comps[key]->GetComp("tUnitAttacksLeftIs") != nullptr)
 		{
-			static_cast<Text*>(comps[key]->GetComp("tUnitAttacksLeftIs"))->text = std::to_string(obstacle->attack->GetAttacksLeft());
+			static_cast<TextBox*>(comps[key]->GetComp("tUnitAttacksLeftIs"))->Settext(std::to_string(obstacle->attack->GetAttacksLeft()));
+		}
+		if (key == "fUnit")
+		{
+			std::map<std::string, std::string> map2Parse;
+			auto compsOfOld = comps[key]->GetComps();
+			//const std::map<std::string, std::unique_ptr<Component>>::iterator i;
+			for (auto i = compsOfOld->begin(); i != compsOfOld->end(); i++)
+			{
+				if (const TextBox* tb = dynamic_cast<const TextBox*>(i->second.get()))
+				{
+					map2Parse[i->first] = tb->GetText();
+				}
+			}
+			DeleteFrame(key);
+			CreateFrameUnit(&map2Parse);
 		}
 		if (key == "fTownhall")
 		{
@@ -832,6 +925,66 @@ void FrameHandle::UpdateFrame(Obstacle* obstacle, std::string key)
 			else
 				static_cast<CheckBox*>(fLumberjackHut->GetComp("cBautomaticChop"))->Check();
 		}
+		if (key.find("Inventory") != std::string::npos && FrameEnabledForObstacle(obstacle,key))		//handles all needed Inventoryupdates
+		{
+			UpdateInventoryComps(obstacle->inv.get(), comps[key].get());
+		}
+		if (key == "fInventoryWrought")
+		{
+			Frame* fInventoryWrought = static_cast<Frame*>(comps[key].get());
+			if (obstacle->craft->IsCrafting())
+			{
+				fInventoryWrought->GetComp("t_craftStatus")->text = Settings::lang_status[Settings::lang] + ": " + Settings::GetItemString(obstacle->craft->GetItemID()) + " " + Settings::lang_finishedIn[Settings::lang] + " " + std::to_string(obstacle->craft->TurnsLeft(obstacle->productivity)) + " " + Settings::lang_rounds[Settings::lang];
+				fInventoryWrought->GetComp("t_craftStatus")->c = Colors::Green;
+			}
+			else if (obstacle->craft->GetItemID() != -1 && !obstacle->team->GetMaterials().Has(Settings::itemStats[obstacle->craft->GetItemID()].neededResToCraft))
+			{
+				fInventoryWrought->GetComp("t_craftStatus")->text = Settings::lang_status[Settings::lang] + ": " + Settings::lang_ressourcesAreMissing[Settings::lang];
+				fInventoryWrought->GetComp("t_craftStatus")->c = Colors::Red;
+			}
+			else
+			{
+				fInventoryWrought->GetComp("t_craftStatus")->text = Settings::lang_status[Settings::lang] + ": " + Settings::lang_nothingSelected[Settings::lang];
+				fInventoryWrought->GetComp("t_craftStatus")->c = Colors::Red;
+			}
+			comps["b_wroughScene"]->SetVisible(true);
+		}
+	}
+}
+void FrameHandle::DeleteFrame(std::string key)
+{
+	if (key == "fInventoryWrought")
+	{
+		comps["b_wroughScene"]->SetVisible(false);
+	}
+	comps.erase(key);
+}
+void FrameHandle::CreateFrameUnit(const std::map<std::string,std::string>* parsedText)
+{
+	std::vector<int> a = { 0,1 };
+	Frame* fUnity = AddFrame("fUnit", (RectF)resC->GetFrameSize().GetFramePos("framePos"), 0);
+	fUnity->SetState(1);																		//Unit Frame
+
+	AddHeadline(fUnity, Settings::lang_unitInfo[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
+
+	int start = fUnity->GetPos().GetHeight() * Settings::percentForGrab + 5;
+	if (parsedText == nullptr)
+	{
+		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitName");
+		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitHp");
+		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitTeam");
+		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitStepsLeft");
+		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitAttacksLeft");
+		start = AddObstacleAttackButton(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black);
+	}
+	else
+	{
+		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitName", parsedText->find("tUnitNameIs")->second);
+		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitHp", parsedText->find("tUnitHpIs")->second	);
+		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitTeam", parsedText->find("tUnitTeamIs")->second);
+		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitStepsLeft", parsedText->find("tUnitStepsLeftIs")->second);
+		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitAttacksLeft", parsedText->find("tUnitAttacksLeftIs")->second);
+		start = AddObstacleAttackButton(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black);
 	}
 }
 FrameHandle::FrameHandle(sharedResC resC)
@@ -1003,12 +1156,6 @@ void FrameHandle::LoadScene(int scene, World* world)
 			p3->AddTextPF("24", RectF(Vec2(100, 170), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nMaxUnits", { 0,1 }, { 0, 0, 1 }, 1);
 
 
-		
-
-			//Frame* fNextTurn = AddFrame(RectF(Vec2(1120, 600), 120, 60), 1);																			//NEXT TURN FRAME
-			//fNextTurn->s = &resC->GetSurf().windowsFrame[3].GetCurSurface();
-			//fNextTurn->bFunc = BNextTurn;
-
 			comps["b_NextTurn"] = std::make_unique<Button>(Button(RectF(Vec2(1120, 600), 120, 60), &resC->GetSurf().windowsFrame[3], &resC->GetSurf().windowsFrame[3], { 0,0 }, &resC->GetSurf().fonts[0], nullptr, &buffer));
 			//comps["b_NextTurn"] = std::make_unique<Button>(Button(RectF(Vec2(650, 450), 120, 60), &resC->GetSurf().windowsFrame[3], &resC->GetSurf().windowsFrame[3], { 0,0 }, &resC->GetSurf().fonts[0], nullptr, &buffer));
 			static_cast<Button*>(comps["b_NextTurn"].get())->bFunc = BNextTurn;
@@ -1032,90 +1179,7 @@ void FrameHandle::LoadScene(int scene, World* world)
 			fButtonBuild->s = &resC->GetSurf().windowsFrame[4].GetCurSurface();
 			fButtonBuild->bFunc = BBuildMenu;
 			*/
-			Frame* fInventory = AddFrame("f_Inventory", RectF(Vec2(Graphics::ScreenWidth / 2 - 125, Graphics::ScreenHeight / 12), 250, 190), 1);
-			fInventory->s = &resC->GetSurf().windowsFrame[8].GetCurSurface();
-			fInventory->SetVisible(false);
-
-			GrabImage* hand1 = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 10), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item0", { 1,1 });
-			hand1->extra1 = 0;
-			hand1->extraS1 = "inventory swap unit";
-
-			GrabImage* bonus2 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 10), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item1", { 1,1 });
-			bonus2->extra1 = 1;
-			bonus2->extraS1 = "inventory swap unit";
-
-			GrabImage* armor = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 70), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item2", { 1,1 });
-			armor->SetVisible(false);
-			armor->extra1 = 2;
-			armor->extraS1 = "inventory swap unit";
-
-			GrabImage* bonus1 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 70), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item3", { 1,1 });
-			bonus1->SetVisible(false);
-			bonus1->extra1 = 3;
-			bonus1->extraS1 = "inventory swap unit";
-
-			GrabImage* item1 = CreateGIWithHpBar(fInventory, RectF(Vec2(10, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item4", { 1,1 });
-			item1->SetVisible(false);
-			item1->extra1 = 4;
-			item1->extraS1 = "inventory swap unit";
-
-			GrabImage* item2 = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item5", { 1,1 });
-			item2->SetVisible(false);
-			item2->extra1 = 5;
-			item2->extraS1 = "inventory swap unit";
-
-			GrabImage* item3 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item6", { 1,1 });
-			item3->SetVisible(false);
-			item3->extra1 = 6;
-			item3->extraS1 = "inventory swap unit";
-
-			GrabImage* item4 = CreateGIWithHpBar(fInventory, RectF(Vec2(190, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item7", { 1,1 });
-			item4->SetVisible(false);
-			item4->extra1 = 7;
-			item4->extraS1 = "inventory swap unit";
-
-			Frame* fInventoryBox = AddFrame("f_InventoryBox", RectF(Vec2(Graphics::ScreenWidth / 8 * 5, Graphics::ScreenHeight / 12), 190, 190), 1);
-			fInventoryBox->s = &resC->GetSurf().windowsFrame[9].GetCurSurface();
-			fInventoryBox->SetVisible(false);
-
-			for (int i = 0; i < 9; i++)
-			{
-				GrabImage* image = CreateGIWithHpBar(fInventoryBox, RectF(Vec2(10.f + (int)(i % 3) * 60.f, 10.f + (int)(i / 3) * 60.f), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
-				image->SetVisible(false);
-				image->extra1 = i;
-				image->extraS1 = "inventory swap box";
-			}
-
-			Frame* fInventoryStorage = AddFrame("f_InventoryStorage", RectF(Vec2(Graphics::ScreenWidth / 8 * 5, Graphics::ScreenHeight / 12), 310, 310), 1);
-			fInventoryStorage->s = &resC->GetSurf().windowsFrame[10].GetCurSurface();
-			fInventoryStorage->SetVisible(false);
-
-			for (int i = 0; i < 25; i++)
-			{
-				GrabImage* image = CreateGIWithHpBar(fInventoryStorage, RectF(Vec2(10.f + (int)(i % 5) * 60, 10.f + (int)(i / 5) * 60), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
-				image->SetVisible(false);
-				image->extra1 = i;
-				image->extraS1 = "inventory swap storage";
-			}
-
-			Frame* fInventoryWrought = AddFrame("f_InventoryWrought", RectF(Vec2(Graphics::ScreenWidth / 8 * 5, Graphics::ScreenHeight / 12), 190, 190), 1);
-			fInventoryWrought->s = &resC->GetSurf().windowsFrame[11].GetCurSurface();
-			fInventoryWrought->SetVisible(false);
-			Text* text;
-			text = fInventoryWrought->AddText(Settings::lang_craftedItem[Settings::lang] + ":", RectF(Vec2(10, 10), 50, 8), 14, &resC->GetSurf().fonts[0], Colors::Black, "t_craft", { 1,1 }, 1);
-			text->SetVisible(true);
-			text = fInventoryWrought->AddText(Settings::lang_status[Settings::lang] + ":", RectF(Vec2(10, 28), 50, 8), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_craftStatus", { 1,1 }, 1);
-
-			text = fInventoryWrought->AddText(Settings::lang_reparation[Settings::lang] + ":", RectF(Vec2(10, 110), 50, 8), 14, &resC->GetSurf().fonts[0], Colors::Black, "t_rep", { 1,1 }, 1);
-			text->SetVisible(true);
-
-			for (int i = 0; i < 6; i++)
-			{
-				GrabImage* image = CreateGIWithHpBar(fInventoryWrought, RectF(Vec2(10.f + (int)(i % 3) * 60.f, 40.f + (int)(i / 3) * 90.f), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
-				image->SetVisible(false);
-				image->extra1 = i;
-				image->extraS1 = "inventory swap wrought";
-			}
+			
 		}
 		else if (scene == 1)
 		{
@@ -1266,9 +1330,13 @@ void FrameHandle::UpdateFrames(Obstacle* obst, Obstacle* storage)
 				{
 					UpdateFrame(obst, key);
 				}
+				else if (storage != nullptr && FrameEnabledForObstacle(storage, key))
+				{
+					UpdateFrame(storage, key);
+				}
 				else
 				{
-					comps.erase(key);
+					DeleteFrame(key);
 				}
 			}
 			else if (obst != nullptr && FrameEnabledForObstacle(obst,key))
@@ -1276,145 +1344,10 @@ void FrameHandle::UpdateFrames(Obstacle* obst, Obstacle* storage)
 				LoadFrame(key);
 				UpdateFrame(obst, key);
 			}
-		}
-	}
-	if (Settings::framesOn)
-	{
-		//Frame* f_unit = static_cast<Frame*>(comps["fUnit"].get());
-		//f_unit->SetVisible(false);
-		//Frame* f_townhall = static_cast<Frame*>(comps["f_Townhall"].get());
-		//f_townhall->SetVisible(false);
-		//Frame* f_lumberjackHut = static_cast<Frame*>(comps["f_LumberjackHut"].get());
-		//f_lumberjackHut->SetVisible(false);
-		Frame* f_Inventory = static_cast<Frame*>(comps["f_Inventory"].get());
-		f_Inventory->SetVisible(false);
-		Frame* f_InventoryBox = static_cast<Frame*>(comps["f_InventoryBox"].get());
-		f_InventoryBox->SetVisible(false);
-		Frame* f_InventoryStorage = static_cast<Frame*>(comps["f_InventoryStorage"].get());
-		f_InventoryStorage->SetVisible(false);
-		Frame* f_InventoryWrought = static_cast<Frame*>(comps["f_InventoryWrought"].get());
-		f_InventoryWrought->SetVisible(false);
-
-		//buttons
-		Button* b_wroughScene = static_cast<Button*>(comps["b_wroughScene"].get());
-		b_wroughScene->SetVisible(false);
-
-		if (obst != nullptr)
-		{
-			
-			if (Settings::anyOfCreature(obst->type))
+			else if (storage != nullptr && FrameEnabledForObstacle(storage,key))
 			{
-				f_Inventory->SetVisible(true);
-
-				Inventory& inv = *obst->inv;
-
-				UpdateInventoryComps(obst->inv.get(), f_Inventory);
-			}
-				/*
-				f_unit->SetVisible(true);
-				std::string s1 = Settings::GetObstacleString(obst->type);
-
-				f_unit->SetText(s1, "t_unitNameIs");
-				f_unit->SetText(std::to_string(obst->hp) + " / " + std::to_string(Settings::obstacleStats[obst->type].baseHp), "t_hpIs");
-				f_unit->SetText(std::to_string(obst->stepsLeft), "t_stepsIs");
-				f_unit->SetText(std::to_string(obst->attack->GetAttacksLeft()), "t_attacksIs");
-				if (obst->team != nullptr)
-				{
-					f_unit->SetText(obst->team->GetTeamName(), "t_teamIs");
-				}
-				else
-				{
-					f_unit->SetText(Settings::lang_noInformation[Settings::lang], "t_teamIs");
-				}
-				f_Inventory->SetVisible(true);
-
-				Inventory& inv = *obst->inv;
-
-				UpdateInventoryComps(obst->inv.get(), f_Inventory);
-			}
-			*/
-			/*
-			if (obst->type == 3)
-			{
-				f_townhall->SetVisible(true);
-				//t_teamIs
-				f_townhall->SetText(std::to_string(obst->hp) + " / " + std::to_string(Settings::obstacleStats[obst->type].baseHp), "t_hpIs");
-				f_townhall->SetText(std::to_string(obst->attack->GetAttacksLeft()) + " / " + std::to_string(Settings::obstacleStats[obst->type].attacksPerTurn), "t_attacksIs");
-				if (obst->team != nullptr)
-				{
-					f_townhall->SetText(obst->team->GetTeamName(), "t_teamIs");
-				}
-				else
-				{
-					f_townhall->SetText(Settings::lang_noInformation[Settings::lang], "t_teamIs");
-				}
-				if (obst->education->Educates())
-					static_cast<CheckBox*>(f_townhall->GetComp("cB_educate"))->Check();
-				else
-					static_cast<CheckBox*>(f_townhall->GetComp("cB_educate"))->Uncheck();
-				if (obst->heal->Isenabled())
-					static_cast<CheckBox*>(f_townhall->GetComp("cB_heal"))->Check();
-				else
-					static_cast<CheckBox*>(f_townhall->GetComp("cB_heal"))->Uncheck();
-				if (obst->attack->GetReloadNextTurn())
-					static_cast<CheckBox*>(f_townhall->GetComp("cB_attack"))->Check();
-				else
-					static_cast<CheckBox*>(f_townhall->GetComp("cB_attack"))->Uncheck();
-			}
-			*/
-			/*
-			if (obst->type == 27)
-			{
-				f_lumberjackHut->SetVisible(true);
-				//t_teamIs
-				f_lumberjackHut->SetText(std::to_string(obst->hp) + " / " + std::to_string(Settings::obstacleStats[obst->type].baseHp), "t_hpIs");
-				f_lumberjackHut->SetText(std::to_string(obst->attack->GetAttacksLeft()) + " / " + std::to_string(Settings::obstacleStats[obst->type].attacksPerTurn), "t_attacksIs");
-				if (obst->team != nullptr)
-				{
-					f_lumberjackHut->SetText(obst->team->GetTeamName(), "t_teamIs");
-				}
-				else
-				{
-					f_lumberjackHut->SetText(Settings::lang_noInformation[Settings::lang], "t_teamIs");
-				}
-
-			}
-			*/
-		}
-		if (storage != nullptr)
-		{
-			if (storage->type == 6)
-			{
-				f_InventoryBox->SetVisible(true);
-				UpdateInventoryComps(storage->inv.get(), f_InventoryBox);
-			}
-			if (storage->type == 30)
-			{
-				f_InventoryWrought->SetVisible(true);
-
-				if (storage->craft->IsCrafting())
-				{
-					f_InventoryWrought->GetComp("t_craftStatus")->text = Settings::lang_status[Settings::lang] + ": " + Settings::GetItemString(storage->craft->GetItemID()) + " " + Settings::lang_finishedIn[Settings::lang] + " " + std::to_string(storage->craft->TurnsLeft(storage->productivity)) + " " + Settings::lang_rounds[Settings::lang];
-					f_InventoryWrought->GetComp("t_craftStatus")->c = Colors::Green;
-				}
-				else if (storage->craft->GetItemID() != -1 && !storage->team->GetMaterials().Has(Settings::itemStats[storage->craft->GetItemID()].neededResToCraft))
-				{
-					f_InventoryWrought->GetComp("t_craftStatus")->text = Settings::lang_status[Settings::lang] + ": " + Settings::lang_ressourcesAreMissing[Settings::lang];
-					f_InventoryWrought->GetComp("t_craftStatus")->c = Colors::Red;
-				}
-				else
-				{
-					f_InventoryWrought->GetComp("t_craftStatus")->text = Settings::lang_status[Settings::lang] + ": " + Settings::lang_nothingSelected[Settings::lang];
-					f_InventoryWrought->GetComp("t_craftStatus")->c = Colors::Red;
-				}
-				b_wroughScene->SetVisible(true);
-				UpdateInventoryComps(storage->inv.get(), f_InventoryWrought);
-
-			}
-			if (storage->type == 50)
-			{
-				f_InventoryStorage->SetVisible(true);
-				UpdateInventoryComps(storage->inv.get(), f_InventoryStorage);
+				LoadFrame(key);
+				UpdateFrame(storage, key);
 			}
 		}
 	}

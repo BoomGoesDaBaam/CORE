@@ -122,6 +122,7 @@ public:
 	std::string text = "no title";
 	bool mouseHovers = false, hitable = false;
 	Component(RectF pos, Component* parentC, std::queue<FrameEvent>* buffer) :pos(pos), parentC(parentC),buffer(buffer){}
+	
 	virtual void Draw(Graphics& gfx)
 	{
 		gfx.DrawFilledRect(GetPos(), c, SpriteEffect::Nothing());
@@ -152,6 +153,9 @@ public:
 			return it->second.get();
 		}
 		return nullptr;
+	}
+	const std::map<std::string, std::unique_ptr<Component>>* GetComps() {
+		return &comps;
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
@@ -199,9 +203,9 @@ public:
 class Text: public Component
 {
 public:
-	const BoomFont* f;
+	const Font* f;
 	int size, textLoc;			//		'0' = centered			 '1' = left
-	Text(std::string text, RectF pos, int size,const BoomFont* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer);
+	Text(std::string text, RectF pos, int size,const Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer);
 	void Draw(Graphics& gfx) override
 	{
 		if (textLoc == 0)
@@ -240,7 +244,7 @@ class TextBox : public Text
 protected:
 	std::vector<std::string> lines;
 public:
-	TextBox(std::string text, RectF pos, int size, const BoomFont* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer);
+	TextBox(std::string text, RectF pos, int size, const Font* f, Color c, std::vector<int> activInStates, Component* parentC, int textLoc, std::queue<FrameEvent>* buffer);
 	void Draw(Graphics& gfx) override
 	{
 		for (int i = 0; i < (int)lines.size(); i++)
@@ -257,7 +261,21 @@ public:
 			gfx.DrawText(lines[i], (int)(drawPos.left), (int)(drawPos.top) + i * (size + 2), size, f, SpriteEffect::ChromaColor(Colors::Magenta, c));
 		}
 	}
-	std::vector<std::string> SplitTextToLines(const BoomFont* font,std::string text, int size, int width);
+	void Settext(std::string text)
+	{
+		lines.clear();
+		lines = SplitTextToLines(f, text, size, GetPos().GetWidth());
+	}
+	std::string GetText()const
+	{
+		std::string text = "";
+		for (int i = 0; i < lines.size(); i++)
+		{
+			text += lines[i];
+		}
+		return text;
+	}
+	std::vector<std::string> SplitTextToLines(const Font* font,std::string text, int size, int width);
 	//
 	const std::vector<std::string>& GetLines()const;
 };
@@ -706,14 +724,14 @@ public:
 		static_assert (fail<T>::value, "Do not use!");
 	}
 
-	Text* AddTextPF(std::string text, RectF pos, int size,const BoomFont* f, Color c, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {}, int textLoc = 0)
+	Text* AddTextPF(std::string text, RectF pos, int size,const Font* f, Color c, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {}, int textLoc = 0)
 	{
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
 		compActivOnPages[key] = activOnPages;
 		return Component::AddText(text, pos, size, f, c, key, activInStates, textLoc);
 	}
-	Button* AddButtonPF(RectF pos,const Animation* a, const Animation* aHover, std::string key,const BoomFont* f, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
+	Button* AddButtonPF(RectF pos,const Animation* a, const Animation* aHover, std::string key,const Font* f, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
 	{
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
@@ -975,15 +993,24 @@ private:
 	Frame* CreateBuildOption(RectF pos, int obstacleType, PageFrame* parentC, std::vector<int> activOnPages, World* world);
 	Frame* CreateCraftOption(RectF pos, int itemType, Frame* parentC, std::vector<int> activOnPages, World* world);
 	GrabImage* CreateGIWithHpBar(Component* parentC, RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates);
-	void AddHeadline(Component* parentC, std::string text, const BoomFont* f, Color c);
-	int AddObstacleInfo(Component* parentC, int top, const BoomFont* f, Color c, std::string key);
-	int AddObstacleInfoTextBox(Component* parentC, std::string text, int top, const BoomFont* f, Color c, std::string key);
-	int AddObstacleAttackButton(Component* parentC, int top, const BoomFont* f, Color c);
-	int AddObstacleCheckBox(Component* parentC, int top, const BoomFont* f, Color c, std::string text, std::string key);
+	void AddHeadline(Component* parentC, std::string text, const Font* f, Color c);
+	int AddObstacleInfo(Component* parentC, int top, const Font* f, Color c, std::string key, std::string infoText = "###");
+	int AddObstacleInfoTextBox(Component* parentC, std::string text, int top, const Font* f, Color c, std::string key);
+	int AddObstacleAttackButton(Component* parentC, int top, const Font* f, Color c);
+	int AddObstacleCheckBox(Component* parentC, int top, const Font* f, Color c, std::string text, std::string key);
 
 	std::string GetInfoString(std::string key);
 	bool FrameEnabledForObstacle(Obstacle* obstacle, std::string key);
 	void SetCheckboxDisabling(std::vector<CheckBox*> checkboxes);
+
+	// ###### single Frame operations #####
+	void LoadFrame(std::string key);
+	void UpdateFrame(Obstacle* obstacle, std::string key);
+	void DeleteFrame(std::string key);
+
+	//
+	void CreateFrameUnit(const std::map<std::string, std::string>* parsedText = nullptr);
+
 public:
 	bool BufferIsEmpty() const
 	{
@@ -998,19 +1025,14 @@ public:
 	bool HandleMouseInput(Mouse::Event& e);
 	void Draw(Graphics& gfx);
 	void UpdateHandleOrder();
-	// ###### Init Frames #####
+	//	###### handle Frames #####
 	void LoadScene(int scene, World* world);
-	void LoadFrame(std::string key);
-	void UpdateFrame(Obstacle* obstacle, std::string key);
-	// Update existing Frames
-	void UpdateFieldinformation(World& curW, Team* player);
 	void UpdateFrames(Obstacle* obst, Obstacle* storage);
+	// ###### single Frame operations #####
+	void UpdateFieldinformation(World& curW, Team* player);
 	void UpdateInventoryComps(Inventory* inv, Component* parentC);
 
 	//Mouse collision when item is grabbed
-	int GetHitInventorySpace(Vec2 mP);
-	int GetHitInventoryBox(Vec2 mP);
-	int GetHitInventoryStorage(Vec2 mP);
-	int GetHitInventoryWrought(Vec2 mP);
+	int GetHitInventorySlot(std::string who, Vec2 mP);
 };
 

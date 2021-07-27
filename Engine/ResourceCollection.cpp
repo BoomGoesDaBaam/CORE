@@ -322,11 +322,8 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	fields[0].SetKeepTime(0.3f);
 	fields[12].SetKeepTime(0.3f);
 	//Fonts
-	fonts.push_back(BoomFont("Textures/Font5.bmp", 112, '!', '~', Colors::FontDelimitor, Colors::FontNewLine));
-	FontFamily ff = FontFamily();
+	fonts.push_back(Font("Textures/Font5.bmp", 112, '!', '~', Colors::FontDelimitor, Colors::FontNewLine));
 
-	std::complex<double> mycomplex(10.0, 1.0);
-	Font f = Font(&ff,std::real(mycomplex),INT(23), Unit::UnitPixel);
 
 	//Items
 	for (int i = 0; i < 13; i++)
@@ -412,7 +409,7 @@ FramesizeCollection::FramesizeCollection(TexturesCollection* tC):tC(tC)
 		fieldCon.push_back(RectI(Vei2(0, 0), 0, 0));
 	}
 	UpdateFieldCon(Vei2(100, 100));								
-	UpdateFramePos(Vec2(Graphics::ScreenWidth, Graphics::ScreenHeight), 0.75f);
+	UpdateFramePos(Vec2(Graphics::ScreenWidth, Graphics::ScreenHeight), 1.f);
 }
 std::vector<RectI> FramesizeCollection::GetConOffset(Vei2 cSize)const
 {
