@@ -322,7 +322,7 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	fields[0].SetKeepTime(0.3f);
 	fields[12].SetKeepTime(0.3f);
 	//Fonts
-	fonts.push_back(Font("Textures/Font5.bmp", 112, '!', '~', Colors::FontDelimitor, Colors::FontNewLine));
+	fonts.push_back(Font("Textures/Font5.bmp",Colors::Magenta, 112, '!', '~', Colors::FontDelimitor, Colors::FontNewLine));
 
 
 	//Items

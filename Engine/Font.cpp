@@ -1,9 +1,10 @@
 #pragma once
 #include "Font.h"
 #include "SpriteEffect.h"
-Font::Font(std::string filename, int nRaws, int nColums, int charWidth, int charHeight,char first, char last):
+Font::Font(std::string filename,Color chroma, int nRaws, int nColums, int charWidth, int charHeight,char first, char last):
 	surface(filename),
-	nRaws(nRaws),nColums(nColums), charWidth(charWidth),charHeight(charHeight), first(first),last(last)
+	nRaws(nRaws),nColums(nColums), charWidth(charWidth),charHeight(charHeight), first(first),last(last),
+	chroma(chroma)
 {
 	for (int y = 0; y < nRaws; y++)
 	{
@@ -17,9 +18,10 @@ Font::Font(std::string filename, int nRaws, int nColums, int charWidth, int char
 		}
 	}
 }//94
-Font::Font(std::string filename, int charHeight, char first, char last, Color delimiter, Color newLine) :
+Font::Font(std::string filename, Color chroma, int charHeight, char first, char last, Color delimiter, Color newLine) :
 	surface(filename),
-	charHeight(charHeight), first(first), last(last)
+	charHeight(charHeight), first(first), last(last),
+	chroma(chroma)
 {
 	Vei2 curPos = Vei2(0, 0);
 	int curWidth = 0;
