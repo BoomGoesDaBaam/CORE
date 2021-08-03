@@ -256,11 +256,11 @@ namespace Settings
 	const std::string lang_maxUnits[] = { "maxUnits", "MaxUnits" };
 
 	const std::string lang_unitName[] = { "Unit name", "Art" };
-	const std::string lang_hp[] = { "Health points", "Lebenspunkte" };
+	const std::string lang_hp[] = { "Health points", "LP" };		//Health points
 	const std::string lang_team[] = { "Team", "Team" };
 	const std::string lang_attacksLeft[] = { "attacks left", "Verb. Angriffe" };
 	const std::string lang_chopsLeft[] = { "chops left", "Schlaege über" };
-	const std::string lang_chop[] = { "chops", "zerhacken" };
+	const std::string lang_chop[] = { "chop", "zerhacken" };
 	const std::string lang_craftedItem[] = { "crafted items", "Erstellte Items" };
 	const std::string lang_reparation[] = { "reparation", "Reperatur" };
 	
@@ -1018,8 +1018,8 @@ namespace Settings
 		{{"cactus",3.f}}),
 		ObstacleStats(				//#6
 		1,{Vei2(1,1)},100,-1,0,0,0,1,
-		{},
-		{{"iron",3.f},{"gold",0.1f}}),
+		{{"wood",1.0f}},
+		{}),
 		ObstacleStats(				//#7
 		1,{Vei2(1,1)},100,-1,0,0,0,1,
 		{{"stone",60.f}},

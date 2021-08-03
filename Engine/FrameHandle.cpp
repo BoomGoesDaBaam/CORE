@@ -81,8 +81,10 @@ std::vector<std::string> TextBox::SplitTextToLines(const Font* font, std::string
 	int charStart = 0;
 	int first = font->GetFirst();
 	int last = font->GetLast();
-
+	float charDist = font->GetCharDist();
 	lines.push_back("");
+	bool firstWorldInLine = true;
+
 	for (int i = 0; i < (int)text.length(); i++)
 	{
 		if (text[i] >= first && text[i] <= last)
@@ -90,15 +92,17 @@ std::vector<std::string> TextBox::SplitTextToLines(const Font* font, std::string
 			wordWidthInChar++;
 			float ratio = (float)cRects[(__int64)text[i] - first].GetWidth() / cRects[(__int64)text[i] - first].GetHeight();
 			Vec2 charSize(ratio * size, (float)size);
-			if (wordWidthInPixel + ((float)size * 0.9f * ratio) >= width)
+			if (wordWidthInPixel + ((float)size * charDist * ratio) >= width && !firstWorldInLine)
 			{
 				lines.push_back("");
 				wordWidthInPixel = 0;
+				firstWorldInLine = true;
 			}
-			wordWidthInPixel += ((float)size * 0.9f * ratio);
+			wordWidthInPixel += ((float)size * charDist * ratio);
 		}
 		if (text[i] == ' ')
 		{
+			firstWorldInLine = false;
 			wordWidthInChar++;
 			lines[(int)lines.size() - 1] += text.substr(charStart, wordWidthInChar);
 			charStart += wordWidthInChar;
@@ -107,6 +111,7 @@ std::vector<std::string> TextBox::SplitTextToLines(const Font* font, std::string
 			{
 				lines.push_back("");
 				wordWidthInPixel = 0;
+				firstWorldInLine = true;
 			}
 			wordWidthInPixel += ((float)(size * 0.7f));
 		}
@@ -511,6 +516,7 @@ int FrameHandle::GetHitInventorySlot(std::string who, Vec2 mP)
 	}
 	return -1;
 }
+	// 270, 90		//180 60
 Frame* FrameHandle::CreateBuildOption(RectF pos, int obstacleType, PageFrame* parentC, std::vector<int> activOnPages, World* world)
 {
 	std::string key = Settings::GetObstacleString(obstacleType);
@@ -519,7 +525,7 @@ Frame* FrameHandle::CreateBuildOption(RectF pos, int obstacleType, PageFrame* pa
 	frame->extra1 = obstacleType;
 	frame->bFunc = BBuildMode;
 	frame->hitable = true;
-	frame->AddText(Settings::GetObstacleString(obstacleType), RectF(Vec2(60, 5), 50, 8), 7, &resC->GetSurf().fonts[0], Colors::Black, key + "H", { 1 });
+	frame->AddText(Settings::GetObstacleString(obstacleType), RectF(Vec2(pos.GetWidth() / 3, pos.GetHeight() / 10), pos.GetWidth() / 3, 11), 11, &resC->GetSurf().fonts[0], Colors::Black, key + "H", { 1 });
 	std::map<std::string, float> neededRes = Settings::obstacleStats[obstacleType].neededResToBuild;
 	std::map<std::string, float>::iterator res;
 	int i = 0;
@@ -527,10 +533,10 @@ Frame* FrameHandle::CreateBuildOption(RectF pos, int obstacleType, PageFrame* pa
 	{
 		//std::map<st::string,float> check ={{}}
 		if (world->GetPlayer()->GetMaterials().Has({ { res->first,res->second } }))
-			frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(70.f, 20.f + i * 10.f), 50.f, 8.f), 7, &resC->GetSurf().fonts[0], Colors::Green, key + "res" + std::to_string(i), { 1 });
+			frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(pos.GetWidth() / 2, (pos.GetHeight() / 3) + i * (pos.GetHeight() / 6)), 50.f, 11.f), 11, &resC->GetSurf().fonts[0], Colors::Green, key + "res" + std::to_string(i), { 1 });
 		else
 		{
-			frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(70.f, 20.f + i * 10.f), 50.f, 8.f), 7, &resC->GetSurf().fonts[0], Colors::Red, key + "res" + std::to_string(i), { 1 });
+			frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(pos.GetWidth() / 2, (pos.GetHeight() / 3) + i * (pos.GetHeight() / 6)), 50.f, 11.f), 11, &resC->GetSurf().fonts[0], Colors::Red, key + "res" + std::to_string(i), { 1 });
 		}
 		i++;
 	}
@@ -575,7 +581,7 @@ GrabImage* FrameHandle::CreateGIWithHpBar(Component* parentC, RectF pos, const A
 }
 void FrameHandle::AddHeadline(Component* parentC, std::string text, const Font* f, Color c)
 {
-	parentC->AddText(text, (RectF)resC->GetFrameSize().GetFramePos("frameHeadline"), 14*resC->GetFrameSize().GetGuiScale(),f, Colors::Black, "tHeadline");
+	parentC->AddText(text, (RectF)resC->GetFrameSize().GetFramePos("frameHeadline"), 11*resC->GetFrameSize().GetGuiScale(),f, Colors::Black, "tHeadline");
 
 }
 int FrameHandle::AddObstacleInfo(Component* parentC, int top, const Font* f, Color c, std::string key, std::string infoText)
@@ -587,15 +593,15 @@ int FrameHandle::AddObstacleInfo(Component* parentC, int top, const Font* f, Col
 	RectF parentRect = parentC->GetPos();
 	int xStart = (int)((float)(parentRect.GetWidth()) / 40);
 	int halfParentWidth = parentRect.GetWidth() / 2;
-	int textSize = (int)((float)(14) * resC->GetFrameSize().GetGuiScale());
+	int textSize = (int)((float)(11) * resC->GetFrameSize().GetGuiScale());
 	std::string infoString = GetInfoString(key);
 	//parentC->AddTextBox()
 	TextBox* tb1 = parentC->AddTextBox(infoText, RectF(Vec2(halfParentWidth, top), halfParentWidth, 14), textSize, &resC->GetSurf().fonts[0], c, key+"Is", {0,1}, 1);
 	TextBox* tb2 = parentC->AddTextBox(infoString, RectF(Vec2(xStart, top), halfParentWidth, 14), textSize, &resC->GetSurf().fonts[0], Colors::Black, key, { 0,1 }, 1);
 	int nLines = tb1->GetLines().size();
-	if (tb1->GetLines().size() > nLines)
+	if (tb2->GetLines().size() > nLines)
 	{
-		nLines = tb1->GetLines().size();
+		nLines = tb2->GetLines().size();
 	}
 	return top + textSize*nLines + 10;
 }
@@ -618,7 +624,7 @@ int FrameHandle::AddObstacleAttackButton(Component* parentC, int top, const Font
 	Button* b_setAttack = parentC->AddButton(RectF(Vec2(xStart, top), buttonBoxSize, buttonBoxSize / 2), &resC->GetSurf().windowsFrame[6], &resC->GetSurf().windowsFrame[6], "bSetAttack", &resC->GetSurf().fonts[0], { 0,1 });
 	b_setAttack->bFunc = BSetAttackMode;
 	b_setAttack->text = Settings::lang_attack[Settings::lang] + " (A)";
-	b_setAttack->size = (int)((float)(14) * resC->GetFrameSize().GetGuiScale());
+	b_setAttack->size = (int)((float)(11) * resC->GetFrameSize().GetGuiScale());
 	b_setAttack->c = c;
 	b_setAttack->hitable = true;
 	return top + halfParentWidth / 2 + 10;
@@ -1195,47 +1201,57 @@ void FrameHandle::LoadScene(int scene, World* world)
 			b_back->extra1 = 0;
 			b_back->bFunc = BLoadScene;
 			b_back->text = Settings::lang_back[Settings::lang];
+			RectI screenRect = Graphics::GetScreenRect<int>();
+			int screenHeight = screenRect.GetHeight();
+			int screenWidth = screenRect.GetWidth();
 
-			CreateBuildOption(RectF(Vec2(60, 120), 180, 60), 0, fBuildSelection, { 1,0,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 190), 180, 60), 2, fBuildSelection, { 1,0,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 260), 180, 60), 3, fBuildSelection, { 1,0,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 330), 180, 60), 21, fBuildSelection, { 1,0,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 400), 180, 60), 22, fBuildSelection, { 1,0,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 470), 180, 60), 23, fBuildSelection, { 1,0,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 540), 180, 60), 24, fBuildSelection, { 1,0,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 610), 180, 60), 25, fBuildSelection, { 1,0,0,0 }, world);
 
-			CreateBuildOption(RectF(Vec2(250, 190), 180, 60), 26, fBuildSelection, { 1,0,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth/25, screenHeight / 6), screenWidth/5, screenHeight / 8), 2, fBuildSelection, { 1,0,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 25, screenHeight / 6 + 1 * screenHeight / 6), screenWidth/5, screenHeight / 8), 6, fBuildSelection, { 1,0,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 25, screenHeight / 6 + 2 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 3, fBuildSelection, { 1,0,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 25, screenHeight / 6 + 3 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 21, fBuildSelection, { 1,0,0,0 }, world);
+			
+			CreateBuildOption(RectF(Vec2(screenWidth / 12.5f + screenWidth / 5, screenHeight / 6), screenWidth / 5, screenHeight / 8), 0, fBuildSelection, { 1,0,0,0 }, world);
+
+			CreateBuildOption(RectF(Vec2(screenWidth / 8.3333f + screenWidth / 5 * 2, screenHeight / 6), screenWidth / 5, 90), 22, fBuildSelection, { 1,0,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 8.3333f + screenWidth / 5 * 2, screenHeight / 6 + 1 * screenHeight / 6), 270, 90), 23, fBuildSelection, { 1,0,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 8.3333f + screenWidth / 5 * 2, screenHeight / 6 + 2 * screenHeight / 6), 270, 90), 24, fBuildSelection, { 1,0,0,0 }, world);
+
+			CreateBuildOption(RectF(Vec2(screenWidth / 6.25f + screenWidth / 5 * 3, screenHeight / 6), screenWidth / 5, 90), 25, fBuildSelection, { 1,0,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 6.25f + screenWidth / 5 * 3, screenHeight / 6 + 1 * screenHeight / 6), screenWidth / 5, 90), 26, fBuildSelection, { 1,0,0,0 }, world);
+
 
 			fBuildSelection->AddTextPF(Settings::lang_productions[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->GetSurf().fonts[0], Colors::Black, "roductionH", { 1 }, { 0,1,0,0 });
+			
+			CreateBuildOption(RectF(Vec2(screenWidth / 25, screenHeight / 6), screenWidth / 5, screenHeight / 8), 27, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 25, screenHeight / 6 + 1 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 28, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 25, screenHeight / 6 + 2 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 33, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 25, screenHeight / 6 + 3 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 31, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 25, screenHeight / 6 + 4 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 34, fBuildSelection, { 0,1,0,0 }, world);
 
-			CreateBuildOption(RectF(Vec2(60, 120), 180, 60), 27, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 190), 180, 60), 28, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 260), 180, 60), 29, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 330), 180, 60), 30, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 400), 180, 60), 31, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 470), 180, 60), 32, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 540), 180, 60), 33, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(60, 610), 180, 60), 34, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 12.5f + screenWidth / 5, screenHeight / 6), screenWidth / 5, screenHeight / 8), 30, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 12.5f + screenWidth / 5, screenHeight / 6 + 1 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 32, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 12.5f + screenWidth / 5, screenHeight / 6 + 2 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 29, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 12.5f + screenWidth / 5, screenHeight / 6 + 3 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 36, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 12.5f + screenWidth / 5, screenHeight / 6 + 4 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 38, fBuildSelection, { 0,1,0,0 }, world);
 
-			CreateBuildOption(RectF(Vec2(250, 120), 180, 60), 35, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(250, 190), 180, 60), 36, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(250, 260), 180, 60), 37, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(250, 330), 180, 60), 38, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(250, 400), 180, 60), 39, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(250, 470), 180, 60), 40, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(250, 540), 180, 60), 41, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(250, 610), 180, 60), 42, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 8.3333f + screenWidth / 5 * 2, screenHeight / 6), screenWidth / 5, 90), 37, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 8.3333f + screenWidth / 5 * 2, screenHeight / 6 + 1 * screenHeight / 6), 270, 90), 35, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 8.3333f + screenWidth / 5 * 2, screenHeight / 6 + 2 * screenHeight / 6), 270, 90), 42, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 8.3333f + screenWidth / 5 * 2, screenHeight / 6 + 3 * screenHeight / 6), 270, 90), 49, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 8.3333f + screenWidth / 5 * 2, screenHeight / 6 + 4 * screenHeight / 6), 270, 90), 50, fBuildSelection, { 0,1,0,0 }, world);
 
-			CreateBuildOption(RectF(Vec2(440, 120), 180, 60), 48, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(440, 190), 180, 60), 49, fBuildSelection, { 0,1,0,0 }, world);
-			CreateBuildOption(RectF(Vec2(440, 260), 180, 60), 50, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 6.25f + screenWidth / 5 * 3, screenHeight / 6), screenWidth / 5, 90), 39, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 6.25f + screenWidth / 5 * 3, screenHeight / 6 + 1 * screenHeight / 6), screenWidth / 5, 90), 40, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 6.25f + screenWidth / 5 * 3, screenHeight / 6 + 2 * screenHeight / 6), screenWidth / 5, 90), 41, fBuildSelection, { 0,1,0,0 }, world);
+			CreateBuildOption(RectF(Vec2(screenWidth / 6.25f + screenWidth / 5 * 3, screenHeight / 6 + 3 * screenHeight / 6), screenWidth / 5, 90), 48, fBuildSelection, { 0,1,0,0 }, world);
 
+			
 		}
 		else if (scene == 2)
 		{
 			std::vector<int> a = { 0,1 };
-			Frame* fCraftSelection = AddFrame("f_craftMenu", RectF(Vec2(0, 0), Graphics::ScreenWidth, Graphics::ScreenHeight), 1);//AddPageFrame("f_bg", RectF(Vec2(0, 0), Graphics::ScreenWidth, Graphics::ScreenHeight), 1, 4);															//build selection menu
+			Frame* fCraftSelection = AddFrame("f_craftMenu", Graphics::GetScreenRect<float>(), 1);//AddPageFrame("f_bg", RectF(Vec2(0, 0), Graphics::ScreenWidth, Graphics::ScreenHeight), 1, 4);															//build selection menu
 			fCraftSelection->s = &resC->GetSurf().windowsFrame[5].GetCurSurface();
 			fCraftSelection->SetMoveable(false);
 			fCraftSelection->AddText(Settings::lang_forge[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->GetSurf().fonts[0], Colors::Black, "ForgeH", { 1 });

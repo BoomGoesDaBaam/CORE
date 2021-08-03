@@ -276,6 +276,7 @@ public:
 		return text;
 	}
 	std::vector<std::string> SplitTextToLines(const Font* font,std::string text, int size, int width);
+
 	//
 	const std::vector<std::string>& GetLines()const;
 };

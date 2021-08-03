@@ -322,7 +322,7 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	fields[0].SetKeepTime(0.3f);
 	fields[12].SetKeepTime(0.3f);
 	//Fonts
-	fonts.push_back(Font("Textures/Font5.bmp",Colors::Magenta, 112, '!', '~', Colors::FontDelimitor, Colors::FontNewLine));
+	fonts.push_back(Font("Textures/fontNeu.bmp",Colors::Magenta, 11, '!', '~', Colors::FontDelimitor, Colors::FontNewLine,1.2f));
 
 
 	//Items
@@ -443,8 +443,8 @@ void FramesizeCollection::UpdateFieldCon(Vei2 cSize)
 void FramesizeCollection::UpdateFramePos(Vec2 screenSize, float guiScale)
 {
 	this->guiScale = guiScale;
-	int frameHeight = (int)((float)(280 * 2) * guiScale);
-	framePos["framePos"] = RectI(Vei2((int)(screenSize.x / 8), (int)((screenSize.y - frameHeight)/2)), (int)((float)(140 * 2)*guiScale), frameHeight);
+	int frameHeight = (int)((float)(420) * guiScale);
+	framePos["framePos"] = RectI(Vei2((int)(screenSize.x / 8), (int)((screenSize.y - frameHeight)/2)), (int)((float)(210)*guiScale), frameHeight);
 	RectF fp = (RectF)framePos.at("framePos");
 	framePos["frameHeadline"] = RectI(Vei2(0,0), fp.GetWidth(), fp.GetHeight() * Settings::percentForGrab);
 }

@@ -1,10 +1,11 @@
 #pragma once
 #include "Font.h"
 #include "SpriteEffect.h"
-Font::Font(std::string filename,Color chroma, int nRaws, int nColums, int charWidth, int charHeight,char first, char last):
+Font::Font(std::string filename,Color chroma, int nRaws, int nColums, int charWidth, int charHeight,char first, char last, float distBetwCharFactor):
 	surface(filename),
 	nRaws(nRaws),nColums(nColums), charWidth(charWidth),charHeight(charHeight), first(first),last(last),
-	chroma(chroma)
+	chroma(chroma),
+	distBetwCharFactor(distBetwCharFactor)
 {
 	for (int y = 0; y < nRaws; y++)
 	{
@@ -18,10 +19,11 @@ Font::Font(std::string filename,Color chroma, int nRaws, int nColums, int charWi
 		}
 	}
 }//94
-Font::Font(std::string filename, Color chroma, int charHeight, char first, char last, Color delimiter, Color newLine) :
+Font::Font(std::string filename, Color chroma, int charHeight, char first, char last, Color delimiter, Color newLine, float distBetwCharFactor) :
 	surface(filename),
 	charHeight(charHeight), first(first), last(last),
-	chroma(chroma)
+	chroma(chroma),
+	distBetwCharFactor(distBetwCharFactor)
 {
 	Vei2 curPos = Vei2(0, 0);
 	int curWidth = 0;
@@ -47,7 +49,8 @@ Font::Font(std::string filename, Color chroma, int charHeight, char first, char 
 	}
 	costumWidth = true;
 }
-void Font::DrawText(std::string text, int x, int y, int size, Color c)
+/*
+void Font::DrawText(std::string text, int x, int y, int size, Color c)	
 {
 	int xM = 0;
 	int yM = 0;
@@ -140,8 +143,8 @@ void Font::DrawTextCentered(std::string text, Vei2 pos, int size, Color c)
 			}
 		}
 	}
-	*/
 }
+*/
 int Font::GetFirst()const { return first; }
 int Font::GetLast()const { return last; }
 const std::vector<RectI>& Font::GetCharRects()const

@@ -434,12 +434,14 @@ public:
 	template<typename E>
 	void DrawSurface(RectI pos, RectI sourceR, const Surface& s, E effect, int n90rot=0)
 	{
-		if (pos.right < screenRect.left || pos.left > screenRect.right || pos.bottom < screenRect.top || pos.top > screenRect.bottom)
+
+		pos.right--;
+		pos.bottom--;
+		if (pos.right < screenRect.left || pos.left > screenRect.right || pos.bottom < screenRect.top || pos.top > screenRect.bottom ||
+			pos.GetWidth() == 0 || pos.GetHeight() == 0)
 		{
 			return;
 		}
-		pos.right--;
-		pos.bottom--;
 
 		RectI inFpos = pos;
 		int skippedLeft = 0, skippedRight = 0, skippedTop = 0, skippedBottom = 0;
@@ -553,6 +555,7 @@ public:
 	template<typename E>
 	void DrawText(std::string text, int x, int y, int size, const Font* font, E effect)
 	{
+		float charDist = font->GetCharDist();
 		int xM = 0;
 		int yM = 0;
 
@@ -570,7 +573,7 @@ public:
 				float ratio = (float)cRects[(__int64)text[i] - first].GetWidth() / cRects[(__int64)text[i] - first].GetHeight();
 				Vec2 charSize(ratio * size, (float)size);
 				DrawSurface(RectI(Vei2(x + xM, y), (int)charSize.x, (int)charSize.y), cRects[(__int64)text[i] - first], surface, effect);
-				xM += (int)((float)size * 0.9f * ratio);
+				xM += (int)((float)size * charDist * ratio);
 			}
 			if (text[i] == ' ')
 			{
@@ -586,6 +589,7 @@ public:
 	template<typename E>
 	void DrawTextCentered(std::string text, int x, int y, int size, const Font* font, E effect)
 	{
+		float charDist = font->GetCharDist();
 		int xM = 0;
 		int yM = 0;
 
@@ -600,7 +604,7 @@ public:
 			if (text[i] >= first && text[i] <= last)
 			{
 				float ratio = (float)cRects[(__int64)text[i] - first].GetWidth() / cRects[(__int64)text[i] - first].GetHeight();
-				width += (__int64)(size * 0.9f * ratio);
+				width += (__int64)(size * charDist * ratio);
 			}
 			if (text[i] == ' ')
 			{
@@ -616,7 +620,7 @@ public:
 				float ratio = (float)cRects[(__int64)text[i] - first].GetWidth() / cRects[(__int64)text[i] - first].GetHeight();
 				Vec2 charSize(ratio * size, (float)size);
 				DrawSurface(RectI(Vei2(x + xM, y), (int)charSize.x, (int)charSize.y), cRects[(__int64)text[i] - first], surface, effect);
-				xM += (__int64)(size * 0.9f * ratio);
+				xM += (__int64)(size * charDist * ratio);
 			}
 			if (text[i] == ' ')
 			{
