@@ -4,6 +4,8 @@
 #include <map>
 #include <algorithm>
 #include "Graphics.h"
+#include <sstream>
+#include <iomanip>
 class ButtonFunctions;
 class PageFrame;
 class FrameHandle;
@@ -605,7 +607,10 @@ public:
 	{
 			Vec2 mP = (Vec2)e.GetPos();
 			bool hit = Hit(mP);
-
+			if (e.GetType() == Mouse::Event::Type::LRelease)
+			{
+				int k = 23;
+			}
 			if (grabbed && moveable)
 			{
 				if (e.GetType() == Mouse::Event::Type::LRelease)
@@ -961,6 +966,40 @@ public:
 	{
 		return frames[key].get();
 	}
+	Frame* GetFrame(int index)
+	{
+		assert(index >= 0);
+		int i = 0;
+		std::map<std::string, std::unique_ptr<Frame>>::iterator frame;
+		for (frame = frames.begin(); frame != frames.end(); frame++)
+		{
+			if (i == index)
+			{
+				return frame->second.get();
+			}
+			i++;
+		}
+		assert(false);
+	}
+	std::string GetKey(int index)
+	{
+		assert(index >= 0);
+		int i = 0;
+		std::map<std::string, std::unique_ptr<Frame>>::iterator frame;
+		for (frame = frames.begin(); frame != frames.end(); frame++)
+		{
+			if (i == index)
+			{
+				return frame->first;
+			}
+			i++;
+		}
+		assert(false);
+	}
+	int GetFrameAmount()
+	{
+		return frames.size();
+	}
 };
 
 bool B1(std::queue<FrameEvent>* buffer, Component* caller);
@@ -1001,12 +1040,12 @@ private:
 	int AddObstacleCheckBox(Component* parentC, int top, const Font* f, Color c, std::string text, std::string key);
 
 	std::string GetInfoString(std::string key);
-	bool FrameEnabledForObstacle(Obstacle* obstacle, std::string key);
+	bool FrameIsEnabled(Obstacle* obstacle, std::string key);
 	void SetCheckboxDisabling(std::vector<CheckBox*> checkboxes);
 
 	// ###### single Frame operations #####
 	void LoadFrame(std::string key);
-	void UpdateFrame(Obstacle* obstacle, std::string key);
+	void UpdateFrame(const World* world, int process, std::string key);
 	void DeleteFrame(std::string key);
 
 	//
@@ -1028,7 +1067,8 @@ public:
 	void UpdateHandleOrder();
 	//	###### handle Frames #####
 	void LoadScene(int scene, World* world);
-	void UpdateFrames(Obstacle* obst, Obstacle* storage);
+	void UpdateFrames(const World* world);
+	void DeterminateUpdateProc(const World* world, Component* comp, std::string key);
 	// ###### single Frame operations #####
 	void UpdateFieldinformation(World& curW, Team* player);
 	void UpdateInventoryComps(Inventory* inv, Component* parentC);

@@ -6,9 +6,7 @@
 namespace Settings
 {
 	/*
-	to do list:
-		-animals consume food every turn finish
-	
+	make flora updateable
 	*/
 	/*		### Types ###
 			0 = water				5 = snow				10 = mountains (high)
@@ -138,7 +136,7 @@ namespace Settings
 	static const std::vector<int> anySawmillBoostedObstacles = { 27,30,33,35,36,37,42,43,44,45,46,47,49 };
 	static const std::vector<int> anyWindmillBoostedObstacles = {  };
 	//available Frames
-	static const std::vector<std::string> frameKeys = { "fUnit","fTownhall","fLumberjackHut","fInventory","fInventoryBox", "fInventoryStorage","fInventoryWrought"};
+	static const std::vector<std::string> frameKeys = { "fUnit","fTownhall","fLumberjackHut","fInventory","fInventoryBox", "fInventoryStorage","fInventoryWrought","fresD_f1"};
 	//Graphic options
 	//static bool displayObstacles = true;
 	static int probToGrow = 50;

@@ -241,35 +241,28 @@ bool Frame::Hit(Vec2 mP)
 	if (IsVisible())
 	{
 		assert(type == 0 || type == 1 || type == -1);
-		Vei2 mpRelTop = (Vei2)(mP - GetPos().GetTopLeft<float>());
-		Vei2 mpRelBottom = (Vei2)(mP - GetPos().GetTopLeft<float>());
-		Vec2 scaleHead;
-		Vec2 scaleBottom;
+		Vec2 mpRel = (Vec2)(mP - GetPos().GetTopLeft<float>());
+		Vec2 scale;
 		switch (type)
 		{
 		case 0:
-			scaleHead = Vec2(resC->GetSurf().windowsFrame[1].GetSize()) / Vec2(pos.GetSize());
-			scaleBottom = Vec2(resC->GetSurf().windowsFrame[0].GetSize()) / Vec2(pos.GetSize());
-			mpRelTop.x = (int)(mpRelTop.x * scaleHead.x);
-			mpRelTop.y = (int)(mpRelTop.y * scaleHead.y);
-			mpRelBottom.x = (int)(mpRelBottom.x * scaleBottom.x);
-			mpRelBottom.y = (int)(mpRelBottom.y * scaleBottom.y);
+			Vec2 scale = Vec2(resC->GetSurf().windowsFrame[0].GetSize()) / Vec2(pos.GetSize());
+			mpRel *= scale;
 			switch (curState)
 			{
 			case 0:
-				return resC->GetSurf().windowsFrame[1].GetCurSurface().TestIfHitOnScreen((Vec2)mpRelBottom);
+				return resC->GetSurf().windowsFrame[1].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
 				break;
 			case 1:
-				return resC->GetSurf().windowsFrame[0].GetCurSurface().TestIfHitOnScreen((Vec2)mpRelTop) || resC->GetSurf().windowsFrame[2].GetCurSurface().TestIfHitOnScreen((Vec2)mpRelBottom);
+				return resC->GetSurf().windowsFrame[0].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel) || resC->GetSurf().windowsFrame[2].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
 				break;
 			}
 			break;
 		case 1:
-			scaleHead = Vec2(s->GetSize()) / Vec2(pos.GetSize());
-			mpRelTop.x = (int)(mpRelTop.x * scaleHead.x);
-			mpRelTop.y = (int)(mpRelTop.y * scaleHead.y);
+			scale = Vec2(s->GetSize()) / Vec2(pos.GetSize());
+			mpRel *= scale;
 
-			return s->TestIfHitOnScreen((Vec2)mpRelTop);
+			return s->TestIfHitOnScreen((Vec2)mpRel);
 			break;
 		case -1:
 			return false;//resC->GetSurf().windowsFrame[1].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
@@ -475,29 +468,31 @@ void FrameHandle::UpdateInventoryComps(Inventory* inv, Component* parentC)
 		}
 	}
 }
-int FrameHandle::GetHitInventorySlot(std::string who, Vec2 mP)
+int FrameHandle::GetHitInventorySlot(std::string frameString, Vec2 mP)
 {
+	if (comps.count(frameString) <= 0)
+	{
+		return -1;
+	}
 	int nSlots = 0;
 	Frame* frame = nullptr;
-	if (who == "unit")
+
+	frame = static_cast<Frame*>(comps[frameString].get());
+	if (frameString == "fInventory")
 	{
 		nSlots = 8;
-		frame = static_cast<Frame*>(comps["fInventory"].get());
 	}
-	if (who == "box")
+	if (frameString == "fInventoryBox")
 	{
-		nSlots = 9;
-		frame = static_cast<Frame*>(comps["fInventoryBox"].get());
+		nSlots = 9; 
 	}
-	if (who == "storage")
+	if (frameString == "fInventoryStorage")
 	{
 		nSlots = 25;
-		frame = static_cast<Frame*>(comps["fInventoryStorage"].get());
 	}
-	if (who == "wrought")
+	if (frameString == "fInventoryWrought")
 	{
 		nSlots = 6;
-		frame = static_cast<Frame*>(comps["fInventoryWrought"].get());
 	}
 	if (frame == nullptr)
 	{
@@ -532,11 +527,13 @@ Frame* FrameHandle::CreateBuildOption(RectF pos, int obstacleType, PageFrame* pa
 	for (res = neededRes.begin(); res != neededRes.end(); res++)
 	{
 		//std::map<st::string,float> check ={{}}
+		std::string amount = GigaMath::float2StringWithPrecision(2, res->second);
+
 		if (world->GetPlayer()->GetMaterials().Has({ { res->first,res->second } }))
-			frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(pos.GetWidth() / 2, (pos.GetHeight() / 3) + i * (pos.GetHeight() / 6)), 50.f, 11.f), 11, &resC->GetSurf().fonts[0], Colors::Green, key + "res" + std::to_string(i), { 1 });
+			frame->AddText("-" + res->first + ": x" + amount + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(pos.GetWidth() / 2, (pos.GetHeight() / 3) + i * (pos.GetHeight() / 6)), 50.f, 11.f), 11, &resC->GetSurf().fonts[0], Colors::Green, key + "res" + std::to_string(i), { 1 });
 		else
 		{
-			frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(pos.GetWidth() / 2, (pos.GetHeight() / 3) + i * (pos.GetHeight() / 6)), 50.f, 11.f), 11, &resC->GetSurf().fonts[0], Colors::Red, key + "res" + std::to_string(i), { 1 });
+			frame->AddText("-" + res->first + ": x" + amount + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(pos.GetWidth() / 2, (pos.GetHeight() / 3) + i * (pos.GetHeight() / 6)), 50.f, 11.f), 11, &resC->GetSurf().fonts[0], Colors::Red, key + "res" + std::to_string(i), { 1 });
 		}
 		i++;
 	}
@@ -683,37 +680,51 @@ std::string FrameHandle::GetInfoString(std::string key)
 	{
 		return Settings::lang_attacksLeft[Settings::lang] + ":";
 	}
+	else if (key == "tFlora")
+	{
+		return Settings::lang_flora[Settings::lang] + ":";
+	}
 	return "ERROR: key not found:" + key;
 }
-bool FrameHandle::FrameEnabledForObstacle(Obstacle* obstacle, std::string key)
+bool FrameHandle::FrameIsEnabled(Obstacle* obstacle, std::string key)
 {
-	if (key == "fUnit")
+	if (obstacle != nullptr)
 	{
-		return Settings::anyOfCreature(obstacle->type);
+		if (key == "fUnit")
+		{
+			return Settings::anyOfCreature(obstacle->type);
+		}
+		if (key == "fTownhall")
+		{
+			return obstacle->type == 3;
+		}
+		if (key == "fLumberjackHut")
+		{
+			return obstacle->type == 27;
+		}
+		if (key == "fInventory")
+		{
+			return Settings::anyOfCreature(obstacle->type);
+		}
+		if (key == "fInventoryBox")
+		{
+			return obstacle->type == 6;
+		}
+		if (key == "fInventoryStorage")
+		{
+			return obstacle->type == 50;
+		}
+		if (key == "fInventoryWrought")
+		{
+			return obstacle->type == 30;
+		}
 	}
-	if (key == "fTownhall")
+	else
 	{
-		return obstacle->type == 3;
-	}
-	if (key == "fLumberjackHut")
-	{
-		return obstacle->type == 27;
-	}
-	if (key == "fInventory")
-	{
-		return Settings::anyOfCreature(obstacle->type);
-	}
-	if (key == "fInventoryBox")
-	{
-		return obstacle->type == 6;
-	}
-	if (key == "fInventoryStorage")
-	{
-		return obstacle->type == 50;
-	}
-	if (key == "fInventoryWrought")
-	{
-		return obstacle->type == 30;
+		if (key == "fresD_f1")
+		{
+			return curScene == 0;
+		}
 	}
 	return false;
 }
@@ -785,41 +796,41 @@ void FrameHandle::LoadFrame(std::string key)
 		
 		GrabImage* hand1 = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 10), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item0", { 1,1 });
 		hand1->extra1 = 0;
-		hand1->extraS1 = "inventory swap unit";
+		hand1->extraS1 = "inventory swap fInventory";
 
 		GrabImage* bonus2 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 10), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item1", { 1,1 });
 		bonus2->extra1 = 1;
-		bonus2->extraS1 = "inventory swap unit";
+		bonus2->extraS1 = "inventory swap fInventory";
 
 		GrabImage* armor = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 70), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item2", { 1,1 });
 		armor->SetVisible(false);
 		armor->extra1 = 2;
-		armor->extraS1 = "inventory swap unit";
+		armor->extraS1 = "inventory swap fInventory";
 
 		GrabImage* bonus1 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 70), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item3", { 1,1 });
 		bonus1->SetVisible(false);
 		bonus1->extra1 = 3;
-		bonus1->extraS1 = "inventory swap unit";
+		bonus1->extraS1 = "inventory swap fInventory";
 
 		GrabImage* item1 = CreateGIWithHpBar(fInventory, RectF(Vec2(10, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item4", { 1,1 });
 		item1->SetVisible(false);
 		item1->extra1 = 4;
-		item1->extraS1 = "inventory swap unit";
+		item1->extraS1 = "inventory swap fInventory";
 
 		GrabImage* item2 = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item5", { 1,1 });
 		item2->SetVisible(false);
 		item2->extra1 = 5;
-		item2->extraS1 = "inventory swap unit";
+		item2->extraS1 = "inventory swap fInventory";
 
 		GrabImage* item3 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item6", { 1,1 });
 		item3->SetVisible(false);
 		item3->extra1 = 6;
-		item3->extraS1 = "inventory swap unit";
+		item3->extraS1 = "inventory swap fInventory";
 
 		GrabImage* item4 = CreateGIWithHpBar(fInventory, RectF(Vec2(190, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item7", { 1,1 });
 		item4->SetVisible(false);
 		item4->extra1 = 7;
-		item4->extraS1 = "inventory swap unit";
+		item4->extraS1 = "inventory swap fInventory";
 	}
 	else if (key == "fInventoryBox")
 	{
@@ -831,7 +842,7 @@ void FrameHandle::LoadFrame(std::string key)
 			GrabImage* image = CreateGIWithHpBar(fInventoryBox, RectF(Vec2(10.f + (int)(i % 3) * 60.f, 10.f + (int)(i / 3) * 60.f), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
 			image->SetVisible(false);
 			image->extra1 = i;
-			image->extraS1 = "inventory swap box";
+			image->extraS1 = "inventory swap fInventoryBox";
 		}
 	}
 	else if (key == "fInventoryStorage")
@@ -844,7 +855,7 @@ void FrameHandle::LoadFrame(std::string key)
 			GrabImage* image = CreateGIWithHpBar(fInventoryStorage, RectF(Vec2(10.f + (int)(i % 5) * 60, 10.f + (int)(i / 5) * 60), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
 			image->SetVisible(false);
 			image->extra1 = i;
-			image->extraS1 = "inventory swap storage";
+			image->extraS1 = "inventory swap fInventoryStorage";
 		}
 	}
 	else if (key == "fInventoryWrought")
@@ -864,12 +875,27 @@ void FrameHandle::LoadFrame(std::string key)
 			GrabImage* image = CreateGIWithHpBar(fInventoryWrought, RectF(Vec2(10.f + (int)(i % 3) * 60.f, 40.f + (int)(i / 3) * 90.f), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
 			image->SetVisible(false);
 			image->extra1 = i;
-			image->extraS1 = "inventory swap wrought";
+			image->extraS1 = "inventory swap fInventoryWrought";
 		}
 	}
 }
-void FrameHandle::UpdateFrame(Obstacle* obstacle, std::string key)
+void FrameHandle::UpdateFrame(const World* world, int process, std::string key)
 {
+	Obstacle* obstacle = nullptr;
+	if (process == 0)
+	{
+		obstacle = world->GetFocusedObstacle();
+	}
+	else if (process == 1)
+	{
+		obstacle = world->GetStorageObstacle();
+	}
+
+	if (comps[key]->GetComp("tFloraIs") != nullptr)
+	{
+		static_cast<TextBox*>(comps[key]->GetComp("tFloraIs"))->Settext("Hallo");
+	}
+
 	if (obstacle != nullptr)
 	{
 		if (comps[key]->GetComp("tUnitNameIs")!= nullptr)
@@ -931,7 +957,7 @@ void FrameHandle::UpdateFrame(Obstacle* obstacle, std::string key)
 			else
 				static_cast<CheckBox*>(fLumberjackHut->GetComp("cBautomaticChop"))->Check();
 		}
-		if (key.find("Inventory") != std::string::npos && FrameEnabledForObstacle(obstacle,key))		//handles all needed Inventoryupdates
+		if (key.find("Inventory") != std::string::npos && FrameIsEnabled(obstacle,key))		//handles all needed Inventoryupdates
 		{
 			UpdateInventoryComps(obstacle->inv.get(), comps[key].get());
 		}
@@ -1001,35 +1027,22 @@ FrameHandle::FrameHandle(sharedResC resC)
 
 bool FrameHandle::HandleMouseInput(Mouse::Event& e)
 {
-
+	bool hit = false;
 	if (Settings::framesOn)
 	{
-		for (int prio = 0; prio <= 10; prio++)
+		for (int i = 0; i < handleOrder.size(); i++)
 		{
-			std::map<std::string, std::unique_ptr<Component>>::iterator i;
-			for (i = comps.begin(); i != comps.end(); i++)
-			{
-				/*
-				if (e.GetType() == Mouse::Event::Type::LRelease && i->first == "f_Unit" && i->second->GetPrio() == prio)
-				{
-					int k = 23;
-				}
-				*/
-				if (i->second->GetPrio() == prio && i->second->HandleMouseInput(e, true))
-				{
-					return true;
-				}
-			}
+			hit = handleOrder[i]->HandleMouseInput(e,true) || hit;
 		}
+		UpdateHandleOrder();
 	}
-	return false;
+	return hit;
 }
 
 void FrameHandle::Draw(Graphics& gfx)
 {
 	if (Settings::framesOn)
 	{
-		UpdateHandleOrder();
 		for (int i = 0; i < handleOrder.size(); i++)
 		{
 			handleOrder[i]->Draw(gfx);
@@ -1062,20 +1075,31 @@ void FrameHandle::LoadScene(int scene, World* world)
 			using namespace Settings;
 			std::vector<int> a = { 0,1 };
 
-			MultiFrame* m = AddMultiFrame("f_resD", RectF(Vec2(1040, 110), 140, 280), 0, 1);
+					
+			//Frame* fUnity = AddFrame("fUnit", (RectF)resC->GetFrameSize().GetFramePos("framePos"), 0); frameResDisPos
 
-			Frame* f1 = m->AddFrame("fresD_f1", RectF(Vec2(0, 0), 140, 280), 0, resC, m);
-			PageFrame* p3 = m->AddPageFrame("fresD_f2", RectF(Vec2(0, 12), 140, 280), 0, resC, m, 3);
+			//MultiFrame* m = AddMultiFrame("f_resD", RectF(Vec2(1040, 110), 140, 280), 0, 1);
+			RectF resDisRect = (RectF)resC->GetFrameSize().GetFramePos("frameResDisPos");
+			MultiFrame* m = AddMultiFrame("f_resD", resDisRect, 0, 1);
 
+			Frame* f1 = m->AddFrame("fresD_f1", RectF(Vec2(0, 0), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
+			int f1Top = Settings::percentForGrab * resDisRect.GetHeight()+20;
+			AddObstacleInfo(f1, f1Top, &resC->GetSurf().fonts[0], Colors::Black, "tFlora");
+
+
+			PageFrame* p3 = m->AddPageFrame("fresD_f2", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight()), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m, 3);
+			
+			
 			// #1
-			f1->AddText(Settings::lang_fieldInformation[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->GetSurf().fonts[0], Colors::Black, "h_f1");
-
-			f1->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(60, 19), 50, 8), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_cellType", a, 1);
-			f1->AddText(Settings::lang_flora[Settings::lang] + ":", RectF(Vec2(2, 19), 50, 8), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_flora", a, 1);
-			f1->AddText(Settings::lang_Obstacle[Settings::lang] + ":", RectF(Vec2(2, 35), 50, 8), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_obstacle", a, 1);
-			f1->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(60, 35), 50, 8), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_obstacleInfo", a, 1);
-			f1->AddText(Settings::lang_hp[Settings::lang] + ":", RectF(Vec2(2, 46), 50, 8), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_obstacleHp", a, 1);
-			f1->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(60, 46), 50, 8), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_obstacleHpIs", a, 1);
+			f1->AddText(Settings::lang_fieldInformation[Settings::lang], RectF(Vec2(0, 0), resDisRect.GetWidth(), Settings::percentForGrab * resDisRect.GetHeight()), 11, &resC->GetSurf().fonts[0], Colors::Black, "h_f1");
+			/*
+			f1->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(resDisRect.GetWidth() / 2, 19), resDisRect.GetWidth() / 2, 8), 11, &resC->GetSurf().fonts[0], Colors::Black, "t_cellType", a, 1);
+			f1->AddText(Settings::lang_flora[Settings::lang] + ":", RectF(Vec2(2, 19), resDisRect.GetWidth()/2, 8), 11, &resC->GetSurf().fonts[0], Colors::Black, "t_flora", a, 1);
+			f1->AddText(Settings::lang_Obstacle[Settings::lang] + ":", RectF(Vec2(2, 35), resDisRect.GetWidth() / 2, 8), 11, &resC->GetSurf().fonts[0], Colors::Black, "t_obstacle", a, 1);
+			f1->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(resDisRect.GetWidth() / 2, 35), resDisRect.GetWidth() / 2, 8), 11, &resC->GetSurf().fonts[0], Colors::Black, "t_obstacleInfo", a, 1);
+			f1->AddText(Settings::lang_hp[Settings::lang] + ":", RectF(Vec2(2, 46), resDisRect.GetWidth() / 2, 8), 11, &resC->GetSurf().fonts[0], Colors::Black, "t_obstacleHp", a, 1);
+			f1->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(resDisRect.GetWidth() / 2, 46), resDisRect.GetWidth() / 2, 8), 11, &resC->GetSurf().fonts[0], Colors::Black, "t_obstacleHpIs", a, 1);
+			*/
 
 			// #2
 			// #3
@@ -1185,7 +1209,6 @@ void FrameHandle::LoadScene(int scene, World* world)
 			fButtonBuild->s = &resC->GetSurf().windowsFrame[4].GetCurSurface();
 			fButtonBuild->bFunc = BBuildMenu;
 			*/
-			
 		}
 		else if (scene == 1)
 		{
@@ -1269,6 +1292,7 @@ void FrameHandle::LoadScene(int scene, World* world)
 			CreateCraftOption(RectF(Vec2(60, 540), 180, 60), 11, fCraftSelection, { 1,0,0,0 }, world);
 		}
 		UpdateHandleOrder();
+		UpdateFrames(world);
 	}
 }
 void FrameHandle::UpdateFieldinformation(World& curW, Team* player)
@@ -1333,8 +1357,10 @@ void FrameHandle::UpdateFieldinformation(World& curW, Team* player)
 
 	}
 }
-void FrameHandle::UpdateFrames(Obstacle* obst, Obstacle* storage)
+void FrameHandle::UpdateFrames(const World* world)
 {
+	Obstacle* obst = world->GetFocusedObstacle();
+	Obstacle* storage = world->GetStorageObstacle();
 	if (Settings::framesOn)
 	{
 		for (int i = 0; i < (int)Settings::frameKeys.size(); i++)
@@ -1342,30 +1368,50 @@ void FrameHandle::UpdateFrames(Obstacle* obst, Obstacle* storage)
 			std::string key = Settings::frameKeys[i];
 			if (comps.count(key) > 0)
 			{
-				if (obst != nullptr && FrameEnabledForObstacle(obst, key))
-				{
-					UpdateFrame(obst, key);
-				}
-				else if (storage != nullptr && FrameEnabledForObstacle(storage, key))
-				{
-					UpdateFrame(storage, key);
-				}
-				else
-				{
-					DeleteFrame(key);
-				}
+				DeterminateUpdateProc(world, comps[key].get(), key);
 			}
-			else if (obst != nullptr && FrameEnabledForObstacle(obst,key))
+			else if (obst != nullptr && FrameIsEnabled(obst, key))
 			{
 				LoadFrame(key);
-				UpdateFrame(obst, key);
+				UpdateFrame(world, 0, key);
 			}
-			else if (storage != nullptr && FrameEnabledForObstacle(storage,key))
+			else if (storage != nullptr && FrameIsEnabled(storage, key))
 			{
 				LoadFrame(key);
-				UpdateFrame(storage, key);
+				UpdateFrame(world, 1, key);
 			}
 		}
+		UpdateHandleOrder();
+	}
+}
+void FrameHandle::DeterminateUpdateProc(const World* world, Component* comp, std::string key)
+{
+	Obstacle* obst = world->GetFocusedObstacle();
+	Obstacle* storage = world->GetStorageObstacle();
+
+
+	if (MultiFrame* mf = dynamic_cast<MultiFrame*>(comp))
+	{
+		for (int i = 0; i < mf->GetFrameAmount(); i++)
+		{
+			DeterminateUpdateProc(world, mf->GetFrame(i), mf->GetKey(i));
+		}
+	}
+	if (obst != nullptr && FrameIsEnabled(obst, key))
+	{
+		UpdateFrame(world, 0, key);
+	}
+	else if (storage != nullptr && FrameIsEnabled(storage, key))
+	{
+		UpdateFrame(world, 1, key);
+	}
+	else if (FrameIsEnabled(nullptr, key))
+	{
+
+	}
+	else 
+	{
+		DeleteFrame(key);
 	}
 }
 
