@@ -338,6 +338,10 @@ RectF Chunk::GetTileRect(RectF chunkRect, Vei2 tilePos) const
 }
 RectF Chunk::GetTileRect(Vei2 tilePos) const
 {
+	if (tilePos.x < 0 || tilePos.x >= tilesRect.GetSize().x || tilePos.y < 0 || tilePos.y >= tilesRect.GetSize().y)
+	{
+		return RectF(Vec2(0, 0), 0, 0);
+	}
 	if (TileIsInChunk(tilePos))
 	{
 		return tilesRect(tilePos);

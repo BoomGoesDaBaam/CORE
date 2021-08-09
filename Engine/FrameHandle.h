@@ -854,6 +854,7 @@ public:
 class MultiFrame : public Frame
 {
 	std::map<std::string, std::unique_ptr<Frame>> frames;
+	std::map<int, std::string> frameOrder;
 public:
 	MultiFrame(RectF pos, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer) :Frame(pos, -1, resC, parentC, buffer) {}
 
@@ -894,7 +895,6 @@ public:
 			}
 			std::string changed ="-";
 			int yMove = 0;
-			int n = 0;
 			for (frame = frames.begin(); frame != frames.end(); frame++)
 			{
 				bool hitFrame = frame->second->HandleMouseInput(e, interact);
@@ -902,43 +902,48 @@ public:
 				if (hitFrame)
 				{
 					
-					std::map<std::string, std::unique_ptr<Frame>>::iterator innerFrame;
-					for (innerFrame = frames.begin(); innerFrame != frames.end(); innerFrame++)
+					for(int i=0;i<100;i++)
 					{
-						innerFrame->second->pos.top += yMove;
-						innerFrame->second->pos.bottom += yMove;
-						if (extended[innerFrame->first] != (bool)innerFrame->second->GetCurState())
+						if (frameOrder.count(i) > 0)
 						{
-							changed = innerFrame->first;
-							n = (int)frames.size();
-							if (extended[innerFrame->first])
+							std::string key = frameOrder[i];
+							Frame* innerFrame = frames[key].get();
+							innerFrame->pos.top += yMove;
+							innerFrame->pos.bottom += yMove;
+							if (extended[key] != (bool)innerFrame->GetCurState())
 							{
-								yMove -= frame->second->GetExtendedHeight();
-							}
-							if (!extended[innerFrame->first])
-							{
-								yMove += frame->second->GetExtendedHeight();
+								changed = key;
+								if (extended[key])
+								{
+									yMove -= frame->second->GetExtendedHeight();
+								}
+								if (!extended[key])
+								{
+									yMove += frame->second->GetExtendedHeight();
+								}
 							}
 						}
 					}
 				}
-				n++;
 			}
 			yMove = 0;
 			if (changed != "-")
 			{
-				int i = 0;
-				std::map<std::string, std::unique_ptr<Frame>>::iterator frame;
-				for (frame = frames.begin(); frame != frames.end(); frame++)
+				for (int i = 0; i < 100; i++)
 				{
-					frame->second->pos.top += yMove;
-					frame->second->pos.bottom += yMove;
-					if (frame->second->IsExtended() && frame->first != changed)
+					if (frameOrder.count(i) > 0)
 					{
-						frame->second->SetState(0);
-						yMove -= frame->second->GetExtendedHeight();
+						std::string key = frameOrder[i];
+						Frame* innerFrame = frames[key].get();
+
+						innerFrame->pos.top += yMove;
+						innerFrame->pos.bottom += yMove;
+						if (innerFrame->IsExtended() && key != changed)
+						{
+							innerFrame->SetState(0);
+							yMove -= innerFrame->GetExtendedHeight();
+						}
 					}
-					i++;
 				}
 			}
 			if (hit || grabbed)
@@ -1034,8 +1039,8 @@ private:
 	Frame* CreateCraftOption(RectF pos, int itemType, Frame* parentC, std::vector<int> activOnPages, World* world);
 	GrabImage* CreateGIWithHpBar(Component* parentC, RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates);
 	void AddHeadline(Component* parentC, std::string text, const Font* f, Color c);
-	int AddObstacleInfo(Component* parentC, int top, const Font* f, Color c, std::string key, std::string infoText = "###");
-	int AddObstacleInfoTextBox(Component* parentC, std::string text, int top, const Font* f, Color c, std::string key);
+	int AddInfo(Component* parentC, int top, const Font* f, Color c, std::string key, std::string infoText = "###");
+	int AddInfoTextBox(Component* parentC, std::string text, int top, const Font* f, Color c, std::string key);
 	int AddObstacleAttackButton(Component* parentC, int top, const Font* f, Color c);
 	int AddObstacleCheckBox(Component* parentC, int top, const Font* f, Color c, std::string text, std::string key);
 
@@ -1045,7 +1050,7 @@ private:
 
 	// ###### single Frame operations #####
 	void LoadFrame(std::string key);
-	void UpdateFrame(const World* world, int process, std::string key);
+	void UpdateFrame(const World* world, int process, std::string key, Component* comp);
 	void DeleteFrame(std::string key);
 
 	//

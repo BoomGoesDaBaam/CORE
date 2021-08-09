@@ -135,8 +135,9 @@ namespace Settings
 	static const std::vector<int> anyOfBuildingVec = {0,2,3,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,40};
 	static const std::vector<int> anySawmillBoostedObstacles = { 27,30,33,35,36,37,42,43,44,45,46,47,49 };
 	static const std::vector<int> anyWindmillBoostedObstacles = {  };
-	//available Frames
-	static const std::vector<std::string> frameKeys = { "fUnit","fTownhall","fLumberjackHut","fInventory","fInventoryBox", "fInventoryStorage","fInventoryWrought","fresD_f1"};
+	//available Frames wich need to be updated
+	static const std::vector<std::string> frameKeysObstacle = { "fUnit","fTownhall","fLumberjackHut","fInventory","fInventoryBox", "fInventoryStorage","fInventoryWrought"};//dynamic frames
+	static const std::vector<std::string> frameKeysNoObstacle = { "f_resD" };	//static frames
 	//Graphic options
 	//static bool displayObstacles = true;
 	static int probToGrow = 50;
@@ -234,8 +235,9 @@ namespace Settings
 
 	const std::string lang_unknown[] = { "unbekannt", "unknown" };
 	const std::string lang_noInformation[] = { "no information", "Keine Informationen vorhanden" };
-	const std::string lang_flora[] = { "Flora", "Flora" };			// Goettin
-	const std::string lang_Obstacle[] = { "Obstacle", "Hindernis" };			// Goettin
+	const std::string lang_flora[] = { "Flora", "Flora" };			
+	const std::string lang_Obstacle[] = { "Obstacle", "Hindernis" };
+	const std::string lang_ObstacleHP[] = { "Obstacle HP", "Hindernis LP" };
 	const std::string lang_kilogram[] = { "kg", "kg" };		
 	const std::string lang_stepsLeft[] = { "steps left", "Schritte ueber" };
 	const std::string lang_educate[] = { "educate", "Ausbilden" };
@@ -628,7 +630,24 @@ namespace Settings
 		}
 		return v;
 	}
-	
+	template<typename T>
+	static std::vector<T> CombineTwoVectors(const std::vector<T> first, const std::vector<T> second)
+	{
+		std::vector<T> v;
+		for (int i = 0; i < (int)first.size(); i++)
+		{
+			v.push_back(first.at(i));
+		}
+		for (int i = 0; i < (int)second.size(); i++)
+		{
+			v.push_back(second.at(i));
+		}
+		return v;
+	}
+	static std::vector<std::string> GetFrameKeys()
+	{
+		return CombineTwoVectors(frameKeysObstacle, frameKeysNoObstacle);
+	}
 	static std::string GetTypeString(int type)
 	{
 		switch (type)

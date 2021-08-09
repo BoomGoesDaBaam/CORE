@@ -386,11 +386,13 @@ std::vector<int> Component::FillWith1WhenSize0(std::vector<int> activInStates, i
 Frame* MultiFrame::AddFrame(std::string key, RectF pos, int type, sharedResC resC, Component* parentC)
 {
 	frames[key] = std::make_unique<Frame>(pos,type,resC,parentC, buffer);
+	frameOrder[(int)frameOrder.size()] = key;
 	return frames[key].get();
 }
 PageFrame* MultiFrame::AddPageFrame(std::string key, RectF pos, int type, sharedResC resC, Component* parentC, int nPages)
 {
 	frames[key] = std::make_unique<PageFrame>(pos, type, resC, parentC, nPages, buffer);
+	frameOrder[(int)frameOrder.size()] = key;
 	return static_cast<PageFrame*>(frames[key].get());
 }
 
@@ -581,7 +583,7 @@ void FrameHandle::AddHeadline(Component* parentC, std::string text, const Font* 
 	parentC->AddText(text, (RectF)resC->GetFrameSize().GetFramePos("frameHeadline"), 11*resC->GetFrameSize().GetGuiScale(),f, Colors::Black, "tHeadline");
 
 }
-int FrameHandle::AddObstacleInfo(Component* parentC, int top, const Font* f, Color c, std::string key, std::string infoText)
+int FrameHandle::AddInfo(Component* parentC, int top, const Font* f, Color c, std::string key, std::string infoText)
 {
 	if (infoText == "###")
 	{
@@ -602,7 +604,7 @@ int FrameHandle::AddObstacleInfo(Component* parentC, int top, const Font* f, Col
 	}
 	return top + textSize*nLines + 10;
 }
-int FrameHandle::AddObstacleInfoTextBox(Component* parentC,std::string text, int top, const Font* f, Color c, std::string key)
+int FrameHandle::AddInfoTextBox(Component* parentC,std::string text, int top, const Font* f, Color c, std::string key)
 {
 
 	RectF parentRect = parentC->GetPos();
@@ -684,47 +686,104 @@ std::string FrameHandle::GetInfoString(std::string key)
 	{
 		return Settings::lang_flora[Settings::lang] + ":";
 	}
+	else if (key == "tObstacle")
+	{
+		return Settings::lang_Obstacle[Settings::lang] + ":";
+	}
+	else if (key == "tObstacleHP")
+	{
+		return Settings::lang_ObstacleHP[Settings::lang] + ":";
+	}
+	else if (key == "tIron")
+	{
+		return Settings::lang_iron[Settings::lang] + ":";
+	}
+	else if (key == "tSand")
+	{
+		return Settings::lang_sand[Settings::lang] + ":";
+	}
+	else if (key == "tStone")
+	{
+		return Settings::lang_stone[Settings::lang] + ":";
+	}
+	else if (key == "tCopper")
+	{
+		return Settings::lang_copper[Settings::lang] + ":";
+	}
+	else if (key == "tGold")
+	{
+		return Settings::lang_gold[Settings::lang] + ":";
+	}
+	else if (key == "tAluminum")
+	{
+		return Settings::lang_aluminum[Settings::lang] + ":";
+	}
+	else if (key == "tEmerald")
+	{
+		return Settings::lang_emerald[Settings::lang] + ":";
+	}
+	else if (key == "tSapphire")
+	{
+		return Settings::lang_sapphire[Settings::lang] + ":";
+	}
+	else if (key == "tRobin")
+	{
+		return Settings::lang_robin[Settings::lang] + ":";
+	}
+	else if (key == "tDimond")
+	{
+		return Settings::lang_diamond[Settings::lang] + ":";
+	}
+	else if (key == "tAmber")
+	{
+		return Settings::lang_amber[Settings::lang] + ":";
+	}
 	return "ERROR: key not found:" + key;
 }
 bool FrameHandle::FrameIsEnabled(Obstacle* obstacle, std::string key)
 {
-	if (obstacle != nullptr)
+	bool obstacleFrame = std::any_of(Settings::frameKeysObstacle.begin(), Settings::frameKeysObstacle.end(), [&](const std::string val) {
+		return val == key;
+	});
+	if (curScene == 0)
 	{
-		if (key == "fUnit")
+		if (obstacleFrame && obstacle != nullptr)
 		{
-			return Settings::anyOfCreature(obstacle->type);
+			if (key == "fUnit")
+			{
+				return Settings::anyOfCreature(obstacle->type);
+			}
+			if (key == "fTownhall")
+			{
+				return obstacle->type == 3;
+			}
+			if (key == "fLumberjackHut")
+			{
+				return obstacle->type == 27;
+			}
+			if (key == "fInventory")
+			{
+				return Settings::anyOfCreature(obstacle->type);
+			}
+			if (key == "fInventoryBox")
+			{
+				return obstacle->type == 6;
+			}
+			if (key == "fInventoryStorage")
+			{
+				return obstacle->type == 50;
+			}
+			if (key == "fInventoryWrought")
+			{
+				return obstacle->type == 30;
+			}
+			return false;
 		}
-		if (key == "fTownhall")
+		else if (obstacleFrame)
 		{
-			return obstacle->type == 3;
+			return false;
 		}
-		if (key == "fLumberjackHut")
-		{
-			return obstacle->type == 27;
-		}
-		if (key == "fInventory")
-		{
-			return Settings::anyOfCreature(obstacle->type);
-		}
-		if (key == "fInventoryBox")
-		{
-			return obstacle->type == 6;
-		}
-		if (key == "fInventoryStorage")
-		{
-			return obstacle->type == 50;
-		}
-		if (key == "fInventoryWrought")
-		{
-			return obstacle->type == 30;
-		}
-	}
-	else
-	{
-		if (key == "fresD_f1")
-		{
-			return curScene == 0;
-		}
+		return true;
 	}
 	return false;
 }
@@ -755,11 +814,11 @@ void FrameHandle::LoadFrame(std::string key)
 
 		int start = fTownhall->GetPos().GetHeight() * Settings::percentForGrab + 5;
 
-		start = AddObstacleInfoTextBox(fTownhall, Settings::lang_TownhallInfo[Settings::lang], start, &resC->GetSurf().fonts[0], Colors::Black, "tbObstacleInfo");
+		start = AddInfoTextBox(fTownhall, Settings::lang_TownhallInfo[Settings::lang], start, &resC->GetSurf().fonts[0], Colors::Black, "tbObstacleInfo");
 
-		start = AddObstacleInfo(fTownhall, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitHp");
-		start = AddObstacleInfo(fTownhall, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitAttacksLeft");
-		start = AddObstacleInfo(fTownhall, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitTeam");
+		start = AddInfo(fTownhall, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitHp");
+		start = AddInfo(fTownhall, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitAttacksLeft");
+		start = AddInfo(fTownhall, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitTeam");
 
 		start = AddObstacleCheckBox(fTownhall, start, &resC->GetSurf().fonts[0], Colors::Black, Settings::lang_educate[Settings::lang]+":", "educate");
 		start = AddObstacleCheckBox(fTownhall, start, &resC->GetSurf().fonts[0], Colors::Black, Settings::lang_heal[Settings::lang] + ":", "heal");
@@ -779,11 +838,11 @@ void FrameHandle::LoadFrame(std::string key)
 
 		int start = fLumberjackHut->GetPos().GetHeight() * Settings::percentForGrab + 5;
 		
-		start = AddObstacleInfoTextBox(fLumberjackHut, Settings::lang_LumberjackHutInfo[Settings::lang], start, &resC->GetSurf().fonts[0], Colors::Black, "tbObstacleInfo");
+		start = AddInfoTextBox(fLumberjackHut, Settings::lang_LumberjackHutInfo[Settings::lang], start, &resC->GetSurf().fonts[0], Colors::Black, "tbObstacleInfo");
 		
-		start = AddObstacleInfo(fLumberjackHut, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitHp");
-		start = AddObstacleInfo(fLumberjackHut, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitAttacksLeft");
-		start = AddObstacleInfo(fLumberjackHut, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitTeam");
+		start = AddInfo(fLumberjackHut, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitHp");
+		start = AddInfo(fLumberjackHut, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitAttacksLeft");
+		start = AddInfo(fLumberjackHut, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitTeam");
 
 		start = AddObstacleCheckBox(fLumberjackHut, start, &resC->GetSurf().fonts[0], Colors::Black, Settings::lang_automatic[Settings::lang] + ":", "automaticChop");
 		start = AddObstacleAttackButton(fLumberjackHut, start, &resC->GetSurf().fonts[0], Colors::Black);
@@ -879,7 +938,7 @@ void FrameHandle::LoadFrame(std::string key)
 		}
 	}
 }
-void FrameHandle::UpdateFrame(const World* world, int process, std::string key)
+void FrameHandle::UpdateFrame(const World* world, int process, std::string key, Component* comp)
 {
 	Obstacle* obstacle = nullptr;
 	if (process == 0)
@@ -890,38 +949,115 @@ void FrameHandle::UpdateFrame(const World* world, int process, std::string key)
 	{
 		obstacle = world->GetStorageObstacle();
 	}
-
-	if (comps[key]->GetComp("tFloraIs") != nullptr)
+	//
+	if (comp->GetComp("tFloraIs") != nullptr)
 	{
-		static_cast<TextBox*>(comps[key]->GetComp("tFloraIs"))->Settext("Hallo");
+		static_cast<TextBox*>(comp->GetComp("tFloraIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
 	}
+	if (comp->GetComp("tObstacleIs") != nullptr)
+	{
+		if(world->GetFocusedObstacle() != nullptr)
+			static_cast<TextBox*>(comp->GetComp("tObstacleIs"))->Settext(Settings::GetObstacleString(world->GetFocusedObstacle()->type));
+		else
+			static_cast<TextBox*>(comp->GetComp("tObstacleIs"))->Settext("...");
+	}
+	if (comp->GetComp("tObstacleHPIs") != nullptr)
+	{
+		if (world->GetFocusedObstacle() != nullptr)
+			static_cast<TextBox*>(comp->GetComp("tObstacleHPIs"))->Settext(std::to_string(world->GetFocusedObstacle()->hp) + " / " + std::to_string(Settings::obstacleStats[world->GetFocusedObstacle()->type].baseHp));
+		else
+			static_cast<TextBox*>(comp->GetComp("tObstacleHPIs"))->Settext("...");
+	}
+	//
+	p3->SetText(std::to_string(playerM.values["wood"]), "t_nWood");
+	p3->SetText(std::to_string(playerM.values["iron"]), "t_nIron");
+	p3->SetText(std::to_string(playerM.values["sand"]), "t_nSand");
+	p3->SetText(std::to_string(playerM.values["stone"]), "t_nStone");
+	p3->SetText(std::to_string(playerM.values["copper"]), "t_nCopper");
+	p3->SetText(std::to_string(playerM.values["gold"]), "t_nGold");
+	p3->SetText(std::to_string(playerM.values["aluminum"]), "t_nAluminum");
+	p3->SetText(std::to_string(playerM.values["emerald"]), "t_nEmerald");
+	p3->SetText(std::to_string(playerM.values["sapphire"]), "t_nSapphire");
+	p3->SetText(std::to_string(playerM.values["robin"]), "t_nRobin");
+	p3->SetText(std::to_string(playerM.values["diamond"]), "t_nDimond");
+	p3->SetText(std::to_string(playerM.values["amber"]), "t_nAmber");
 
+	const Materials* playerM = world->get
+	if (comp->GetComp("tWoodIs") != nullptr)
+	{
+		static_cast<TextBox*>(comp->GetComp("tWoodIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+	}
+	if (comp->GetComp("tIronIs") != nullptr)
+	{
+		static_cast<TextBox*>(comp->GetComp("tIronIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+	}
+	if (comp->GetComp("tSandIs") != nullptr)
+	{
+		static_cast<TextBox*>(comp->GetComp("tSandIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+	}
+	if (comp->GetComp("tStoneIs") != nullptr)
+	{
+		static_cast<TextBox*>(comp->GetComp("tStoneIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+	}
+	if (comp->GetComp("tCopperIs") != nullptr)
+	{
+		static_cast<TextBox*>(comp->GetComp("tCopperIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+	}
+	if (comp->GetComp("tGoldIs") != nullptr)
+	{
+		static_cast<TextBox*>(comp->GetComp("tGoldIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+	}
+	if (comp->GetComp("tAluminumIs") != nullptr)
+	{
+		static_cast<TextBox*>(comp->GetComp("tAluminumIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+	}
+	if (comp->GetComp("tEmeraldIs") != nullptr)
+	{
+		static_cast<TextBox*>(comp->GetComp("tEmeraldIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+	}
+	if (comp->GetComp("tSapphireIs") != nullptr)
+	{
+		static_cast<TextBox*>(comp->GetComp("tSapphireIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+	}
+	if (comp->GetComp("tRobinIs") != nullptr)
+	{
+		static_cast<TextBox*>(comp->GetComp("tRobinIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+	}
+	if (comp->GetComp("tDimondIs") != nullptr)
+	{
+		static_cast<TextBox*>(comp->GetComp("tDimondIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+	}
+	if (comp->GetComp("tAmberIs") != nullptr)
+	{
+		static_cast<TextBox*>(comp->GetComp("tAmberIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+	}
+	//
 	if (obstacle != nullptr)
 	{
-		if (comps[key]->GetComp("tUnitNameIs")!= nullptr)
+		if (comp->GetComp("tUnitNameIs")!= nullptr)
 		{
 			static_cast<TextBox*>(comps[key]->GetComp("tUnitNameIs"))->Settext(Settings::GetObstacleString(obstacle->type));
 		}
-		if (comps[key]->GetComp("tUnitHpIs") != nullptr)
+		if (comp->GetComp("tUnitHpIs") != nullptr)
 		{
 			static_cast<TextBox*>(comps[key]->GetComp("tUnitHpIs"))->Settext(std::to_string(obstacle->hp) + " / " + std::to_string(Settings::obstacleStats[obstacle->type].baseHp));
 		}
-		if (comps[key]->GetComp("tUnitTeamIs") != nullptr)
+		if (comp->GetComp("tUnitTeamIs") != nullptr)
 		{
 			static_cast<TextBox*>(comps[key]->GetComp("tUnitTeamIs"))->Settext(obstacle->team->GetTeamName());
 		}
-		if (comps[key]->GetComp("tUnitStepsLeftIs") != nullptr)
+		if (comp->GetComp("tUnitStepsLeftIs") != nullptr)
 		{
 			static_cast<TextBox*>(comps[key]->GetComp("tUnitStepsLeftIs"))->Settext(std::to_string(obstacle->stepsLeft));
 		}
-		if (comps[key]->GetComp("tUnitAttacksLeftIs") != nullptr)
+		if (comp->GetComp("tUnitAttacksLeftIs") != nullptr)
 		{
 			static_cast<TextBox*>(comps[key]->GetComp("tUnitAttacksLeftIs"))->Settext(std::to_string(obstacle->attack->GetAttacksLeft()));
 		}
 		if (key == "fUnit")
 		{
 			std::map<std::string, std::string> map2Parse;
-			auto compsOfOld = comps[key]->GetComps();
+			auto compsOfOld = comp->GetComps();
 			//const std::map<std::string, std::unique_ptr<Component>>::iterator i;
 			for (auto i = compsOfOld->begin(); i != compsOfOld->end(); i++)
 			{
@@ -935,7 +1071,7 @@ void FrameHandle::UpdateFrame(const World* world, int process, std::string key)
 		}
 		if (key == "fTownhall")
 		{
-			Frame* f_townhall = static_cast<Frame*>(comps[key].get());
+			Frame* f_townhall = static_cast<Frame*>(comp);
 			if (obstacle->education->Educates())
 				static_cast<CheckBox*>(f_townhall->GetComp("cBeducate"))->Check();
 			else
@@ -951,7 +1087,7 @@ void FrameHandle::UpdateFrame(const World* world, int process, std::string key)
 		}
 		if (key == "fLumberjackHut")
 		{
-			Frame* fLumberjackHut = static_cast<Frame*>(comps[key].get());
+			Frame* fLumberjackHut = static_cast<Frame*>(comp);
 			if (obstacle->attack->GetAutomaticMode() == CtPos(Vei2(-1, -1), Vei2(-1, -1)))
 				static_cast<CheckBox*>(fLumberjackHut->GetComp("cBautomaticChop"))->Uncheck();
 			else
@@ -959,11 +1095,11 @@ void FrameHandle::UpdateFrame(const World* world, int process, std::string key)
 		}
 		if (key.find("Inventory") != std::string::npos && FrameIsEnabled(obstacle,key))		//handles all needed Inventoryupdates
 		{
-			UpdateInventoryComps(obstacle->inv.get(), comps[key].get());
+			UpdateInventoryComps(obstacle->inv.get(), comp);
 		}
 		if (key == "fInventoryWrought")
 		{
-			Frame* fInventoryWrought = static_cast<Frame*>(comps[key].get());
+			Frame* fInventoryWrought = static_cast<Frame*>(comp);
 			if (obstacle->craft->IsCrafting())
 			{
 				fInventoryWrought->GetComp("t_craftStatus")->text = Settings::lang_status[Settings::lang] + ": " + Settings::GetItemString(obstacle->craft->GetItemID()) + " " + Settings::lang_finishedIn[Settings::lang] + " " + std::to_string(obstacle->craft->TurnsLeft(obstacle->productivity)) + " " + Settings::lang_rounds[Settings::lang];
@@ -1002,20 +1138,20 @@ void FrameHandle::CreateFrameUnit(const std::map<std::string,std::string>* parse
 	int start = fUnity->GetPos().GetHeight() * Settings::percentForGrab + 5;
 	if (parsedText == nullptr)
 	{
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitName");
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitHp");
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitTeam");
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitStepsLeft");
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitAttacksLeft");
+		start = AddInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitName");
+		start = AddInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitHp");
+		start = AddInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitTeam");
+		start = AddInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitStepsLeft");
+		start = AddInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitAttacksLeft");
 		start = AddObstacleAttackButton(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black);
 	}
 	else
 	{
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitName", parsedText->find("tUnitNameIs")->second);
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitHp", parsedText->find("tUnitHpIs")->second	);
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitTeam", parsedText->find("tUnitTeamIs")->second);
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitStepsLeft", parsedText->find("tUnitStepsLeftIs")->second);
-		start = AddObstacleInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitAttacksLeft", parsedText->find("tUnitAttacksLeftIs")->second);
+		start = AddInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitName", parsedText->find("tUnitNameIs")->second);
+		start = AddInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitHp", parsedText->find("tUnitHpIs")->second	);
+		start = AddInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitTeam", parsedText->find("tUnitTeamIs")->second);
+		start = AddInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitStepsLeft", parsedText->find("tUnitStepsLeftIs")->second);
+		start = AddInfo(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black, "tUnitAttacksLeft", parsedText->find("tUnitAttacksLeftIs")->second);
 		start = AddObstacleAttackButton(fUnity, start, &resC->GetSurf().fonts[0], Colors::Black);
 	}
 }
@@ -1083,24 +1219,46 @@ void FrameHandle::LoadScene(int scene, World* world)
 			MultiFrame* m = AddMultiFrame("f_resD", resDisRect, 0, 1);
 
 			Frame* f1 = m->AddFrame("fresD_f1", RectF(Vec2(0, 0), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
-			int f1Top = Settings::percentForGrab * resDisRect.GetHeight()+20;
-			AddObstacleInfo(f1, f1Top, &resC->GetSurf().fonts[0], Colors::Black, "tFlora");
+			AddHeadline(f1, Settings::lang_constructionMaterials[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
+			int f1Top = Settings::percentForGrab * resDisRect.GetHeight()+10;
+			f1Top = AddInfo(f1, f1Top, &resC->GetSurf().fonts[0], Colors::Black, "tFlora", "...");
+			f1Top = AddInfo(f1, f1Top, &resC->GetSurf().fonts[0], Colors::Black, "tObstacle","...");
+			f1Top = AddInfo(f1, f1Top, &resC->GetSurf().fonts[0], Colors::Black, "tObstacleHP", "...");
+
+			Frame* f2 = m->AddFrame("fresD_res", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight()), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
+			AddHeadline(f2, Settings::lang_resources[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
+			int f2Top = Settings::percentForGrab * resDisRect.GetHeight() * 2 + 10;
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tWood", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tIron", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tSand", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tStone", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tCopper", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tGold", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tAluminum", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tEmerald", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tSapphire", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tRobin", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tDimond", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tAmber", "...");
 
 
-			PageFrame* p3 = m->AddPageFrame("fresD_f2", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight()), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m, 3);
-			
-			
+
+
+			Frame* f3 = m->AddFrame("fresD_mat", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight() * 2), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
+			AddHeadline(f3, Settings::lang_materials[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
+			int f3Top = Settings::percentForGrab * resDisRect.GetHeight() * 2 + 10;
+
+			PageFrame* p3 = m->AddPageFrame("fresD_f2", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight()*3), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m, 3);
+			//AddHeadline(p3, Settings::lang_materials[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
+
+
+			Frame* f4 = m->AddFrame("fresD_org", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight()*4), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
+			AddHeadline(f4, Settings::lang_organic[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
+			int f4Top = Settings::percentForGrab * resDisRect.GetHeight() * 2 + 10;
+
 			// #1
-			f1->AddText(Settings::lang_fieldInformation[Settings::lang], RectF(Vec2(0, 0), resDisRect.GetWidth(), Settings::percentForGrab * resDisRect.GetHeight()), 11, &resC->GetSurf().fonts[0], Colors::Black, "h_f1");
-			/*
-			f1->AddText(Settings::lang_noInformation[Settings::lang], RectF(Vec2(resDisRect.GetWidth() / 2, 19), resDisRect.GetWidth() / 2, 8), 11, &resC->GetSurf().fonts[0], Colors::Black, "t_cellType", a, 1);
-			f1->AddText(Settings::lang_flora[Settings::lang] + ":", RectF(Vec2(2, 19), resDisRect.GetWidth()/2, 8), 11, &resC->GetSurf().fonts[0], Colors::Black, "t_flora", a, 1);
-			f1->AddText(Settings::lang_Obstacle[Settings::lang] + ":", RectF(Vec2(2, 35), resDisRect.GetWidth() / 2, 8), 11, &resC->GetSurf().fonts[0], Colors::Black, "t_obstacle", a, 1);
-			f1->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(resDisRect.GetWidth() / 2, 35), resDisRect.GetWidth() / 2, 8), 11, &resC->GetSurf().fonts[0], Colors::Black, "t_obstacleInfo", a, 1);
-			f1->AddText(Settings::lang_hp[Settings::lang] + ":", RectF(Vec2(2, 46), resDisRect.GetWidth() / 2, 8), 11, &resC->GetSurf().fonts[0], Colors::Black, "t_obstacleHp", a, 1);
-			f1->AddText(Settings::lang_noInformation[Settings::lang] + ":", RectF(Vec2(resDisRect.GetWidth() / 2, 46), resDisRect.GetWidth() / 2, 8), 11, &resC->GetSurf().fonts[0], Colors::Black, "t_obstacleHpIs", a, 1);
-			*/
-
+			//f1->AddText(Settings::lang_fieldInformation[Settings::lang], RectF(Vec2(0, 0), resDisRect.GetWidth(), Settings::percentForGrab * resDisRect.GetHeight()), 11, &resC->GetSurf().fonts[0], Colors::Black, "h_f1");
+			
 			// #2
 			// #3
 			// Page 1
@@ -1363,22 +1521,22 @@ void FrameHandle::UpdateFrames(const World* world)
 	Obstacle* storage = world->GetStorageObstacle();
 	if (Settings::framesOn)
 	{
-		for (int i = 0; i < (int)Settings::frameKeys.size(); i++)
+		for (int i = 0; i < (int)Settings::GetFrameKeys().size(); i++)
 		{
-			std::string key = Settings::frameKeys[i];
+			std::string key = Settings::GetFrameKeys()[i];
 			if (comps.count(key) > 0)
 			{
 				DeterminateUpdateProc(world, comps[key].get(), key);
 			}
-			else if (obst != nullptr && FrameIsEnabled(obst, key))
+			else if (FrameIsEnabled(obst, key))
 			{
 				LoadFrame(key);
-				UpdateFrame(world, 0, key);
+				UpdateFrame(world, 0, key, comps[key].get());
 			}
-			else if (storage != nullptr && FrameIsEnabled(storage, key))
+			else if (FrameIsEnabled(storage, key))
 			{
 				LoadFrame(key);
-				UpdateFrame(world, 1, key);
+				UpdateFrame(world, 1, key, comps[key].get());
 			}
 		}
 		UpdateHandleOrder();
@@ -1397,13 +1555,13 @@ void FrameHandle::DeterminateUpdateProc(const World* world, Component* comp, std
 			DeterminateUpdateProc(world, mf->GetFrame(i), mf->GetKey(i));
 		}
 	}
-	if (obst != nullptr && FrameIsEnabled(obst, key))
+	if (FrameIsEnabled(obst, key))
 	{
-		UpdateFrame(world, 0, key);
+		UpdateFrame(world, 0, key, comp);
 	}
-	else if (storage != nullptr && FrameIsEnabled(storage, key))
+	else if (FrameIsEnabled(storage, key))
 	{
-		UpdateFrame(world, 1, key);
+		UpdateFrame(world, 1, key, comp);
 	}
 	else if (FrameIsEnabled(nullptr, key))
 	{
