@@ -235,11 +235,11 @@ public:
 	RectI GetRenderRect()const { 
 		auto mos = Graphics::GetMidOfScreen();
 		return RectI(-1 - (int)((mos.x / s.chunkSize.x) * 1.5f), 1 + (int)((mos.x / s.chunkSize.x) * 1.5f), -1 - (int)((mos.y / s.chunkSize.y) * 1.5f), 1 + (int)((mos.y / s.chunkSize.y) * 1.5f)); };
-	Obstacle* GetFocusedObstacle()
+	Obstacle* GetFocusedObstacle()const
 	{
 		return focusedObst;
 	}
-	Obstacle* GetStorageObstacle()
+	Obstacle* GetStorageObstacle()const
 	{
 		return storageObst;
 	}

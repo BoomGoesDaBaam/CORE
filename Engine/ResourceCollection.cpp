@@ -444,8 +444,13 @@ void FramesizeCollection::UpdateFramePos(Vec2 screenSize, float guiScale)
 {
 	this->guiScale = guiScale;
 	int frameHeight = (int)((float)(420) * guiScale);
-	framePos["framePos"] = RectI(Vei2((int)(screenSize.x / 8), (int)((screenSize.y - frameHeight)/2)), (int)((float)(210)*guiScale), frameHeight);
+	int frameWidth = (int)((float)(210) * guiScale);
+
+	framePos["frameResDisPos"] = RectI(Vei2((int)(screenSize.x - frameWidth - 10), 10), frameWidth, frameHeight);
+	
+	framePos["framePos"] = RectI(Vei2((int)(screenSize.x / 8), (int)((screenSize.y - frameHeight)/2)), frameWidth, frameHeight);
 	RectF fp = (RectF)framePos.at("framePos");
+	
 	framePos["frameHeadline"] = RectI(Vei2(0,0), fp.GetWidth(), fp.GetHeight() * Settings::percentForGrab);
 }
 std::vector<SubAnimation> FramesizeCollection::GetConnectionAnimationVec(int lookFor, bool masked, Matrix<int> aMat)const
