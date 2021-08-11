@@ -202,10 +202,9 @@ namespace Settings
 	const std::string lang_gunpowder[] = { "gunpowder", "Schiesspulver" };
 	const std::string lang_silk[] = { "silk", "Seide" };
 
-	const std::string lang_leafes[] = { "leafes", "Blaetter" };
+	const std::string lang_leaves[] = { "leaves", "Blaetter" };
 	const std::string lang_corals[] = { "corals", "Korallen" };
 	const std::string lang_sticks[] = { "sticks", "Stoecke" };
-	const std::string lang_leaves[] = { "leaves", "Blaetter" };
 	const std::string lang_wool[] = { "wool", "Wolle" };
 	const std::string lang_leather[] = { "leather", "Leder" };
 	const std::string lang_fur[] = { "fur", "Fell" };
@@ -439,9 +438,9 @@ namespace Settings
 		{
 			return lang_sticks[lang];
 		}
-		else if (ressource == "leafes")
+		else if (ressource == "leaves")
 		{
-			return lang_leafes[lang];
+			return lang_leaves[lang];
 		}
 		else if (ressource == "wool")
 		{

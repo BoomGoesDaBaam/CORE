@@ -231,7 +231,7 @@ public:
 	{
 		return chunks(fctPos.x).GetObstacleCount();
 	}
-	Team* GetPlayer() { return player; }
+	Team* GetPlayer()const { return player; }
 	RectI GetRenderRect()const { 
 		auto mos = Graphics::GetMidOfScreen();
 		return RectI(-1 - (int)((mos.x / s.chunkSize.x) * 1.5f), 1 + (int)((mos.x / s.chunkSize.x) * 1.5f), -1 - (int)((mos.y / s.chunkSize.y) * 1.5f), 1 + (int)((mos.y / s.chunkSize.y) * 1.5f)); };

@@ -1086,89 +1086,92 @@ void Chunk::NextTurnSecond(std::map<std::string, Team*> teams)
 	for (int i = 0; i < obstacles.size(); i++)
 	{
 		if (std::none_of(obstaclesIndexNotUsed.begin(), obstaclesIndexNotUsed.end(), [&](const int& val) {return val == i; })) {
-			obstacles[i]->stepsLeft = Settings::obstacleStats[obstacles[i]->type].movesPerTurn * obstacles[i]->productivity;
-			obstacles[i]->Heal(std::ceil(2 * obstacles[i]->productivity));
-			//Apply Items effects
-			if (obstacles[i]->inv.get() != nullptr)
-			{
-				if (obstacles[i]->inv->HasItemNotBroken(3))		//range chain
-				{
-					obstacles[i]->stepsLeft += 5;
-					obstacles[i]->inv->ItemUsed(3);
-				}
-				if (obstacles[i]->inv->HasItemNotBroken(4))		//heal ring
-				{
-					obstacles[i]->Heal(10);
-					obstacles[i]->inv->ItemUsed(4);
-				}
-			}
-			//Apply Traits
-			if (obstacles[i]->attack != nullptr && obstacles[i]->attack->GetReloadNextTurn() && obstacles[i]->attack->GetAutomaticMode() == CtPos(Vei2(-1, -1), Vei2(-1, -1)))
-			{
-				obstacles[i]->attack->SetAttacksleft(Settings::obstacleStats[obstacles[i]->type].attacksPerTurn);
+			NextTurnSecondObstacle(obstacles[i].get(), teams);
+		}
+	}
+}
+void Chunk::NextTurnSecondObstacle(Obstacle* obstacle, std::map<std::string, Team*> teams)
+{
+	obstacle->stepsLeft = Settings::obstacleStats[obstacle->type].movesPerTurn * obstacle->productivity;
+	obstacle->Heal(std::ceil(2 * obstacle->productivity));
+	//Apply Items effects
+	if (obstacle->inv.get() != nullptr)
+	{
+		if (obstacle->inv->HasItemNotBroken(3))		//range chain
+		{
+			obstacle->stepsLeft += 5;
+			obstacle->inv->ItemUsed(3);
+		}
+		if (obstacle->inv->HasItemNotBroken(4))		//heal ring
+		{
+			obstacle->Heal(10);
+			obstacle->inv->ItemUsed(4);
+		}
+	}
+	//Apply Traits
+	if (obstacle->attack != nullptr && obstacle->attack->GetReloadNextTurn() && obstacle->attack->GetAutomaticMode() == CtPos(Vei2(-1, -1), Vei2(-1, -1)))
+	{
+		obstacle->attack->SetAttacksleft(Settings::obstacleStats[obstacle->type].attacksPerTurn);
+	}else if (obstacle->attack != nullptr && obstacle->attack->GetAutomaticMode() != CtPos(Vei2(-1, -1), Vei2(-1, -1)))
+	{
+		obstacle->attack->SetAttacksleft(0);
 
-			}
-			else if (obstacles[i]->attack != nullptr && obstacles[i]->attack->GetAutomaticMode() != CtPos(Vei2(-1, -1), Vei2(-1, -1)))
+		ApplyAutoAttackPosWhenNeeded(obstacle);
+		CtPos attackPos = obstacle->attack->GetAutomaticMode();
+		for (int attack = 0; attack < Settings::obstacleStats[obstacle->type].attacksPerTurn; attack++)
+		{
+			if (obstacle->attack->GetAutomaticMode() != CtPos(Vei2(-3, -3), Vei2(-3, -3)))
 			{
-				obstacles[i]->attack->SetAttacksleft(0);
-
-				ApplyAutoAttackPosWhenNeeded(obstacles[i].get());
-				CtPos attackPos = obstacles[i]->attack->GetAutomaticMode();
-				for (int attack = 0; attack < Settings::obstacleStats[obstacles[i]->type].attacksPerTurn; attack++)
-				{
-					if (obstacles[i]->attack->GetAutomaticMode() != CtPos(Vei2(-3, -3), Vei2(-3, -3)))
-					{
-						AttackTile(CtPos2CctPos(attackPos), obstacles[i].get());
-					}
-					ApplyAutoAttackPosWhenNeeded(obstacles[i].get());
-					attackPos = obstacles[i]->attack->GetAutomaticMode();
-				}
+				AttackTile(CtPos2CctPos(attackPos), obstacle);
 			}
-			if (obstacles[i]->craft != nullptr && obstacles[i]->craft->IsCrafting())
+			ApplyAutoAttackPosWhenNeeded(obstacle);
+			attackPos = obstacle->attack->GetAutomaticMode();
+		}
+	}
+	if (obstacle->craft != nullptr && obstacle->craft->IsCrafting())
+	{
+		obstacle->craft->TurnPassed(obstacle->productivity);
+		if (obstacle->craft->TurnsLeft(obstacle->productivity) == 0)
+		{
+			int craftedItemID = obstacle->craft->GetItemID();
+			for (int indexInv = 0; indexInv < 3; indexInv++)
 			{
-				obstacles[i]->craft->TurnPassed(obstacles[i]->productivity);
-				if (obstacles[i]->craft->TurnsLeft(obstacles[i]->productivity) == 0)
+				if (obstacle->type == 30)
 				{
-					int craftedItemID = obstacles[i]->craft->GetItemID();
-					for (int indexInv = 0; indexInv < 3; indexInv++)
+					if (obstacle->inv->GetItem(indexInv)->get() == nullptr && obstacle->team->GetMaterials().Has(Settings::itemStats[craftedItemID].neededResToCraft))
 					{
-						if (obstacles[i]->type == 30)
-						{
-							if (obstacles[i]->inv->GetItem(indexInv)->get() == nullptr && obstacles[i]->team->GetMaterials().Has(Settings::itemStats[craftedItemID].neededResToCraft))
-							{
-								obstacles[i]->team->GetMaterials().Remove(Settings::itemStats[craftedItemID].neededResToCraft);
-								obstacles[i]->inv->SetItem(std::make_unique<Slot>(craftedItemID),indexInv);
-								obstacles[i]->craft->StoppedCrafting();
-								break;
-							}
-						}
+						obstacle->team->GetMaterials().Remove(Settings::itemStats[craftedItemID].neededResToCraft);
+						obstacle->inv->SetItem(std::make_unique<Slot>(craftedItemID), indexInv);
+						obstacle->craft->StoppedCrafting();
+						break;
 					}
 				}
 			}
-			//Obstacle expandation
-			if (Settings::anyOfPlants(obstacles[i]->type) && rr.Calc(Settings::probToGrow) == 1)
-			{
-				PlantExpand(obstacles[i]->GetCtPos(), obstacles[i]->type, 20, Settings::forestDensity, teams["Fuer die Natur"]);
-			}
-			if (Settings::anyOfAnimals(obstacles[i]->type) && rr.Calc(Settings::probToGrow) == 1)
-			{
-				PlantExpand(obstacles[i]->GetCtPos(), obstacles[i]->type, 45, Settings::animalDensity, teams["Fuer die Natur"]);
-			}
-			//Add meterials and apply Obstacle effects
-			if (obstacles[i]->team != nullptr)
-				ApplyObstacleEffectSecond(obstacles[i].get());
-			//COnstructions finished
-			if (ConstructionSite* conObst = dynamic_cast<ConstructionSite*>(obstacles[i].get()))
-			{
-				conObst->TurnPassed();
-				if (conObst->BuildingFinished())
-				{
-					Obstacle obstacle = Obstacle(conObst->tilePos, conObst->chunkPos, conObst->GetTypeWhenFinished(), resC, conObst->team);
-					obstacle.n90rot = conObst->n90rot;
-					DeleteObstacle(conObst->tilePos);
-					PlaceObstacleWithoutCheck(obstacle.tilePos, &obstacle);
-				}
-			}
+		}
+	}
+	//Obstacle expandation
+	if (Settings::anyOfPlants(obstacle->type) && rr.Calc(Settings::probToGrow) == 1)
+	{
+		PlantExpand(obstacle->GetCtPos(), obstacle->type, 20, Settings::forestDensity, teams["Fuer die Natur"]);
+	}
+	if (Settings::anyOfAnimals(obstacle->type) && rr.Calc(Settings::probToGrow) == 1)
+	{
+		PlantExpand(obstacle->GetCtPos(), obstacle->type, 45, Settings::animalDensity, teams["Fuer die Natur"]);
+	}
+	//Add meterials and apply Obstacle effects
+	if (obstacle->team != nullptr)
+		ApplyObstacleEffectSecond(obstacle);
+	//COnstructions finished
+	if (ConstructionSite* conObst = dynamic_cast<ConstructionSite*>(obstacle))
+	{
+		conObst->TurnPassed();
+		if (conObst->BuildingFinished())
+		{
+			Obstacle obstacle = Obstacle(conObst->tilePos, conObst->chunkPos, conObst->GetTypeWhenFinished(), resC, conObst->team);
+			obstacle.n90rot = conObst->n90rot;
+			DeleteObstacle(conObst->tilePos);
+			PlaceObstacleWithoutCheck(obstacle.tilePos, &obstacle);
+			NextTurnSecondObstacle(GetObstacleAt(obstacle.tilePos), teams);
 		}
 	}
 }

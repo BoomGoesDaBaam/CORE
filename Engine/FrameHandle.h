@@ -1075,7 +1075,6 @@ public:
 	void UpdateFrames(const World* world);
 	void DeterminateUpdateProc(const World* world, Component* comp, std::string key);
 	// ###### single Frame operations #####
-	void UpdateFieldinformation(World& curW, Team* player);
 	void UpdateInventoryComps(Inventory* inv, Component* parentC);
 
 	//Mouse collision when item is grabbed

@@ -42,7 +42,7 @@ struct Materials
 		//Organics
 		values["corals"] = 200;
 		values["sticks"] = 205.f;
-		values["leafes"] = 200;
+		values["leaves"] = 200;
 		values["wool"] = 200;
 		values["leather"] = 120.f;
 		values["fur"] = 200;
@@ -125,6 +125,10 @@ struct Materials
 			values[key] -= kg;
 			kg = 0.0f;
 		}
+	}
+	const std::map<std::string, float>* GetRawData()const
+	{
+		return &values;
 	}
 };
 

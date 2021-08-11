@@ -756,6 +756,8 @@ public:
 	void NextTurnFirst(std::map<std::string, Team*> teams);
 	void NextTurnSecond(std::map<std::string, Team*> teams);
 
+	void NextTurnSecondObstacle(Obstacle* obstacle, std::map<std::string, Team*> teams);
+
 	void AttackTile(CctPos pos, Obstacle* attacker);
 
 	void SetConMapAt(Vei2 pos, int type, bool value);

@@ -694,51 +694,22 @@ std::string FrameHandle::GetInfoString(std::string key)
 	{
 		return Settings::lang_ObstacleHP[Settings::lang] + ":";
 	}
-	else if (key == "tIron")
+	else if (key == "tUnits")
 	{
-		return Settings::lang_iron[Settings::lang] + ":";
+		return Settings::lang_units[Settings::lang] + ":";
 	}
-	else if (key == "tSand")
+	else if (key == "tMaxUnits")
 	{
-		return Settings::lang_sand[Settings::lang] + ":";
+		return Settings::lang_maxUnits[Settings::lang] + ":";
 	}
-	else if (key == "tStone")
+	std::string ressource = key.substr(1, key.length() - 1);
+	ressource[0] += 32;
+	if (Settings::TranslateRessource(ressource, Settings::lang).find("ERROR") == std::string::npos)
 	{
-		return Settings::lang_stone[Settings::lang] + ":";
+		return ressource;
 	}
-	else if (key == "tCopper")
-	{
-		return Settings::lang_copper[Settings::lang] + ":";
-	}
-	else if (key == "tGold")
-	{
-		return Settings::lang_gold[Settings::lang] + ":";
-	}
-	else if (key == "tAluminum")
-	{
-		return Settings::lang_aluminum[Settings::lang] + ":";
-	}
-	else if (key == "tEmerald")
-	{
-		return Settings::lang_emerald[Settings::lang] + ":";
-	}
-	else if (key == "tSapphire")
-	{
-		return Settings::lang_sapphire[Settings::lang] + ":";
-	}
-	else if (key == "tRobin")
-	{
-		return Settings::lang_robin[Settings::lang] + ":";
-	}
-	else if (key == "tDimond")
-	{
-		return Settings::lang_diamond[Settings::lang] + ":";
-	}
-	else if (key == "tAmber")
-	{
-		return Settings::lang_amber[Settings::lang] + ":";
-	}
-	return "ERROR: key not found:" + key;
+
+	return "ERROR: key not found(method GetInfoString()):" + key;
 }
 bool FrameHandle::FrameIsEnabled(Obstacle* obstacle, std::string key)
 {
@@ -969,6 +940,7 @@ void FrameHandle::UpdateFrame(const World* world, int process, std::string key, 
 			static_cast<TextBox*>(comp->GetComp("tObstacleHPIs"))->Settext("...");
 	}
 	//
+	/*
 	p3->SetText(std::to_string(playerM.values["wood"]), "t_nWood");
 	p3->SetText(std::to_string(playerM.values["iron"]), "t_nIron");
 	p3->SetText(std::to_string(playerM.values["sand"]), "t_nSand");
@@ -981,56 +953,69 @@ void FrameHandle::UpdateFrame(const World* world, int process, std::string key, 
 	p3->SetText(std::to_string(playerM.values["robin"]), "t_nRobin");
 	p3->SetText(std::to_string(playerM.values["diamond"]), "t_nDimond");
 	p3->SetText(std::to_string(playerM.values["amber"]), "t_nAmber");
-
-	const Materials* playerM = world->get
+	*/
+	const std::map<std::string, float>* playerM = world->GetPlayer()->GetMaterials().GetRawData();
+	std::map<std::string, float>::const_iterator i;
+	for (i = playerM->begin(); i != playerM->end(); i++)
+	{
+		std::string key = i->first;
+		key[0] -= 32;
+		key = "t" + key + "Is";
+		if (comp->GetComp(key) != nullptr)
+		{
+			static_cast<TextBox*>(comp->GetComp(key))->Settext(GigaMath::float2StringWithPrecision(2,i->second));
+		}
+	}
+	/*
 	if (comp->GetComp("tWoodIs") != nullptr)
 	{
-		static_cast<TextBox*>(comp->GetComp("tWoodIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+		static_cast<TextBox*>(comp->GetComp("tWoodIs"))->Settext(std::to_string(playerM->values["wood"]));
 	}
 	if (comp->GetComp("tIronIs") != nullptr)
 	{
-		static_cast<TextBox*>(comp->GetComp("tIronIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+		static_cast<TextBox*>(comp->GetComp("tIronIs"))->Settext(std::to_string(playerM->values["iron"]));
 	}
 	if (comp->GetComp("tSandIs") != nullptr)
 	{
-		static_cast<TextBox*>(comp->GetComp("tSandIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+		static_cast<TextBox*>(comp->GetComp("tSandIs"))->Settext(std::to_string(playerM->values["sand"]));
 	}
 	if (comp->GetComp("tStoneIs") != nullptr)
 	{
-		static_cast<TextBox*>(comp->GetComp("tStoneIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+		static_cast<TextBox*>(comp->GetComp("tStoneIs"))->Settext(std::to_string(playerM->values["wood"]));
 	}
 	if (comp->GetComp("tCopperIs") != nullptr)
 	{
-		static_cast<TextBox*>(comp->GetComp("tCopperIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+		static_cast<TextBox*>(comp->GetComp("tCopperIs"))->Settext(std::to_string(playerM->values["wood"]));
 	}
 	if (comp->GetComp("tGoldIs") != nullptr)
 	{
-		static_cast<TextBox*>(comp->GetComp("tGoldIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+		static_cast<TextBox*>(comp->GetComp("tGoldIs"))->Settext(std::to_string(playerM->values["wood"]));
 	}
 	if (comp->GetComp("tAluminumIs") != nullptr)
 	{
-		static_cast<TextBox*>(comp->GetComp("tAluminumIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+		static_cast<TextBox*>(comp->GetComp("tAluminumIs"))->Settext(std::to_string(playerM->values["wood"]));
 	}
 	if (comp->GetComp("tEmeraldIs") != nullptr)
 	{
-		static_cast<TextBox*>(comp->GetComp("tEmeraldIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+		static_cast<TextBox*>(comp->GetComp("tEmeraldIs"))->Settext(std::to_string(playerM->values["wood"]));
 	}
 	if (comp->GetComp("tSapphireIs") != nullptr)
 	{
-		static_cast<TextBox*>(comp->GetComp("tSapphireIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+		static_cast<TextBox*>(comp->GetComp("tSapphireIs"))->Settext(std::to_string(playerM->values["wood"]));
 	}
 	if (comp->GetComp("tRobinIs") != nullptr)
 	{
-		static_cast<TextBox*>(comp->GetComp("tRobinIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+		static_cast<TextBox*>(comp->GetComp("tRobinIs"))->Settext(std::to_string(playerM->values["wood"]));
 	}
 	if (comp->GetComp("tDimondIs") != nullptr)
 	{
-		static_cast<TextBox*>(comp->GetComp("tDimondIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+		static_cast<TextBox*>(comp->GetComp("tDimondIs"))->Settext(std::to_string(playerM->values["wood"]));
 	}
 	if (comp->GetComp("tAmberIs") != nullptr)
 	{
-		static_cast<TextBox*>(comp->GetComp("tAmberIs"))->Settext(Settings::GetTypeString(world->GetfCellType()));
+		static_cast<TextBox*>(comp->GetComp("tAmberIs"))->Settext(std::to_string(playerM->values["wood"]));
 	}
+	*/
 	//
 	if (obstacle != nullptr)
 	{
@@ -1219,15 +1204,17 @@ void FrameHandle::LoadScene(int scene, World* world)
 			MultiFrame* m = AddMultiFrame("f_resD", resDisRect, 0, 1);
 
 			Frame* f1 = m->AddFrame("fresD_f1", RectF(Vec2(0, 0), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
-			AddHeadline(f1, Settings::lang_constructionMaterials[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
+			AddHeadline(f1, Settings::lang_fieldInformation[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
 			int f1Top = Settings::percentForGrab * resDisRect.GetHeight()+10;
 			f1Top = AddInfo(f1, f1Top, &resC->GetSurf().fonts[0], Colors::Black, "tFlora", "...");
 			f1Top = AddInfo(f1, f1Top, &resC->GetSurf().fonts[0], Colors::Black, "tObstacle","...");
 			f1Top = AddInfo(f1, f1Top, &resC->GetSurf().fonts[0], Colors::Black, "tObstacleHP", "...");
+			f1Top = AddInfo(f1, f1Top, &resC->GetSurf().fonts[0], Colors::Black, "tUnits", "...");
+			f1Top = AddInfo(f1, f1Top, &resC->GetSurf().fonts[0], Colors::Black, "tMaxUnits", "...");
 
 			Frame* f2 = m->AddFrame("fresD_res", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight()), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
 			AddHeadline(f2, Settings::lang_resources[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
-			int f2Top = Settings::percentForGrab * resDisRect.GetHeight() * 2 + 10;
+			int f2Top = Settings::percentForGrab * resDisRect.GetHeight() *2* 0.8f;
 			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tWood", "...");
 			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tIron", "...");
 			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tSand", "...");
@@ -1238,112 +1225,40 @@ void FrameHandle::LoadScene(int scene, World* world)
 			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tEmerald", "...");
 			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tSapphire", "...");
 			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tRobin", "...");
-			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tDimond", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tDiamond", "...");
 			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tAmber", "...");
-
-
 
 
 			Frame* f3 = m->AddFrame("fresD_mat", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight() * 2), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
 			AddHeadline(f3, Settings::lang_materials[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
-			int f3Top = Settings::percentForGrab * resDisRect.GetHeight() * 2 + 10;
-
-			PageFrame* p3 = m->AddPageFrame("fresD_f2", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight()*3), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m, 3);
-			//AddHeadline(p3, Settings::lang_materials[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
-
-
-			Frame* f4 = m->AddFrame("fresD_org", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight()*4), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
-			AddHeadline(f4, Settings::lang_organic[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
-			int f4Top = Settings::percentForGrab * resDisRect.GetHeight() * 2 + 10;
-
-			// #1
-			//f1->AddText(Settings::lang_fieldInformation[Settings::lang], RectF(Vec2(0, 0), resDisRect.GetWidth(), Settings::percentForGrab * resDisRect.GetHeight()), 11, &resC->GetSurf().fonts[0], Colors::Black, "h_f1");
+			int f3Top = Settings::percentForGrab * resDisRect.GetHeight() * 3 * 0.55f;
 			
-			// #2
-			// #3
-			// Page 1
-			p3->AddTextPF(Settings::lang_constructionMaterials[Settings::lang], RectF(Vec2(46, 2), 50, 8), 7, &resC->GetSurf().fonts[0], Colors::Black, "h_f3");
-
-			p3->AddTextPF(Settings::lang_resources[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "sh_resourcen", { 0,1 }, { 1, 0, 0 });
-			p3->AddTextPF(Settings::lang_materials[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "sh_materials", { 0,1 }, { 0, 1, 0 });
-			p3->AddTextPF(Settings::lang_organic[Settings::lang], RectF(Vec2(44, 16), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "sh_organic", { 0,1 }, { 0, 0, 1 });
-
-			p3->AddTextPF(Settings::lang_wood[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_wood", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF(Settings::lang_iron[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_iron", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF(Settings::lang_sand[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_sand", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF(Settings::lang_stone[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_stone", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF(Settings::lang_copper[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_copper", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF(Settings::lang_gold[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_gold", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF(Settings::lang_aluminum[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_aluminum", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF(Settings::lang_emerald[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_emerald", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF(Settings::lang_sapphire[Settings::lang] + ":", RectF(Vec2(5, 130), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_sapphire", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF(Settings::lang_robin[Settings::lang] + ":", RectF(Vec2(5, 140), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_robin", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF(Settings::lang_diamond[Settings::lang] + ":", RectF(Vec2(5, 150), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_dimond", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF(Settings::lang_amber[Settings::lang] + ":", RectF(Vec2(5, 160), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_amber", { 0,1 }, { 1, 0, 0 }, 1);
-
-			p3->AddTextPF(Settings::lang_kilogram[Settings::lang], RectF(Vec2(100, 40), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_kilogram", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nWood", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nIron", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nSand", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nStone", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nCopper", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF("24", RectF(Vec2(100, 100), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nGold", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF("3", RectF(Vec2(100, 110), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nAluminum", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF("4", RectF(Vec2(100, 120), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nEmerald", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 130), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nSapphire", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF("4", RectF(Vec2(100, 140), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nRobin", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF("24", RectF(Vec2(100, 150), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nDimond", { 0,1 }, { 1, 0, 0 }, 1);
-			p3->AddTextPF("24", RectF(Vec2(100, 160), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nAmber", { 0,1 }, { 1, 0, 0 }, 1);
-
-			//Page 2
-			p3->AddTextPF(Settings::lang_steel[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_steel", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF(Settings::lang_plastic[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_plastic", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF(Settings::lang_concrete[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_concrete", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF(Settings::lang_glass[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_glass", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF(Settings::lang_ceramics[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_ceramics", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF(Settings::lang_snow[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_snow", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF(Settings::lang_bricks[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_bricks", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF(Settings::lang_slate[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_slate", { 0,1 }, { 0, 1, 0 }, 1);
-
-			p3->AddTextPF("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nSteel", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nPlastic", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nConcrete", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nGlass", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nCeramics", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 100), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nSnow", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 110), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nBricks", { 0,1 }, { 0, 1, 0 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 120), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nSlate", { 0,1 }, { 0, 1, 0 }, 1);
-
-			//Page 3
-			p3->AddTextPF(Settings::lang_corals[Settings::lang] + ":", RectF(Vec2(5, 50), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_corals", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF(Settings::lang_sticks[Settings::lang] + ":", RectF(Vec2(5, 60), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_sticks", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF(Settings::lang_leaves[Settings::lang] + ":", RectF(Vec2(5, 70), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_leaves", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF(Settings::lang_wool[Settings::lang] + ":", RectF(Vec2(5, 80), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_wool", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF(Settings::lang_leather[Settings::lang] + ":", RectF(Vec2(5, 90), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_leather", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF(Settings::lang_fur[Settings::lang] + ":", RectF(Vec2(5, 100), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_fur", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF(Settings::lang_meat[Settings::lang] + ":", RectF(Vec2(5, 110), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_meat", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF(Settings::lang_fish[Settings::lang] + ":", RectF(Vec2(5, 120), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_fish", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF(Settings::lang_berrys[Settings::lang] + ":", RectF(Vec2(5, 130), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_berrys", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF(Settings::lang_apples[Settings::lang] + ":", RectF(Vec2(5, 140), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_apples", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF(Settings::lang_cactus[Settings::lang] + ":", RectF(Vec2(5, 150), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_cactus", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF(Settings::lang_units[Settings::lang] + ":", RectF(Vec2(5, 160), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_units", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF(Settings::lang_maxUnits[Settings::lang] + ":", RectF(Vec2(5, 170), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_maxUnits", { 0,1 }, { 0, 0, 1 }, 1);
-
-			p3->AddTextPF("11", RectF(Vec2(100, 50), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nCorals", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 60), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nSticks", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 70), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nLeaves", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF("44", RectF(Vec2(100, 80), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nWool", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 90), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nLeather", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF("24", RectF(Vec2(100, 100), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nFur", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF("3", RectF(Vec2(100, 110), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nMeat", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF("4", RectF(Vec2(100, 120), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nFish", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF("2", RectF(Vec2(100, 130), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nBerrys", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF("4", RectF(Vec2(100, 140), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nApples", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF("24", RectF(Vec2(100, 150), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nCactus", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF("24", RectF(Vec2(100, 160), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nUnits", { 0,1 }, { 0, 0, 1 }, 1);
-			p3->AddTextPF("24", RectF(Vec2(100, 170), 50, 10), 7, &resC->GetSurf().fonts[0], Colors::Black, "t_nMaxUnits", { 0,1 }, { 0, 0, 1 }, 1);
+			f3Top = AddInfo(f3, f3Top, &resC->GetSurf().fonts[0], Colors::Black, "tSteel", "...");
+			f3Top = AddInfo(f3, f3Top, &resC->GetSurf().fonts[0], Colors::Black, "tPlastic", "...");
+			f3Top = AddInfo(f3, f3Top, &resC->GetSurf().fonts[0], Colors::Black, "tConcrete", "...");
+			f3Top = AddInfo(f3, f3Top, &resC->GetSurf().fonts[0], Colors::Black, "tGlass", "...");
+			f3Top = AddInfo(f3, f3Top, &resC->GetSurf().fonts[0], Colors::Black, "tCeramics", "...");
+			f3Top = AddInfo(f3, f3Top, &resC->GetSurf().fonts[0], Colors::Black, "tSnow", "...");
+			f3Top = AddInfo(f3, f3Top, &resC->GetSurf().fonts[0], Colors::Black, "tBricks", "...");
+			f3Top = AddInfo(f3, f3Top, &resC->GetSurf().fonts[0], Colors::Black, "tSlate", "...");
 
 
+			Frame* f4 = m->AddFrame("fresD_org", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight()*3), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
+			AddHeadline(f4, Settings::lang_organic[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
+			int f4Top = Settings::percentForGrab * resDisRect.GetHeight() * 3 + 0.5f;
+
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tCorals", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tSticks", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tLeaves", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tWool", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tLeather", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tFur", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tMeat", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tFish", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tBerrys", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tApples", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tCactus", "...");
+			
 			comps["b_NextTurn"] = std::make_unique<Button>(Button(RectF(Vec2(1120, 600), 120, 60), &resC->GetSurf().windowsFrame[3], &resC->GetSurf().windowsFrame[3], { 0,0 }, &resC->GetSurf().fonts[0], nullptr, &buffer));
 			//comps["b_NextTurn"] = std::make_unique<Button>(Button(RectF(Vec2(650, 450), 120, 60), &resC->GetSurf().windowsFrame[3], &resC->GetSurf().windowsFrame[3], { 0,0 }, &resC->GetSurf().fonts[0], nullptr, &buffer));
 			static_cast<Button*>(comps["b_NextTurn"].get())->bFunc = BNextTurn;
@@ -1451,68 +1366,6 @@ void FrameHandle::LoadScene(int scene, World* world)
 		}
 		UpdateHandleOrder();
 		UpdateFrames(world);
-	}
-}
-void FrameHandle::UpdateFieldinformation(World& curW, Team* player)
-{
-	if (Settings::framesOn)
-	{
-
-		MultiFrame* m = static_cast<MultiFrame*>(comps["f_resD"].get());
-		Materials& playerM = player->GetMaterials();
-		//#1
-		Frame* f1 = static_cast<Frame*>(m->GetFrame("fresD_f1"));
-		f1->SetText(Settings::GetTypeString(curW.GetfCellType()), "t_cellType");
-		if (curW.GetFocusedObstacle() != nullptr)
-		{
-			f1->SetText(Settings::GetObstacleString(curW.GetFocusedObstacle()->type), "t_obstacleInfo");
-			f1->SetText(std::to_string(curW.GetFocusedObstacle()->hp) + " / " + std::to_string(Settings::obstacleStats[curW.GetFocusedObstacle()->type].baseHp), "t_obstacleHpIs");
-		}
-
-		//#2
-
-		//#3
-		PageFrame* p3 = static_cast<PageFrame*>(m->GetFrame("fresD_f2"));
-
-		// Page 1
-		p3->SetText(std::to_string(playerM.values["wood"]), "t_nWood");
-		p3->SetText(std::to_string(playerM.values["iron"]), "t_nIron");
-		p3->SetText(std::to_string(playerM.values["sand"]), "t_nSand");
-		p3->SetText(std::to_string(playerM.values["stone"]), "t_nStone");
-		p3->SetText(std::to_string(playerM.values["copper"]), "t_nCopper");
-		p3->SetText(std::to_string(playerM.values["gold"]), "t_nGold");
-		p3->SetText(std::to_string(playerM.values["aluminum"]), "t_nAluminum");
-		p3->SetText(std::to_string(playerM.values["emerald"]), "t_nEmerald");
-		p3->SetText(std::to_string(playerM.values["sapphire"]), "t_nSapphire");
-		p3->SetText(std::to_string(playerM.values["robin"]), "t_nRobin");
-		p3->SetText(std::to_string(playerM.values["diamond"]), "t_nDimond");
-		p3->SetText(std::to_string(playerM.values["amber"]), "t_nAmber");
-
-		//Page 2
-		p3->SetText(std::to_string(playerM.values["steel"]), "t_nSteel");
-		p3->SetText(std::to_string(playerM.values["plastic"]), "t_nPlastic");
-		p3->SetText(std::to_string(playerM.values["concrete"]), "t_nConcrete");
-		p3->SetText(std::to_string(playerM.values["glass"]), "t_nGlass");
-		p3->SetText(std::to_string(playerM.values["ceramics"]), "t_nCeramics");
-		p3->SetText(std::to_string(playerM.values["snow"]), "t_nSnow");
-		p3->SetText(std::to_string(playerM.values["bricks"]), "t_nBricks");
-		p3->SetText(std::to_string(playerM.values["slate"]), "t_nSlate");
-
-		//Page 3
-		p3->SetText(std::to_string(playerM.values["corals"]), "t_nCorals");
-		p3->SetText(std::to_string(playerM.values["sticks"]), "t_nSticks");
-		p3->SetText(std::to_string(playerM.values["leafes"]), "t_nLeaves");
-		p3->SetText(std::to_string(playerM.values["wool"]), "t_nWool");
-		p3->SetText(std::to_string(playerM.values["leather"]), "t_nLeather");
-		p3->SetText(std::to_string(playerM.values["fur"]), "t_nFur");
-		p3->SetText(std::to_string(playerM.values["meat"]), "t_nMeat");
-		p3->SetText(std::to_string(playerM.values["fish"]), "t_nFish");
-		p3->SetText(std::to_string(playerM.values["berrys"]), "t_nBerrys");
-		p3->SetText(std::to_string(playerM.values["apples"]), "t_nApples");
-		p3->SetText(std::to_string(playerM.values["cactus"]), "t_nCactus");
-		p3->SetText(std::to_string(playerM.values["units"]), "t_nUnits");
-		p3->SetText(std::to_string(playerM.values["maxUnits"]), "t_nMaxUnits");
-
 	}
 }
 void FrameHandle::UpdateFrames(const World* world)

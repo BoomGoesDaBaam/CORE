@@ -186,7 +186,6 @@ void Game::HandleMouseInput(Mouse::Event& e)
 	{
 		curW->HandleMouseEvents(e, gH);
 		World& w = *curW.get();
-		igwH.UpdateFieldinformation(w, &player);
 	}
 	HandleFrameChanges();
 }
