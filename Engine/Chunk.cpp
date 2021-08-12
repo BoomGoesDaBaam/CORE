@@ -1055,7 +1055,7 @@ void Chunk::SetTypeAt(Vei2 pos, int type)
 {
 	cells(pos).type = type;
 }
-void Chunk::NextTurnFirst(std::map<std::string, Team*> teams)
+void Chunk::NextTurnFirst(std::map<std::string, Team>* teams)
 {
 	for (int i = 0; i < obstacles.size(); i++)			//Update Map
 	{
@@ -1065,7 +1065,7 @@ void Chunk::NextTurnFirst(std::map<std::string, Team*> teams)
 			if (obstacles[i]->education != nullptr && obstacles[i]->education->Educates())
 			{
 				obstacles[i]->education->TurnPassed();
-				if (obstacles[i]->education->EducationFinished() && teams["player"]->GetMaterials().values["units"] + 1 <= teams["player"]->GetMaterials().values["maxUnits"])
+				if (obstacles[i]->education->EducationFinished() && teams->at("player").GetMaterials().values["units"] + 1 <= teams->at("player").GetMaterials().values["maxUnits"])
 				{
 					CtPos spawnPoint = FindNearestPositionThatFits(obstacles[i]->tilePos, obstacles[i]->education->GetFinishedType());
 					Obstacle obstacle = Obstacle(spawnPoint.y, spawnPoint.x, obstacles[i]->education->GetFinishedType(), resC, obstacles[i]->team);
@@ -1080,7 +1080,7 @@ void Chunk::NextTurnFirst(std::map<std::string, Team*> teams)
 		}
 	}
 }
-void Chunk::NextTurnSecond(std::map<std::string, Team*> teams)
+void Chunk::NextTurnSecond(std::map<std::string, Team>* teams)
 {
 	RandyRandom rr;
 	for (int i = 0; i < obstacles.size(); i++)
@@ -1090,7 +1090,7 @@ void Chunk::NextTurnSecond(std::map<std::string, Team*> teams)
 		}
 	}
 }
-void Chunk::NextTurnSecondObstacle(Obstacle* obstacle, std::map<std::string, Team*> teams)
+void Chunk::NextTurnSecondObstacle(Obstacle* obstacle, std::map<std::string, Team>* teams)
 {
 	obstacle->stepsLeft = Settings::obstacleStats[obstacle->type].movesPerTurn * obstacle->productivity;
 	obstacle->Heal(std::ceil(2 * obstacle->productivity));
@@ -1152,11 +1152,11 @@ void Chunk::NextTurnSecondObstacle(Obstacle* obstacle, std::map<std::string, Tea
 	//Obstacle expandation
 	if (Settings::anyOfPlants(obstacle->type) && rr.Calc(Settings::probToGrow) == 1)
 	{
-		PlantExpand(obstacle->GetCtPos(), obstacle->type, 20, Settings::forestDensity, teams["Fuer die Natur"]);
+		PlantExpand(obstacle->GetCtPos(), obstacle->type, 20, Settings::forestDensity, &teams->at("animals"));
 	}
 	if (Settings::anyOfAnimals(obstacle->type) && rr.Calc(Settings::probToGrow) == 1)
 	{
-		PlantExpand(obstacle->GetCtPos(), obstacle->type, 45, Settings::animalDensity, teams["Fuer die Natur"]);
+		PlantExpand(obstacle->GetCtPos(), obstacle->type, 45, Settings::animalDensity, &teams->at("animals"));
 	}
 	//Add meterials and apply Obstacle effects
 	if (obstacle->team != nullptr)

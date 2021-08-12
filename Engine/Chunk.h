@@ -612,7 +612,6 @@ class Chunk
 	void AttractObstacles(Obstacle* attracer, const CtPos& attractTo, const int& radius, const std::vector<int>& allowedTypes, bool costsFood = false);
 
 	CtPos FindNearestObstacle(CtPos pos,std::vector<int> allowedTypes, int radius);
-	CtPos FindNearestPositionThatFits(Vei2 tilePos, int type);
 	void ApplyAutoAttackPosWhenNeeded(Obstacle* obstacle);
 	void ApplyObstacleEffectFirst(Obstacle* obstacle);
 	void ApplyObstacleEffectSecond(Obstacle* obstacle);
@@ -753,13 +752,14 @@ public:
 
 	Obstacle* GetObstacleOutOfBounds(Vei2 tilePos) const;
 
-	void NextTurnFirst(std::map<std::string, Team*> teams);
-	void NextTurnSecond(std::map<std::string, Team*> teams);
+	void NextTurnFirst(std::map<std::string, Team>* teams);
+	void NextTurnSecond(std::map<std::string, Team>* teams);
 
-	void NextTurnSecondObstacle(Obstacle* obstacle, std::map<std::string, Team*> teams);
+	void NextTurnSecondObstacle(Obstacle* obstacle, std::map<std::string, Team>* teams);
 
 	void AttackTile(CctPos pos, Obstacle* attacker);
 
+	CtPos FindNearestPositionThatFits(Vei2 tilePos, int type);
 	void SetConMapAt(Vei2 pos, int type, bool value);
 	int GetCellTypeAt(Vei2 pos)const;
 	int GetGrounedMapAt(Vei2 pos)const;

@@ -138,6 +138,22 @@ namespace Settings
 	//available Frames wich need to be updated
 	static const std::vector<std::string> frameKeysObstacle = { "fUnit","fTownhall","fLumberjackHut","fInventory","fInventoryBox", "fInventoryStorage","fInventoryWrought"};//dynamic frames
 	static const std::vector<std::string> frameKeysNoObstacle = { "f_resD" };	//static frames
+	const std::vector<std::vector<std::string>> lang_teamnames = { {"In favour of the nature ","Fuer die Natur"},
+																   {"The doubtful students","Die zweifelnden Studenten"},
+																   {"The mangy princes","The raeudigen Prinzen"},
+																   {"Timo and the gang","Timo und die Gang"},
+																   {"The smart alecks","Die Schlauberger"},
+																   {"low wage earners","Die Geringverdiener"},
+																   {"Austrian","Oesterreicher"},
+																   {"Germans","Deutschen"},
+																   {"Swiss","Schweizer"},
+																   {"Cool kinds","Die Coolen"},
+																   {"The nerds","Die Nerds"},
+																   {"The spirituallies","Die Spirituellen"},
+																   {"The discreet thieves","Die diskreten Diebe"},
+																   {"The flatearther","Die Flacherdler"},
+																   {"The vegan","Die Veganer"},
+																   {"The vegetarian","Die Vegetarier"} };
 	//Graphic options
 	//static bool displayObstacles = true;
 	static int probToGrow = 50;

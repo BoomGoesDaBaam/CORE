@@ -364,15 +364,15 @@ public:
 };
 class Team
 {
-	std::string teamname = "kein Name";
+	int teamname = 0;
 	Materials m;
 public:
 
-	Team(std::string teamname)
+	Team(int teamname)
 	{
 		this->teamname = teamname;
 	}
 	Materials& GetMaterials() { return m; }
-	std::string GetTeamName() { return teamname; }
+	std::string GetTeamName() { return Settings::lang_teamnames[teamname][Settings::lang]; }
 };
 

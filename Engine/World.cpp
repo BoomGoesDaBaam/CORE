@@ -1,12 +1,12 @@
 #include "World.h"
 
-World::World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera, Team* player)
+World::World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera, std::map<std::string, Team>* teams)
 	:
 	resC(std::move(resC)),
 	c(camera),
 	tC(&this->resC->GetSurf()),
 	fsC(&this->resC->GetFrameSize()),
-	player(player)
+	teams(teams)
 {
 	Init(wSettings);
 	Generate(wSettings);
@@ -179,23 +179,20 @@ std::vector<Obstacle*> World::SpawnUnits(int n, int type, Team* team, Vei2 tileP
 	}
 	return generatedObstacles;
 }
-void World::SpawnPlayer()
+CtPos World::SpawnTeam(Team* team, Vei2 circaSpawnPoint)
 {
-	Vei2 spawnpoint = Vei2(0, s.worldHasNChunks.y/2 * Settings::chunkHasNTiles);
-	while (GroundedMapAt(spawnpoint) != 1)
-	{
-		spawnpoint.x++;
-	}
-	std::vector<Obstacle*> genObsts = SpawnUnits(5,10, player, spawnpoint);
-	std::vector<Obstacle*> box = GenerateObstacleExplosion(spawnpoint,1, 5, 6, player, -1, 25);
+	CtPos spawnPointCtPos = Chunk::Flat2ChunkPos(circaSpawnPoint, s.wSizeInTiles);
+	Vei2 spawnpoint = Chunk::chunkPos2Flat(chunks(spawnPointCtPos.x).FindNearestPositionThatFits(spawnPointCtPos.y, 10));
+	std::vector<Obstacle*> genObsts = SpawnUnits(5, 10, team, spawnpoint);
+	CtPos actuallSpawnPoint = genObsts[0]->GetCtPos();
+	std::vector<Obstacle*> box = GenerateObstacleExplosion(spawnpoint, 1, 5, 6, team, -1, 25);
 	for (int i = 0; i < genObsts.size(); i++)
 	{
-		genObsts[i]->inv->SetItem(std::make_unique<Slot>(9),4);
-		genObsts[i]->inv->SetItem(std::make_unique<Slot>(10),5);
-		genObsts[i]->inv->SetItem(std::make_unique<Slot>(11),6);
+		genObsts[i]->inv->SetItem(std::make_unique<Slot>(9), 4);
+		genObsts[i]->inv->SetItem(std::make_unique<Slot>(10), 5);
+		genObsts[i]->inv->SetItem(std::make_unique<Slot>(11), 6);
 	}
-	auto cctPos = Chunk::Flat2ChunkPos(spawnpoint, s.wSizeInTiles);
-	mChunk = cctPos.x;
+	return actuallSpawnPoint;
 }
 void World::SpawnUnitGroup(Vei2 circaTilePos, int type, Team* team, int n)
 {
@@ -1094,6 +1091,7 @@ bool World::ObstaclePosAllowed(Vei2 tilePos, int type)
 }
 void World::Init(WorldSettings& s)
 {
+	player = &teams->at("player");
 	this->s = s;
 	mChunk = Vei2(10, s.worldHasNChunks.y / 2);
 	for (int type = 1; type < (int)tC->fields.size(); type++)		//Create connectionsmaps
@@ -1270,7 +1268,7 @@ void World::Generate(WorldSettings& s)
 
 					if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 1)
 					{
-						SpawnUnitGroup(spawnAt, 11 + n, &animals, rng.Calc(10) + 5);
+						SpawnUnitGroup(spawnAt, 11 + n, &teams->at("animals"), rng.Calc(10) + 5);
 					}
 				}
 			}
@@ -1284,11 +1282,11 @@ void World::Generate(WorldSettings& s)
 
 				if (chunks(ccPos1.x).GetCellTypeAt(ccPos1.y) != 0)
 				{
-					SpawnUnitGroup(spawnAtArctis, 18, &animals, rng.Calc(10) + 5);
+					SpawnUnitGroup(spawnAtArctis, 18, &teams->at("animals"), rng.Calc(10) + 5);
 				}
 				if (chunks(ccPos2.x).GetCellTypeAt(ccPos2.y) != 0)
 				{
-					SpawnUnitGroup(spawnAtTopAntarktis, 18, &animals, rng.Calc(10) + 5);
+					SpawnUnitGroup(spawnAtTopAntarktis, 18, &teams->at("animals"), rng.Calc(10) + 5);
 				}
 			}
 			for (int n = 0; n < 2; n++)
@@ -1300,7 +1298,7 @@ void World::Generate(WorldSettings& s)
 
 					if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 1)
 					{
-						SpawnUnitGroup(spawnAt, 19 + n, &animals, 1);
+						SpawnUnitGroup(spawnAt, 19 + n, &teams->at("animals"), 1);
 					}
 				}
 			}
@@ -1310,16 +1308,33 @@ void World::Generate(WorldSettings& s)
 	
 	UpdateConMap();
 	UpdateGroundedMap();
+	CtPos spawnpos;
 	if (Settings::obstaclesOn && Settings::spawnObstacles)
 	{
-		SpawnPlayer();
+		spawnpos = SpawnTeam(&teams->at("player"), Vei2(0, (s.worldHasNChunks.y * Settings::chunkHasNTiles) / 2));
+		mChunk = spawnpos.x;
+		c.x = ((float)spawnpos.y.x / Settings::chunkHasNTiles) * s.chunkSize.x;
+		c.y = ((float)spawnpos.y.y / Settings::chunkHasNTiles) * s.chunkSize.y;
+
+		for (int i = 2; i < 16; i++)
+		{
+			Vei2 enemieSpawnPoint = Chunk::chunkPos2Flat(spawnpos);
+			Vei2 vers = Vei2(100, 0);//(Vei2)(GigaMath::GetRandomPointOnUnitCircle<float>() * (rng.Calc(100) + 30));
+			float dist = std::sqrt(std::pow(vers.x, 2)+std::pow(vers.y, 2));
+			enemieSpawnPoint += vers;//(Vei2)(GigaMath::GetRandomPointOnUnitCircle<float>() * (rng.Calc(50) + 30));
+			enemieSpawnPoint = Chunk::PutTileInWorld(enemieSpawnPoint.x, enemieSpawnPoint.y, s.wSizeInTiles);
+			std::string team = "enemie" + std::to_string(i-2);
+			teams->insert({ team,Team(i) });
+			SpawnTeam(&teams->at(team), enemieSpawnPoint);
+		}
 	}
 	UpdateChunkRects();
-	teams["player"] = player;
+	/*
 	teams["Fuer die Natur"] = &animals;
 	teams["In dem Sinne"] = &animals;
 	teams["Nichts wie Zeg"] = &animals;
 	teams["Was geht!"] = &animals;
+	*/
 	//CutHills(1);		//NICHT ZUENDE!!!!
 }
 void World::GenerateCircle(Vei2 pos, int radius,int type, int ontoType, int surrBy)

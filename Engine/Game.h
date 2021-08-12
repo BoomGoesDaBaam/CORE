@@ -32,6 +32,7 @@
 #include "ResourceCollection.h"
 #include "GrabHandle.h"
 #include "FrameHandle.h"
+#include "Team.h"
 class Game
 {
 public:
@@ -57,11 +58,13 @@ private:
 
 	RandyRandom rr;
 	Tim t;
+	Vec2 c = { 0,0 };
 	float passedTime = 0;
 	bool debugInfoOn = false,ignoreMouse=false;			//Ignores the Mouseiput for curW unless eventtype is LRelease
 	Vei2 debugMarkerPos = Vei2(Graphics::ScreenWidth / 2, Graphics::ScreenHeight / 2);
 	Vei2 markPos = Vei2(Graphics::ScreenWidth / 2, Graphics::ScreenHeight / 2);
 
+	std::map<std::string, Team> teams;
 
 	std::shared_ptr<ResourceCollection> resC = nullptr;
 	GraphicObjects go;
@@ -69,8 +72,6 @@ private:
 	FrameHandle igwH;
 
 	GrabHandle gH;
-	Vec2 c = { 0,0 };
-	Team player = Team("Die reichlich raeudigen Raucher");;
 	int fps_c = 0, fps_d = 0;
 	/********************************/
 };

@@ -551,7 +551,7 @@ Frame* FrameHandle::CreateCraftOption(RectF pos, int itemType, Frame* parentC, s
 	frame->extra1 = itemType;
 	frame->bFunc = BCraftingQueue;
 	frame->hitable = true;
-	frame->AddText(Settings::GetItemString(itemType), RectF(Vec2(60, 5), 50, 8), 7, &resC->GetSurf().fonts[0], Colors::Black, key + "H", { 1 });
+	frame->AddText(Settings::GetItemString(itemType), RectF(Vec2(pos.GetWidth() / 3, pos.GetHeight() / 10), pos.GetWidth() / 3, 11), 11, &resC->GetSurf().fonts[0], Colors::Black, key + "H", { 1 });
 	std::map<std::string, float> neededRes = Settings::itemStats[itemType].neededResToCraft;
 	std::map<std::string, float>::iterator res;
 	int i = 0;
@@ -559,10 +559,10 @@ Frame* FrameHandle::CreateCraftOption(RectF pos, int itemType, Frame* parentC, s
 	{
 		//std::map<st::string,float> check ={{}}
 		if (world->GetPlayer()->GetMaterials().Has({ { res->first,res->second } }))
-			frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(70.f, 20.f + i * 10.f), 50.f, 8.f), 7, &resC->GetSurf().fonts[0], Colors::Green, key + "res" + std::to_string(i), { 1 });
+			frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(pos.GetWidth() / 2, (pos.GetHeight() / 3) + i * (pos.GetHeight() / 6)), 50.f, 11.f), 11, &resC->GetSurf().fonts[0], Colors::Green, key + "res" + std::to_string(i), { 1 });
 		else
 		{
-			frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(70.f, 20.f + i * 10.f), 50.f, 8.f), 7, &resC->GetSurf().fonts[0], Colors::Red, key + "res" + std::to_string(i), { 1 });
+			frame->AddText("-" + res->first + ": x" + std::to_string(res->second) + " " + Settings::lang_kilogram[Settings::lang], RectF(Vec2(pos.GetWidth() / 2, (pos.GetHeight() / 3) + i * (pos.GetHeight() / 6)), 50.f, 11.f), 11, &resC->GetSurf().fonts[0], Colors::Red, key + "res" + std::to_string(i), { 1 });
 		}
 		i++;
 	}
@@ -963,7 +963,7 @@ void FrameHandle::UpdateFrame(const World* world, int process, std::string key, 
 		key = "t" + key + "Is";
 		if (comp->GetComp(key) != nullptr)
 		{
-			static_cast<TextBox*>(comp->GetComp(key))->Settext(GigaMath::float2StringWithPrecision(2,i->second));
+			static_cast<TextBox*>(comp->GetComp(key))->Settext(GigaMath::float2StringWithPrecision(2,i->second)+" kg");
 		}
 	}
 	/*
@@ -1191,6 +1191,10 @@ void FrameHandle::LoadScene(int scene, World* world)
 	{
 		comps.clear();
 		curScene = scene;
+		RectI screenRect = Graphics::GetScreenRect<int>();
+		int screenHeight = screenRect.GetHeight();
+		int screenWidth = screenRect.GetWidth();
+
 		if (scene == 0)
 		{
 			using namespace Settings;
@@ -1259,18 +1263,18 @@ void FrameHandle::LoadScene(int scene, World* world)
 			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tApples", "...");
 			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tCactus", "...");
 			
-			comps["b_NextTurn"] = std::make_unique<Button>(Button(RectF(Vec2(1120, 600), 120, 60), &resC->GetSurf().windowsFrame[3], &resC->GetSurf().windowsFrame[3], { 0,0 }, &resC->GetSurf().fonts[0], nullptr, &buffer));
+			comps["b_NextTurn"] = std::make_unique<Button>(Button(RectF(Vec2(Graphics::ScreenWidth/20*17, Graphics::ScreenHeight *13/16), Graphics::ScreenWidth / 10, Graphics::ScreenHeight / 12), &resC->GetSurf().windowsFrame[3], &resC->GetSurf().windowsFrame[3], { 0,0 }, &resC->GetSurf().fonts[0], nullptr, &buffer));
 			//comps["b_NextTurn"] = std::make_unique<Button>(Button(RectF(Vec2(650, 450), 120, 60), &resC->GetSurf().windowsFrame[3], &resC->GetSurf().windowsFrame[3], { 0,0 }, &resC->GetSurf().fonts[0], nullptr, &buffer));
 			static_cast<Button*>(comps["b_NextTurn"].get())->bFunc = BNextTurn;
 
-			comps["b_buildScene"] = std::make_unique<Button>(Button(RectF(Vec2(30, 60), 120, 60), &resC->GetSurf().windowsFrame[6], &resC->GetSurf().windowsFrame[6], { 0,0 }, &resC->GetSurf().fonts[0], nullptr, &buffer));
+			comps["b_buildScene"] = std::make_unique<Button>(Button(RectF(Vec2(Graphics::ScreenWidth/42, Graphics::ScreenHeight/12), Graphics::ScreenWidth / 10, Graphics::ScreenHeight / 12), &resC->GetSurf().windowsFrame[6], &resC->GetSurf().windowsFrame[6], { 0,0 }, &resC->GetSurf().fonts[0], nullptr, &buffer));
 			Button* button = static_cast<Button*>(comps["b_buildScene"].get());
 			button->extra1 = 1;
 			button->size = 14;
 			button->bFunc = BLoadScene;
 			button->text = Settings::lang_build[Settings::lang];
 
-			comps["b_wroughScene"] = std::make_unique<Button>(Button(RectF(Vec2(30, 100), 60, 30), &resC->GetSurf().windowsFrame[6], &resC->GetSurf().windowsFrame[6], { 0,0 }, &resC->GetSurf().fonts[0], nullptr, &buffer));
+			comps["b_wroughScene"] = std::make_unique<Button>(Button(RectF(Vec2(Graphics::ScreenWidth / 42, Graphics::ScreenHeight / 24*5), Graphics::ScreenWidth / 10, Graphics::ScreenHeight / 12), &resC->GetSurf().windowsFrame[6], &resC->GetSurf().windowsFrame[6], { 0,0 }, &resC->GetSurf().fonts[0], nullptr, &buffer));
 			button = static_cast<Button*>(comps["b_wroughScene"].get());
 			button->extra1 = 2;
 			button->size = 14;
@@ -1291,16 +1295,13 @@ void FrameHandle::LoadScene(int scene, World* world)
 			fBuildSelection->SetMoveable(false);
 			fBuildSelection->GetComp("b_left")->pos = RectF(Vec2(25, 25), 100, 25);
 			fBuildSelection->GetComp("b_right")->pos = RectF(Vec2(Graphics::ScreenWidth - 125, 25), 100, 25);
-			fBuildSelection->AddTextPF(Settings::lang_housing[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->GetSurf().fonts[0], Colors::Black, "HousingH", { 1 }, { 1,0,0,0 });
+			fBuildSelection->AddTextPF(Settings::lang_housing[Settings::lang], RectF(Vec2(screenWidth / 8 * 3, screenHeight / 24), screenHeight / 2, screenWidth / 21), 50, &resC->GetSurf().fonts[0], Colors::Black, "HousingH", { 1 }, { 1,0,0,0 });
 
 			Button* b_back = fBuildSelection->AddButtonPF(RectF(Vec2(30, 60), 60, 30), &resC->GetSurf().windowsFrame[6], &resC->GetSurf().windowsFrame[6], "b_buildback", &resC->GetSurf().fonts[0], { 1 }, { 1,1,1,1 });
 			b_back->extra1 = 0;
 			b_back->bFunc = BLoadScene;
 			b_back->text = Settings::lang_back[Settings::lang];
-			RectI screenRect = Graphics::GetScreenRect<int>();
-			int screenHeight = screenRect.GetHeight();
-			int screenWidth = screenRect.GetWidth();
-
+			
 
 			CreateBuildOption(RectF(Vec2(screenWidth/25, screenHeight / 6), screenWidth/5, screenHeight / 8), 2, fBuildSelection, { 1,0,0,0 }, world);
 			CreateBuildOption(RectF(Vec2(screenWidth / 25, screenHeight / 6 + 1 * screenHeight / 6), screenWidth/5, screenHeight / 8), 6, fBuildSelection, { 1,0,0,0 }, world);
@@ -1317,7 +1318,7 @@ void FrameHandle::LoadScene(int scene, World* world)
 			CreateBuildOption(RectF(Vec2(screenWidth / 6.25f + screenWidth / 5 * 3, screenHeight / 6 + 1 * screenHeight / 6), screenWidth / 5, 90), 26, fBuildSelection, { 1,0,0,0 }, world);
 
 
-			fBuildSelection->AddTextPF(Settings::lang_productions[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->GetSurf().fonts[0], Colors::Black, "roductionH", { 1 }, { 0,1,0,0 });
+			fBuildSelection->AddTextPF(Settings::lang_productions[Settings::lang], RectF(Vec2(screenWidth / 8 * 3, screenHeight / 24), screenHeight / 2, screenWidth / 21), 50, &resC->GetSurf().fonts[0], Colors::Black, "roductionH", { 1 }, { 0,1,0,0 });
 			
 			CreateBuildOption(RectF(Vec2(screenWidth / 25, screenHeight / 6), screenWidth / 5, screenHeight / 8), 27, fBuildSelection, { 0,1,0,0 }, world);
 			CreateBuildOption(RectF(Vec2(screenWidth / 25, screenHeight / 6 + 1 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 28, fBuildSelection, { 0,1,0,0 }, world);
@@ -1350,19 +1351,20 @@ void FrameHandle::LoadScene(int scene, World* world)
 			Frame* fCraftSelection = AddFrame("f_craftMenu", Graphics::GetScreenRect<float>(), 1);//AddPageFrame("f_bg", RectF(Vec2(0, 0), Graphics::ScreenWidth, Graphics::ScreenHeight), 1, 4);															//build selection menu
 			fCraftSelection->s = &resC->GetSurf().windowsFrame[5].GetCurSurface();
 			fCraftSelection->SetMoveable(false);
-			fCraftSelection->AddText(Settings::lang_forge[Settings::lang], RectF(Vec2(470, 30), 300, 60), 50, &resC->GetSurf().fonts[0], Colors::Black, "ForgeH", { 1 });
+			fCraftSelection->AddText(Settings::lang_forge[Settings::lang], RectF(Vec2(screenWidth / 8 * 3, screenHeight/24), screenHeight/2, screenWidth / 21), 50, &resC->GetSurf().fonts[0], Colors::Black, "ForgeH", { 1 });
 
 			Button* b_back = fCraftSelection->AddButton(RectF(Vec2(30, 100), 60, 30), &resC->GetSurf().windowsFrame[6], &resC->GetSurf().windowsFrame[6], "b_buildback", &resC->GetSurf().fonts[0], { 1 });
 			b_back->extra1 = 0;
 			b_back->bFunc = BLoadScene;
 			b_back->text = Settings::lang_back[Settings::lang];
 
-			CreateCraftOption(RectF(Vec2(60, 190), 180, 60), 0, fCraftSelection, { 1,0,0,0 }, world);
-			CreateCraftOption(RectF(Vec2(60, 260), 180, 60), 1, fCraftSelection, { 1,0,0,0 }, world);
-			CreateCraftOption(RectF(Vec2(60, 330), 180, 60), 2, fCraftSelection, { 1,0,0,0 }, world);
-			CreateCraftOption(RectF(Vec2(60, 400), 180, 60), 9, fCraftSelection, { 1,0,0,0 }, world);
-			CreateCraftOption(RectF(Vec2(60, 470), 180, 60), 10, fCraftSelection, { 1,0,0,0 }, world);
-			CreateCraftOption(RectF(Vec2(60, 540), 180, 60), 11, fCraftSelection, { 1,0,0,0 }, world);
+			CreateCraftOption(RectF(Vec2(screenWidth / 25, screenHeight / 6), screenWidth / 5, screenHeight / 8), 0, fCraftSelection, { 1,0,0,0 }, world);
+			CreateCraftOption(RectF(Vec2(screenWidth / 25, screenHeight / 6 + 1 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 1, fCraftSelection, { 1,0,0,0 }, world);
+			CreateCraftOption(RectF(Vec2(screenWidth / 25, screenHeight / 6 + 2 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 2, fCraftSelection, { 1,0,0,0 }, world);
+
+			CreateCraftOption(RectF(Vec2(screenWidth / 12.5f + screenWidth / 5, screenHeight / 6), screenWidth / 5, screenHeight / 8), 9, fCraftSelection, { 1,0,0,0 }, world);
+			CreateCraftOption(RectF(Vec2(screenWidth / 12.5f + screenWidth / 5, screenHeight / 6 + 1 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 10, fCraftSelection, { 1,0,0,0 }, world);
+			CreateCraftOption(RectF(Vec2(screenWidth / 12.5f + screenWidth / 5, screenHeight / 6 + 2 * screenHeight / 6), screenWidth / 5, screenHeight / 8), 11, fCraftSelection, { 1,0,0,0 }, world);
 		}
 		UpdateHandleOrder();
 		UpdateFrames(world);

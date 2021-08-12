@@ -33,7 +33,7 @@ public:
 		int defType = 0;
 		Vei2 wSizeInCells;
 		Vei2 wSizeInTiles;
-		Vei2 worldHasNChunks = Vei2(10, 10);
+		Vei2 worldHasNChunks = Vei2(3, 3);
 		Vei2 chunkSize = { 2000, 2000 };
 	};
 private:
@@ -80,12 +80,14 @@ private:
 	bool loadBuildMenu = false;
 	bool buildMenuShown = false;
 
-	std::map<std::string, Team*> teams;
+	std::map<std::string, Team>* teams;
 	Team* player;
-	Team animals = Team("Fuer die Natur");
+	//Team animals = Team("Fuer die Natur");
+	/*
 	Team enemie1 = Team("In dem Sinne");
 	Team enemie2 = Team("Nichts wie Zeg");
 	Team enemie3 = Team("Was geht!");
+	*/
 
 	//Mouse calculations
 	Vei2 GetChunkHit(Vec2 mP)const;
@@ -129,7 +131,7 @@ private:
 	void UpdateConMap();							//
 	void UpdateGroundedMap(Vei2 pos=Vei2(0,0), Vei2 size = Vei2(-1,-1));						// VERY performance heavy - UpdateConMap must be called before UpdateGroundedMap
 	std::vector<Obstacle*> SpawnUnits(int n, int type, Team* inTeam, Vei2 tilePos);
-	void SpawnPlayer();
+	CtPos SpawnTeam(Team* team, Vei2 circaSpawnPoint);
 	void SpawnUnitGroup(Vei2 circaTilePos, int type, Team* team, int n);
 	bool IsSurroundedBy(Vei2 pos, int type);		//3x3 around pos
 	//Private not const Funktions
@@ -152,7 +154,7 @@ private:
 public:
 	
 	int updatedGraphics = 0;																						//Konstruktor + Operatoren
-	World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera, Team* player);
+	World(WorldSettings wSettings, std::shared_ptr<ResourceCollection> resC, Vec2& camera, std::map<std::string, Team>* teams);
 	
 	//Handles
 	void HandleMouseEvents(Mouse::Event& e, GrabHandle& gH);

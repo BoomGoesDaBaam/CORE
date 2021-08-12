@@ -28,7 +28,8 @@ Game::Game(MainWindow& wnd)
 	gfx(wnd),
 	resC(std::make_shared<ResourceCollection>(gfx)),
 	go(gfx, resC),
-	curW(std::make_unique<World>(World::WorldSettings(),resC,c, &player)),
+	teams({ { "player",Team(1) },{"animals",Team(0)} }),
+	curW(std::make_unique<World>(World::WorldSettings(),resC,c,&teams)),
 	igwH(resC)
 
 {
@@ -139,7 +140,7 @@ void Game::ComposeFrame()
 			gfx.DrawText(oss2.str().c_str(), 25, 45, 14, &resC->GetSurf().fonts[0], SpriteEffect::ChromaColor(Colors::Magenta, Colors::Red));
 			gfx.DrawText(oss4.str().c_str(), 25, 65, 14, &resC->GetSurf().fonts[0], SpriteEffect::ChromaColor(Colors::Magenta, Colors::Red));
 			Vei2 mos = Graphics::GetMidOfScreen();
-			//gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
+			gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
 			for (int y = 1; y <= 7; y++)
 			{
 				gfx.DrawLine(Vec2((float)(y * 100), 0.f), Vec2((float)(y * 100), 600.f), Colors::Red);
