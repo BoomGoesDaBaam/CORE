@@ -802,7 +802,7 @@ public:
 	static CtPos Flat2ChunkPosCtPos(Vei2 tilePos, Vei2 wSizeInTiles)
 	{
 		CctPos pos = Flat2ChunkPos(tilePos, wSizeInTiles);
-		return CtPos(pos.x, pos.y * Settings::CellSplitUpIn + pos.x);
+		return CtPos(pos.x, pos.y * Settings::CellSplitUpIn + pos.z);
 	}
 	static Vei2 PutTileInWorld(Vei2 pos, Vei2 wSizeInTiles)
 	{

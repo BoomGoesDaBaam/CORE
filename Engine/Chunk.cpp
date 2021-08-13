@@ -854,13 +854,13 @@ bool Chunk::UnitIsAround(Vei2 tilePos, int range)
 }
 bool Chunk::PlaceObstacle(Vei2 tilePos, int type, Team* team, int ontoType, int surrByObst)
 {
-	CtPos ctPos = Chunk::PutCtPosInWorld(CtPos(Vei2(0, 0), tilePos),chunks->GetSize());
 	//CtPos ctPos  = Chunk::CctPos2CtPos(Chunk::Flat2ChunkPos(tilePos, GetWorldSizeInTiles()));
 	//Matrix<int> aMat = chunks->operator()(ctPos.x).GetAroundmatrix(ctPos.y / Vei2(Settings::CellSplitUpIn,Settings::CellSplitUpIn));// GetAroundMatrix(tileIsInCell);
 	//if (ObstaclePosAllowed(tilePos, type) && (ontoType == -1 || ontoType == cells(tileIsInCell).type) && (surrBy == -1 || aMat.HasValue(surrBy)))
 	//{
-	if (Settings::spawnObstacles)
+	if (Settings::spawnObstacles && TileIsInWorld(tilePos))
 	{
+		CtPos ctPos = Chunk::PutCtPosInWorld(CtPos(Vei2(0, 0), tilePos), chunks->GetSize());
 		Obstacle obstacle = Obstacle(ctPos.y, ctPos.x, type, resC, team);
 		return chunks->operator()(ctPos.x).PlaceObstacle(ctPos.y, &obstacle);
 	}
@@ -951,7 +951,7 @@ Vei2 Chunk::PutTileInChunk(Vei2 pos)const
 }
 Vei2 Chunk::PutTileInChunk(int x, int y)const
 {
-	if (y < 0)
+	while (y < 0)
 	{
 		y = 0;
 	}

@@ -181,7 +181,7 @@ std::vector<Obstacle*> World::SpawnUnits(int n, int type, Team* team, Vei2 tileP
 }
 CtPos World::SpawnTeam(Team* team, Vei2 circaSpawnPoint)
 {
-	CtPos spawnPointCtPos = Chunk::Flat2ChunkPos(circaSpawnPoint, s.wSizeInTiles);
+	CtPos spawnPointCtPos = Chunk::Flat2ChunkPosCtPos(circaSpawnPoint, s.wSizeInTiles);
 	Vei2 spawnpoint = Chunk::chunkPos2Flat(chunks(spawnPointCtPos.x).FindNearestPositionThatFits(spawnPointCtPos.y, 10));
 	std::vector<Obstacle*> genObsts = SpawnUnits(5, 10, team, spawnpoint);
 	CtPos actuallSpawnPoint = genObsts[0]->GetCtPos();
@@ -1187,7 +1187,7 @@ void World::Generate(WorldSettings& s)
 				auto ccPos = Cell2ChunkPos(PutCellInWorldX(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)));
 				if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 1)
 				{
-					int rT = rng.Calc(3);
+					int rT = rng.Calc(3);	//random tree
 					switch (rT)
 					{
 					case 0:
@@ -1204,10 +1204,10 @@ void World::Generate(WorldSettings& s)
 			}
 			for (int i = 0; i < (s.wSizeInCells.x * s.wSizeInCells.y) * 2; i++)	//cactus
 			{
-				Vei2 spawnAt = Vei2(rng.Calc((s.wSizeInCells.x - 1) * Settings::CellSplitUpIn), 10 * Settings::CellSplitUpIn + rng.Calc((s.wSizeInCells.y - 20) * Settings::CellSplitUpIn));
-				auto ccPos = Cell2ChunkPos(PutCellInWorldX(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn)));
+				Vei2 spawnAt = Vei2(rng.Calc((s.wSizeInCells.x - 1) * Settings::CellSplitUpIn), 5 * Settings::CellSplitUpIn + rng.Calc((s.wSizeInCells.y - 10) * Settings::CellSplitUpIn));
+				auto ccPos = Cell2ChunkPos(Vei2(spawnAt.x / Settings::CellSplitUpIn, spawnAt.y / Settings::CellSplitUpIn));
 
-				if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 1)
+				if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 3)
 				{
 					chunks(Vei2(0, 0)).PlaceObstacle(spawnAt, 5);
 				}
@@ -1248,6 +1248,7 @@ void World::Generate(WorldSettings& s)
 
 				if (chunks(ccPos.x).GetCellTypeAt(ccPos.y) == 1)
 				{
+					/*
 					GenerateObstacleExplosion(spawnAt, 10, 100, 1, nullptr, 1, 15);
 					GenerateObstacleExplosion(spawnAt + Vei2(0, 1), 10, 100, 1, nullptr, 1, 15);
 					GenerateObstacleExplosion(spawnAt + Vei2(1, 0), 10, 100, 1, nullptr, 1, 15);
@@ -1257,6 +1258,7 @@ void World::Generate(WorldSettings& s)
 					GenerateObstacleExplosion(spawnAt + Vei2(0, 1), 10, 100, 4, nullptr, 1, 15);
 					GenerateObstacleExplosion(spawnAt + Vei2(1, 0), 10, 100, 4, nullptr, 1, 15);
 					GenerateObstacleExplosion(spawnAt + Vei2(1, 1), 10, 100, 4, nullptr, 1, 15);
+					*/
 				}
 			}
 			for (int n = 0; n < 7; n++)
@@ -1319,8 +1321,8 @@ void World::Generate(WorldSettings& s)
 		for (int i = 2; i < 16; i++)
 		{
 			Vei2 enemieSpawnPoint = Chunk::chunkPos2Flat(spawnpos);
-			Vei2 vers = Vei2(100, 0);//(Vei2)(GigaMath::GetRandomPointOnUnitCircle<float>() * (rng.Calc(100) + 30));
-			float dist = std::sqrt(std::pow(vers.x, 2)+std::pow(vers.y, 2));
+			Vei2 vers = (Vei2)(GigaMath::GetRandomPointOnUnitCircle<float>() * (rng.Calc(30) + 30));
+			//float dist = std::sqrt(std::pow(vers.x, 2)+std::pow(vers.y, 2));
 			enemieSpawnPoint += vers;//(Vei2)(GigaMath::GetRandomPointOnUnitCircle<float>() * (rng.Calc(50) + 30));
 			enemieSpawnPoint = Chunk::PutTileInWorld(enemieSpawnPoint.x, enemieSpawnPoint.y, s.wSizeInTiles);
 			std::string team = "enemie" + std::to_string(i-2);

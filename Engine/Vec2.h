@@ -128,7 +128,7 @@ public:
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const Vec2_<T>& obj)
 {
-	os << "(" << obj.x << "|" << obj.y << ")";
+	os << "(" << obj.x << "/" << obj.y << ")";
 	return os;
 }
 

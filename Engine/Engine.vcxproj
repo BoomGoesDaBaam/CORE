@@ -165,6 +165,7 @@
     <ClInclude Include="Vec2.h" />
     <ClInclude Include="Vec3.h" />
     <ClInclude Include="World.h" />
+    <ClInclude Include="WorldGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
@@ -185,6 +186,7 @@
     <ClCompile Include="Surface.cpp" />
     <ClCompile Include="Team.cpp" />
     <ClCompile Include="World.cpp" />
+    <ClCompile Include="WorldGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="FramebufferPS.hlsl">

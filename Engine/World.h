@@ -221,7 +221,7 @@ public:
 	Vei2 GetcSize()const { return s.chunkSize / Settings::chunkHasNCells; }
 	Vec2 GetTileSize()const { return (Vec2)GetcSize()/Settings::CellSplitUpIn; }
 	Vei2 GetfCell()const { return Vei2(-1,-1); }
-	Vei2 GetfTile()const { return fTile; }
+	Vei2 GetfTile()const { return Chunk::chunkPos2Flat(fcctPos); }
 	int GetfCellType()const { return chunks(fctPos.x).GetCellTypeAt(fctPos.y / Settings::CellSplitUpIn); }
 	Vei2 GetmChunk()const { return mChunk; }
 	void SetPlayer(Team* player) { this->player = player; }
