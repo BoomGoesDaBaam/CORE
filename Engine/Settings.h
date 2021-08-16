@@ -938,6 +938,53 @@ namespace Settings
 			break;
 		}
 	}
+	class WorldSettings
+	{
+		int defBlueprint = 0;
+		int defType = 0;
+		Vei2 wSizeInCells;
+		Vei2 wSizeInTiles;
+		Vei2 worldHasNChunks = Vei2(3, 3);
+		Vei2 chunkSize = { 2000, 2000 };
+	public:
+		WorldSettings()
+		{
+#ifdef _DEBUG 
+			worldHasNChunks = Vei2(3, 3);
+#endif
+			wSizeInCells = Vei2(worldHasNChunks.x * Settings::chunkHasNCells, worldHasNChunks.y * Settings::chunkHasNCells);
+			wSizeInTiles = Vei2(worldHasNChunks.x * Settings::chunkHasNCells * Settings::CellSplitUpIn, worldHasNChunks.y * Settings::chunkHasNCells * Settings::CellSplitUpIn);
+		}
+		int GetBlueprint()const
+		{
+			return defBlueprint;
+		}
+		int GetDefaultType()const
+		{
+			return defType;
+		}
+		Vei2 GetWorldSizeInCells()const
+		{
+			return wSizeInCells;
+		}
+		Vei2 GetWorldSizeInTiles()const
+		{
+			return wSizeInTiles;
+		}
+		Vei2 GetChunkAmount()const
+		{
+			return worldHasNChunks;
+		}
+		Vei2 GetChunkSize()const
+		{
+			return chunkSize;
+		}
+		Vei2 AddChunkSize(Vei2 delta)
+		{
+			chunkSize += delta;
+			return chunkSize;
+		}
+	};
 	class OPB//ObstacleProductivityBoost
 	{
 		float prodDelta=0.0f;

@@ -33,6 +33,8 @@
 #include "GrabHandle.h"
 #include "FrameHandle.h"
 #include "Team.h"
+#include "WorldGenerator.h"
+#include "Settings.h"
 class Game
 {
 public:
@@ -70,7 +72,6 @@ private:
 	GraphicObjects go;
 	std::unique_ptr<World> curW;
 	FrameHandle igwH;
-
 	GrabHandle gH;
 	int fps_c = 0, fps_d = 0;
 	/********************************/

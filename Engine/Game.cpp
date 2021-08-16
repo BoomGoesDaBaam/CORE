@@ -29,7 +29,7 @@ Game::Game(MainWindow& wnd)
 	resC(std::make_shared<ResourceCollection>(gfx)),
 	go(gfx, resC),
 	teams({ { "player",Team(1) },{"animals",Team(0)} }),
-	curW(std::make_unique<World>(World::WorldSettings(),resC,c,&teams)),
+	curW(std::make_unique<World>(Settings::WorldSettings(),resC,c,&teams)),
 	igwH(resC)
 
 {

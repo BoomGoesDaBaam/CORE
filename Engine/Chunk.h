@@ -748,7 +748,11 @@ public:
 	bool PlaceObstacle(Vei2 tilePos, int type, Team* team = nullptr, int ontoType = -1, int surrBy = -1);
 	Vei2 PutTileInChunk(int x, int y)const;
 	Vec2_<Vei2> GetTilePosOutOfBounds(Vei2 tilePos) const;
-
+	
+	int ObstacleMapAt(Vei2 tilePos)const;
+	int ObstacleMapAt(Vec3_<Vei2> tilePos)const;
+	int ObstacleMapAt(CtPos ctPos)const;
+	bool CellIsInWorld(Vei2& pos)const;
 
 	Obstacle* GetObstacleOutOfBounds(Vei2 tilePos) const;
 
@@ -759,6 +763,8 @@ public:
 
 	void AttackTile(CctPos pos, Obstacle* attacker);
 
+
+	int GroundedMapAt(Vei2 tilePos)const;
 	CtPos FindNearestPositionThatFits(Vei2 tilePos, int type);
 	void SetConMapAt(Vei2 pos, int type, bool value);
 	int GetCellTypeAt(Vei2 pos)const;

@@ -969,6 +969,11 @@ Vei2 Chunk::PutTileInChunk(int x, int y)const
 	}
 	return Vei2(x, y);
 }
+int Chunk::GroundedMapAt(Vei2 tilePos)const
+{
+	auto tccPos = Chunk::Flat2ChunkPos(tilePos,chunks->GetSize() * Settings::chunkHasNTiles);
+	return chunks->operator()(tccPos.x).GetGrounedMapAt(tccPos.y * Settings::CellSplitUpIn + tccPos.z);
+}
 CtPos Chunk::FindNearestPositionThatFits(Vei2 tilePos, int type)
 {
 	int range = 0;
@@ -1478,6 +1483,24 @@ Obstacle* Chunk::GetObstacleAt(Vei2 pos)
 		return obstacles[obstacleMap(baseTile)].get();
 	}
 	return chunks->operator()(CtPos.x).GetObstacleAt(CtPos.y);//GetObstacleOutOfBounds(baseTile);//&obstacles[obstacleMap(pos)];
+}
+int Chunk::ObstacleMapAt(Vei2 tilePos)const
+{
+	auto tccPos = Chunk::Flat2ChunkPos(tilePos, chunks->GetSize() * Settings::chunkHasNTiles);
+	return chunks->operator()(tccPos.x).GetObstacleMapAt(tccPos.y * Settings::CellSplitUpIn + tccPos.z);
+}
+int Chunk::ObstacleMapAt(Vec3_<Vei2> cctPos)const
+{
+	return chunks->operator()(cctPos.x).GetObstacleMapAt(cctPos.y * Settings::CellSplitUpIn + cctPos.z);
+}
+bool Chunk::CellIsInWorld(Vei2& v)const
+{
+	Vei2 wSizeInCells = chunks->GetSize() * Settings::chunkHasNCells;
+	return v.x >= 0 && v.x < wSizeInCells.x&& v.y >= 0 && v.y < wSizeInCells.y;
+}
+int Chunk::ObstacleMapAt(CtPos ctPos)const
+{
+	return chunks->operator()(ctPos.x).GetObstacleMapAt(ctPos.y);
 }
 Matrix<int> Chunk::GetAroundmatrix(Vei2 pos)const
 {
