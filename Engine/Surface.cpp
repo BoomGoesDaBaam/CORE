@@ -166,16 +166,23 @@ Matrix<int> Surface::GetChromaMatrix(Color chroma)const
 	}
 	return matrix;
 }
-bool Surface::TestIfHitOnScreen(Vec2 mpRel, Vei2 size)const
+bool Surface::TestIfHitOnScreen(Vec2 mP)const
 {
-	Vei2 surSize = GetSize() + Vei2(-1,-1);
+	if (RectI(Vei2(0, 0), width, height).Contains((Vei2)mP))
+	{
+		Matrix<int> chromaM = GetChromaMatrix(Colors::Magenta);
+		return chromaM((Vei2)mP) == 1;
+	}
+	return false;
+
+	//Vei2 surSize = GetSize() + Vei2(-1,-1);
 	/*
 	if (size != Vei2(-1, -1))
 	{
-		mpRel.x *= surSize.x / size.x;
-		mpRel.y *= surSize.y / size.y;
+		mP.x *= surSize.x / size.x;
+		mP.y *= surSize.y / size.y;
 	}
 	*/
-	Matrix<int> chromaM = GetChromaMatrix(Colors::Magenta);
-	return Vec2::IsPositivFactor(Vec2((float)mpRel.x / width, (float)mpRel.y / height)) && chromaM(Vei2((int)(((float)mpRel.x / width) * surSize.x),(int)( ((float)mpRel.y / height) * surSize.y))) == 1;
+	//Matrix<int> chromaM = GetChromaMatrix(Colors::Magenta);
+	//return Vec2::IsPositivFactor(Vec2((float)mP.x / width, (float)mP.y / height)) && chromaM((Vei2)mP) == 1; //chromaM(Vei2((int)(((float)mP.x / width) * surSize.x),(int)( ((float)mP.y / height) * surSize.y))) == 1;
 }

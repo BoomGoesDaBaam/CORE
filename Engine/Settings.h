@@ -6,9 +6,7 @@
 namespace Settings
 {
 	/*
-	to do list:
-		-animals consume food every turn finish
-	
+	make flora updateable
 	*/
 	/*		### Types ###
 			0 = water				5 = snow				10 = mountains (high)
@@ -122,6 +120,7 @@ namespace Settings
 	static constexpr int CellSplitUpIn = 25;										//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
 	static constexpr int chunkHasNCells = 5;
 	static constexpr int chunkHasNTiles = chunkHasNCells * CellSplitUpIn;
+	static constexpr float percentForGrab = 0.05;									
 	//Type Traits
 	static constexpr int obstacleTrait_education[] = { 3,-1 };
 	static constexpr int obstacleTrait_heal[] = { 2,3,-1 };
@@ -136,6 +135,25 @@ namespace Settings
 	static const std::vector<int> anyOfBuildingVec = {0,2,3,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,40};
 	static const std::vector<int> anySawmillBoostedObstacles = { 27,30,33,35,36,37,42,43,44,45,46,47,49 };
 	static const std::vector<int> anyWindmillBoostedObstacles = {  };
+	//available Frames wich need to be updated
+	static const std::vector<std::string> frameKeysObstacle = { "fUnit","fTownhall","fLumberjackHut","fInventory","fInventoryBox", "fInventoryStorage","fInventoryWrought"};//dynamic frames
+	static const std::vector<std::string> frameKeysNoObstacle = { "f_resD" };	//static frames
+	const std::vector<std::vector<std::string>> lang_teamnames = { {"In favour of the nature ","Fuer die Natur"},
+																   {"The doubtful students","Die zweifelnden Studenten"},
+																   {"The mangy princes","The raeudigen Prinzen"},
+																   {"Timo and the gang","Timo und die Gang"},
+																   {"The smart alecks","Die Schlauberger"},
+																   {"low wage earners","Die Geringverdiener"},
+																   {"Austrian","Oesterreicher"},
+																   {"Germans","Deutschen"},
+																   {"Swiss","Schweizer"},
+																   {"Cool kinds","Die Coolen"},
+																   {"The nerds","Die Nerds"},
+																   {"The spirituallies","Die Spirituellen"},
+																   {"The discreet thieves","Die diskreten Diebe"},
+																   {"The flatearther","Die Flacherdler"},
+																   {"The vegan","Die Veganer"},
+																   {"The vegetarian","Die Vegetarier"} };
 	//Graphic options
 	//static bool displayObstacles = true;
 	static int probToGrow = 50;
@@ -153,7 +171,7 @@ namespace Settings
 
 
 	//
-	static int lang = 0;															//choosen language (0 = english, 1 = german)
+	static int lang = 1;															//choosen language (0 = english, 1 = german)
 
 	const std::string lang_fieldInformation[] = { "Field information", "Feldinformationen" };
 	const std::string lang_buildmenu[] = { "Build menue", "Baumenue" };
@@ -200,10 +218,9 @@ namespace Settings
 	const std::string lang_gunpowder[] = { "gunpowder", "Schiesspulver" };
 	const std::string lang_silk[] = { "silk", "Seide" };
 
-	const std::string lang_leafes[] = { "leafes", "Blaetter" };
+	const std::string lang_leaves[] = { "leaves", "Blaetter" };
 	const std::string lang_corals[] = { "corals", "Korallen" };
 	const std::string lang_sticks[] = { "sticks", "Stoecke" };
-	const std::string lang_leaves[] = { "leaves", "Blaetter" };
 	const std::string lang_wool[] = { "wool", "Wolle" };
 	const std::string lang_leather[] = { "leather", "Leder" };
 	const std::string lang_fur[] = { "fur", "Fell" };
@@ -233,14 +250,15 @@ namespace Settings
 
 	const std::string lang_unknown[] = { "unbekannt", "unknown" };
 	const std::string lang_noInformation[] = { "no information", "Keine Informationen vorhanden" };
-	const std::string lang_flora[] = { "Flora", "Flora" };			// Goettin
-	const std::string lang_Obstacle[] = { "Obstacle", "Hindernis" };			// Goettin
+	const std::string lang_flora[] = { "Flora", "Flora" };			
+	const std::string lang_Obstacle[] = { "Obstacle", "Hindernis" };
+	const std::string lang_ObstacleHP[] = { "Obstacle HP", "Hindernis LP" };
 	const std::string lang_kilogram[] = { "kg", "kg" };		
 	const std::string lang_stepsLeft[] = { "steps left", "Schritte ueber" };
 	const std::string lang_educate[] = { "educate", "Ausbilden" };
 	const std::string lang_heal[] = { "heal", "Heilen" };
 	const std::string lang_recharge[] = { "recharge", "nachladen" };
-	const std::string lang_automatic[] = { "automatic chop", "automatisch faellen" };
+	const std::string lang_automatic[] = { "autom. chop", "autom. faellen" };
 
 	//Obstacles
 
@@ -252,12 +270,12 @@ namespace Settings
 	const std::string lang_units[] = { "units", "Einheiten" };
 	const std::string lang_maxUnits[] = { "maxUnits", "MaxUnits" };
 
-	const std::string lang_unitName[] = { "Unit name", "Name der Einheit" };
-	const std::string lang_hp[] = { "Health points", "Lebenspunkte" };
+	const std::string lang_unitName[] = { "Unit name", "Art" };
+	const std::string lang_hp[] = { "Health points", "LP" };		//Health points
 	const std::string lang_team[] = { "Team", "Team" };
-	const std::string lang_attacksLeft[] = { "attacks left", "Verb. angriffe" };
-	const std::string lang_chopsLeft[] = { "chops left", "schlaege über" };
-	const std::string lang_chop[] = { "chops", "zerhacken" };
+	const std::string lang_attacksLeft[] = { "attacks left", "Verb. Angriffe" };
+	const std::string lang_chopsLeft[] = { "chops left", "Schlaege über" };
+	const std::string lang_chop[] = { "chop", "zerhacken" };
 	const std::string lang_craftedItem[] = { "crafted items", "Erstellte Items" };
 	const std::string lang_reparation[] = { "reparation", "Reperatur" };
 	
@@ -329,7 +347,8 @@ namespace Settings
 	const std::string lang_nothingSelected[] = { "nothing Selected", "Nichts ausgewaehlt" };
 
 	//Beschreibungen
-	const std::string lang_TownhallInfo[] = { "This is the main building of your town. Use it to heal your surrounding units, train units or defent your town from enemies. Choose one every turn!", "Lagerhalle" };
+	const std::string lang_TownhallInfo[] = { "This is the main building of your town. Use it to heal your surrounding units, train units or defent your town from enemies. Choose one every turn!", 
+											  "Das ist dein Rathhaus. Hier kannst du Einheiten heilen, ausbilden und Gegner angreifen. Du hast jede Runde erneut die Wahl." };
 	const std::string lang_LumberjackHutInfo[] = { "Use this building to chop wood.", "Lagerhalle" };
 
 	//
@@ -435,9 +454,9 @@ namespace Settings
 		{
 			return lang_sticks[lang];
 		}
-		else if (ressource == "leafes")
+		else if (ressource == "leaves")
 		{
-			return lang_leafes[lang];
+			return lang_leaves[lang];
 		}
 		else if (ressource == "wool")
 		{
@@ -493,7 +512,6 @@ namespace Settings
 		}
 	}
 
-	static constexpr float percentForGrab[] = { 0.05f, 0.05f };
 	static bool anyOfCreature(int type)
 	{
 		return std::any_of(std::begin(anyOfAnimalsVec), std::end(anyOfAnimalsVec), [&](const int val) {return type == val; })
@@ -627,7 +645,24 @@ namespace Settings
 		}
 		return v;
 	}
-	
+	template<typename T>
+	static std::vector<T> CombineTwoVectors(const std::vector<T> first, const std::vector<T> second)
+	{
+		std::vector<T> v;
+		for (int i = 0; i < (int)first.size(); i++)
+		{
+			v.push_back(first.at(i));
+		}
+		for (int i = 0; i < (int)second.size(); i++)
+		{
+			v.push_back(second.at(i));
+		}
+		return v;
+	}
+	static std::vector<std::string> GetFrameKeys()
+	{
+		return CombineTwoVectors(frameKeysObstacle, frameKeysNoObstacle);
+	}
 	static std::string GetTypeString(int type)
 	{
 		switch (type)
@@ -903,6 +938,53 @@ namespace Settings
 			break;
 		}
 	}
+	class WorldSettings
+	{
+		int defBlueprint = 0;
+		int defType = 0;
+		Vei2 wSizeInCells;
+		Vei2 wSizeInTiles;
+		Vei2 worldHasNChunks = Vei2(3, 3);
+		Vei2 chunkSize = { 2000, 2000 };
+	public:
+		WorldSettings()
+		{
+#ifdef _DEBUG 
+			worldHasNChunks = Vei2(3, 3);
+#endif
+			wSizeInCells = Vei2(worldHasNChunks.x * Settings::chunkHasNCells, worldHasNChunks.y * Settings::chunkHasNCells);
+			wSizeInTiles = Vei2(worldHasNChunks.x * Settings::chunkHasNCells * Settings::CellSplitUpIn, worldHasNChunks.y * Settings::chunkHasNCells * Settings::CellSplitUpIn);
+		}
+		int GetBlueprint()const
+		{
+			return defBlueprint;
+		}
+		int GetDefaultType()const
+		{
+			return defType;
+		}
+		Vei2 GetWorldSizeInCells()const
+		{
+			return wSizeInCells;
+		}
+		Vei2 GetWorldSizeInTiles()const
+		{
+			return wSizeInTiles;
+		}
+		Vei2 GetChunkAmount()const
+		{
+			return worldHasNChunks;
+		}
+		Vei2 GetChunkSize()const
+		{
+			return chunkSize;
+		}
+		Vei2 AddChunkSize(Vei2 delta)
+		{
+			chunkSize += delta;
+			return chunkSize;
+		}
+	};
 	class OPB//ObstacleProductivityBoost
 	{
 		float prodDelta=0.0f;
@@ -1015,8 +1097,8 @@ namespace Settings
 		{{"cactus",3.f}}),
 		ObstacleStats(				//#6
 		1,{Vei2(1,1)},100,-1,0,0,0,1,
-		{},
-		{{"iron",3.f},{"gold",0.1f}}),
+		{{"wood",1.0f}},
+		{}),
 		ObstacleStats(				//#7
 		1,{Vei2(1,1)},100,-1,0,0,0,1,
 		{{"stone",60.f}},

@@ -90,7 +90,7 @@ public:
 		TileFrame(PartConf& configs, Matrix<int> matrix) 
 			: Object(configs),
 			matrix(matrix),
-			offset(configs.resC->fsC.GetConOffset(Vei2((int)configs.size, (int)configs.size))),
+			offset(configs.resC->GetFrameSize().GetConOffset(Vei2((int)configs.size, (int)configs.size))),
 			outline(matrix.GetMatPlusZeroOutline())
 		{
 			
@@ -134,8 +134,8 @@ private:
 	Graphics& gfx;
 	RandyRandom rr;
 	std::shared_ptr<ResourceCollection> resC;
-	TexturesCollection* tC;
-	FramesizeCollection* fsC;
+	const TexturesCollection* tC;
+	const FramesizeCollection* fsC;
 public:
 	std::vector<std::unique_ptr<Object>> objects;
 	GraphicObjects(Graphics& gfx, std::shared_ptr<ResourceCollection> resC);

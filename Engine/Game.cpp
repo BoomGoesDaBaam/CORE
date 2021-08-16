@@ -28,12 +28,16 @@ Game::Game(MainWindow& wnd)
 	gfx(wnd),
 	resC(std::make_shared<ResourceCollection>(gfx)),
 	go(gfx, resC),
-	curW(std::make_unique<World>(World::WorldSettings(),resC,c, &player)),
+	teams({ { "player",Team(1) },{"animals",Team(0)} }),
+	curW(std::make_unique<World>(Settings::WorldSettings(),resC,c,&teams)),
 	igwH(resC)
 
 {
 	igwH.LoadScene(0,curW.get());
-	resC->tC.IdkCallOnce();
+	//resC->tC.IdkCallOnce();
+
+
+
 	//Settings::ReloadFile();
 
 	//AddScrollWindow(RectF(Vec2(50, 50), 50, 50), RectF(Vec2(110, 50), 10, 50));
@@ -111,10 +115,12 @@ void Game::ComposeFrame()
 	{
 		curW->Draw(gfx);
 		go.Draw();
-		resC->tC.Update(0.015f);
+		resC->UpdateSurfs(0.015f);
 		std::ostringstream oss3;
 		oss3 << "FPS: " << fps_d;
-		resC->tC.fonts.at(0).DrawText(oss3.str().c_str(), 5, 5, 25, Colors::Black);
+		//gfx.DrawText()
+		//resC->tC.fonts.at(0).DrawText(oss3.str().c_str(), 5, 5, 25, Colors::Black);
+		gfx.DrawText(oss3.str().c_str(), 5, 5, 25, &resC->GetSurf().fonts[0], SpriteEffect::ChromaColor(Colors::Magenta, Colors::Black));
 
 		if (debugInfoOn)
 		{
@@ -127,11 +133,14 @@ void Game::ComposeFrame()
 			oss1 << " obstaclesOnCHunk:" << curW->GetObstacleCount() << " PlaceFieldType: "<<Settings::GetTypeString(curW->GetPlaceField());
 			oss2 << "fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CellSize:" << curW->GetcSize().x << "   x-Felder:" << curW->GetRenderRect().left << " Markerpos:" << debugMarkerPos << " Markpos:" << markPos << "Dist: " << Vei2(std::abs(debugMarkerPos.x - markPos.x)+1, std::abs(debugMarkerPos.y - markPos.y)+1);
 			oss4 << "Type:" << curW->GetfCellType() << "  use count tC:" << resC.use_count() << " ignoreMouse:" << ignoreMouse << " opt1:" << Settings::obstaclesOn << " updatedGraphics:" << curW->updatedGraphics;
-			resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 14, Colors::Red);
-			resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 14, Colors::Red);
-			resC->tC.fonts.at(0).DrawText(oss4.str().c_str(), 25, 65, 14, Colors::Red);
+			//resC->tC.fonts.at(0).DrawText(oss1.str().c_str(), 25, 25, 14, Colors::Red);
+			//resC->tC.fonts.at(0).DrawText(oss2.str().c_str(), 25, 45, 14, Colors::Red);
+			//resC->tC.fonts.at(0).DrawText(oss4.str().c_str(), 25, 65, 14, Colors::Red);
+			gfx.DrawText(oss1.str().c_str(), 25, 25, 14, &resC->GetSurf().fonts[0], SpriteEffect::ChromaColor(Colors::Magenta, Colors::Red));
+			gfx.DrawText(oss2.str().c_str(), 25, 45, 14, &resC->GetSurf().fonts[0], SpriteEffect::ChromaColor(Colors::Magenta, Colors::Red));
+			gfx.DrawText(oss4.str().c_str(), 25, 65, 14, &resC->GetSurf().fonts[0], SpriteEffect::ChromaColor(Colors::Magenta, Colors::Red));
 			Vei2 mos = Graphics::GetMidOfScreen();
-			//gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
+			gfx.DrawCircle(mos.x, mos.y, 2, Colors::Black);
 			for (int y = 1; y <= 7; y++)
 			{
 				gfx.DrawLine(Vec2((float)(y * 100), 0.f), Vec2((float)(y * 100), 600.f), Colors::Red);
@@ -174,11 +183,10 @@ void Game::HandleMouseInput(Mouse::Event& e)
 			ignoreMouse = true;
 		}
 	}
-	else
+	else if(igwH.GetCurScene() == 0)
 	{
 		curW->HandleMouseEvents(e, gH);
 		World& w = *curW.get();
-		igwH.UpdateFieldinformation(w, &player);
 	}
 	HandleFrameChanges();
 }
@@ -216,7 +224,7 @@ void Game::HandleFrameChanges()
 		Obstacle* obstacle = curW->GetFocusedObstacle();
 		if (curW->UpdateFrameInfo())
 		{
-			igwH.UpdateFrames(curW->GetFocusedObstacle(),curW->GetStorageObstacle());
+			igwH.UpdateFrames(curW.get());
 			curW->FramesUpdated();
 		}
 	}
@@ -250,7 +258,7 @@ void Game::HandleFrameLogic(FrameEvent& e)
 			{
 				curW->SetCraftMode(e.GetExtra());
 				igwH.LoadScene(0, curW.get());
-				igwH.UpdateFrames(curW->GetFocusedObstacle(),curW->GetStorageObstacle());
+				igwH.UpdateFrames(curW.get());
 			}
 		}
 		if (e.GetAction() == "next turn")
@@ -258,7 +266,7 @@ void Game::HandleFrameLogic(FrameEvent& e)
 			curW->NextTurn();
 			if (curW->GetFocusedObstacle() != nullptr)
 			{
-				igwH.UpdateFrames(curW->GetFocusedObstacle(),curW->GetStorageObstacle());
+				igwH.UpdateFrames(curW.get());
 			}
 		}
 		if (e.GetAction() == "load scene")
@@ -338,48 +346,36 @@ void Game::HandleFrameLogic(FrameEvent& e)
 			Obstacle* giver = nullptr;
 			Obstacle* reciever = nullptr;
 			//
-			if (e.GetAction().find("unit") != std::string::npos)
+			if (e.GetAction().find("fInventory") != std::string::npos)
 			{
-				hitSlot = igwH.GetHitInventorySpace(mP);
+				hitSlot = igwH.GetHitInventorySlot("fInventory",mP);
 				giver = curW->GetFocusedObstacle();
 			}
-			if (e.GetAction().find("box") != std::string::npos)
+			std::vector<std::string> keyStorage = { "fInventoryBox","fInventoryStorage","fInventoryWrought" };
+			for (int i = 0; i < 3; i++)
 			{
-				hitSlot = igwH.GetHitInventoryBox(mP);
-				giver = curW->GetStorageObstacle();
-			}
-			if (e.GetAction().find("storage") != std::string::npos)
-			{
-					hitSlot = igwH.GetHitInventoryStorage(mP);
+				std::string curKey = keyStorage[i];
+				if (e.GetAction().find(curKey) != std::string::npos)
+				{
+					hitSlot = igwH.GetHitInventorySlot(curKey, mP);
 					giver = curW->GetStorageObstacle();
+				}
 			}
-			if (e.GetAction().find("wrought") != std::string::npos)
-			{
-				hitSlot = igwH.GetHitInventoryWrought(mP);
-				giver = curW->GetStorageObstacle();
-			}
-			//
 			
 			int releasedHitSlot;
-			if (igwH.GetHitInventorySpace(mP) != -1)
+			if (igwH.GetHitInventorySlot("fInventory",mP) != -1)
 			{
 				reciever = curW->GetFocusedObstacle();
-				releasedHitSlot = igwH.GetHitInventorySpace(mP);
+				releasedHitSlot = igwH.GetHitInventorySlot("fInventory",mP);
 			}
-			if (igwH.GetHitInventoryBox(mP) != -1)
+			for (int i = 0; i < 3; i++)
 			{
-				reciever = curW->GetStorageObstacle();
-				releasedHitSlot = igwH.GetHitInventoryBox(mP);
-			}
-			if (igwH.GetHitInventoryStorage(mP) != -1)
-			{
-				reciever = curW->GetStorageObstacle();
-				releasedHitSlot = igwH.GetHitInventoryStorage(mP);
-			}
-			if (igwH.GetHitInventoryWrought(mP) != -1)
-			{
-				reciever = curW->GetStorageObstacle();
-				releasedHitSlot = igwH.GetHitInventoryWrought(mP);
+				std::string curKey = keyStorage[i];
+				if (igwH.GetHitInventorySlot(curKey, mP) != -1)
+				{
+					reciever = curW->GetStorageObstacle();
+					releasedHitSlot = igwH.GetHitInventorySlot(curKey, mP);
+				}
 			}
 			//
 			if (reciever != nullptr)
@@ -388,7 +384,7 @@ void Game::HandleFrameLogic(FrameEvent& e)
 				if (hitSlot != e.GetExtra() && reciever->inv->ItemFitsForSlotFlat(move, releasedHitSlot))
 				{
 					reciever->inv->SetItem(std::move(*move), releasedHitSlot);
-					igwH.UpdateFrames(curW->GetFocusedObstacle(), curW->GetStorageObstacle());
+					igwH.UpdateFrames(curW.get());
 				}
 				else if (hitSlot != e.GetExtra() && reciever->inv->WouldFitWhenEmptyFlat(move, releasedHitSlot) && giver->inv->WouldFitWhenEmptyFlat(reciever->inv->GetItem(releasedHitSlot), e.GetExtra()))
 				{
@@ -396,7 +392,7 @@ void Game::HandleFrameLogic(FrameEvent& e)
 
 					reciever->inv->SetItem(std::move(*move), releasedHitSlot);
 					giver->inv->SetItem(std::move(swap), e.GetExtra());
-					igwH.UpdateFrames(curW->GetFocusedObstacle(), curW->GetStorageObstacle());
+					igwH.UpdateFrames(curW.get());
 				}
 			}
 		}

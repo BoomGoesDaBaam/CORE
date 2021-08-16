@@ -42,7 +42,7 @@ struct Materials
 		//Organics
 		values["corals"] = 200;
 		values["sticks"] = 205.f;
-		values["leafes"] = 200;
+		values["leaves"] = 200;
 		values["wool"] = 200;
 		values["leather"] = 120.f;
 		values["fur"] = 200;
@@ -125,6 +125,10 @@ struct Materials
 			values[key] -= kg;
 			kg = 0.0f;
 		}
+	}
+	const std::map<std::string, float>* GetRawData()const
+	{
+		return &values;
 	}
 };
 
@@ -360,15 +364,15 @@ public:
 };
 class Team
 {
-	std::string teamname = "kein Name";
+	int teamname = 0;
 	Materials m;
 public:
 
-	Team(std::string teamname)
+	Team(int teamname)
 	{
 		this->teamname = teamname;
 	}
 	Materials& GetMaterials() { return m; }
-	std::string GetTeamName() { return teamname; }
+	std::string GetTeamName() { return Settings::lang_teamnames[teamname][Settings::lang]; }
 };
 

@@ -9,7 +9,24 @@ ResourceCollection::ResourceCollection(Graphics& gfx)
 {
 
 }
-
+const TexturesCollection& ResourceCollection::GetSurf()const
+{
+	return tC;
+}
+const FramesizeCollection& ResourceCollection::GetFrameSize()const
+{
+	return fsC;
+}
+//
+void ResourceCollection::UpdateSurfs(float dt)
+{
+	tC.Update(dt);
+}
+//
+void ResourceCollection::UpdateFieldCon(Vei2 size)
+{
+	fsC.UpdateFieldCon(size);
+}
 //  ##### TEXTUREN #####
 
 TexturesCollection::TexturesCollection(Graphics& gfx)
@@ -298,14 +315,16 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 			maskedIndex++;
 		}
 	}
-
+	FillMaskedSurfaceWithWater();
 	//Delay anpassen
 	fields[6].SetKeepTime(0.3f);
 	fields[7].SetKeepTime(0.4f);
 	fields[0].SetKeepTime(0.3f);
 	fields[12].SetKeepTime(0.3f);
 	//Fonts
-	fonts.push_back(Font("Textures/Font5.bmp", 112, '!', '~', Colors::FontDelimitor, Colors::FontNewLine, gfx));
+	fonts.push_back(Font("Textures/fontNeu.bmp",Colors::Magenta, 11, '!', '~', Colors::FontDelimitor, Colors::FontNewLine,1.2f));
+
+
 	//Items
 	for (int i = 0; i < 13; i++)
 	{
@@ -313,7 +332,7 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 		items[i].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(1150 + (i%10) * 51, 601 + (i/10) * 51), 50, 50)));
 	}
 }
-void TexturesCollection::IdkCallOnce()
+void TexturesCollection::FillMaskedSurfaceWithWater()
 {
 	for (int f = 0; f < 5; f++)
 	{
@@ -387,9 +406,10 @@ FramesizeCollection::FramesizeCollection(TexturesCollection* tC):tC(tC)
 {
 	for (int i = 0; i < 4; i++)
 	{
-		FieldCon.push_back(RectI(Vei2(0, 0), 0, 0));
+		fieldCon.push_back(RectI(Vei2(0, 0), 0, 0));
 	}
-	Update(Vei2(100, 100));								// !!! Hardcoded
+	UpdateFieldCon(Vei2(100, 100));								
+	UpdateFramePos(Vec2(Graphics::ScreenWidth, Graphics::ScreenHeight), 1.f);
 }
 std::vector<RectI> FramesizeCollection::GetConOffset(Vei2 cSize)const
 {
@@ -416,9 +436,22 @@ std::vector<RectI> FramesizeCollection::GetConOffset(Vei2 cSize)const
 	//new elements need to be added in loop and in GetPositionsOfCon!!!!!!!!!!!!!
 	return v;
 }
-void FramesizeCollection::Update(Vei2 cSize)
+void FramesizeCollection::UpdateFieldCon(Vei2 cSize)
 {
-	FieldCon = GetConOffset(cSize);
+	fieldCon = GetConOffset(cSize);
+}
+void FramesizeCollection::UpdateFramePos(Vec2 screenSize, float guiScale)
+{
+	this->guiScale = guiScale;
+	int frameHeight = (int)((float)(420) * guiScale);
+	int frameWidth = (int)((float)(210) * guiScale);
+
+	framePos["frameResDisPos"] = RectI(Vei2((int)(screenSize.x - frameWidth - 10), 10), frameWidth, frameHeight);
+	
+	framePos["framePos"] = RectI(Vei2((int)(screenSize.x / 8), (int)((screenSize.y - frameHeight)/2)), frameWidth, frameHeight);
+	RectF fp = (RectF)framePos.at("framePos");
+	
+	framePos["frameHeadline"] = RectI(Vei2(0,0), fp.GetWidth(), fp.GetHeight() * Settings::percentForGrab);
 }
 std::vector<SubAnimation> FramesizeCollection::GetConnectionAnimationVec(int lookFor, bool masked, Matrix<int> aMat)const
 {
@@ -618,4 +651,16 @@ bool FramesizeCollection::FIDF(int first, int second)const	//FIRST IS DRAWN FIRS
 		}
 	}
 	return false;
+}
+const std::vector<RectI>& FramesizeCollection::GetFieldCon()const
+{
+	return fieldCon;
+}
+const RectI& FramesizeCollection::GetFramePos(std::string value)const
+{
+	return framePos.at(value);
+}
+float FramesizeCollection::GetGuiScale()const
+{
+	return guiScale;
 }

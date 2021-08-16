@@ -29,6 +29,7 @@
 #include <cmath>
 #include "Matrix.h"
 #include "Settings.h"
+#include "Font.h"
 class Graphics
 {
 public:
@@ -433,12 +434,14 @@ public:
 	template<typename E>
 	void DrawSurface(RectI pos, RectI sourceR, const Surface& s, E effect, int n90rot=0)
 	{
-		if (pos.right < screenRect.left || pos.left > screenRect.right || pos.bottom < screenRect.top || pos.top > screenRect.bottom)
+
+		pos.right--;
+		pos.bottom--;
+		if (pos.right < screenRect.left || pos.left > screenRect.right || pos.bottom < screenRect.top || pos.top > screenRect.bottom ||
+			pos.GetWidth() == 0 || pos.GetHeight() == 0)
 		{
 			return;
 		}
-		pos.right--;
-		pos.bottom--;
 
 		RectI inFpos = pos;
 		int skippedLeft = 0, skippedRight = 0, skippedTop = 0, skippedBottom = 0;
@@ -541,6 +544,87 @@ public:
 				{
 					//PutPixel((int)pos.left + x, (int)pos.top + y, Colors::Black);
 				}
+			}
+		}
+	}
+	template<typename E>
+	void DrawText(std::string text,Vei2 pos, int size, const Font* font, E effect)
+	{
+		DrawText(text, pos.x, pos.y, size, font, effect);
+	}
+	template<typename E>
+	void DrawText(std::string text, int x, int y, int size, const Font* font, E effect)
+	{
+		float charDist = font->GetCharDist();
+		int xM = 0;
+		int yM = 0;
+
+		const std::vector<RectI>& cRects = font->GetCharRects();
+		int first = font->GetFirst();
+		int last = font->GetLast();
+		const Surface& surface = font->GetSurface();
+
+		//if (costumWidth)
+		//{
+		for (int i = 0; i < (int)text.length(); i++)
+		{
+			if (text[i] >= first && text[i] <= last)
+			{
+				float ratio = (float)cRects[(__int64)text[i] - first].GetWidth() / cRects[(__int64)text[i] - first].GetHeight();
+				Vec2 charSize(ratio * size, (float)size);
+				DrawSurface(RectI(Vei2(x + xM, y), (int)charSize.x, (int)charSize.y), cRects[(__int64)text[i] - first], surface, effect);
+				xM += (int)((float)size * charDist * ratio);
+			}
+			if (text[i] == ' ')
+			{
+				xM += (int)(size * 0.7f);
+			}
+		}
+	}
+	template<typename E>
+	void DrawTextCentered(std::string text, Vei2 pos, int size, const Font* font, E effect)
+	{
+		DrawTextCentered(text, pos.x, pos.y, size, font, effect);
+	}
+	template<typename E>
+	void DrawTextCentered(std::string text, int x, int y, int size, const Font* font, E effect)
+	{
+		float charDist = font->GetCharDist();
+		int xM = 0;
+		int yM = 0;
+
+		const std::vector<RectI>& cRects = font->GetCharRects();
+		int first = font->GetFirst();
+		int last = font->GetLast();
+		const Surface& surface = font->GetSurface();
+
+		int width = 0;
+		for (int i = 0; i < (int)(text.length()); i++)
+		{
+			if (text[i] >= first && text[i] <= last)
+			{
+				float ratio = (float)cRects[(__int64)text[i] - first].GetWidth() / cRects[(__int64)text[i] - first].GetHeight();
+				width += (__int64)(size * charDist * ratio);
+			}
+			if (text[i] == ' ')
+			{
+				width += (int)(size * 0.7f);
+			}
+		}
+		x -= width / 2;
+		y -= size / 2;
+		for (int i = 0; i < (int)text.length(); i++)
+		{
+			if (text[i] >= first && text[i] <= last)
+			{
+				float ratio = (float)cRects[(__int64)text[i] - first].GetWidth() / cRects[(__int64)text[i] - first].GetHeight();
+				Vec2 charSize(ratio * size, (float)size);
+				DrawSurface(RectI(Vei2(x + xM, y), (int)charSize.x, (int)charSize.y), cRects[(__int64)text[i] - first], surface, effect);
+				xM += (__int64)(size * charDist * ratio);
+			}
+			if (text[i] == ' ')
+			{
+				xM += (int)(size * 0.7f);
 			}
 		}
 	}

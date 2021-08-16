@@ -1,10 +1,11 @@
 #pragma once
 #include "Font.h"
 #include "SpriteEffect.h"
-Font::Font(std::string filename, int nRaws, int nColums, int charWidth, int charHeight,char first, char last,Graphics& gfx):
-	s(filename),
+Font::Font(std::string filename,Color chroma, int nRaws, int nColums, int charWidth, int charHeight,char first, char last, float distBetwCharFactor):
+	surface(filename),
 	nRaws(nRaws),nColums(nColums), charWidth(charWidth),charHeight(charHeight), first(first),last(last),
-	gfx(gfx)
+	chroma(chroma),
+	distBetwCharFactor(distBetwCharFactor)
 {
 	for (int y = 0; y < nRaws; y++)
 	{
@@ -18,10 +19,11 @@ Font::Font(std::string filename, int nRaws, int nColums, int charWidth, int char
 		}
 	}
 }//94
-Font::Font(std::string filename, int charHeight, char first, char last, Color delimiter, Color newLine, Graphics& gfx) :
-	s(filename),
+Font::Font(std::string filename, Color chroma, int charHeight, char first, char last, Color delimiter, Color newLine, float distBetwCharFactor) :
+	surface(filename),
 	charHeight(charHeight), first(first), last(last),
-	gfx(gfx)
+	chroma(chroma),
+	distBetwCharFactor(distBetwCharFactor)
 {
 	Vei2 curPos = Vei2(0, 0);
 	int curWidth = 0;
@@ -30,24 +32,25 @@ Font::Font(std::string filename, int charHeight, char first, char last, Color de
 	{
 		curWidth = 0;
 
-		for (int x = curPos.x; s.GetPixel(x,curPos.y) != delimiter && s.GetPixel(x, curPos.y) != newLine; x++)
+		for (int x = curPos.x; surface.GetPixel(x,curPos.y) != delimiter && surface.GetPixel(x, curPos.y) != newLine; x++)
 		{
 			curWidth++;
 		}
 		cRects.push_back(RectI(curPos, curWidth, charHeight));
 
-		if (s.GetPixel(curPos.x + curWidth, curPos.y) == delimiter)
+		if (surface.GetPixel(curPos.x + curWidth, curPos.y) == delimiter)
 		{
 			curPos.x += curWidth + 1;
 		}
-		else if (s.GetPixel(curPos.x + curWidth, curPos.y) == newLine)
+		else if (surface.GetPixel(curPos.x + curWidth, curPos.y) == newLine)
 		{
 			curPos = Vei2(0, curPos.y + charHeight+1);
 		}
 	}
 	costumWidth = true;
 }
-void Font::DrawText(std::string text, int x, int y, int size, Color c)
+/*
+void Font::DrawText(std::string text, int x, int y, int size, Color c)	
 {
 	int xM = 0;
 	int yM = 0;
@@ -59,7 +62,7 @@ void Font::DrawText(std::string text, int x, int y, int size, Color c)
 			{
 				float ratio = (float)cRects[(__int64)text[i] - first].GetWidth() / cRects[(__int64)text[i] - first].GetHeight();
 				Vec2 charSize(ratio * size, (float)size);
-				gfx.DrawSurface(RectI(Vei2(x + xM, y), (int)charSize.x, (int)charSize.y), cRects[(__int64)text[i] - first], s, SpriteEffect::ChromaColor(Colors::Magenta, c));
+				//gfx.DrawSurface(RectI(Vei2(x + xM, y), (int)charSize.x, (int)charSize.y), cRects[(__int64)text[i] - first], s, SpriteEffect::ChromaColor(Colors::Magenta, c));
 				xM += (int)((float)size * 0.9f * ratio);
 			}
 			if (text[i] == ' ')
@@ -75,7 +78,7 @@ void Font::DrawText(std::string text, int x, int y, int size, Color c)
 		{
 			if (text[i] >= first && text[i] <= last)
 			{
-				gfx.DrawSurface(RectI(Vei2(x + xM, y), (int)(size * radio), size), cRects[(__int64)text[i] - first], s, SpriteEffect::ChromaColor(Colors::Magenta, c));
+				//gfx.DrawSurface(RectI(Vei2(x + xM, y), (int)(size * radio), size), cRects[(__int64)text[i] - first], s, SpriteEffect::ChromaColor(Colors::Magenta, c));
 				xM += (int)(size * radio);
 			}
 			if (text[i] == ' ')
@@ -114,7 +117,7 @@ void Font::DrawTextCentered(std::string text, Vei2 pos, int size, Color c)
 			{
 				float ratio = (float)cRects[(__int64)text[i] - first].GetWidth() / cRects[(__int64)text[i] - first].GetHeight();
 				Vec2 charSize(ratio * size, (float)size);
-				gfx.DrawSurface(RectI(Vei2(x + xM, y), (int)charSize.x, (int)charSize.y), cRects[(__int64)text[i] - first], s, SpriteEffect::ChromaColor(Colors::Magenta, c));
+				//gfx.DrawSurface(RectI(Vei2(x + xM, y), (int)charSize.x, (int)charSize.y), cRects[(__int64)text[i] - first], surface, SpriteEffect::ChromaColor(Colors::Magenta, c));
 				xM += (__int64)(size * 0.9f * ratio);
 			}
 			if (text[i] == ' ')
@@ -140,5 +143,15 @@ void Font::DrawTextCentered(std::string text, Vei2 pos, int size, Color c)
 			}
 		}
 	}
-	*/
+}
+*/
+int Font::GetFirst()const { return first; }
+int Font::GetLast()const { return last; }
+const std::vector<RectI>& Font::GetCharRects()const
+{
+	return cRects;
+}
+const Surface& Font::GetSurface()const
+{
+	return surface;
 }

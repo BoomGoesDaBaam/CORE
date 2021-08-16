@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
 #include <cmath>
+#include <sstream>
+#include <iomanip>
 #include "RandyRandom.h"
 #include "Rect.h"
 namespace GigaMath
@@ -71,6 +73,12 @@ namespace GigaMath
 	static Vec2_<T> NegMod(Vec2_<T> x, int divisor)			//divisor has to be positiv
 	{
 		return Vec2_<T>(NegMod(x.x, divisor), NegMod(x.y, divisor));
+	}
+	static std::string float2StringWithPrecision(int precision, float number)
+	{
+		std::stringstream stream;
+		stream << std::fixed << std::setprecision(precision) << number;
+		return stream.str();
 	}
 	
 	template <typename T>

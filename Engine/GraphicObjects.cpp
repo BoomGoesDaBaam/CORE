@@ -3,8 +3,8 @@
 
 GraphicObjects::GraphicObjects(Graphics& gfx, std::shared_ptr<ResourceCollection> resC):gfx(gfx), resC(std::move(resC))
 {
-	tC = &resC->tC;
-	fsC = &resC->fsC;
+	tC = &resC->GetSurf();
+	fsC = &resC->GetFrameSize();
 }
 
 void GraphicObjects::Update(float dt)

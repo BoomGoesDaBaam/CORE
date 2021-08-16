@@ -13,7 +13,7 @@ public:
 	Animation(float keepTime = 1.0f): keepTime(keepTime) {}
 	Animation(std::vector<Surface> frames, float keepTime = 1.0f) :frames(frames),keepTime(keepTime)
 	{}
-	Animation(Animation& a) : frames(a.frames), keepTime(a.keepTime) 
+	Animation(const Animation& a) : frames(a.frames), keepTime(a.keepTime) 
 	{
 	
 	}
@@ -59,19 +59,19 @@ public:
 	{
 		return (int)frames.size();
 	}
-	std::vector<Surface>& GetFrames()
+	const std::vector<Surface>& GetFrames()const
 	{
 		return frames;
 	}
-	Vei2 GetSize()
+	Vei2 GetSize()const
 	{
 		return Vei2(frames[0].GetWidth(), frames[0].GetHeight());
 	}
-	int GetWidth()
+	int GetWidth()const
 	{
 		return frames[0].GetWidth();
 	}
-	int GetHeight()
+	int GetHeight()const
 	{
 		return frames[0].GetHeight();
 	}
@@ -88,10 +88,10 @@ public:
 class SubAnimation
 {
 public:
-	Animation& a;
+	const Animation& a;
 	RectI sourceR, posIn50x50grit;
 	Matrix<int> chromaM;
-	SubAnimation(Animation& a, RectI sourceR, RectI posIn50x50grit)
+	SubAnimation(const Animation& a, RectI sourceR, RectI posIn50x50grit)
 		:
 		a(a),
 		sourceR(sourceR),
@@ -106,7 +106,7 @@ public:
 
 
 		Matrix<int> mat = Matrix<int>(sourceR.GetWidth(), sourceR.GetHeight(), 1);
-		int size = (int)a.GetFrames().size();
+		int size = (int)(a.GetFrames().size());
 		auto& frames = a.GetFrames();
 
 		for (int y = 0; y < sourceR.GetHeight(); y++)

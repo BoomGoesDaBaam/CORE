@@ -83,7 +83,7 @@ public:
 	const Color* Data() const;
 	bool IsInBounds(int x, int y)const;
 	Matrix<int> GetChromaMatrix(Color chroma)const;		// '0' == chroma		'1' == nonchroma
-	bool TestIfHitOnScreen(Vec2 mP, Vei2 size = Vei2(-1,-1))const;
+	bool TestIfHitOnScreen(Vec2 mP)const;
 private:
 	std::vector<Color> pixels;
 	int width = 0;

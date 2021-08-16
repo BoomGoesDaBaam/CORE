@@ -300,13 +300,13 @@ public:
 			}
 		}
 		hp = Settings::obstacleStats[type].baseHp;
-		animations.push_back(Animation(this->resC->tC.obstacles[type]));
+		animations.push_back(Animation(this->resC->GetSurf().obstacles[type]));
 		switch (type)
 		{
 		case 1:
 		case 4:
 			//state = 1;
-			animations.push_back(Animation(this->resC->tC.multiObstacles[Settings::Obstacle2MultiObstacle(type)]));
+			animations.push_back(Animation(this->resC->GetSurf().multiObstacles[Settings::Obstacle2MultiObstacle(type)]));
 			break;
 
 		}
@@ -370,9 +370,9 @@ public:
 			float tileWidth = rect.GetWidth() / Settings::obstacleStats[type].size[0].x;
 			float startX = rect.left + ((Settings::obstacleStats[type].size[0].x / 2)-1) * tileWidth;
 			float startY = rect.top + (float)(Settings::obstacleStats[type].size[0].y-0.5f) * tileWidth;
-			gfx.DrawSurface(RectI(Vei2((int)startX, (int)startY), (int)tileWidth*3, (int)tileWidth), resC->tC.frames[1].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.75f), 0);
+			gfx.DrawSurface(RectI(Vei2((int)startX, (int)startY), (int)tileWidth*3, (int)tileWidth), resC->GetSurf().frames[1].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.75f), 0);
 			//gfx.DrawSurface(RectI(Vei2(startX, startY), tileWidth * 3, tileWidth), resC->tC.frames[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
-			gfx.DrawSurface(RectI(Vei2((int)startX, (int)startY), (int)((tileWidth * 3) * percentage), (int)tileWidth), RectI(Vei2(0, 0), (int)((float)(30) * percentage), 10), resC->tC.frames[2].GetCurSurface(),SpriteEffect::Transparent(Colors::Magenta,0.75f));
+			gfx.DrawSurface(RectI(Vei2((int)startX, (int)startY), (int)((tileWidth * 3) * percentage), (int)tileWidth), RectI(Vei2(0, 0), (int)((float)(30) * percentage), 10), resC->GetSurf().frames[2].GetCurSurface(),SpriteEffect::Transparent(Colors::Magenta,0.75f));
 			//gfx.DrawSurface(RectI(Vei2(startX, startY), tileWidth * 3, tileWidth), resC->tC.frames[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
 		}
 	}
@@ -612,7 +612,6 @@ class Chunk
 	void AttractObstacles(Obstacle* attracer, const CtPos& attractTo, const int& radius, const std::vector<int>& allowedTypes, bool costsFood = false);
 
 	CtPos FindNearestObstacle(CtPos pos,std::vector<int> allowedTypes, int radius);
-	CtPos FindNearestPositionThatFits(Vei2 tilePos, int type);
 	void ApplyAutoAttackPosWhenNeeded(Obstacle* obstacle);
 	void ApplyObstacleEffectFirst(Obstacle* obstacle);
 	void ApplyObstacleEffectSecond(Obstacle* obstacle);
@@ -749,15 +748,24 @@ public:
 	bool PlaceObstacle(Vei2 tilePos, int type, Team* team = nullptr, int ontoType = -1, int surrBy = -1);
 	Vei2 PutTileInChunk(int x, int y)const;
 	Vec2_<Vei2> GetTilePosOutOfBounds(Vei2 tilePos) const;
-
+	
+	int ObstacleMapAt(Vei2 tilePos)const;
+	int ObstacleMapAt(Vec3_<Vei2> tilePos)const;
+	int ObstacleMapAt(CtPos ctPos)const;
+	bool CellIsInWorld(Vei2& pos)const;
 
 	Obstacle* GetObstacleOutOfBounds(Vei2 tilePos) const;
 
-	void NextTurnFirst(std::map<std::string, Team*> teams);
-	void NextTurnSecond(std::map<std::string, Team*> teams);
+	void NextTurnFirst(std::map<std::string, Team>* teams);
+	void NextTurnSecond(std::map<std::string, Team>* teams);
+
+	void NextTurnSecondObstacle(Obstacle* obstacle, std::map<std::string, Team>* teams);
 
 	void AttackTile(CctPos pos, Obstacle* attacker);
 
+
+	int GroundedMapAt(Vei2 tilePos)const;
+	CtPos FindNearestPositionThatFits(Vei2 tilePos, int type);
 	void SetConMapAt(Vei2 pos, int type, bool value);
 	int GetCellTypeAt(Vei2 pos)const;
 	int GetGrounedMapAt(Vei2 pos)const;
@@ -800,7 +808,7 @@ public:
 	static CtPos Flat2ChunkPosCtPos(Vei2 tilePos, Vei2 wSizeInTiles)
 	{
 		CctPos pos = Flat2ChunkPos(tilePos, wSizeInTiles);
-		return CtPos(pos.x, pos.y * Settings::CellSplitUpIn + pos.x);
+		return CtPos(pos.x, pos.y * Settings::CellSplitUpIn + pos.z);
 	}
 	static Vei2 PutTileInWorld(Vei2 pos, Vei2 wSizeInTiles)
 	{
