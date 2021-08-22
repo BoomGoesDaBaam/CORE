@@ -180,7 +180,7 @@ public:
 	Vei2 GetwSize()const { return s.GetWorldSizeInCells(); }
 	Vei2 GetcSize()const { return s.GetChunkSize() / Settings::chunkHasNCells; }
 	Vec2 GetTileSize()const { return (Vec2)GetcSize()/Settings::CellSplitUpIn; }
-	Vei2 GetfCell()const { return Vei2(-1,-1); }
+	Vei2 GetfCell()const { return fctPos.x*Settings::chunkHasNCells + fctPos.y / Settings::CellSplitUpIn; }
 	Vei2 GetfTile()const { return Chunk::chunkPos2Flat(fcctPos); }
 	int GetfCellType()const { return chunks(fctPos.x).GetCellTypeAt(fctPos.y / Settings::CellSplitUpIn); }
 	Vei2 GetmChunk()const { return mChunk; }

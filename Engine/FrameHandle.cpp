@@ -939,21 +939,6 @@ void FrameHandle::UpdateFrame(const World* world, int process, std::string key, 
 		else
 			static_cast<TextBox*>(comp->GetComp("tObstacleHPIs"))->Settext("...");
 	}
-	//
-	/*
-	p3->SetText(std::to_string(playerM.values["wood"]), "t_nWood");
-	p3->SetText(std::to_string(playerM.values["iron"]), "t_nIron");
-	p3->SetText(std::to_string(playerM.values["sand"]), "t_nSand");
-	p3->SetText(std::to_string(playerM.values["stone"]), "t_nStone");
-	p3->SetText(std::to_string(playerM.values["copper"]), "t_nCopper");
-	p3->SetText(std::to_string(playerM.values["gold"]), "t_nGold");
-	p3->SetText(std::to_string(playerM.values["aluminum"]), "t_nAluminum");
-	p3->SetText(std::to_string(playerM.values["emerald"]), "t_nEmerald");
-	p3->SetText(std::to_string(playerM.values["sapphire"]), "t_nSapphire");
-	p3->SetText(std::to_string(playerM.values["robin"]), "t_nRobin");
-	p3->SetText(std::to_string(playerM.values["diamond"]), "t_nDimond");
-	p3->SetText(std::to_string(playerM.values["amber"]), "t_nAmber");
-	*/
 	const std::map<std::string, float>* playerM = world->GetPlayer()->GetMaterials().GetRawData();
 	std::map<std::string, float>::const_iterator i;
 	for (i = playerM->begin(); i != playerM->end(); i++)
@@ -962,8 +947,15 @@ void FrameHandle::UpdateFrame(const World* world, int process, std::string key, 
 		key[0] -= 32;
 		key = "t" + key + "Is";
 		if (comp->GetComp(key) != nullptr)
-		{
-			static_cast<TextBox*>(comp->GetComp(key))->Settext(GigaMath::float2StringWithPrecision(2,i->second)+" kg");
+		{ 
+			if (key != "tMaxUnitsIs" && key != "tUnitsIs")
+			{
+				static_cast<TextBox*>(comp->GetComp(key))->Settext(GigaMath::float2StringWithPrecision(2, i->second) + " kg");
+			}
+			else
+			{
+				static_cast<TextBox*>(comp->GetComp(key))->Settext(GigaMath::float2StringWithPrecision(2, i->second));
+			}
 		}
 	}
 	/*
@@ -1353,7 +1345,7 @@ void FrameHandle::LoadScene(int scene, World* world)
 			fCraftSelection->SetMoveable(false);
 			fCraftSelection->AddText(Settings::lang_forge[Settings::lang], RectF(Vec2(screenWidth / 8 * 3, screenHeight/24), screenHeight/2, screenWidth / 21), 50, &resC->GetSurf().fonts[0], Colors::Black, "ForgeH", { 1 });
 
-			Button* b_back = fCraftSelection->AddButton(RectF(Vec2(30, 100), 60, 30), &resC->GetSurf().windowsFrame[6], &resC->GetSurf().windowsFrame[6], "b_buildback", &resC->GetSurf().fonts[0], { 1 });
+			Button* b_back = fCraftSelection->AddButton(RectF(Vec2(30, 60), 60, 30), &resC->GetSurf().windowsFrame[6], &resC->GetSurf().windowsFrame[6], "b_buildback", &resC->GetSurf().fonts[0], { 1 });
 			b_back->extra1 = 0;
 			b_back->bFunc = BLoadScene;
 			b_back->text = Settings::lang_back[Settings::lang];

@@ -14,10 +14,20 @@ class WorldGenerator
 	Vei2 mChunk = { 0,0 };
 	Vec2 c = Vec2(0,0);
 
+	//surrBy just available after calling UpdateConMap and UpdateGroundedMap!!!
 	void GenerateCircle(Vei2 pos, int radius, int type, int ontoType = -1, int surrBy = -1);
-	void GenerateLine(Vec2 p0, Vec2 p1, int type, int ontoType = -1, int thickness = 1, int surrBy = -1);
-	void GenerateExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 100, int surrBy = -1);
+	void GenerateLine(Vec2 p0, Vec2 p1, int type, int ontoType = -1, int thickness = 1, int surrBy = -1);	//Points arent allowed to cross worldrecusionLine!!!
+	void GenerateExplosion(Vei2 pos, int maxLineLength, int type, int ontoType = -1, int nRolls = 30, int surrBy = -1);
 	bool GenerateCell(Vei2 pos, int type, int ontoType = -1, int surrBy = -1);
+	void GenerateExplosionRect(RectI sprayPos, int maxLineLength, int type, int nRolls=30);
+	std::vector<Vei2> GenerateRandomExplosions(RectI bounds, int maxLineLength, int type, float density, int ontoType = -1, int nRolls = 30, int surrBy = -1);
+	void GenerateExplosions(std::vector<Vei2> spawnPoints, int maxLineLength, int type, int ontoType = -1, int nRolls = 30, int surrBy = -1);
+
+	void GenerateObstaclesOnRandomPosition(RectI bounds, int type, float density, std::vector<int> ontoTypes, Team* team = nullptr);
+	void GenerateObstaclegroupOnRandomPosition(RectI bounds, int type, float density, std::vector<int> ontoTypes, Team* team);
+	CtPos SpawnPlayer(Vei2 tilePos);
+	void InitEnemies();
+	void SpawnEnemie(int spawnCode, Team* team, RectI bounds);
 
 	std::vector<Obstacle*> GenerateObstacleExplosion(Vei2 pos, int nMax, int maxLineLength, int type, Team* team = nullptr, int ontoType = -1, int nRolls = 25, int surrBy = -1);
 	void GenerateObstacleLine(Vec2 tile0, Vec2 tile1, int type, Team* team = nullptr, int ontoType = -1, int thickness = 1, int surrBy = -1);
@@ -30,7 +40,6 @@ class WorldGenerator
 	bool IsSurroundedBy(Vei2 pos, int type);		//3x3 around pos
 
 	void InitChunks();
-	void GenerateSprayRect(RectI sprayPos, int sprayLength, int type);
 public:
 	WorldGenerator(Matrix<Chunk>& chunks, sharedResC resC, const Settings::WorldSettings& settings,std::map<std::string, Team>* teams);
 
@@ -47,11 +56,11 @@ public:
 	{
 		return c;
 	}
-	static Vei2 PutCellInWorldX(Vei2 v, Vei2 wSizeInCells)
+	static Vei2 PutCellInWorld(Vei2 v, Vei2 wSizeInCells)
 	{
-		return PutCellInWorldX(v.x, v.y, wSizeInCells);
+		return PutCellInWorld(v.x, v.y, wSizeInCells);
 	}
-	static Vei2 PutCellInWorldX(int x, int y, Vei2 wSizeInCells)
+	static Vei2 PutCellInWorld(int x, int y, Vei2 wSizeInCells)
 	{
 		if (x < 0)
 		{

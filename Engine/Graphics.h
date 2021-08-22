@@ -648,6 +648,7 @@ private:
 	
 
 public:
+	//When frame is bigger than screen, input will be invalid
 	static constexpr int ScreenWidth = 1280;
 	static constexpr int ScreenHeight = 720;
 	static Vei2 GetMidOfScreen() { return Vei2(ScreenWidth / 2, ScreenHeight / 2); };

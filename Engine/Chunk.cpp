@@ -858,6 +858,7 @@ bool Chunk::PlaceObstacle(Vei2 tilePos, int type, Team* team, int ontoType, int 
 	//Matrix<int> aMat = chunks->operator()(ctPos.x).GetAroundmatrix(ctPos.y / Vei2(Settings::CellSplitUpIn,Settings::CellSplitUpIn));// GetAroundMatrix(tileIsInCell);
 	//if (ObstaclePosAllowed(tilePos, type) && (ontoType == -1 || ontoType == cells(tileIsInCell).type) && (surrBy == -1 || aMat.HasValue(surrBy)))
 	//{
+	tilePos = Chunk::PutTileInWorld(tilePos, chunks->GetSize() * Settings::chunkHasNTiles);
 	if (Settings::spawnObstacles && TileIsInWorld(tilePos))
 	{
 		CtPos ctPos = Chunk::PutCtPosInWorld(CtPos(Vei2(0, 0), tilePos), chunks->GetSize());

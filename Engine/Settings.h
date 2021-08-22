@@ -112,7 +112,7 @@ namespace Settings
 	static constexpr int nDiffFieldTypes = 15;										//Array Nullterminator == -1
 	static constexpr int nDiffObstacles = 51;
 	static constexpr int nDiffWindows = 1;
-	static constexpr int typeLayer[] = { 0,6,8,14,4,3,9,1,5,7,2,13,12,10,11,-1 };		//Orden in wich the connections are drawn
+	static constexpr int typeLayer[] = { 0,6,8,14,4,3,9,1,2,5,7,13,12,10,11,-1 };		//Orden in wich the connections are drawn
 	static constexpr int hillTypesARE[] = { 11,10,12,-1 };
 	static constexpr int liquidsTypesARE[] = { 0,6,8,-1 };
 	static constexpr int maskTypesARE[] = { 14,-1 };							    //Types like swamp that need to copy watertexture behind
@@ -161,7 +161,7 @@ namespace Settings
 	static bool obstaclesOn = true;
 	static bool spawnObstacles = true;
 	static bool testMode = false;
-	static bool zoomingEnabled = false;
+	static bool zoomingEnabled = true;
 
 	static bool framesOn = true;
 
@@ -171,7 +171,7 @@ namespace Settings
 
 
 	//
-	static int lang = 1;															//choosen language (0 = english, 1 = german)
+	static int lang = 0;															//choosen language (0 = english, 1 = german)
 
 	const std::string lang_fieldInformation[] = { "Field information", "Feldinformationen" };
 	const std::string lang_buildmenu[] = { "Build menue", "Baumenue" };

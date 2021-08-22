@@ -53,8 +53,8 @@ struct Materials
 		values["cactus"] = 200;
 		values["sapling"] = 200;		//not added to showresorrces
 		values["feather"] = 200;		//not added to showresorrces
-		values["maxUnits"] = 5;		//not added to showresorrces
-		values["units"] = 5;		//not added to showresorrces
+		values["maxUnits"] = 5;		
+		values["units"] = 5;		
 		values["silk"] = 100;		//not added to showresorrces
 	}
 	bool Has(std::map<std::string, float> lookFor)
