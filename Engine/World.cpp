@@ -69,13 +69,13 @@ void World::SetBuildMode(int obstacle)
 void World::SetCraftMode(int itemID)
 {
 	Obstacle* builder = nullptr;
-	if (storageObst->type == 30)
+	if (storageObst->GetType() == 30)
 	{
 		builder = storageObst;
 	}
-	if (builder->craft.get() != nullptr)
+	if (builder->GetCraftTrait() != nullptr)
 	{
-		builder->craft->SetItem2Craft(itemID);
+		builder->GetCraftTrait()->SetItem2Craft(itemID);
 	}
 }
 void World::NextTurn()
@@ -83,7 +83,7 @@ void World::NextTurn()
 	CtPos lastFocused = CctPos(Vei2(-1,-1), Vei2(-1, -1), Vei2(-1, -1));
 	if (focusedObst != nullptr)
 	{
-		lastFocused = CtPos(focusedObst->chunkPos, focusedObst->tilePos);
+		lastFocused = CtPos(focusedObst->GetChunkPos(), focusedObst->GetTilePos());
 	}
 	for (int y = 0; y < chunks.GetColums(); y++)
 	{
@@ -123,7 +123,7 @@ void World::DestroyObstacleAt(Vei2 tilePos)
 	{
 		int index = ObstacleMapAt(tilePos);
 		Obstacle* curObst = obstacles[ObstacleMapAt(tilePos)].get();
-		Vei2 size = Settings::obstacleSizes[curObst->type];
+		Vei2 size = Settings::obstacleSizes[curObst->GetType()];
 		for (int y = 0; y < size.y; y++)
 		{
 			for (int x = 0; x < size.x; x++)
@@ -501,7 +501,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		//UpdateConMap();
 		if (attackMode)
 		{
-			Vei2 dist2lastclick = Chunk::chunkPos2Flat(Chunk::CtPos2CctPos(Chunk::GetMidPosOfObstacle(focusedObst->GetCtPos(),focusedObst->type,chunks.GetSize()))) - Chunk::chunkPos2Flat(fctPos);
+			Vei2 dist2lastclick = Chunk::chunkPos2Flat(Chunk::CtPos2CctPos(Chunk::GetMidPosOfObstacle(focusedObst->GetCtPos(),focusedObst->GetType(),chunks.GetSize()))) - Chunk::chunkPos2Flat(fctPos);
 			if (dist2lastclick.x > s.GetWorldSizeInTiles().x / 2)
 			{
 				dist2lastclick.x -= s.GetWorldSizeInTiles().x;
@@ -510,11 +510,11 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 			{
 				dist2lastclick.x += s.GetWorldSizeInTiles().x;
 			}
-			if (attackMode && fctPos != oldCtPos && chunks(fctPos.x).GetObstacleMapAt(fctPos.y) != -1 && sqrt(pow(dist2lastclick.x, 2) + pow(dist2lastclick.y, 2)) <= focusedObst->GetAttackRange() && focusedObst->attack->GetAttacksLeft())
+			if (attackMode && fctPos != oldCtPos && chunks(fctPos.x).GetObstacleMapAt(fctPos.y) != -1 && sqrt(pow(dist2lastclick.x, 2) + pow(dist2lastclick.y, 2)) <= focusedObst->GetAttackRange() && focusedObst->GetAttackTrait()->GetAttacksLeft())
 			{
 				chunks(fctPos.x).AttackTile(Chunk::CtPos2CctPos(fctPos), focusedObst);
-				focusedObst->attack->Attacked();
-				if (focusedObst->attack->GetAttacksLeft() <= 0)
+				focusedObst->GetAttackTrait()->Attacked();
+				if (focusedObst->GetAttackTrait()->GetAttacksLeft() <= 0)
 				{
 					grit = false;
 					attackMode = false;
@@ -533,9 +533,9 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 			worldGen.UpdateConMap();
 			worldGen.UpdateGroundedMap(Vei2(0,0));
 		}
-		if (moveMode && focusedObst != nullptr && TileIsInRange(Chunk::CtPos2CctPos(fctPos), Chunk::CtPos2CctPos(focusedObst->GetCtPos()), (float)focusedObst->stepsLeft))
+		if (moveMode && focusedObst != nullptr && TileIsInRange(Chunk::CtPos2CctPos(fctPos), Chunk::CtPos2CctPos(focusedObst->GetCtPos()), (float)focusedObst->GetStepsLeft()))
 		{
-			chunks(focusedObst->chunkPos).MoveObstacle(chunks(Vei2(0,0)).ObstacleMapAt(focusedObst->GetCtPos()), fctPos);
+			chunks(focusedObst->GetChunkPos()).MoveObstacle(chunks(Vei2(0,0)).ObstacleMapAt(focusedObst->GetCtPos()), fctPos);
 			/*if (chunks(focusedObst->chunkPos).MoveObstacle(ObstacleMapAt(focusedObst->GetCtPos()), fctPos))
 			{
 				for (int y = -1; y < 2; y++)
@@ -553,9 +553,9 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		if (chunks(Vei2(0, 0)).ObstacleMapAt(fctPos) != -1)
 		{
 			Obstacle* hitObstacle = GetObstacleAt(fctPos);
-			if (Settings::anyOfStorage(hitObstacle->type))
+			if (Settings::anyOfStorage(hitObstacle->GetType()))
 			{
-				if (storageObst != nullptr && storageObst->type == hitObstacle->type)
+				if (storageObst != nullptr && storageObst->GetType() == hitObstacle->GetType())
 				{
 					storageObst = nullptr;
 				}
@@ -592,7 +592,7 @@ void World::HandleMouseEvents(Mouse::Event& e, GrabHandle& gH)
 		{
 			int constructionWidth = Settings::obstacleStats[placeObstacle].size[0].x;
 			ConstructionSite obstacle = ConstructionSite(Settings::obstacleStats[placeObstacle].constructionTime, placeObstacle, obstacleMidPos.y, obstacleMidPos.x, 42 + constructionWidth, resC, player);
-			obstacle.n90rot = placeObstaclen90Rot;
+			obstacle.SetN90Rot(placeObstaclen90Rot);
 			//chunks(fcctPos.x).PlaceObstacle(fcctPos.y * Settings::CellSplitUpIn + fcctPos.z, 42 + constructionWidth, player);
 			chunks(obstacleMidPos.x).PlaceObstacleWithoutCheck(obstacleMidPos.y, &obstacle);
 			player->GetMaterials().Remove(Settings::obstacleStats[placeObstacle].neededResToBuild);
@@ -789,19 +789,19 @@ void World::Draw(Graphics& gfx) const
 	}
 	if (storageObst != nullptr)
 	{
-		chunks(storageObst->chunkPos).DrawObstacleOutlines(storageObst->tilePos, storageObst->type, GetChunkRect(storageObst->chunkPos), Colors::Purple, gfx);
+		chunks(storageObst->GetChunkPos()).DrawObstacleOutlines(storageObst->GetTilePos(), storageObst->GetType(), GetChunkRect(storageObst->GetChunkPos()), Colors::Purple, gfx);
 	}
 	if (focusedObst != nullptr)
 	{
-		chunks(focusedObst->chunkPos).DrawObstacleOutlines(focusedObst->tilePos, focusedObst->type, GetChunkRect(focusedObst->chunkPos), Colors::Blue, gfx);
-		CtPos obstacleMidPos = Chunk::GetMidPosOfObstacle(CtPos(focusedObst->chunkPos, focusedObst->tilePos), focusedObst->type, chunks.GetSize());
-		if (focusedObst->heal != nullptr && focusedObst->heal->Isenabled())
+		chunks(focusedObst->GetChunkPos()).DrawObstacleOutlines(focusedObst->GetTilePos(), focusedObst->GetType(), GetChunkRect(focusedObst->GetChunkPos()), Colors::Blue, gfx);
+		CtPos obstacleMidPos = Chunk::GetMidPosOfObstacle(CtPos(focusedObst->GetChunkPos(), focusedObst->GetTilePos()), focusedObst->GetType(), chunks.GetSize());
+		if (focusedObst->GetHealTrait() != nullptr && focusedObst->GetHealTrait()->Isenabled())
 		{
-			DrawCircle(obstacleMidPos, Settings::obstacleStats[focusedObst->type].healRange, Colors::Green,gfx);
+			DrawCircle(obstacleMidPos, Settings::obstacleStats[focusedObst->GetType()].healRange, Colors::Green,gfx);
 		}
-		if (Settings::obstacleStats[focusedObst->type].opb.BoostsProd())
+		if (Settings::obstacleStats[focusedObst->GetType()].opb.BoostsProd())
 		{
-			DrawCircle(obstacleMidPos, Settings::obstacleStats[focusedObst->type].opb.GetProdBoostrange(), Colors::Purple, gfx);
+			DrawCircle(obstacleMidPos, Settings::obstacleStats[focusedObst->GetType()].opb.GetProdBoostrange(), Colors::Purple, gfx);
 		}
 		/*
 		if (focusedObst->attack != nullptr && focusedObst->attack->GetReloadNextTurn())
@@ -814,7 +814,7 @@ void World::Draw(Graphics& gfx) const
 	{
 		Vei2 bottomLeft = Chunk::chunkPos2Flat(focusedObst->GetCtPos());
 		CctPos curcctPos = Chunk::Flat2ChunkPos(bottomLeft, s.GetWorldSizeInTiles());
-		int moveRange = focusedObst->stepsLeft;
+		int moveRange = focusedObst->GetStepsLeft();
 		for (int y = -moveRange; y <= moveRange; y++)
 		{
 			for (int x = -moveRange; x <= moveRange; x++)
@@ -823,17 +823,17 @@ void World::Draw(Graphics& gfx) const
 				CctPos cctPos = PutCctPosInWorld(curcctPos + cctDelta);
 
 				Vec2_<Vei2> ctPos = chunks(cctPos.x).GetTilePosOutOfBounds(cctPos.y * Settings::CellSplitUpIn + cctPos.z);
-				int index = chunks(ctPos.x).GetObstacleIndex(focusedObst->tilePos);
-				if (moveRange > 0 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= moveRange && chunks(ctPos.x).ObstaclePosAllowed(ctPos.y,focusedObst->type, index))
+				int index = chunks(ctPos.x).GetObstacleIndex(focusedObst->GetTilePos());
+				if (moveRange > 0 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= moveRange && chunks(ctPos.x).ObstaclePosAllowed(ctPos.y,focusedObst->GetType(), index))
 				{
 					chunks(ctPos.x).DrawTile(GetChunkRect(ctPos.x), ctPos.y, Colors::Green, gfx);
 				}
 			}
 		}
 	}
-	if (attackMode && focusedObst->attack != nullptr && focusedObst->attack->GetAttacksLeft())
+	if (attackMode && focusedObst->GetAttackTrait() != nullptr && focusedObst->GetAttackTrait()->GetAttacksLeft())
 	{
-		CtPos obstacleMidPos = Chunk::GetMidPosOfObstacle(CtPos(focusedObst->chunkPos,focusedObst->tilePos), focusedObst->type, chunks.GetSize());
+		CtPos obstacleMidPos = Chunk::GetMidPosOfObstacle(CtPos(focusedObst->GetChunkPos(),focusedObst->GetTilePos()), focusedObst->GetType(), chunks.GetSize());
 		DrawCircle(obstacleMidPos, focusedObst->GetAttackRange(), Colors::Red, gfx);
 	}
 }

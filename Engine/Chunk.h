@@ -152,381 +152,83 @@ class Obstacle
 {
 protected:
 	sharedResC resC;
-public:
-	Vei2 tilePos=Vei2(-1,-1);						//pos in chunk		Vei2(-1,-1) == disabled
-	Vei2 chunkPos=Vei2(-1,-1);
+	Vei2 tilePos = Vei2(-1, -1);						//pos in chunk		Vei2(-1,-1) == disabled
+	Vei2 chunkPos = Vei2(-1, -1);
 	int type;
 	int state = 0;
 	int n90rot = 0;
-	int hp=50;
+	int hp = 50;
 	int stepsLeft = 0;
 	float productivity = 1.0f;
 	Team* team = nullptr;
-	RectF rect = RectF(Vec2(0,0),0,0);
-	std::vector<Animation> animations;	//index runs through states
-	//Traits		new Trait need handle in creation and in COPY ASSIGNMENT!
+	RectF rect = RectF(Vec2(0, 0), 0, 0);			//pos where Obstacle is drawn on screen
+	std::vector<Animation> animations;				//index runs through states
+	//Traits		new Trait need handle in constructor and in COPY ASSIGNMENT!
 	std::unique_ptr<EducationTrait> education = nullptr;
 	std::unique_ptr<HealTrait> heal = nullptr;
 	std::unique_ptr<AttackTrait> attack = nullptr;
 	std::unique_ptr<CraftTrait> craft = nullptr;
-
 	//
 	std::unique_ptr<Inventory> inv = nullptr;
-	//Obstacle() {}
-	Obstacle(Obstacle& obst) 
-	{
-		*this = obst;
-	}
-	//Obstacle(Obstacle&& obst) {}
-	Obstacle& operator=(const Obstacle& other)
-	{
-		resC = other.resC;
-		tilePos = other.tilePos;
-		chunkPos = other.chunkPos;
-		type = other.type;
-		state = other.state;
-		n90rot = other.n90rot;
-		hp = other.hp;
-		stepsLeft = other.stepsLeft;
-		team = other.team;
-		rect = other.rect;
-		animations = other.animations;
-		//Traits
-		if(other.education != nullptr)
-			education = std::make_unique<EducationTrait>(*other.education.get());
-		if (other.heal != nullptr)
-			heal = std::make_unique<HealTrait>(*other.heal.get());
-		if (other.attack != nullptr)
-			attack = std::make_unique<AttackTrait>(*other.attack.get());
-		if (other.craft != nullptr)
-			craft = std::make_unique<CraftTrait>(*other.craft.get());
-		//Inventory
-		if (other.inv != nullptr)
-			inv = std::make_unique<Inventory>(*other.inv.get());
-
-		return *this;
-	}
+public:
+	//Obstacle() {}							//no args constructor not needed
+	//Obstacle(Obstacle&& obst) {}			//move constructor not needed
 	/*
-	Obstacle& operator=(Obstacle&& other) {
+	Obstacle& operator=(Obstacle&& other) {	//move assignment not needed
 
 		return *this;
 	}
-	Obstacle::~Obstacle() {};
+	Obstacle::~Obstacle() {};				//destructor not needed
 	*/
-	Obstacle(Vei2 tilePos, Vei2 chunkPos, int type, sharedResC resC, Team* team = nullptr)
-		:
-		tilePos(tilePos),
-		chunkPos(chunkPos),
-		type(type),
-		resC(std::move(resC)),
-		team(team),
-		stepsLeft(Settings::obstacleStats[type].movesPerTurn)
-	{
-		//Add Traits
-		if (std::any_of(std::begin(Settings::obstacleTrait_education), std::end(Settings::obstacleTrait_education), [&](const int& val)
-			{
-				return type == val;
-			}))
-		{
-			education = std::make_unique<EducationTrait>(5, 10);
-		}
-		std::for_each(std::begin(Settings::obstacleTrait_heal), std::end(Settings::obstacleTrait_heal), [&](const int& val)
-		{
-			if (type == val && val == 2)
-			{
-				heal = std::make_unique<HealTrait>(true);
-			}
-			else if (type == val)
-			{
-				heal = std::make_unique<HealTrait>(false);
-			}
-		});
-		if (std::any_of(std::begin(Settings::obstacleTrait_attack), std::end(Settings::obstacleTrait_attack), [&](const int& val)
-			{
-				return type == val;
-			}))
-		{
-			attack = std::make_unique<AttackTrait>(Settings::obstacleStats[type].attacksPerTurn);
-			attack->SetReloadNextTurn(true);
-			if (type == 3)
-			{
-				attack->SetAttacksleft(0);
-				attack->SetReloadNextTurn(false);
-			}
-		}
-		if (type == 30)
-		{
-			craft = std::make_unique<CraftTrait>();
-		}
-		//Add Inventory
-		if (Settings::anyOfCreature(type))
-		{
-			inv = std::make_unique<Inventory>(0);
-		}
-		if (type == 6)
-		{
-			RandyRandom rr;
-			inv = std::make_unique<Inventory>(1);
-			/*
-			int nItem = rr.Calc(2) + 3;
-			for (int i = 0; i < nItem; i++)
-			{
-				inv->SetItem(std::make_unique<Slot>(rr.Calc(12)), i);
-			}
-			*/
-			for (int i = 0; i < 7; i++)
-			{
-				inv->SetItem(std::make_unique<Slot>(i), i);
-			}
-		}
-		if (type == 30)
-		{
-			RandyRandom rr;
-			inv = std::make_unique<Inventory>(3);
-			int nItem = 1;
-			for (int i = 0; i < nItem; i++)
-			{
-				inv->SetItem(std::make_unique<Slot>(rr.Calc(12)), i);
-			}
-		}
-		if (type == 50)
-		{
-			inv = std::make_unique<Inventory>(2);
-			RandyRandom rr;
-			int nItem = rr.Calc(2) + 3;
-			for (int i = 0; i < nItem; i++)
-			{
-				inv->SetItem(std::make_unique<Slot>(rr.Calc(12)), i);
-			}
-		}
-		hp = Settings::obstacleStats[type].baseHp;
-		animations.push_back(Animation(this->resC->GetSurf().obstacles[type]));
-		switch (type)
-		{
-		case 1:
-		case 4:
-			//state = 1;
-			animations.push_back(Animation(this->resC->GetSurf().multiObstacles[Settings::Obstacle2MultiObstacle(type)]));
-			break;
 
-		}
-		RandyRandom rr;
-		if (type == 10)
-		{
-			n90rot = 0;
-		}
-		else
-		{
-			n90rot = rr.Calc(3);
-		}
-		for (auto& animation : animations)
-		{
-			//animation.SetKeepTime(((float)rr.Calc(50)/100) + 0.5);
-			//animation.SetTimePassed(animation.GetKeepTime()*((float)rr.Calc(100)/100));
-		}
-	}
-	void Heal(int deltaHP)
-	{
-		if (hp < Settings::obstacleStats[type].baseHp)
-		{
-			hp += deltaHP;
-			if (hp > Settings::obstacleStats[type].baseHp)
-			{
-				hp = Settings::obstacleStats[type].baseHp;
-			}
-		}
+	Obstacle& operator=(const Obstacle& other);
+	Obstacle(Obstacle& obst);
+	Obstacle(Vei2 tilePos, Vei2 chunkPos, int type, sharedResC resC, Team* team = nullptr);
+	void Heal(int deltaHP);
+	int GetHealRange();
+	int GetHealAmount();
+	void Draw(Graphics& gfx)const;
+	void UpdateRect(RectF tileRect, Vei2 tilePos, RectF chunkRect);
+	void Update(float dt);
+	CtPos GetCtPos();
+	Vei2 GetPosFlat();
+	CctPos GetCctPos();
+	int GetDmg(const Obstacle* victim);
+	int GetAttackRange();
+	float AttackObstacle(Obstacle* attacker, float dmg, int range);
+	
+	//Getter
+	Vei2 GetChunkPos()const;
+	Vei2 GetTilePos()const;
+	int GetType()const;
+	int GetState()const;
+	int GetN90Rot()const;
+	int GetHP()const;
+	int GetStepsLeft()const;
+	float GetProductivity()const;
+	Team* GetTeam()const;
+	RectF GetRect()const;
+	Inventory* GetInventory()const;
+	//Traits
+	EducationTrait* GetEducation()const;
+	HealTrait* GetHealTrait()const;
+	AttackTrait* GetAttackTrait()const;
+	CraftTrait* GetCraftTrait()const;
 
-	}
-	int GetHealRange()
-	{
-		if (heal != nullptr)
-		{
-			return Settings::obstacleStats[type].healRange * productivity;
-		}
-		return 0;
-	}
-	int GetHealAmount()
-	{
-		if (heal != nullptr)
-		{
-			return Settings::obstacleStats[type].healNumber * productivity;
-		}
-		return 0;
-	}
-	void Draw(Graphics& gfx)const			//	'tileRect' = Rect of tile where (Vei2(0, -1) && Vei2(-1, 0) != index) == true
-	{
-		if (state == 0)
-		{
-			gfx.DrawSurface((RectI)rect, animations[0].GetCurSurface(), SpriteEffect::Chroma(),n90rot);
-		}
-		else
-		{
-			gfx.DrawSurface((RectI)rect, animations[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), n90rot);
-		}
-		if (hp != Settings::obstacleStats[type].baseHp)
-		{
-			float percentage = (float)hp / Settings::obstacleStats[type].baseHp;
-			assert(percentage >= 0 && percentage <= 100);
-			float tileWidth = rect.GetWidth() / Settings::obstacleStats[type].size[0].x;
-			float startX = rect.left + ((Settings::obstacleStats[type].size[0].x / 2)-1) * tileWidth;
-			float startY = rect.top + (float)(Settings::obstacleStats[type].size[0].y-0.5f) * tileWidth;
-			gfx.DrawSurface(RectI(Vei2((int)startX, (int)startY), (int)tileWidth*3, (int)tileWidth), resC->GetSurf().frames[1].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.75f), 0);
-			//gfx.DrawSurface(RectI(Vei2(startX, startY), tileWidth * 3, tileWidth), resC->tC.frames[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
-			gfx.DrawSurface(RectI(Vei2((int)startX, (int)startY), (int)((tileWidth * 3) * percentage), (int)tileWidth), RectI(Vei2(0, 0), (int)((float)(30) * percentage), 10), resC->GetSurf().frames[2].GetCurSurface(),SpriteEffect::Transparent(Colors::Magenta,0.75f));
-			//gfx.DrawSurface(RectI(Vei2(startX, startY), tileWidth * 3, tileWidth), resC->tC.frames[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
-		}
-	}
-	void UpdateRect(RectF tileRect, Vei2 tilePos, RectF chunkRect)
-	{
-		if (state == 0)
-		{
-			Vec2 tileSize = Vec2(tileRect.GetWidth(), tileRect.GetHeight());
-			tileRect.right += tileSize.x * (Settings::obstacleStats[type].size[0].x - 1);
-			tileRect.top -= tileSize.y * (Settings::obstacleStats[type].size[0].y - 1);
-			rect = tileRect;
-		}
-		else
-		{
-			Vec2 tileSize = Vec2(tileRect.GetWidth(), tileRect.GetHeight());
-			int multiObstIndex = Settings::Obstacle2MultiObstacle(type);
-			tileRect += Vec2(Settings::obstacleStats[type].obstacleStartPos[state].x * tileSize.x, -Settings::obstacleStats[type].obstacleStartPos[state].y * tileSize.y);
-			Vei2 size = Settings::obstacleStats[type].size[state];
-			tileRect.right += tileSize.x * (size.x - 1);
-			tileRect.top -= tileSize.y * (size.y - 1);
-			rect = tileRect;
-		}
-	}
-	void Update(float dt)
-	{
-		for (int i = 0; i < animations.size(); i++)
-		{
-			animations[i].Update(dt);
-		}
-		/*
-		for (auto animation : animations)
-		{
-			animation.Update(dt);
-		}
-		*/
-	}
-	void GetRect(Vei2 chunkSize, Vei2 midChunk, Vei2 c)
-	{
-		Vei2 delta = midChunk - chunkPos;
-		Vei2 tileSize = chunkSize / Settings::chunkHasNCells * Settings::CellSplitUpIn;
 
-	}
-	CtPos GetCtPos()
-	{
-		return CtPos(chunkPos, tilePos);
-	}
-	Vei2 GetPosFlat()
-	{
-		return chunkPos * Settings::CellSplitUpIn * Settings::chunkHasNCells + tilePos;
-	}
-	CctPos GetCctPos()
-	{
-		return CctPos(chunkPos, tilePos / Settings::CellSplitUpIn, tilePos % Settings::CellSplitUpIn);
-	}
-	int GetDmg(const Obstacle* victim)
-	{
-		float dmg = (float)Settings::obstacleStats[type].attackDmg; //* ( (float)hp / Settings::obstacleStats[type].baseHp);
-		if (inv != nullptr)
-		{
-			if (inv->HasItemNotBroken(0))						//axe
-			{
-				if (Settings::anyOfAxeBonus(victim->type))
-				{
-					dmg *= 3.f;
-					inv->ItemUsed(0);
-				}
-				else if (Settings::anyOfCreature(victim->type))
-				{
-					dmg *= 1.5f;
-					inv->ItemUsed(0);
-				}
-			}
-			if (Settings::anyOfPlants(victim->type))
-			{
-				dmg *= Settings::obstacleStats[type].dmgAgainstPlants;
-			}
-			if (inv->HasItemNotBroken(1) && Settings::anyOfCreature(victim->type))	//iron sword
-			{
-				dmg *= 2.5f;
-				inv->ItemUsed(1);
-			}
-			if (inv->HasItemNotBroken(10))						//axe
-			{
-				if (Settings::anyOfPickaxeBonus(victim->type))
-				{
-					dmg *= 3.f;
-					inv->ItemUsed(10);
-				}
-				else if (Settings::anyOfCreature(victim->type))
-				{
-					dmg *= 1.5f;
-					inv->ItemUsed(10);
-				}
-			}
-			if (inv->HasItemNotBroken(11) && Settings::anyOfCreature(victim->type))	//bow
-			{
-				dmg *= 2;
-				inv->ItemUsed(11);
-			}
-			else if (inv->HasItemNotBroken(11))
-			{
-				inv->ItemUsed(11);
-			}
-			if (inv->HasItemNotBroken(12) && Settings::anyOfCreature(victim->type))	//sniper
-			{
-				dmg *= 3;
-				inv->ItemUsed(12);
-			}
-			else if (inv->HasItemNotBroken(12))
-			{
-				inv->ItemUsed(12);
-			}
-		}
-		if (type == 27 && Settings::anyOfPlants(victim->type))
-		{
-			dmg *= productivity;
-		}
-		return (int)dmg;
-	}
-	int GetAttackRange()
-	{
-		float attackRange = (float)Settings::obstacleStats[type].attackRange;
-		if (inv != nullptr)
-		{
-			if (inv->HasItemNotBroken(11))	//bow
-			{
-				attackRange = 10;
-			}
-			if (inv->HasItemNotBroken(12))	//sniper
-			{
-				attackRange = 20;
-			}
-		}
-		return (int)attackRange;
-	}
-	float AttackObstacle(Obstacle* attacker, float dmg, int range)
-	{
-		float dmgAdjusted = dmg;
-		if (inv != nullptr)
-		{
-			if (inv->HasItemNotBroken(9))
-			{
-				dmgAdjusted *= 0.5f;
-				inv->ItemUsed(9);
-			}
-			if (inv->HasItemNotBroken(2))
-			{
-				dmgAdjusted *= 0.75f;
-				inv->ItemUsed(2);
-			}
-		}
-		hp -= (int)dmgAdjusted;
-		return dmgAdjusted;
-	}
+	//Setter
+	void SetChunkPos(Vei2 pos);
+	void SetTilePos(Vei2 pos);
+	void SetN90Rot(int n90rot);
+	void SetState(int state);
+	void SetHp(int hp);
+	void AddHP(int delta);
+	void SetStepsLeft(int stepsLeft);
+	void AddStepsLeft(int delta);
+	void SetProductivity(float stepsLeft);
+	void AddProductivity(float delta);
+	void SetRect(RectF rect);
+
 	virtual void Poop() {}
 };
 
@@ -909,8 +611,8 @@ public:
 	}
 	static double GetDistBetween2Obstacles(Obstacle* obstacle1, Obstacle* obstacle2, int worldWidth, Vei2 worldHasNChunks)
 	{
-		CtPos tileCtPos1 = GetMidPosOfObstacle(obstacle1->GetCtPos(), obstacle1->type, worldHasNChunks);
-		CtPos tileCtPos2 = GetMidPosOfObstacle(obstacle2->GetCtPos(), obstacle2->type, worldHasNChunks);
+		CtPos tileCtPos1 = GetMidPosOfObstacle(obstacle1->GetCtPos(), obstacle1->GetType(), worldHasNChunks);
+		CtPos tileCtPos2 = GetMidPosOfObstacle(obstacle2->GetCtPos(), obstacle2->GetType(), worldHasNChunks);
 
 		Vei2 tilePos1 = chunkPos2Flat(tileCtPos1);
 		Vei2 tilePos2 = chunkPos2Flat(tileCtPos2);

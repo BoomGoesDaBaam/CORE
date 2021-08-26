@@ -139,7 +139,7 @@ public:
 	}
 	void SetAttackMode(bool val)
 	{
-		if (val && focusedObst != nullptr && focusedObst->attack->GetAttacksLeft() > 0)
+		if (val && focusedObst != nullptr && focusedObst->GetAttackTrait()->GetAttacksLeft() > 0)
 		{
 			grit = true;
 			attackMode = true;

@@ -95,6 +95,7 @@ CtPos WorldGenerator::SpawnPlayer(Vei2 tilePos)
 	mChunk = spawnpos.x;
 	c.x = ((float)spawnpos.y.x / Settings::chunkHasNTiles) * settings.GetChunkSize().x;
 	c.y = ((float)spawnpos.y.y / Settings::chunkHasNTiles) * settings.GetChunkSize().y;
+	return spawnpos;
 }
 void WorldGenerator::InitEnemies()
 {
@@ -550,9 +551,9 @@ CtPos WorldGenerator::SpawnTeam(Team* team, Vei2 circaSpawnPoint)
 	std::vector<Obstacle*> box = GenerateObstacleExplosion(spawnpoint, 1, 5, 6, team, -1, 25);
 	for (int i = 0; i < genObsts.size(); i++)
 	{
-		genObsts[i]->inv->SetItem(std::make_unique<Slot>(9), 4);
-		genObsts[i]->inv->SetItem(std::make_unique<Slot>(10), 5);
-		genObsts[i]->inv->SetItem(std::make_unique<Slot>(11), 6);
+		genObsts[i]->GetInventory()->SetItem(std::make_unique<Slot>(9), 4);
+		genObsts[i]->GetInventory()->SetItem(std::make_unique<Slot>(10), 5);
+		genObsts[i]->GetInventory()->SetItem(std::make_unique<Slot>(11), 6);
 	}
 	return actuallSpawnPoint;
 }

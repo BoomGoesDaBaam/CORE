@@ -6,7 +6,8 @@
 namespace Settings
 {
 	/*
-	make flora updateable
+	new Items:
+	shovel
 	*/
 	/*		### Types ###
 			0 = water				5 = snow				10 = mountains (high)
@@ -160,7 +161,7 @@ namespace Settings
 	//Game options
 	static bool obstaclesOn = true;
 	static bool spawnObstacles = true;
-	static bool testMode = false;
+	static bool testMode = true;
 	static bool zoomingEnabled = true;
 
 	static bool framesOn = true;
@@ -191,6 +192,7 @@ namespace Settings
 	const std::string lang_materials[] = { "Materials", "Werkstoffe" };
 	const std::string lang_organic[] = { "Organic", "Oragnisches" };
 
+	const std::string lang_science[] = { "science", "Wissenschaft" };
 	const std::string lang_computerChip[] = { "computer chip", "computer chip" };
 	
 	const std::string lang_wood[] = { "wood", "Holz" };
@@ -349,12 +351,12 @@ namespace Settings
 	//Beschreibungen
 	const std::string lang_TownhallInfo[] = { "This is the main building of your town. Use it to heal your surrounding units, train units or defent your town from enemies. Choose one every turn!", 
 											  "Das ist dein Rathhaus. Hier kannst du Einheiten heilen, ausbilden und Gegner angreifen. Du hast jede Runde erneut die Wahl." };
-	const std::string lang_LumberjackHutInfo[] = { "Use this building to chop wood.", "Lagerhalle" };
+	const std::string lang_LumberjackHutInfo[] = { "Use this building to chop wood.", "Mit diesem Gebaeude kannst du holz faellen." };
 
 	//
 	static std::string TranslateRessource(std::string ressource, int lang)
 	{
-		if (ressource == "computer")
+		if (ressource == "computer chips")
 		{
 			return lang_computerChip[lang];
 		}

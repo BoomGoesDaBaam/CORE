@@ -1,35 +1,35 @@
 #pragma once
 #include "FrameHandle.h"
 //		### Componente ###
-Text* Component::AddText(std::string text, RectF pos, int size,const Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
+Text* ComponentWithoutHint::AddText(std::string text, RectF pos, int size,const Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
 	comps[key] = std::make_unique<Text>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
 	return static_cast<Text*>(comps[key].get());
 }
-TextBox* Component::AddTextBox(std::string text, RectF pos, int size, const Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
+TextBox* ComponentWithoutHint::AddTextBox(std::string text, RectF pos, int size, const Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
 	comps[key] = std::make_unique<TextBox>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
 	return static_cast<TextBox*>(comps[key].get());
 }
-Button* Component::AddButton(RectF pos,const Animation* a,const Animation* aHover, std::string key,const Font* f, std::vector<int> activInStates)
+Button* ComponentWithoutHint::AddButton(RectF pos,const Animation* a,const Animation* aHover, std::string key,const Font* f, std::vector<int> activInStates)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
 	comps[key] = std::make_unique<Button>(pos, a, aHover, activInStates, f, this, buffer);
 	return static_cast<Button*>(comps[key].get());
 }
-CheckBox* Component::AddCheckBox(RectF pos, std::queue<FrameEvent>* buffer, sharedResC resC, std::string key, std::vector<int> activInStates)
+CheckBox* ComponentWithoutHint::AddCheckBox(RectF pos, std::queue<FrameEvent>* buffer, sharedResC resC, std::string key, std::vector<int> activInStates)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
 	comps[key] = std::make_unique<CheckBox>(pos, this, buffer, resC, activInStates);
 	return static_cast<CheckBox*>(comps[key].get());
 }
-Image* Component::AddImage(RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
+Image* ComponentWithoutHint::AddImage(RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
 {
 	//RectF pos, Animation* a, Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
@@ -37,7 +37,7 @@ Image* Component::AddImage(RectF pos, const Animation* a, const Animation* aHove
 	comps[key] = std::make_unique<Image>(pos, a, aHover, this, buffer, activInStates);
 	return static_cast<Image*>(comps[key].get());
 }
-GrabImage* Component::AddGrabImage(RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
+GrabImage* ComponentWithoutHint::AddGrabImage(RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
 {
 	//(RectF pos, Animation * a, Animation * aHover, Component * parentC, std::queue<FrameEvent>*buffer, std::vector<int> activInStates);
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
@@ -45,7 +45,7 @@ GrabImage* Component::AddGrabImage(RectF pos, const Animation* a, const Animatio
 	comps[key] = std::make_unique<GrabImage>(pos, a, aHover, this, buffer, activInStates);
 	return static_cast<GrabImage*>(comps[key].get());
 }
-Frame* Component::AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
+Frame* ComponentWithoutHint::AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
@@ -200,6 +200,30 @@ Frame::Frame(RectF pos, int type, sharedResC resC, Component* parentC, std::queu
 
 }
 
+Hint::Hint(sharedResC resC)
+	:
+	resC(std::move(resC))
+{
+
+}
+/*
+void Hint::AddHintTextBox(int width, std::string text,const Font* font, Color c)
+{
+	//comps["comp" + comps.size()] = std::make_unique<TextBox>(text,RectF(Vec2(10,newCompAtX),width,);
+
+	RectF parentRect = parentC->GetPos();
+	int xStart = (int)((float)(parentRect.GetWidth()) / 40);
+	int textSize = (int)((float)(11) * resC->GetFrameSize().GetGuiScale());
+	//comps["comp" + comps.size()] = std::make_unique<TextBox>(text, RectF(Vec2(xStart, newCompAtX), parentRect.GetWidth() - xStart * 2, 40), textSize, font, c, {1,1}, this, 0, nullptr);
+	comps["comp" + comps.size()] = std::make_unique<TextBox>(text, RectF(Vec2(xStart, newCompAtX), parentRect.GetWidth() - xStart * 2, 40), textSize, font, c, activInStates, this, 0, buffer);
+	//TextBox* tB_townHall = parentC->AddTextBox(text, RectF(Vec2(xStart, newCompAtX), parentRect.GetWidth() - xStart * 2, 40), textSize, &resC->GetSurf().fonts[0], Colors::Black, key, { 0,1 });
+	newCompAtX += textSize * (static_cast<TextBox*>(comps["comp" + comps.size()-1].get())->GetLines().size() + 2);
+}
+*/
+sharedResC Hint::GetResC()const
+{
+	return resC;
+}
 PageFrame::PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages, std::queue<FrameEvent>* buffer)
 	:
 	Frame(pos, type, resC, parentC,buffer),
@@ -378,7 +402,14 @@ std::vector<int> Component::FillWith1WhenSize0(std::vector<int> activInStates, i
 	}
 	return activInStates;
 }
-
+std::queue<FrameEvent>* Component::GetBuffer()const
+{
+	return buffer;
+}
+void ComponentWithoutHint::AddHint(Hint& hint)
+{
+	this->hint = std::make_unique<Hint>(hint.GetResC());
+}
 //  ### Framehandle::PageFrame ###
 
 
@@ -450,7 +481,14 @@ void FrameHandle::UpdateInventoryComps(Inventory* inv, Component* parentC)
 		if (inv->GetItem(i)->get() != nullptr)
 		{
 			parentC->GetComp(key)->SetVisible(true);
-			static_cast<GrabImage*>(parentC->GetComp(key))->SetAnimationOfBouth(&resC->GetSurf().items[inv->GetItem(i)->get()->GetId()]);
+			GrabImage* gI = static_cast<GrabImage*>(parentC->GetComp(key));
+			gI->SetAnimationOfBouth(&resC->GetSurf().items[inv->GetItem(i)->get()->GetId()]);
+			
+			Hint h = Hint(resC);	//edit me
+			//h.AddHintTextBox(100, "wfhuwfhwuhuwf wwji jijw fjiwifj jiwf ijfw ijfw jiwjiwf  fwfi jwjiwjifw ijff wijwifjijfw ijfwijwf wj wfijjifwijf ", &resC->GetSurf().fonts[0], Colors::Green);
+			//static_cast<GrabImage*>(parentC->GetComp(key))->AddHint(h);
+			//gI->AddHint(h);
+
 			if (inv->GetItem(i)->get()->GetDurability() != -1 && inv->GetItem(i)->get()->GetDurability() != Settings::itemStats[inv->GetItem(i)->get()->GetId()].durability)
 			{
 				static_cast<Image*>(parentC->GetComp(key)->GetComp(key + "HpIs"))->SetVisible(true);
@@ -609,8 +647,8 @@ int FrameHandle::AddInfoTextBox(Component* parentC,std::string text, int top, co
 
 	RectF parentRect = parentC->GetPos();
 	int xStart = (int)((float)(parentRect.GetWidth()) / 40);
-	int textSize = (int)((float)(14) * resC->GetFrameSize().GetGuiScale());
-	TextBox* tB_townHall = parentC->AddTextBox(Settings::lang_TownhallInfo[Settings::lang], RectF(Vec2(xStart, top), parentRect.GetWidth() - xStart*2, 40), textSize, &resC->GetSurf().fonts[0], Colors::Black, "tB_townhallInfo", { 0,1 });
+	int textSize = (int)((float)(11) * resC->GetFrameSize().GetGuiScale());
+	TextBox* tB_townHall = parentC->AddTextBox(text, RectF(Vec2(xStart, top), parentRect.GetWidth() - xStart*2, 40), textSize, &resC->GetSurf().fonts[0], Colors::Black, key, { 0,1 });
 	return top + textSize * (tB_townHall->GetLines().size() + 2);
 }
 int FrameHandle::AddObstacleAttackButton(Component* parentC, int top, const Font* f, Color c)
@@ -633,7 +671,7 @@ int FrameHandle::AddObstacleCheckBox(Component* parentC, int top, const Font* f,
 	RectF parentRect = parentC->GetPos();
 	int xStart = (int)((float)(parentRect.GetWidth()) / 40);
 	int halfParentWidth = parentRect.GetWidth() / 2;
-	int textSize = (int)((float)(14) * resC->GetFrameSize().GetGuiScale());
+	int textSize = (int)((float)(11) * resC->GetFrameSize().GetGuiScale());
 	int checkBoxSize = (int)((float)(15) * resC->GetFrameSize().GetGuiScale());
 
 	parentC->AddText(text, RectF(Vec2(xStart, top), halfParentWidth, textSize), textSize, f, c, "t"+key, { 0,1 }, 1);
@@ -722,31 +760,31 @@ bool FrameHandle::FrameIsEnabled(Obstacle* obstacle, std::string key)
 		{
 			if (key == "fUnit")
 			{
-				return Settings::anyOfCreature(obstacle->type);
+				return Settings::anyOfCreature(obstacle->GetType());
 			}
 			if (key == "fTownhall")
 			{
-				return obstacle->type == 3;
+				return obstacle->GetType() == 3;
 			}
 			if (key == "fLumberjackHut")
 			{
-				return obstacle->type == 27;
+				return obstacle->GetType() == 27;
 			}
 			if (key == "fInventory")
 			{
-				return Settings::anyOfCreature(obstacle->type);
+				return Settings::anyOfCreature(obstacle->GetType());
 			}
 			if (key == "fInventoryBox")
 			{
-				return obstacle->type == 6;
+				return obstacle->GetType() == 6;
 			}
 			if (key == "fInventoryStorage")
 			{
-				return obstacle->type == 50;
+				return obstacle->GetType() == 50;
 			}
 			if (key == "fInventoryWrought")
 			{
-				return obstacle->type == 30;
+				return obstacle->GetType() == 30;
 			}
 			return false;
 		}
@@ -928,14 +966,14 @@ void FrameHandle::UpdateFrame(const World* world, int process, std::string key, 
 	if (comp->GetComp("tObstacleIs") != nullptr)
 	{
 		if(world->GetFocusedObstacle() != nullptr)
-			static_cast<TextBox*>(comp->GetComp("tObstacleIs"))->Settext(Settings::GetObstacleString(world->GetFocusedObstacle()->type));
+			static_cast<TextBox*>(comp->GetComp("tObstacleIs"))->Settext(Settings::GetObstacleString(world->GetFocusedObstacle()->GetType()));
 		else
 			static_cast<TextBox*>(comp->GetComp("tObstacleIs"))->Settext("...");
 	}
 	if (comp->GetComp("tObstacleHPIs") != nullptr)
 	{
 		if (world->GetFocusedObstacle() != nullptr)
-			static_cast<TextBox*>(comp->GetComp("tObstacleHPIs"))->Settext(std::to_string(world->GetFocusedObstacle()->hp) + " / " + std::to_string(Settings::obstacleStats[world->GetFocusedObstacle()->type].baseHp));
+			static_cast<TextBox*>(comp->GetComp("tObstacleHPIs"))->Settext(std::to_string(world->GetFocusedObstacle()->GetHP()) + " / " + std::to_string(Settings::obstacleStats[world->GetFocusedObstacle()->GetType()].baseHp));
 		else
 			static_cast<TextBox*>(comp->GetComp("tObstacleHPIs"))->Settext("...");
 	}
@@ -1013,23 +1051,23 @@ void FrameHandle::UpdateFrame(const World* world, int process, std::string key, 
 	{
 		if (comp->GetComp("tUnitNameIs")!= nullptr)
 		{
-			static_cast<TextBox*>(comps[key]->GetComp("tUnitNameIs"))->Settext(Settings::GetObstacleString(obstacle->type));
+			static_cast<TextBox*>(comps[key]->GetComp("tUnitNameIs"))->Settext(Settings::GetObstacleString(obstacle->GetType()));
 		}
 		if (comp->GetComp("tUnitHpIs") != nullptr)
 		{
-			static_cast<TextBox*>(comps[key]->GetComp("tUnitHpIs"))->Settext(std::to_string(obstacle->hp) + " / " + std::to_string(Settings::obstacleStats[obstacle->type].baseHp));
+			static_cast<TextBox*>(comps[key]->GetComp("tUnitHpIs"))->Settext(std::to_string(obstacle->GetHP()) + " / " + std::to_string(Settings::obstacleStats[obstacle->GetType()].baseHp));
 		}
 		if (comp->GetComp("tUnitTeamIs") != nullptr)
 		{
-			static_cast<TextBox*>(comps[key]->GetComp("tUnitTeamIs"))->Settext(obstacle->team->GetTeamName());
+			static_cast<TextBox*>(comps[key]->GetComp("tUnitTeamIs"))->Settext(obstacle->GetTeam()->GetTeamName());
 		}
 		if (comp->GetComp("tUnitStepsLeftIs") != nullptr)
 		{
-			static_cast<TextBox*>(comps[key]->GetComp("tUnitStepsLeftIs"))->Settext(std::to_string(obstacle->stepsLeft));
+			static_cast<TextBox*>(comps[key]->GetComp("tUnitStepsLeftIs"))->Settext(std::to_string(obstacle->GetStepsLeft()));
 		}
 		if (comp->GetComp("tUnitAttacksLeftIs") != nullptr)
 		{
-			static_cast<TextBox*>(comps[key]->GetComp("tUnitAttacksLeftIs"))->Settext(std::to_string(obstacle->attack->GetAttacksLeft()));
+			static_cast<TextBox*>(comps[key]->GetComp("tUnitAttacksLeftIs"))->Settext(std::to_string(obstacle->GetAttackTrait()->GetAttacksLeft()));
 		}
 		if (key == "fUnit")
 		{
@@ -1049,15 +1087,15 @@ void FrameHandle::UpdateFrame(const World* world, int process, std::string key, 
 		if (key == "fTownhall")
 		{
 			Frame* f_townhall = static_cast<Frame*>(comp);
-			if (obstacle->education->Educates())
+			if (obstacle->GetEducation()->Educates())
 				static_cast<CheckBox*>(f_townhall->GetComp("cBeducate"))->Check();
 			else
 				static_cast<CheckBox*>(f_townhall->GetComp("cBeducate"))->Uncheck();
-			if (obstacle->heal->Isenabled())
+			if (obstacle->GetHealTrait()->Isenabled())
 				static_cast<CheckBox*>(f_townhall->GetComp("cBheal"))->Check();
 			else
 				static_cast<CheckBox*>(f_townhall->GetComp("cBheal"))->Uncheck();
-			if (obstacle->attack->GetReloadNextTurn())
+			if (obstacle->GetAttackTrait()->GetReloadNextTurn())
 				static_cast<CheckBox*>(f_townhall->GetComp("cBattack"))->Check();
 			else
 				static_cast<CheckBox*>(f_townhall->GetComp("cBattack"))->Uncheck();
@@ -1065,24 +1103,24 @@ void FrameHandle::UpdateFrame(const World* world, int process, std::string key, 
 		if (key == "fLumberjackHut")
 		{
 			Frame* fLumberjackHut = static_cast<Frame*>(comp);
-			if (obstacle->attack->GetAutomaticMode() == CtPos(Vei2(-1, -1), Vei2(-1, -1)))
+			if (obstacle->GetAttackTrait()->GetAutomaticMode() == CtPos(Vei2(-1, -1), Vei2(-1, -1)))
 				static_cast<CheckBox*>(fLumberjackHut->GetComp("cBautomaticChop"))->Uncheck();
 			else
 				static_cast<CheckBox*>(fLumberjackHut->GetComp("cBautomaticChop"))->Check();
 		}
 		if (key.find("Inventory") != std::string::npos && FrameIsEnabled(obstacle,key))		//handles all needed Inventoryupdates
 		{
-			UpdateInventoryComps(obstacle->inv.get(), comp);
+			UpdateInventoryComps(obstacle->GetInventory(), comp);
 		}
 		if (key == "fInventoryWrought")
 		{
 			Frame* fInventoryWrought = static_cast<Frame*>(comp);
-			if (obstacle->craft->IsCrafting())
+			if (obstacle->GetCraftTrait()->IsCrafting())
 			{
-				fInventoryWrought->GetComp("t_craftStatus")->text = Settings::lang_status[Settings::lang] + ": " + Settings::GetItemString(obstacle->craft->GetItemID()) + " " + Settings::lang_finishedIn[Settings::lang] + " " + std::to_string(obstacle->craft->TurnsLeft(obstacle->productivity)) + " " + Settings::lang_rounds[Settings::lang];
+				fInventoryWrought->GetComp("t_craftStatus")->text = Settings::lang_status[Settings::lang] + ": " + Settings::GetItemString(obstacle->GetCraftTrait()->GetItemID()) + " " + Settings::lang_finishedIn[Settings::lang] + " " + std::to_string(obstacle->GetCraftTrait()->TurnsLeft(obstacle->GetProductivity())) + " " + Settings::lang_rounds[Settings::lang];
 				fInventoryWrought->GetComp("t_craftStatus")->c = Colors::Green;
 			}
-			else if (obstacle->craft->GetItemID() != -1 && !obstacle->team->GetMaterials().Has(Settings::itemStats[obstacle->craft->GetItemID()].neededResToCraft))
+			else if (obstacle->GetCraftTrait()->GetItemID() != -1 && !obstacle->GetTeam()->GetMaterials().Has(Settings::itemStats[obstacle->GetCraftTrait()->GetItemID()].neededResToCraft))
 			{
 				fInventoryWrought->GetComp("t_craftStatus")->text = Settings::lang_status[Settings::lang] + ": " + Settings::lang_ressourcesAreMissing[Settings::lang];
 				fInventoryWrought->GetComp("t_craftStatus")->c = Colors::Red;
@@ -1145,6 +1183,10 @@ bool FrameHandle::HandleMouseInput(Mouse::Event& e)
 	{
 		for (int i = 0; i < handleOrder.size(); i++)
 		{
+			if (comps.count("fInventory") > 0 &&  handleOrder[i] == comps["fInventory"].get())
+			{
+				int k = 23;//remove me
+			}
 			hit = handleOrder[i]->HandleMouseInput(e,true) || hit;
 		}
 		UpdateHandleOrder();
@@ -1210,7 +1252,7 @@ void FrameHandle::LoadScene(int scene, World* world)
 
 			Frame* f2 = m->AddFrame("fresD_res", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight()), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
 			AddHeadline(f2, Settings::lang_resources[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
-			int f2Top = Settings::percentForGrab * resDisRect.GetHeight() *2* 0.8f;
+			int f2Top = Settings::percentForGrab * resDisRect.GetHeight() *2* 0.75f;
 			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tWood", "...");
 			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tIron", "...");
 			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tSand", "...");
@@ -1222,12 +1264,14 @@ void FrameHandle::LoadScene(int scene, World* world)
 			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tSapphire", "...");
 			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tRobin", "...");
 			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tDiamond", "...");
-			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tAmber", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tAmber", "..."); 
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tLithium", "...");
+			f2Top = AddInfo(f2, f2Top, &resC->GetSurf().fonts[0], Colors::Black, "tGunpowder", "...");
 
 
 			Frame* f3 = m->AddFrame("fresD_mat", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight() * 2), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
 			AddHeadline(f3, Settings::lang_materials[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
-			int f3Top = Settings::percentForGrab * resDisRect.GetHeight() * 3 * 0.55f;
+			int f3Top = Settings::percentForGrab * resDisRect.GetHeight() * 3 * 0.50f;
 			
 			f3Top = AddInfo(f3, f3Top, &resC->GetSurf().fonts[0], Colors::Black, "tSteel", "...");
 			f3Top = AddInfo(f3, f3Top, &resC->GetSurf().fonts[0], Colors::Black, "tPlastic", "...");
@@ -1241,7 +1285,7 @@ void FrameHandle::LoadScene(int scene, World* world)
 
 			Frame* f4 = m->AddFrame("fresD_org", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight()*3), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
 			AddHeadline(f4, Settings::lang_organic[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
-			int f4Top = Settings::percentForGrab * resDisRect.GetHeight() * 3 + 0.5f;
+			int f4Top = Settings::percentForGrab * resDisRect.GetHeight() * 4 * 0.3f;
 
 			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tCorals", "...");
 			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tSticks", "...");
@@ -1254,7 +1298,18 @@ void FrameHandle::LoadScene(int scene, World* world)
 			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tBerrys", "...");
 			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tApples", "...");
 			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tCactus", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tSilicon", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tSapling", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tFeather", "...");
+			f4Top = AddInfo(f4, f4Top, &resC->GetSurf().fonts[0], Colors::Black, "tSilk", "...");
 			
+			Frame* f5 = m->AddFrame("fresD_science", RectF(Vec2(0, Settings::percentForGrab * resDisRect.GetHeight() * 4), resDisRect.GetWidth(), resDisRect.GetHeight()), 0, resC, m);//
+			AddHeadline(f5, Settings::lang_science[Settings::lang], &resC->GetSurf().fonts[0], Colors::Black);
+			int f5Top = Settings::percentForGrab * resDisRect.GetHeight() * 5 * 0.3f;
+			
+			f5Top = AddInfo(f5, f5Top, &resC->GetSurf().fonts[0], Colors::Black, "tComputer chips", "...");
+
+
 			comps["b_NextTurn"] = std::make_unique<Button>(Button(RectF(Vec2(Graphics::ScreenWidth/20*17, Graphics::ScreenHeight *13/16), Graphics::ScreenWidth / 10, Graphics::ScreenHeight / 12), &resC->GetSurf().windowsFrame[3], &resC->GetSurf().windowsFrame[3], { 0,0 }, &resC->GetSurf().fonts[0], nullptr, &buffer));
 			//comps["b_NextTurn"] = std::make_unique<Button>(Button(RectF(Vec2(650, 450), 120, 60), &resC->GetSurf().windowsFrame[3], &resC->GetSurf().windowsFrame[3], { 0,0 }, &resC->GetSurf().fonts[0], nullptr, &buffer));
 			static_cast<Button*>(comps["b_NextTurn"].get())->bFunc = BNextTurn;

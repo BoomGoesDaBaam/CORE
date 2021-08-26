@@ -6,6 +6,7 @@
 #include "Graphics.h"
 #include <sstream>
 #include <iomanip>
+
 class ButtonFunctions;
 class PageFrame;
 class FrameHandle;
@@ -18,6 +19,8 @@ class Image;
 class GrabImage;
 class CheckBox;
 class TextBox;
+class Hint;
+
 
 class FrameEvent
 {
@@ -68,9 +71,8 @@ public:
 	}
 };
 
-class Component
+class ComponentWithoutHint
 {
-protected:
 	bool visible = true;
 	int prio = 5;	//prio range [0-10] lower means first handled
 	std::queue<FrameEvent>* buffer;
@@ -82,12 +84,14 @@ protected:
 	}
 	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)
 	{
-		if (e.GetType() == Mouse::Event::Type::LRelease && interact && GetPos().Contains((Vec2)e.GetPos()))
+		if (GetPos().Contains((Vec2)e.GetPos()))
 		{
 			mouseHovers = true;
-			return true;
+			if (e.GetType() == Mouse::Event::Type::LRelease && interact)
+			{
+				return true;
+			}
 		}
-		mouseHovers = false;
 		return false;
 	}
 	virtual bool HandleMouseInputComps(Mouse::Event& e, bool interact)
@@ -100,10 +104,12 @@ protected:
 
 		if (hitComp && interact)
 		{
+			mouseHovers = true;
 			return true;
 		}
 		return false;
 	}
+	std::unique_ptr<Hint> hint = nullptr;
 public:
 	Component* parentC;
 	virtual RectF GetPos() {
@@ -111,7 +117,8 @@ public:
 		{
 			return pos;
 		}
-		return pos + parentC->GetPos().GetTopLeft<float>(); }
+		return pos + parentC->GetPos().GetTopLeft<float>();
+	}
 	RectF pos;
 	int curState = 0;
 	int extra1 = 0;
@@ -123,8 +130,8 @@ public:
 	std::vector<int> activInStates;
 	std::string text = "no title";
 	bool mouseHovers = false, hitable = false;
-	Component(RectF pos, Component* parentC, std::queue<FrameEvent>* buffer) :pos(pos), parentC(parentC),buffer(buffer){}
-	
+	Component(RectF pos, Component* parentC, std::queue<FrameEvent>* buffer) :pos(pos), parentC(parentC), buffer(buffer) {}
+
 	virtual void Draw(Graphics& gfx)
 	{
 		gfx.DrawFilledRect(GetPos(), c, SpriteEffect::Nothing());
@@ -134,15 +141,15 @@ public:
 		std::vector<Component*> drawOrder;
 
 		std::for_each(comps.begin(), comps.end(), [&](auto& comp)		//auto = something like 'std::pair<std::string, std::unique_ptr<Component>>'
-		{
-			if (comp.second->activInStates[curState] == 1 && comp.second->IsVisible()) {
-				drawOrder.push_back(comp.second.get());
-			}
-		});
+			{
+				if (comp.second->activInStates[curState] == 1 && comp.second->IsVisible()) {
+					drawOrder.push_back(comp.second.get());
+				}
+			});
 		std::sort(drawOrder.begin(), drawOrder.end(), [&](Component* obst1, Component* obst2)
-		{
-			return obst1->GetPrio() > obst2->GetPrio();
-		});
+			{
+				return obst1->GetPrio() > obst2->GetPrio();
+			});
 		for (int i = 0; i < drawOrder.size(); i++)
 		{
 			drawOrder[i]->Draw(gfx);
@@ -162,6 +169,7 @@ public:
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
 		IncreasePrio();
+		mouseHovers = false;
 		if (IsVisible())
 		{
 			if (HandleMouseInputComps(e, interact) || HandleMouseInputFrame(e, interact))
@@ -192,15 +200,52 @@ public:
 	{
 		return prio;
 	}
+	void AddHint(Hint& hint);
 	std::vector<int> FillWith1WhenSize0(std::vector<int> activInStates, int nStages);
 
-	Text* AddText(std::string text, RectF pos, int size,const Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0);
-	TextBox* AddTextBox(std::string text, RectF pos, int size,const Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0);
-	Button* AddButton(RectF pos,const Animation* a, const Animation* aHover, std::string key, const Font* f, std::vector<int> activInStates = {});
+	//Getter
+	std::queue<FrameEvent>* GetBuffer()const;
+
+	//Setter
+
+	Text* AddText(std::string text, RectF pos, int size, const Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0);
+	TextBox* AddTextBox(std::string text, RectF pos, int size, const Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0);
+	Button* AddButton(RectF pos, const Animation* a, const Animation* aHover, std::string key, const Font* f, std::vector<int> activInStates = {});
 	CheckBox* AddCheckBox(RectF pos, std::queue<FrameEvent>* buffer, sharedResC resC, std::string key, std::vector<int> activInStates = {});
 	Image* AddImage(RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {});
 	GrabImage* AddGrabImage(RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {});
 	Frame* AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {});
+};
+class Component: public ComponentWithoutHint
+{
+protected:
+	class Hint
+	{
+		int newCompAtX = 10;
+		sharedResC resC;
+		Vei2 lastMP = Vei2(0, 0);
+		bool visible = false;
+	public:
+		Hint(sharedResC resC);
+		//void AddHintTextBox(int width, std::string text, const Font* font, Color c);
+
+		void Draw(Graphics& gfx)
+		{
+			if (visible)
+			{
+				gfx.DrawRect(RectF(Vec2((float)lastMP.x, (float)lastMP.y), 100, 100), Colors::Blue);
+			}
+		}
+
+		//Getter
+		sharedResC GetResC()const;
+
+		//Setter
+		void SetLastMP(Vei2 mp)
+		{
+			this->lastMP = lastMP;
+		}
+	};
 };
 class Text: public Component
 {
@@ -453,6 +498,7 @@ public:
 			}
 		}
 		DrawComps(gfx);
+		hint->Draw(gfx);
 	}
 	void SetAnimation(const Animation* a)
 	{
@@ -485,6 +531,7 @@ public:
 	GrabImage(RectF pos, const Animation* a, const Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates);
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)override
 	{
+		mouseHovers = false;
 		IncreasePrio();
 		if (IsVisible())
 		{
@@ -499,6 +546,7 @@ public:
 			}
 			if (GetPos().Contains(mP) || gH.IsLocked())
 			{
+				mouseHovers = true;
 				delta += gH.MoveCamera(e);
 				if (parentC != nullptr)
 				{

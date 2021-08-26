@@ -1,4 +1,451 @@
 #include "Chunk.h"
+Obstacle::Obstacle(Obstacle& obst)
+{
+	*this = obst;
+}
+Obstacle& Obstacle::operator=(const Obstacle& other)
+{
+	resC = other.resC;
+	tilePos = other.tilePos;
+	chunkPos = other.chunkPos;
+	type = other.type;
+	state = other.state;
+	n90rot = other.n90rot;
+	hp = other.hp;
+	stepsLeft = other.stepsLeft;
+	team = other.team;
+	rect = other.rect;
+	animations = other.animations;
+	//Traits
+	if (other.education != nullptr)
+		education = std::make_unique<EducationTrait>(*other.education.get());
+	if (other.heal != nullptr)
+		heal = std::make_unique<HealTrait>(*other.heal.get());
+	if (other.attack != nullptr)
+		attack = std::make_unique<AttackTrait>(*other.attack.get());
+	if (other.craft != nullptr)
+		craft = std::make_unique<CraftTrait>(*other.craft.get());
+	//Inventory
+	if (other.inv != nullptr)
+		inv = std::make_unique<Inventory>(*other.inv.get());
+
+	return *this;
+}
+Obstacle::Obstacle(Vei2 tilePos, Vei2 chunkPos, int type, sharedResC resC, Team* team)
+	:
+	tilePos(tilePos),
+	chunkPos(chunkPos),
+	type(type),
+	resC(std::move(resC)),
+	team(team),
+	stepsLeft(Settings::obstacleStats[type].movesPerTurn)
+{
+	//Add Traits
+	if (std::any_of(std::begin(Settings::obstacleTrait_education), std::end(Settings::obstacleTrait_education), [&](const int& val)
+		{
+			return type == val;
+		}))
+	{
+		education = std::make_unique<EducationTrait>(5, 10);
+	}
+		std::for_each(std::begin(Settings::obstacleTrait_heal), std::end(Settings::obstacleTrait_heal), [&](const int& val)
+			{
+				if (type == val && val == 2)
+				{
+					heal = std::make_unique<HealTrait>(true);
+				}
+				else if (type == val)
+				{
+					heal = std::make_unique<HealTrait>(false);
+				}
+			});
+		if (std::any_of(std::begin(Settings::obstacleTrait_attack), std::end(Settings::obstacleTrait_attack), [&](const int& val)
+			{
+				return type == val;
+			}))
+		{
+			attack = std::make_unique<AttackTrait>(Settings::obstacleStats[type].attacksPerTurn);
+			attack->SetReloadNextTurn(true);
+			if (type == 3)
+			{
+				attack->SetAttacksleft(0);
+				attack->SetReloadNextTurn(false);
+			}
+		}
+			if (type == 30)
+			{
+				craft = std::make_unique<CraftTrait>();
+			}
+			//Add Inventory
+			if (Settings::anyOfCreature(type))
+			{
+				inv = std::make_unique<Inventory>(0);
+			}
+			if (type == 6)
+			{
+				RandyRandom rr;
+				inv = std::make_unique<Inventory>(1);
+				/*
+				int nItem = rr.Calc(2) + 3;
+				for (int i = 0; i < nItem; i++)
+				{
+					inv->SetItem(std::make_unique<Slot>(rr.Calc(12)), i);
+				}
+				*/
+				for (int i = 0; i < 7; i++)
+				{
+					inv->SetItem(std::make_unique<Slot>(i), i);
+				}
+			}
+			if (type == 30)
+			{
+				RandyRandom rr;
+				inv = std::make_unique<Inventory>(3);
+				int nItem = 1;
+				for (int i = 0; i < nItem; i++)
+				{
+					inv->SetItem(std::make_unique<Slot>(rr.Calc(12)), i);
+				}
+			}
+			if (type == 50)
+			{
+				inv = std::make_unique<Inventory>(2);
+				RandyRandom rr;
+				int nItem = rr.Calc(2) + 3;
+				for (int i = 0; i < nItem; i++)
+				{
+					inv->SetItem(std::make_unique<Slot>(rr.Calc(12)), i);
+				}
+			}
+			hp = Settings::obstacleStats[type].baseHp;
+			animations.push_back(Animation(this->resC->GetSurf().obstacles[type]));
+			switch (type)
+			{
+			case 1:
+			case 4:
+				//state = 1;
+				animations.push_back(Animation(this->resC->GetSurf().multiObstacles[Settings::Obstacle2MultiObstacle(type)]));
+				break;
+
+			}
+			RandyRandom rr;
+			if (type == 10)
+			{
+				n90rot = 0;
+			}
+			else
+			{
+				n90rot = rr.Calc(3);
+			}
+			for (auto& animation : animations)
+			{
+				//animation.SetKeepTime(((float)rr.Calc(50)/100) + 0.5);
+				//animation.SetTimePassed(animation.GetKeepTime()*((float)rr.Calc(100)/100));
+			}
+}
+void Obstacle::Heal(int deltaHP)
+{
+	if (hp < Settings::obstacleStats[type].baseHp)
+	{
+		hp += deltaHP;
+		if (hp > Settings::obstacleStats[type].baseHp)
+		{
+			hp = Settings::obstacleStats[type].baseHp;
+		}
+	}
+}
+int Obstacle::GetHealRange()
+{
+	if (heal != nullptr)
+	{
+		return Settings::obstacleStats[type].healRange * productivity;
+	}
+	return 0;
+}
+int Obstacle::GetHealAmount()
+{
+	if (heal != nullptr)
+	{
+		return Settings::obstacleStats[type].healNumber * productivity;
+	}
+	return 0;
+}
+void Obstacle::Draw(Graphics& gfx)const			//	'tileRect' = Rect of tile where (Vei2(0, -1) && Vei2(-1, 0) != index) == true
+{
+	if (state == 0)
+	{
+		gfx.DrawSurface((RectI)rect, animations[0].GetCurSurface(), SpriteEffect::Chroma(), n90rot);
+	}
+	else
+	{
+		gfx.DrawSurface((RectI)rect, animations[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), n90rot);
+	}
+	if (hp != Settings::obstacleStats[type].baseHp)
+	{
+		float percentage = (float)hp / Settings::obstacleStats[type].baseHp;
+		assert(percentage >= 0 && percentage <= 100);
+		float tileWidth = rect.GetWidth() / Settings::obstacleStats[type].size[0].x;
+		float startX = rect.left + ((Settings::obstacleStats[type].size[0].x / 2) - 1) * tileWidth;
+		float startY = rect.top + (float)(Settings::obstacleStats[type].size[0].y - 0.5f) * tileWidth;
+		gfx.DrawSurface(RectI(Vei2((int)startX, (int)startY), (int)tileWidth * 3, (int)tileWidth), resC->GetSurf().frames[1].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.75f), 0);
+		//gfx.DrawSurface(RectI(Vei2(startX, startY), tileWidth * 3, tileWidth), resC->tC.frames[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
+		gfx.DrawSurface(RectI(Vei2((int)startX, (int)startY), (int)((tileWidth * 3) * percentage), (int)tileWidth), RectI(Vei2(0, 0), (int)((float)(30) * percentage), 10), resC->GetSurf().frames[2].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.75f));
+		//gfx.DrawSurface(RectI(Vei2(startX, startY), tileWidth * 3, tileWidth), resC->tC.frames[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta), 0);
+	}
+}
+void Obstacle::UpdateRect(RectF tileRect, Vei2 tilePos, RectF chunkRect)
+{
+	if (state == 0)
+	{
+		Vec2 tileSize = Vec2(tileRect.GetWidth(), tileRect.GetHeight());
+		tileRect.right += tileSize.x * (Settings::obstacleStats[type].size[0].x - 1);
+		tileRect.top -= tileSize.y * (Settings::obstacleStats[type].size[0].y - 1);
+		rect = tileRect;
+	}
+	else
+	{
+		Vec2 tileSize = Vec2(tileRect.GetWidth(), tileRect.GetHeight());
+		int multiObstIndex = Settings::Obstacle2MultiObstacle(type);
+		tileRect += Vec2(Settings::obstacleStats[type].obstacleStartPos[state].x * tileSize.x, -Settings::obstacleStats[type].obstacleStartPos[state].y * tileSize.y);
+		Vei2 size = Settings::obstacleStats[type].size[state];
+		tileRect.right += tileSize.x * (size.x - 1);
+		tileRect.top -= tileSize.y * (size.y - 1);
+		rect = tileRect;
+	}
+}
+void Obstacle::Update(float dt)
+{
+	for (int i = 0; i < animations.size(); i++)
+	{
+		animations[i].Update(dt);
+	}
+	/*
+	for (auto animation : animations)
+	{
+		animation.Update(dt);
+	}
+	*/
+}
+CtPos Obstacle::GetCtPos()
+{
+	return CtPos(chunkPos, tilePos);
+}
+Vei2 Obstacle::GetPosFlat()
+{
+	return chunkPos * Settings::CellSplitUpIn * Settings::chunkHasNCells + tilePos;
+}
+CctPos Obstacle::GetCctPos()
+{
+	return CctPos(chunkPos, tilePos / Settings::CellSplitUpIn, tilePos % Settings::CellSplitUpIn);
+}
+int Obstacle::GetDmg(const Obstacle* victim)
+{
+	float dmg = (float)Settings::obstacleStats[type].attackDmg; //* ( (float)hp / Settings::obstacleStats[type].baseHp);
+	if (inv != nullptr)
+	{
+		if (inv->HasItemNotBroken(0))						//axe
+		{
+			if (Settings::anyOfAxeBonus(victim->GetType()))
+			{
+				dmg *= 3.f;
+				inv->ItemUsed(0);
+			}
+			else if (Settings::anyOfCreature(victim->GetType()))
+			{
+				dmg *= 1.5f;
+				inv->ItemUsed(0);
+			}
+		}
+		if (Settings::anyOfPlants(victim->GetType()))
+		{
+			dmg *= Settings::obstacleStats[type].dmgAgainstPlants;
+		}
+		if (inv->HasItemNotBroken(1) && Settings::anyOfCreature(victim->GetType()))	//iron sword
+		{
+			dmg *= 2.5f;
+			inv->ItemUsed(1);
+		}
+		if (inv->HasItemNotBroken(10))						//axe
+		{
+			if (Settings::anyOfPickaxeBonus(victim->GetType()))
+			{
+				dmg *= 3.f;
+				inv->ItemUsed(10);
+			}
+			else if (Settings::anyOfCreature(victim->GetType()))
+			{
+				dmg *= 1.5f;
+				inv->ItemUsed(10);
+			}
+		}
+		if (inv->HasItemNotBroken(11) && Settings::anyOfCreature(victim->GetType()))	//bow
+		{
+			dmg *= 2;
+			inv->ItemUsed(11);
+		}
+		else if (inv->HasItemNotBroken(11))
+		{
+			inv->ItemUsed(11);
+		}
+		if (inv->HasItemNotBroken(12) && Settings::anyOfCreature(victim->GetType()))	//sniper
+		{
+			dmg *= 3;
+			inv->ItemUsed(12);
+		}
+		else if (inv->HasItemNotBroken(12))
+		{
+			inv->ItemUsed(12);
+		}
+	}
+	if (type == 27 && Settings::anyOfPlants(victim->GetType()))
+	{
+		dmg *= productivity;
+	}
+	return (int)dmg;
+}
+int Obstacle::GetAttackRange()
+{
+	float attackRange = (float)Settings::obstacleStats[type].attackRange;
+	if (inv != nullptr)
+	{
+		if (inv->HasItemNotBroken(11))	//bow
+		{
+			attackRange = 10;
+		}
+		if (inv->HasItemNotBroken(12))	//sniper
+		{
+			attackRange = 20;
+		}
+	}
+	return (int)attackRange;
+}
+float Obstacle::AttackObstacle(Obstacle* attacker, float dmg, int range)
+{
+	float dmgAdjusted = dmg;
+	if (inv != nullptr)
+	{
+		if (inv->HasItemNotBroken(9))
+		{
+			dmgAdjusted *= 0.5f;
+			inv->ItemUsed(9);
+		}
+		if (inv->HasItemNotBroken(2))
+		{
+			dmgAdjusted *= 0.75f;
+			inv->ItemUsed(2);
+		}
+	}
+	hp -= (int)dmgAdjusted;
+	return dmgAdjusted;
+}
+//Obstacle Getter
+Vei2 Obstacle::GetChunkPos()const
+{
+	return chunkPos;
+}
+Vei2 Obstacle::GetTilePos()const
+{
+	return tilePos;
+}
+int Obstacle::GetType()const
+{
+	return type;
+}
+int Obstacle::GetState()const
+{
+	return state;
+}
+int Obstacle::GetN90Rot()const
+{
+	return n90rot;
+}
+int Obstacle::GetHP()const
+{
+	return hp;
+}
+int Obstacle::GetStepsLeft()const
+{
+	return stepsLeft;
+}
+float Obstacle::GetProductivity()const
+{
+	return productivity;
+}
+Team* Obstacle::GetTeam()const
+{
+	return team;
+}
+RectF Obstacle::GetRect()const
+{
+	return rect;
+}
+Inventory* Obstacle::GetInventory()const
+{
+	return inv.get();
+}
+//Traits
+EducationTrait* Obstacle::GetEducation()const
+{
+	return education.get();
+}
+HealTrait* Obstacle::GetHealTrait()const
+{
+	return heal.get();
+}
+AttackTrait* Obstacle::GetAttackTrait()const
+{
+	return attack.get();
+}
+CraftTrait* Obstacle::GetCraftTrait()const
+{
+	return craft.get();
+}
+//Obstacle Setter
+void Obstacle::SetChunkPos(Vei2 pos)
+{
+	chunkPos = pos;
+}
+void Obstacle::SetTilePos(Vei2 pos)
+{
+	tilePos = pos;
+}
+void Obstacle::SetN90Rot(int n90rot)
+{
+	this->n90rot = n90rot;
+}
+void Obstacle::SetState(int state)
+{
+	this->state = state;
+}
+void Obstacle::SetHp(int hp)
+{
+	this->hp = hp;
+}
+void Obstacle::AddHP(int delta)
+{
+	this->hp += delta;
+}
+void Obstacle::SetStepsLeft(int stepsLeft)
+{
+	this->stepsLeft = stepsLeft;
+}
+void Obstacle::AddStepsLeft(int delta)
+{
+	this->stepsLeft += delta;
+}
+void Obstacle::SetProductivity(float productivity)
+{
+	this->productivity = productivity;
+}
+void Obstacle::AddProductivity(float delta)
+{
+	this->productivity += delta;
+}
+void Obstacle::SetRect(RectF rect)
+{
+	this->rect = rect;
+}
+
 void Chunk::PlaceLadderableTiles(int type)
 {
 	for (int y = 0; y < cells.GetColums() * Settings::CellSplitUpIn; y++)
@@ -58,7 +505,7 @@ int Chunk::CountNumberOf(CtPos ctPos, int radius, int type)
 		{
 			CtPos ctPosTest = PutCtPosInWorld(ctPos + CtPos(Vei2(0,0),Vei2(x, y)),chunks->GetSize());
 			//assert(TileIsInWorld(ctPosTest));
-			if (radius > 0 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius && chunks->operator()(ctPosTest.x).GetObstacleAt(ctPosTest.y) != nullptr && chunks->operator()(ctPosTest.x).GetObstacleAt(ctPosTest.y)->type == type)
+			if (radius > 0 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius && chunks->operator()(ctPosTest.x).GetObstacleAt(ctPosTest.y) != nullptr && chunks->operator()(ctPosTest.x).GetObstacleAt(ctPosTest.y)->GetType() == type)
 			{
 				count++;
 			}
@@ -103,9 +550,9 @@ void Chunk::IncreaseProductivity(CtPos pos,const Settings::OPB& opb)// float del
 			CtPos ctPos = PutCtPosInWorld(pos + ctDelta, chunks->GetSize());
 			Obstacle* obst = chunks->operator()(ctPos.x).GetObstacleAt(ctPos.y);
 			if (chunks->operator()(ctPos.x).GetObstacleMapAt(ctPos.y) != -1 && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius && std::none_of(increased.begin(), increased.end(), [&](const Obstacle* val) {return val == obst; }) &&
-				std::any_of(boostedTypes.begin(), boostedTypes.end(), [&](const int& val) {return val == obst->type; }))
+				std::any_of(boostedTypes.begin(), boostedTypes.end(), [&](const int& val) {return val == obst->GetType(); }))
 			{
-				obst->productivity += deltaProd;
+				obst->AddProductivity(deltaProd);
 				increased.push_back(obst);
 			}
 		}
@@ -123,7 +570,7 @@ CtPos Chunk::FindNearestObstacle(CtPos pos, std::vector<int> allowedTypes, int r
 				CtPos ctDelta = { Vei2(0,0),Vei2(x,y) };
 				CtPos ctPos = PutCtPosInWorld(pos + ctDelta, chunks->GetSize());
 				Obstacle* obstacle = chunks->operator()(ctPos.x).GetObstacleAt(ctPos.y);
-				if (obstacle != nullptr && std::any_of(allowedTypes.begin(), allowedTypes.end(), [&](const int type) {return type == obstacle->type;}) && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius)
+				if (obstacle != nullptr && std::any_of(allowedTypes.begin(), allowedTypes.end(), [&](const int type) {return type == obstacle->GetType();}) && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius)
 				{
 					return ctPos;
 				}
@@ -137,8 +584,8 @@ void Chunk::UnitKilled(CtPos killerPos, CtPos victimPos)
 	Obstacle* killer = chunks->operator()(killerPos.x).GetObstacleAt(killerPos.y);
 	Obstacle* victim = chunks->operator()(victimPos.x).GetObstacleAt(victimPos.y);
 	assert(killer != nullptr && victim != nullptr);
-	killer->team->GetMaterials().Add(Settings::obstacleStats[victim->type].lootForDestroying);
-	chunks->operator()(victimPos.x).DeleteObstacle(victim->tilePos);
+	killer->GetTeam()->GetMaterials().Add(Settings::obstacleStats[victim->GetType()].lootForDestroying);
+	chunks->operator()(victimPos.x).DeleteObstacle(victim->GetTilePos());
 }
 void Chunk::PlaceTilesForMaskedField(Vei2 cellPos, int value, int valOfMixed, int valueOfZero, int type)
 {
@@ -289,30 +736,30 @@ void Chunk::MarkObstacleMap(Vei2 tilePos, Vei2 size, int index)
 }
 bool Chunk::MoveObstacle(int index, CtPos newPos)
 {
-	Vei2 oldPos = chunkPos2Flat(Vec3_<Vei2>(chunkPos, Vei2(obstacles[index]->tilePos.x / Settings::CellSplitUpIn, obstacles[index]->tilePos.y / Settings::CellSplitUpIn), Vei2(obstacles[index]->tilePos.x % Settings::CellSplitUpIn, obstacles[index]->tilePos.y % Settings::CellSplitUpIn)));
+	Vei2 oldPos = chunkPos2Flat(Vec3_<Vei2>(chunkPos, Vei2(obstacles[index]->GetTilePos().x / Settings::CellSplitUpIn, obstacles[index]->GetTilePos().y / Settings::CellSplitUpIn), Vei2(obstacles[index]->GetTilePos().x % Settings::CellSplitUpIn, obstacles[index]->GetTilePos().y % Settings::CellSplitUpIn)));
 	int dist = (int)std::ceil(GetDistBetween2tiles(chunkPos2Flat(newPos), oldPos, chunks->GetColums() * Settings::chunkHasNTiles));
 
 	Vei2 onMap = newPos.y;
-	if (dist > 0 && chunks->operator()(newPos.x).ObstaclePosAllowed(onMap, obstacles[index]->type, index))
+	if (dist > 0 && chunks->operator()(newPos.x).ObstaclePosAllowed(onMap, obstacles[index]->GetType(), index))
 	{
 		if (chunkPos == newPos.x)	//move inside a chunk
 		{
-			MarkObstacleMap(obstacles[index]->tilePos, Settings::obstacleStats[obstacles[index]->type].size[0], -1);
-			obstacles[index]->tilePos = onMap;
-			MarkObstacleMap(onMap, Settings::obstacleStats[obstacles[index]->type].size[0], index);
+			MarkObstacleMap(obstacles[index]->GetTilePos(), Settings::obstacleStats[obstacles[index]->GetType()].size[0], -1);
+			obstacles[index]->SetTilePos(onMap);
+			MarkObstacleMap(onMap, Settings::obstacleStats[obstacles[index]->GetType()].size[0], index);
 		}
 		else     //jump into an other chunk
 		{
 			Obstacle o = *obstacles[index].get();
-			DeleteObstacle(obstacles[index]->tilePos);
-			o.chunkPos = newPos.x;
-			o.tilePos = onMap;
-			o.stepsLeft -= dist;
+			DeleteObstacle(obstacles[index]->GetTilePos());
+			o.SetChunkPos(newPos.x);
+			o.SetTilePos(onMap);
+			o.AddStepsLeft(-dist);
 			chunks->operator()(newPos.x).PlaceObstacle(onMap, &o);
 		}
-		obstacles[index]->stepsLeft -= dist;
+		obstacles[index]->AddStepsLeft(-dist);
 		return true;
-		//PlaceObstacle(newPos, obstacles[index]->type);
+		//PlaceObstacle(newPos, obstacles[index]->GetType());
 	}
 	return false;
 }
@@ -427,7 +874,7 @@ int Chunk::GetObstacleIndex(Vei2 tilePos)const
 {
 	for (int i = 0; i < (int)obstacles.size(); i++)
 	{
-		if (obstacles[i]->tilePos == tilePos)
+		if (obstacles[i]->GetTilePos() == tilePos)
 		{
 			return i;
 		}
@@ -439,8 +886,8 @@ void Chunk::DeleteObstacle(Vei2 tilePos)
 	if (CheckIfObstacleBaseTile(tilePos))
 	{
 		int index = obstacleMap(tilePos);
-		MarkObstacleMap(tilePos, Settings::obstacleStats[obstacles[index]->type].size[0], -1);
-		obstacles[index]->tilePos = Vei2(-1, -1);
+		MarkObstacleMap(tilePos, Settings::obstacleStats[obstacles[index]->GetType()].size[0], -1);
+		obstacles[index]->SetTilePos(Vei2(-1, -1));
 		obstaclesIndexNotUsed.push_back(index);
 	}
 }
@@ -467,8 +914,8 @@ void Chunk::DrawObstacle(Vei2 tilePos, int type, RectF chunkRect, int n90rot, Gr
 		drawPos.right += (Settings::obstacleStats[type].size[0].x - 1) * tileSize.x;
 
 		Obstacle o(tilePos, chunkPos, type, resC);
-		o.n90rot = n90rot;
-		o.rect = drawPos;
+		o.SetN90Rot(n90rot);
+		o.SetRect(drawPos);
 		o.Draw(gfx);
 	}
 }
@@ -499,9 +946,9 @@ void Chunk::DrawObstacles(Graphics& gfx) const
 				{
 					continue;
 				}
-					if (obstacles[i]->state == 0 && layer == 0)
+					if (obstacles[i]->GetState() == 0 && layer == 0)
 						obstacles[i]->Draw(gfx);
-					if (obstacles[i]->state == 1 && layer == 1)
+					if (obstacles[i]->GetState() == 1 && layer == 1)
 						obstacles[i]->Draw(gfx);
 			}
 		}
@@ -550,7 +997,7 @@ void Chunk::DrawType(Graphics& gfx)const
 		{
 			Vei2 curXY = Vei2(x, y);
 			//const Cell& curCell = cells(curXY);
-			//int cellType = curCell->type;
+			//int cellType = curCell->GetType();
 			RectF curCellRect = cellsRect(curXY); //GetCellRect(chunkRect, curXY); 
 			int width = curCellRect.GetWidth();
 			int height = curCellRect.GetHeight();
@@ -677,7 +1124,7 @@ void Chunk::DrawGrit(Graphics& gfx)const
 		{
 			Vei2 curXY = Vei2(x, y);
 			//const Cell& curCell = cells(curXY);
-			//int cellType = curCell->type;
+			//int cellType = curCell->GetType();
 			RectI curCellPos = (RectI)cellsRect(curXY);	// RectI(Vei2(pos.x, pos.y), cellSize, cellSize) + Vei2(x, -y - 1) * cellSize;
 
 			//Vei2 tileStart = Vei2(x, y) * Settings::CellSplitUpIn;
@@ -733,7 +1180,7 @@ void Chunk::UpdateRects(RectF chunkRect)
 	}
 	for (int i = 0; i < obstacles.size(); i++)
 	{
-		Vei2 pos = obstacles[i]->tilePos;
+		Vei2 pos = obstacles[i]->GetTilePos();
 		obstacles[i]->UpdateRect(GetTileRect(chunkRect, pos) - Vec2(0, chunkRect.GetWidth()), pos, chunkRect);
 	}
 }
@@ -815,16 +1262,16 @@ void Chunk::UpdateWhenMoved(RectF chunkRect)
 	for (int i = 0; i < obstacles.size(); i++)
 	{
 
-		if (Settings::anyOfChangeSizeWhenNear(obstacles[i]->type) && UnitIsAround(obstacles[i]->tilePos, 5))
+		if (Settings::anyOfChangeSizeWhenNear(obstacles[i]->GetType()) && UnitIsAround(obstacles[i]->GetTilePos(), 5))
 		{
-			obstacles[i]->state = 0;
+			obstacles[i]->SetState(0);
 		}
-		else if (Settings::anyOfChangeSizeWhenNear(obstacles[i]->type))
+		else if (Settings::anyOfChangeSizeWhenNear(obstacles[i]->GetType()))
 		{
 			Vec2 chunkSize = (Vec2)chunkRect.GetSize();
 			Vec2 cellSize = GetCellSize(chunkRect);
 			Vec2 tileSize = GetTileSize(chunkRect);
-			obstacles[i]->state = 1;
+			obstacles[i]->SetState(1);
 			//UpdateTypeSurfaceCell(chunkRect, obstacles[i]->tilePos / Settings::CellSplitUpIn, cellSize, chunkSize);
 			//UpdateObstacleSurfaceCell(chunkRect, obstacles[i]->tilePos / Settings::CellSplitUpIn, cellSize, chunkSize, tileSize);
 
@@ -843,7 +1290,7 @@ bool Chunk::UnitIsAround(Vei2 tilePos, int range)
 			if (chunks->operator()(curctPos.x).GetObstacleMapAt(curctPos.y) != -1)
 			{
 				Obstacle* obst = chunks->operator()(curctPos.x).GetObstacleAt(curctPos.y);
-				if (sqrt(pow(x, 2) + pow(y, 2)) <= range && obst != nullptr && Settings::anyOfCreature(obst->type))
+				if (sqrt(pow(x, 2) + pow(y, 2)) <= range && obst != nullptr && Settings::anyOfCreature(obst->GetType()))
 				{
 					return true;
 				}
@@ -858,7 +1305,7 @@ bool Chunk::PlaceObstacle(Vei2 tilePos, int type, Team* team, int ontoType, int 
 	//Matrix<int> aMat = chunks->operator()(ctPos.x).GetAroundmatrix(ctPos.y / Vei2(Settings::CellSplitUpIn,Settings::CellSplitUpIn));// GetAroundMatrix(tileIsInCell);
 	//if (ObstaclePosAllowed(tilePos, type) && (ontoType == -1 || ontoType == cells(tileIsInCell).type) && (surrBy == -1 || aMat.HasValue(surrBy)))
 	//{
-	tilePos = Chunk::PutTileInWorld(tilePos, chunks->GetSize() * Settings::chunkHasNTiles);
+	//tilePos = Chunk::PutTileInWorld(tilePos, chunks->GetSize() * Settings::chunkHasNTiles);
 	if (Settings::spawnObstacles && TileIsInWorld(tilePos))
 	{
 		CtPos ctPos = Chunk::PutCtPosInWorld(CtPos(Vei2(0, 0), tilePos), chunks->GetSize());
@@ -889,7 +1336,7 @@ bool Chunk::PlaceObstacle(Vei2 tilePos, int type, Team* team, int ontoType, int 
 }
 bool Chunk::PlaceObstacle(Vei2 tilePos, Obstacle* o)
 {
-	if (Settings::obstaclesOn && ObstaclePosAllowed(tilePos, o->type))
+	if (Settings::obstaclesOn && ObstaclePosAllowed(tilePos, o->GetType()))
 	{
 		return PlaceObstacleWithoutCheck(tilePos, o);
 	}
@@ -903,7 +1350,7 @@ bool Chunk::PlaceObstacleWithoutCheck(Vei2 tilePos, Obstacle* o)
 		if (obstaclesIndexNotUsed.size() == 0)
 		{
 			int index = (int)obstacles.size();
-			MarkObstacleMap(tilePos, Settings::obstacleStats[o->type].size[0], index);
+			MarkObstacleMap(tilePos, Settings::obstacleStats[o->GetType()].size[0], index);
 
 			if (ConstructionSite* conObst = dynamic_cast<ConstructionSite*>(o))
 			{
@@ -918,7 +1365,7 @@ bool Chunk::PlaceObstacleWithoutCheck(Vei2 tilePos, Obstacle* o)
 		{
 			int index = obstaclesIndexNotUsed[0];
 			obstaclesIndexNotUsed.erase(obstaclesIndexNotUsed.begin());
-			MarkObstacleMap(tilePos, Settings::obstacleStats[o->type].size[0], index);
+			MarkObstacleMap(tilePos, Settings::obstacleStats[o->GetType()].size[0], index);
 			if (ConstructionSite* conObst = dynamic_cast<ConstructionSite*>(o))
 			{
 				obstacles[index] = std::make_unique<ConstructionSite>(*conObst);
@@ -1066,22 +1513,22 @@ void Chunk::NextTurnFirst(std::map<std::string, Team>* teams)
 	for (int i = 0; i < obstacles.size(); i++)			//Update Map
 	{
 		if (std::none_of(obstaclesIndexNotUsed.begin(), obstaclesIndexNotUsed.end(), [&](const int& val) {return val == i; })) {
-			obstacles[i]->productivity = 1.0f;
+			obstacles[i]->SetProductivity(1.0f);
 			ApplyObstacleEffectFirst(obstacles[i].get());
-			if (obstacles[i]->education != nullptr && obstacles[i]->education->Educates())
+			if (obstacles[i]->GetEducation() != nullptr && obstacles[i]->GetEducation()->Educates())
 			{
-				obstacles[i]->education->TurnPassed();
-				if (obstacles[i]->education->EducationFinished() && teams->at("player").GetMaterials().values["units"] + 1 <= teams->at("player").GetMaterials().values["maxUnits"])
+				obstacles[i]->GetEducation()->TurnPassed();
+				if (obstacles[i]->GetEducation()->EducationFinished() && teams->at("player").GetMaterials().values["units"] + 1 <= teams->at("player").GetMaterials().values["maxUnits"])
 				{
-					CtPos spawnPoint = FindNearestPositionThatFits(obstacles[i]->tilePos, obstacles[i]->education->GetFinishedType());
-					Obstacle obstacle = Obstacle(spawnPoint.y, spawnPoint.x, obstacles[i]->education->GetFinishedType(), resC, obstacles[i]->team);
-					chunks->operator()(spawnPoint.x).PlaceObstacle(obstacle.tilePos, &obstacle);
-					obstacles[i]->education->ResetTurns();
+					CtPos spawnPoint = FindNearestPositionThatFits(obstacles[i]->GetTilePos(), obstacles[i]->GetEducation()->GetFinishedType());
+					Obstacle obstacle = Obstacle(spawnPoint.y, spawnPoint.x, obstacles[i]->GetEducation()->GetFinishedType(), resC, obstacles[i]->GetTeam());
+					chunks->operator()(spawnPoint.x).PlaceObstacle(obstacle.GetTilePos(), &obstacle);
+					obstacles[i]->GetEducation()->ResetTurns();
 				}
 			}
-			if (obstacles[i]->heal != nullptr && obstacles[i]->heal->Isenabled())
+			if (obstacles[i]->GetHealTrait() != nullptr && obstacles[i]->GetHealTrait()->Isenabled())
 			{
-				CastHeal(GetMidPosOfObstacle(CtPos(chunkPos, obstacles[i]->tilePos), obstacles[i]->type, chunks->GetSize()), Settings::obstacleStats[obstacles[i]->type].healNumber, Settings::obstacleStats[obstacles[i]->type].healRange);
+				CastHeal(GetMidPosOfObstacle(CtPos(chunkPos, obstacles[i]->GetTilePos()), obstacles[i]->GetType(), chunks->GetSize()), Settings::obstacleStats[obstacles[i]->GetType()].healNumber, Settings::obstacleStats[obstacles[i]->GetType()].healRange);
 			}
 		}
 	}
@@ -1098,57 +1545,57 @@ void Chunk::NextTurnSecond(std::map<std::string, Team>* teams)
 }
 void Chunk::NextTurnSecondObstacle(Obstacle* obstacle, std::map<std::string, Team>* teams)
 {
-	obstacle->stepsLeft = Settings::obstacleStats[obstacle->type].movesPerTurn * obstacle->productivity;
-	obstacle->Heal(std::ceil(2 * obstacle->productivity));
+	obstacle->SetStepsLeft(Settings::obstacleStats[obstacle->GetType()].movesPerTurn * obstacle->GetProductivity());
+	obstacle->Heal(std::ceil(2 * obstacle->GetProductivity()));
 	//Apply Items effects
-	if (obstacle->inv.get() != nullptr)
+	if (obstacle->GetInventory() != nullptr)
 	{
-		if (obstacle->inv->HasItemNotBroken(3))		//range chain
+		if (obstacle->GetInventory()->HasItemNotBroken(3))		//range chain
 		{
-			obstacle->stepsLeft += 5;
-			obstacle->inv->ItemUsed(3);
+			obstacle->AddStepsLeft(5);
+			obstacle->GetInventory()->ItemUsed(3);
 		}
-		if (obstacle->inv->HasItemNotBroken(4))		//heal ring
+		if (obstacle->GetInventory()->HasItemNotBroken(4))		//heal ring
 		{
 			obstacle->Heal(10);
-			obstacle->inv->ItemUsed(4);
+			obstacle->GetInventory()->ItemUsed(4);
 		}
 	}
 	//Apply Traits
-	if (obstacle->attack != nullptr && obstacle->attack->GetReloadNextTurn() && obstacle->attack->GetAutomaticMode() == CtPos(Vei2(-1, -1), Vei2(-1, -1)))
+	if (obstacle->GetAttackTrait() != nullptr && obstacle->GetAttackTrait()->GetReloadNextTurn() && obstacle->GetAttackTrait()->GetAutomaticMode() == CtPos(Vei2(-1, -1), Vei2(-1, -1)))
 	{
-		obstacle->attack->SetAttacksleft(Settings::obstacleStats[obstacle->type].attacksPerTurn);
-	}else if (obstacle->attack != nullptr && obstacle->attack->GetAutomaticMode() != CtPos(Vei2(-1, -1), Vei2(-1, -1)))
+		obstacle->GetAttackTrait()->SetAttacksleft(Settings::obstacleStats[obstacle->GetType()].attacksPerTurn);
+	}else if (obstacle->GetAttackTrait() != nullptr && obstacle->GetAttackTrait()->GetAutomaticMode() != CtPos(Vei2(-1, -1), Vei2(-1, -1)))
 	{
-		obstacle->attack->SetAttacksleft(0);
+		obstacle->GetAttackTrait()->SetAttacksleft(0);
 
 		ApplyAutoAttackPosWhenNeeded(obstacle);
-		CtPos attackPos = obstacle->attack->GetAutomaticMode();
-		for (int attack = 0; attack < Settings::obstacleStats[obstacle->type].attacksPerTurn; attack++)
+		CtPos attackPos = obstacle->GetAttackTrait()->GetAutomaticMode();
+		for (int attack = 0; attack < Settings::obstacleStats[obstacle->GetType()].attacksPerTurn; attack++)
 		{
-			if (obstacle->attack->GetAutomaticMode() != CtPos(Vei2(-3, -3), Vei2(-3, -3)))
+			if (obstacle->GetAttackTrait()->GetAutomaticMode() != CtPos(Vei2(-3, -3), Vei2(-3, -3)))
 			{
 				AttackTile(CtPos2CctPos(attackPos), obstacle);
 			}
 			ApplyAutoAttackPosWhenNeeded(obstacle);
-			attackPos = obstacle->attack->GetAutomaticMode();
+			attackPos = obstacle->GetAttackTrait()->GetAutomaticMode();
 		}
 	}
-	if (obstacle->craft != nullptr && obstacle->craft->IsCrafting())
+	if (obstacle->GetCraftTrait() != nullptr && obstacle->GetCraftTrait()->IsCrafting())
 	{
-		obstacle->craft->TurnPassed(obstacle->productivity);
-		if (obstacle->craft->TurnsLeft(obstacle->productivity) == 0)
+		obstacle->GetCraftTrait()->TurnPassed(obstacle->GetProductivity());
+		if (obstacle->GetCraftTrait()->TurnsLeft(obstacle->GetProductivity()) == 0)
 		{
-			int craftedItemID = obstacle->craft->GetItemID();
+			int craftedItemID = obstacle->GetCraftTrait()->GetItemID();
 			for (int indexInv = 0; indexInv < 3; indexInv++)
 			{
-				if (obstacle->type == 30)
+				if (obstacle->GetType() == 30)
 				{
-					if (obstacle->inv->GetItem(indexInv)->get() == nullptr && obstacle->team->GetMaterials().Has(Settings::itemStats[craftedItemID].neededResToCraft))
+					if (obstacle->GetInventory()->GetItem(indexInv)->get() == nullptr && obstacle->GetTeam()->GetMaterials().Has(Settings::itemStats[craftedItemID].neededResToCraft))
 					{
-						obstacle->team->GetMaterials().Remove(Settings::itemStats[craftedItemID].neededResToCraft);
-						obstacle->inv->SetItem(std::make_unique<Slot>(craftedItemID), indexInv);
-						obstacle->craft->StoppedCrafting();
+						obstacle->GetTeam()->GetMaterials().Remove(Settings::itemStats[craftedItemID].neededResToCraft);
+						obstacle->GetInventory()->SetItem(std::make_unique<Slot>(craftedItemID), indexInv);
+						obstacle->GetCraftTrait()->StoppedCrafting();
 						break;
 					}
 				}
@@ -1156,16 +1603,16 @@ void Chunk::NextTurnSecondObstacle(Obstacle* obstacle, std::map<std::string, Tea
 		}
 	}
 	//Obstacle expandation
-	if (Settings::anyOfPlants(obstacle->type) && rr.Calc(Settings::probToGrow) == 1)
+	if (Settings::anyOfPlants(obstacle->GetType()) && rr.Calc(Settings::probToGrow) == 1)
 	{
-		PlantExpand(obstacle->GetCtPos(), obstacle->type, 20, Settings::forestDensity, &teams->at("animals"));
+		PlantExpand(obstacle->GetCtPos(), obstacle->GetType(), 20, Settings::forestDensity, &teams->at("animals"));
 	}
-	if (Settings::anyOfAnimals(obstacle->type) && rr.Calc(Settings::probToGrow) == 1)
+	if (Settings::anyOfAnimals(obstacle->GetType()) && rr.Calc(Settings::probToGrow) == 1)
 	{
-		PlantExpand(obstacle->GetCtPos(), obstacle->type, 45, Settings::animalDensity, &teams->at("animals"));
+		PlantExpand(obstacle->GetCtPos(), obstacle->GetType(), 45, Settings::animalDensity, &teams->at("animals"));
 	}
 	//Add meterials and apply Obstacle effects
-	if (obstacle->team != nullptr)
+	if (obstacle->GetTeam() != nullptr)
 		ApplyObstacleEffectSecond(obstacle);
 	//COnstructions finished
 	if (ConstructionSite* conObst = dynamic_cast<ConstructionSite*>(obstacle))
@@ -1173,11 +1620,11 @@ void Chunk::NextTurnSecondObstacle(Obstacle* obstacle, std::map<std::string, Tea
 		conObst->TurnPassed();
 		if (conObst->BuildingFinished())
 		{
-			Obstacle obstacle = Obstacle(conObst->tilePos, conObst->chunkPos, conObst->GetTypeWhenFinished(), resC, conObst->team);
-			obstacle.n90rot = conObst->n90rot;
-			DeleteObstacle(conObst->tilePos);
-			PlaceObstacleWithoutCheck(obstacle.tilePos, &obstacle);
-			NextTurnSecondObstacle(GetObstacleAt(obstacle.tilePos), teams);
+			Obstacle obstacle = Obstacle(conObst->GetTilePos(), conObst->GetChunkPos(), conObst->GetTypeWhenFinished(), resC, conObst->GetTeam());
+			obstacle.SetN90Rot(conObst->GetN90Rot());
+			DeleteObstacle(conObst->GetTilePos());
+			PlaceObstacleWithoutCheck(obstacle.GetTilePos(), &obstacle);
+			NextTurnSecondObstacle(GetObstacleAt(obstacle.GetTilePos()), teams);
 		}
 	}
 }
@@ -1201,18 +1648,18 @@ void Chunk::PlantExpand(CtPos ctPos, int type, int radius, int maxInRange, Team*
 }
 void Chunk::ApplyAutoAttackPosWhenNeeded(Obstacle* obstacle)
 {
-	assert(obstacle->attack != nullptr);
-	assert(obstacle->attack->GetAutomaticMode() != CtPos(Vei2(-1, -1), Vei2(-1, -1)));
-	CtPos attackPos = obstacle->attack->GetAutomaticMode();
-	if (obstacle->attack->GetAutomaticMode() == CtPos(Vei2(-2, -2), Vei2(-2, -2)) || obstacle->attack->GetAutomaticMode() == CtPos(Vei2(-3, -3), Vei2(-3, -3)) || obstacle->attack->GetAutomaticMode() != CtPos(Vei2(-1, -1), Vei2(-1, -1)) && chunks->operator()(attackPos.x).GetObstacleAt(attackPos.y) == nullptr)
+	assert(obstacle->GetAttackTrait() != nullptr);
+	assert(obstacle->GetAttackTrait()->GetAutomaticMode() != CtPos(Vei2(-1, -1), Vei2(-1, -1)));
+	CtPos attackPos = obstacle->GetAttackTrait()->GetAutomaticMode();
+	if (obstacle->GetAttackTrait()->GetAutomaticMode() == CtPos(Vei2(-2, -2), Vei2(-2, -2)) || obstacle->GetAttackTrait()->GetAutomaticMode() == CtPos(Vei2(-3, -3), Vei2(-3, -3)) || obstacle->GetAttackTrait()->GetAutomaticMode() != CtPos(Vei2(-1, -1), Vei2(-1, -1)) && chunks->operator()(attackPos.x).GetObstacleAt(attackPos.y) == nullptr)
 	{
-		attackPos = FindNearestObstacle(GetMidPosOfObstacle(obstacle->GetCtPos(), obstacle->type, chunks->GetSize()), Settings::anyOfPlantsVec, obstacle->GetAttackRange());
-		obstacle->attack->SetAutomaticMode(attackPos);
+		attackPos = FindNearestObstacle(GetMidPosOfObstacle(obstacle->GetCtPos(), obstacle->GetType(), chunks->GetSize()), Settings::anyOfPlantsVec, obstacle->GetAttackRange());
+		obstacle->GetAttackTrait()->SetAutomaticMode(attackPos);
 	}
 }
 void Chunk::ApplyObstacleEffectFirst(Obstacle* obstacle)
 {
-	switch (obstacle->type)
+	switch (obstacle->GetType())
 	{
 	case 31:
 		IncreaseProductivity(obstacle->GetCtPos(), Settings::obstacleStats[31].opb);
@@ -1224,12 +1671,12 @@ void Chunk::ApplyObstacleEffectFirst(Obstacle* obstacle)
 }
 void Chunk::ApplyObstacleEffectSecond(Obstacle* obstacle)
 {
-	Team* team = obstacle->team;
-	switch (obstacle->type)
+	Team* team = obstacle->GetTeam();
+	switch (obstacle->GetType())
 	{
 	
 	case 2:
-		CastHeal(CtPos(obstacle->chunkPos, obstacle->tilePos), obstacle->GetHealAmount(), obstacle->GetHealRange());
+		CastHeal(CtPos(obstacle->GetChunkPos(), obstacle->GetTilePos()), obstacle->GetHealAmount(), obstacle->GetHealRange());
 		break;
 	case 10:
 		team->GetMaterials().Add({ {"units",1.f} });
@@ -1263,14 +1710,14 @@ void Chunk::ApplyObstacleEffectSecond(Obstacle* obstacle)
 	case 30:
 		for (int i = 0; i < 3; i++)
 		{
-			Slot* item = obstacle->inv->GetItem(3 + i)->get();
+			Slot* item = obstacle->GetInventory()->GetItem(3 + i)->get();
 			if (item != nullptr)
 			{
 				if (item->GetDurability() != -1 && item->GetDurability() != Settings::itemStats[item->GetId()].durability)
 				{
-					if (obstacle->team->GetMaterials().Has(Settings::itemStats[item->GetId()].neededResToRepair))
+					if (obstacle->GetTeam()->GetMaterials().Has(Settings::itemStats[item->GetId()].neededResToRepair))
 					{
-						obstacle->team->GetMaterials().Remove(Settings::itemStats[item->GetId()].neededResToRepair);
+						obstacle->GetTeam()->GetMaterials().Remove(Settings::itemStats[item->GetId()].neededResToRepair);
 						item->Repair(Settings::itemStats[item->GetId()].durabilityHealPerRepair);
 					}
 				}
@@ -1284,7 +1731,7 @@ void Chunk::ApplyObstacleEffectSecond(Obstacle* obstacle)
 	case 33:
 		break;
 	}
-	if (Settings::anyOfAnimals(obstacle->type))
+	if (Settings::anyOfAnimals(obstacle->GetType()))
 	{
 		CtPos ctPos = obstacle->GetCtPos();
 		if (rr.Calc(5) == 0)
@@ -1309,15 +1756,15 @@ void Chunk::AttractObstacles(Obstacle* attracer, const CtPos& attractTo, const i
 				CtPos ctDelta = { Vei2(0,0),Vei2(x,y) };
 				CtPos ctPos = PutCtPosInWorld(attractTo + ctDelta, chunks->GetSize());
 				Obstacle* obstacle = chunks->operator()(ctPos.x).GetObstacleAt(ctPos.y);
-				if (obstacle != nullptr && std::any_of(allowedTypes.begin(), allowedTypes.end(), [&](const int type) {return type == obstacle->type; }) && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius)
+				if (obstacle != nullptr && std::any_of(allowedTypes.begin(), allowedTypes.end(), [&](const int type) {return type == obstacle->GetType(); }) && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius)
 				{
 					foodCost += Settings::animalFoodCostPerTurn;
 				}
 			}
 		}
-		if (attracer->team->GetMaterials().HasFood(foodCost))
+		if (attracer->GetTeam()->GetMaterials().HasFood(foodCost))
 		{
-			attracer->team->GetMaterials().RemoveFood(foodCost);
+			attracer->GetTeam()->GetMaterials().RemoveFood(foodCost);
 		}
 		else
 		{
@@ -1332,7 +1779,7 @@ void Chunk::AttractObstacles(Obstacle* attracer, const CtPos& attractTo, const i
 			CtPos ctDelta = { Vei2(0,0),Vei2(x,y) };
 			CtPos ctPos = PutCtPosInWorld(attractTo + ctDelta, chunks->GetSize());
 			Obstacle* obstacle = chunks->operator()(ctPos.x).GetObstacleAt(ctPos.y);
-			if (obstacle != nullptr && std::any_of(allowedTypes.begin(), allowedTypes.end(), [&](const int type) {return type == obstacle->type; }) && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius)
+			if (obstacle != nullptr && std::any_of(allowedTypes.begin(), allowedTypes.end(), [&](const int type) {return type == obstacle->GetType(); }) && (x != 0 || y != 0) && sqrt(pow(x, 2) + pow(y, 2)) <= radius)
 			{
 				Vec2 dir = Vec2(chunkPos2Flat(attractTo)) - Vec2(chunkPos2Flat(obstacle->GetCtPos()));
 				dir = dir.GetNormalized();
@@ -1357,12 +1804,12 @@ void Chunk::MakeRadomMove(Obstacle* obstacle)
 bool Chunk::MoveObstacle(Obstacle* obstacle, Vec2 dir)
 {
 	CtPos ctPos = obstacle->GetCtPos();
-	Vei2 newPos = ctPos.y + (Vei2)(dir * 4.f + dir * (float)obstacle->stepsLeft * GigaMath::GetRandomNormDistribution());
+	Vei2 newPos = ctPos.y + (Vei2)(dir * 4.f + dir * (float)obstacle->GetStepsLeft() * GigaMath::GetRandomNormDistribution());
 	CtPos moveTo = PutCtPosInWorld(CtPos(ctPos.x,newPos),chunks->GetSize());
 	
-	if (chunks->operator()(moveTo.x).ObstaclePosAllowed(moveTo.y, Settings::obstacleStats[obstacle->type].size[0]))
+	if (chunks->operator()(moveTo.x).ObstaclePosAllowed(moveTo.y, Settings::obstacleStats[obstacle->GetType()].size[0]))
 	{
-		return chunks->operator()(obstacle->chunkPos).MoveObstacle(chunks->operator()(obstacle->chunkPos).GetObstacleMapAt(obstacle->tilePos), moveTo);
+		return chunks->operator()(obstacle->GetChunkPos()).MoveObstacle(chunks->operator()(obstacle->GetChunkPos()).GetObstacleMapAt(obstacle->GetTilePos()), moveTo);
 	}
 	return false;
 }
@@ -1377,7 +1824,7 @@ void Chunk::AttackTile(CctPos pos, Obstacle* attacker)
 	{
 		obstacles[obstacleMap(tilePos)]->AttackObstacle(attacker, (float)attacker->GetDmg(obstacles[obstacleMap(tilePos)].get()), GetDistBetween2Obstacles(obstacles[obstacleMap(tilePos)].get(),attacker,chunks->GetSize().x * Settings::chunkHasNTiles,chunks->GetSize()));
 
-		if (obstacles[obstacleMap(tilePos)]->hp <= 0)
+		if (obstacles[obstacleMap(tilePos)]->GetHP() <= 0)
 		{
 			UnitKilled(attacker->GetCtPos(),CctPos2CtPos(pos));
 			//chunks(fcctPos.x).UpdateGraphics();

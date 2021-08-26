@@ -128,7 +128,7 @@ void Game::ComposeFrame()
 			oss1 << "World cords" << curW->GetmChunk().x << " Camera:(" << c.x << " | " << c.y << ")" << "mP: " << mP << "mChunk: " << curW->GetmChunk() << "n90rot: ";
 			if (curW->GetFocusedObstacle() != nullptr)
 			{
-				oss1 << curW->GetFocusedObstacle()->n90rot;
+				oss1 << curW->GetFocusedObstacle()->GetN90Rot();
 			}
 			oss1 << " obstaclesOnCHunk:" << curW->GetObstacleCount() << " PlaceFieldType: "<<Settings::GetTypeString(curW->GetPlaceField());
 			oss2 << "fCell: " << curW->GetfCell() << "    fTile: " << curW->GetfTile() << "   CellSize:" << curW->GetcSize().x << "   x-Felder:" << curW->GetRenderRect().left << " Markerpos:" << debugMarkerPos << " Markpos:" << markPos << "Dist: " << Vei2(std::abs(debugMarkerPos.x - markPos.x)+1, std::abs(debugMarkerPos.y - markPos.y)+1);
@@ -282,45 +282,45 @@ void Game::HandleFrameLogic(FrameEvent& e)
 			Obstacle* obstacle = curW->GetFocusedObstacle();
 			if (e.GetAction().find("townhall") != std::string::npos)
 			{
-				if (obstacle->education != nullptr)
+				if (obstacle->GetEducation() != nullptr)
 				{
 					//Disable all boxes
 					if (e.GetExtra() == 1)
 					{
-						obstacle->education->SetEducates(false);
+						obstacle->GetEducation()->SetEducates(false);
 					}
 					if (e.GetExtra() == 3)
 					{
-						obstacle->heal->Disable();
+						obstacle->GetHealTrait()->Disable();
 					}
 					if (e.GetExtra() == 5)
 					{
-						obstacle->attack->SetReloadNextTurn(false);
+						obstacle->GetAttackTrait()->SetReloadNextTurn(false);
 					}
 					//Check for ticked box
 					if (e.GetExtra() == 0)
 					{
-						obstacle->education->SetEducates(true);
+						obstacle->GetEducation()->SetEducates(true);
 					}
 					else
 					{
-						obstacle->education->SetEducates(false);
+						obstacle->GetEducation()->SetEducates(false);
 					}
 					if (e.GetExtra() == 2)
 					{
-						obstacle->heal->Enable();
+						obstacle->GetHealTrait()->Enable();
 					}
 					else
 					{
-						obstacle->heal->Disable();
+						obstacle->GetHealTrait()->Disable();
 					}
 					if (e.GetExtra() == 4)
 					{
-						obstacle->attack->SetReloadNextTurn(true);
+						obstacle->GetAttackTrait()->SetReloadNextTurn(true);
 					}
 					else
 					{
-						obstacle->attack->SetReloadNextTurn(false);
+						obstacle->GetAttackTrait()->SetReloadNextTurn(false);
 					}
 				}
 			}
@@ -328,11 +328,11 @@ void Game::HandleFrameLogic(FrameEvent& e)
 			{
 				if (e.GetExtra() == 0)
 				{
-					obstacle->attack->SetAutomaticMode(CtPos(Vei2(-2,-2), Vei2(-2, -2)));
+					obstacle->GetAttackTrait()->SetAutomaticMode(CtPos(Vei2(-2,-2), Vei2(-2, -2)));
 				}
 				else
 				{
-					obstacle->attack->SetAutomaticMode(CtPos(Vei2(-1, -1), Vei2(-1, -1)));
+					obstacle->GetAttackTrait()->SetAutomaticMode(CtPos(Vei2(-1, -1), Vei2(-1, -1)));
 				}
 			}
 		}
@@ -380,18 +380,18 @@ void Game::HandleFrameLogic(FrameEvent& e)
 			//
 			if (reciever != nullptr)
 			{
-				std::unique_ptr<Slot>* move = giver->inv->GetItem(e.GetExtra());
-				if (hitSlot != e.GetExtra() && reciever->inv->ItemFitsForSlotFlat(move, releasedHitSlot))
+				std::unique_ptr<Slot>* move = giver->GetInventory()->GetItem(e.GetExtra());
+				if (hitSlot != e.GetExtra() && reciever->GetInventory()->ItemFitsForSlotFlat(move, releasedHitSlot))
 				{
-					reciever->inv->SetItem(std::move(*move), releasedHitSlot);
+					reciever->GetInventory()->SetItem(std::move(*move), releasedHitSlot);
 					igwH.UpdateFrames(curW.get());
 				}
-				else if (hitSlot != e.GetExtra() && reciever->inv->WouldFitWhenEmptyFlat(move, releasedHitSlot) && giver->inv->WouldFitWhenEmptyFlat(reciever->inv->GetItem(releasedHitSlot), e.GetExtra()))
+				else if (hitSlot != e.GetExtra() && reciever->GetInventory()->WouldFitWhenEmptyFlat(move, releasedHitSlot) && giver->GetInventory()->WouldFitWhenEmptyFlat(reciever->GetInventory()->GetItem(releasedHitSlot), e.GetExtra()))
 				{
-					std::unique_ptr<Slot> swap = std::move(*reciever->inv->GetItem(releasedHitSlot));
+					std::unique_ptr<Slot> swap = std::move(*reciever->GetInventory()->GetItem(releasedHitSlot));
 
-					reciever->inv->SetItem(std::move(*move), releasedHitSlot);
-					giver->inv->SetItem(std::move(swap), e.GetExtra());
+					reciever->GetInventory()->SetItem(std::move(*move), releasedHitSlot);
+					giver->GetInventory()->SetItem(std::move(swap), e.GetExtra());
 					igwH.UpdateFrames(curW.get());
 				}
 			}
