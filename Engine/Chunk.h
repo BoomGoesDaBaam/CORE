@@ -182,7 +182,7 @@ public:
 	*/
 
 	Obstacle& operator=(const Obstacle& other);
-	Obstacle(Obstacle& obst);
+	Obstacle(const Obstacle& obst);
 	Obstacle(Vei2 tilePos, Vei2 chunkPos, int type, sharedResC resC, Team* team = nullptr);
 	void Heal(int deltaHP);
 	int GetHealRange();

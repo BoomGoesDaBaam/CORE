@@ -6,6 +6,7 @@
 #include "Graphics.h"
 #include <sstream>
 #include <iomanip>
+#include <typeinfo>
 
 class ButtonFunctions;
 class PageFrame;
@@ -73,10 +74,11 @@ public:
 
 class ComponentWithoutHint
 {
+protected:
 	bool visible = true;
 	int prio = 5;	//prio range [0-10] lower means first handled
 	std::queue<FrameEvent>* buffer;
-	std::map<std::string, std::unique_ptr<Component>> comps;
+	std::map<std::string, std::unique_ptr<ComponentWithoutHint>> comps;
 	void IncreasePrio()
 	{
 		if (GetPrio() < 10)
@@ -109,9 +111,8 @@ class ComponentWithoutHint
 		}
 		return false;
 	}
-	std::unique_ptr<Hint> hint = nullptr;
 public:
-	Component* parentC;
+	ComponentWithoutHint* parentC = nullptr;
 	virtual RectF GetPos() {
 		if (parentC == nullptr)
 		{
@@ -130,7 +131,10 @@ public:
 	std::vector<int> activInStates;
 	std::string text = "no title";
 	bool mouseHovers = false, hitable = false;
-	Component(RectF pos, Component* parentC, std::queue<FrameEvent>* buffer) :pos(pos), parentC(parentC), buffer(buffer) {}
+
+	ComponentWithoutHint& operator=(const ComponentWithoutHint& compWH);
+	ComponentWithoutHint(const ComponentWithoutHint& compWH);
+	ComponentWithoutHint(RectF pos, ComponentWithoutHint* parentC, std::queue<FrameEvent>* buffer) :pos(pos), parentC(parentC), buffer(buffer) {}
 
 	virtual void Draw(Graphics& gfx)
 	{
@@ -138,7 +142,7 @@ public:
 	}
 	virtual void DrawComps(Graphics& gfx)
 	{
-		std::vector<Component*> drawOrder;
+		std::vector<ComponentWithoutHint*> drawOrder;
 
 		std::for_each(comps.begin(), comps.end(), [&](auto& comp)		//auto = something like 'std::pair<std::string, std::unique_ptr<Component>>'
 			{
@@ -146,7 +150,7 @@ public:
 					drawOrder.push_back(comp.second.get());
 				}
 			});
-		std::sort(drawOrder.begin(), drawOrder.end(), [&](Component* obst1, Component* obst2)
+		std::sort(drawOrder.begin(), drawOrder.end(), [&](ComponentWithoutHint* obst1, ComponentWithoutHint* obst2)
 			{
 				return obst1->GetPrio() > obst2->GetPrio();
 			});
@@ -155,15 +159,15 @@ public:
 			drawOrder[i]->Draw(gfx);
 		}
 	}
-	Component* GetComp(std::string key) {
-		std::map<std::string, std::unique_ptr<Component>>::iterator it = comps.find(key);
+	ComponentWithoutHint* GetComp(std::string key) {
+		std::map<std::string, std::unique_ptr<ComponentWithoutHint>>::iterator it = comps.find(key);
 		if (it != comps.end())
 		{
 			return it->second.get();
 		}
 		return nullptr;
 	}
-	const std::map<std::string, std::unique_ptr<Component>>* GetComps() {
+	const std::map<std::string, std::unique_ptr<ComponentWithoutHint>>* GetComps() {
 		return &comps;
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
@@ -200,52 +204,92 @@ public:
 	{
 		return prio;
 	}
-	void AddHint(Hint& hint);
 	std::vector<int> FillWith1WhenSize0(std::vector<int> activInStates, int nStages);
 
 	//Getter
 	std::queue<FrameEvent>* GetBuffer()const;
-
+	std::unique_ptr<ComponentWithoutHint>&& Clone()const;
 	//Setter
-
-	Text* AddText(std::string text, RectF pos, int size, const Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0);
-	TextBox* AddTextBox(std::string text, RectF pos, int size, const Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0);
-	Button* AddButton(RectF pos, const Animation* a, const Animation* aHover, std::string key, const Font* f, std::vector<int> activInStates = {});
-	CheckBox* AddCheckBox(RectF pos, std::queue<FrameEvent>* buffer, sharedResC resC, std::string key, std::vector<int> activInStates = {});
-	Image* AddImage(RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {});
-	GrabImage* AddGrabImage(RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {});
-	Frame* AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {});
 };
+class Hint	
+{
+	int newCompAtY = 10;
+	sharedResC resC;
+	Vei2 lastMP = Vei2(0, 0);
+	bool visible = true;
+	std::vector<std::unique_ptr<ComponentWithoutHint>> comps;
+	Vei2 size = Vei2(4,4);
+	int xStart = 10;
+public:
+	Hint& operator=(const Hint& hint);
+	Hint(Hint& hint);
+	Hint::Hint(sharedResC resC, Vei2 size = Vei2(2,2))
+		:
+		resC(std::move(resC)),
+		size(size)
+	{
+
+	}
+	void AddHintTextBox(std::string text, const Font* font, Color c);
+
+	void Draw(Graphics& gfx)
+	{
+		if (visible && lastMP != Vei2(0,0))
+		{
+			using namespace Settings;
+			gfx.DrawRect(RectF(Vec2((float)lastMP.x, (float)lastMP.y), 100, 100), Colors::Blue);
+
+			gfx.DrawSurface(RectI(Vei2(lastMP.x, lastMP.y), hintCellSize, hintCellSize), RectI(Vei2(0, 0), hintCellSize, hintCellSize), resC->GetSurf().windowsFrame[12].GetCurSurface(), SpriteEffect::Chroma());//1
+			gfx.DrawSurface(RectI(Vei2(lastMP.x + (size.x - 1) * hintCellSize, lastMP.y), hintCellSize, hintCellSize), RectI(Vei2(hintCellSize * 2 + 2, 0), hintCellSize, hintCellSize), resC->GetSurf().windowsFrame[12].GetCurSurface(), SpriteEffect::Chroma());//3
+			gfx.DrawSurface(RectI(Vei2(lastMP.x, lastMP.y + (size.y - 1) * hintCellSize), hintCellSize, hintCellSize), RectI(Vei2(0, hintCellSize * 2 + 2), hintCellSize, hintCellSize), resC->GetSurf().windowsFrame[12].GetCurSurface(), SpriteEffect::Chroma());//7
+			gfx.DrawSurface(RectI(Vei2(lastMP.x + (size.x - 1) * hintCellSize, lastMP.y + (size.y - 1) * hintCellSize), hintCellSize, hintCellSize), RectI(Vei2(hintCellSize * 2 + 2, hintCellSize * 2 + 2), hintCellSize, hintCellSize), resC->GetSurf().windowsFrame[12].GetCurSurface(), SpriteEffect::Chroma());//9
+
+			
+			for (int y = 0; y < size.y-2; y++)
+			{
+				gfx.DrawSurface(RectI(Vei2(lastMP.x, lastMP.y+ hintCellSize *(y+1)), hintCellSize, hintCellSize), RectI(Vei2(0, hintCellSize + 1), hintCellSize, hintCellSize), resC->GetSurf().windowsFrame[12].GetCurSurface(), SpriteEffect::Chroma());//4
+				gfx.DrawSurface(RectI(Vei2(lastMP.x + (size.x-1) * hintCellSize, lastMP.y + hintCellSize * (y + 1)), hintCellSize, hintCellSize), RectI(Vei2(hintCellSize*2 + 2, hintCellSize + 1), hintCellSize, hintCellSize), resC->GetSurf().windowsFrame[12].GetCurSurface(), SpriteEffect::Chroma());//6
+			}
+			for (int x = 0; x < size.x - 2; x++)
+			{
+				gfx.DrawSurface(RectI(Vei2(lastMP.x + hintCellSize * (x + 1), lastMP.y), hintCellSize, hintCellSize), RectI(Vei2(hintCellSize + 1, 0), hintCellSize, hintCellSize), resC->GetSurf().windowsFrame[12].GetCurSurface(), SpriteEffect::Chroma());//2
+				gfx.DrawSurface(RectI(Vei2(lastMP.x + hintCellSize * (x + 1), lastMP.y + (size.y - 1) * hintCellSize), hintCellSize, hintCellSize), RectI(Vei2(hintCellSize * 1 + 1, hintCellSize*2 + 2), hintCellSize, hintCellSize), resC->GetSurf().windowsFrame[12].GetCurSurface(), SpriteEffect::Chroma());//8
+			}
+			for (int y = 0; y < size.y - 2; y++)
+			{
+				for (int x = 0; x < size.x - 2; x++)
+				{
+					gfx.DrawSurface(RectI(Vei2(lastMP.x + hintCellSize * (x + 1), lastMP.y + hintCellSize * (y + 1)), hintCellSize, hintCellSize), RectI(Vei2(hintCellSize + 1, hintCellSize + 1), hintCellSize, hintCellSize), resC->GetSurf().windowsFrame[12].GetCurSurface(), SpriteEffect::Chroma());//5
+				}
+			}
+		}
+	}
+	//Getter
+	sharedResC Hint::GetResC()const
+	{
+		return resC;
+	}
+	Vei2 Hint::GetSize()const
+	{
+		return size;
+	}
+	//Setter
+	void SetLastMP(Vei2 mp)
+	{
+		this->lastMP = mp;
+	}
+};
+
 class Component: public ComponentWithoutHint
 {
 protected:
-	class Hint
-	{
-		int newCompAtX = 10;
-		sharedResC resC;
-		Vei2 lastMP = Vei2(0, 0);
-		bool visible = false;
-	public:
-		Hint(sharedResC resC);
-		//void AddHintTextBox(int width, std::string text, const Font* font, Color c);
+	Component(RectF pos, ComponentWithoutHint* parentC, std::queue<FrameEvent>* buffer) :ComponentWithoutHint(pos, parentC, buffer) {}
 
-		void Draw(Graphics& gfx)
-		{
-			if (visible)
-			{
-				gfx.DrawRect(RectF(Vec2((float)lastMP.x, (float)lastMP.y), 100, 100), Colors::Blue);
-			}
-		}
-
-		//Getter
-		sharedResC GetResC()const;
-
-		//Setter
-		void SetLastMP(Vei2 mp)
-		{
-			this->lastMP = lastMP;
-		}
-	};
+	std::unique_ptr<Hint> hint = nullptr;
+public:
+	void AddHint(Hint& hint);
+	void DrawHintWhenVisible(Graphics& gfx);
+	void UpdateHintPos(Vei2 mP);
 };
 class Text: public Component
 {
@@ -321,6 +365,10 @@ public:
 			text += lines[i];
 		}
 		return text;
+	}
+	int GetLineLength(int line)
+	{
+		return f->GetLineLength(lines[0],size);
 	}
 	std::vector<std::string> SplitTextToLines(const Font* font,std::string text, int size, int width);
 
@@ -400,7 +448,7 @@ protected:
 	{
 		if (visible)
 		{
-			Component::HandleMouseInputFrame(e, interact);
+			ComponentWithoutHint::HandleMouseInputFrame(e, interact);
 			if (GetPos().Contains((Vec2)e.GetPos()) && e.GetType() == Mouse::Event::Type::LRelease && interact)
 			{
 				if (bFunc != nullptr)
@@ -498,7 +546,7 @@ public:
 			}
 		}
 		DrawComps(gfx);
-		hint->Draw(gfx);
+		DrawHintWhenVisible(gfx);
 	}
 	void SetAnimation(const Animation* a)
 	{
@@ -523,61 +571,17 @@ public:
 		this->alpha = alpha;
 	}
 };
-class GrabImage : public Image
-{
-	GrabHandle gH = GrabHandle(0.0f);
-	Vec2 delta = Vec2(0, 0);
-public:
-	GrabImage(RectF pos, const Animation* a, const Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates);
-	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)override
-	{
-		mouseHovers = false;
-		IncreasePrio();
-		if (IsVisible())
-		{
-			Vec2 mP = (Vec2)e.GetPos();
-			if (e.GetType() == Mouse::Event::Type::LRelease && gH.IsLocked())
-			{
-				if (delta != Vec2(0, 0))
-					buffer->push(FrameEvent(FrameEvent::Type::ItemDragReleased, extraS1, extra1, this));
-				gH.Release();
-				delta = Vec2(0, 0);
-				return true;
-			}
-			if (GetPos().Contains(mP) || gH.IsLocked())
-			{
-				mouseHovers = true;
-				delta += gH.MoveCamera(e);
-				if (parentC != nullptr)
-				{
-					parentC->SetPrio(1);
-				}
-				else
-				{
-					SetPrio(1);
-				}
-				return true;
-			}
-		}
-		return false;
-	}
-	virtual RectF GetPos()override {
-		if (parentC == nullptr)
-		{
-			return pos + delta;
-		}
-		return pos + delta + parentC->GetPos().GetTopLeft<float>();
-	}
-};
-class Frame : public Component
+class Frame : public Image
 {
 protected:
 	sharedResC resC;
-	bool grabbed = false;
+	bool grabbed = false, dragable = false;
 	bool moveable = true;
 	Vec2 lastMouseP = Vec2(0, 0);
 	Vec2 posOfLastPress = Vec2(-1, -1);
 	int type = 0;
+	GrabHandle gH = GrabHandle(0.0f);
+	Vec2 delta = Vec2(0, 0);
 public:
 	const Surface* s = nullptr;
 	Frame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer);
@@ -587,60 +591,82 @@ public:
 	{
 		this->moveable = moveable;
 	}
+	void SetDragable(bool dragable)
+	{
+		hitable = true;
+		this->dragable = dragable;
+	}
 
 	virtual void Draw(Graphics& gfx)override {
 		if (IsVisible())
 		{
 			assert(type == 0 || type == 1 || type == -1);
 			RectF cPos = GetPos();
-			if (mouseHovers)
+			if (s != nullptr || type ==0)
 			{
-				switch (type)
+				if (mouseHovers)
 				{
-				case 0:
-					switch (curState)
+					switch (type)
 					{
 					case 0:
-						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), (int)(pos.GetWidth()), (int)(pos.GetHeight() / 20)), resC->GetSurf().windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+						switch (curState)
+						{
+						case 0:
+							gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), (int)(pos.GetWidth()), (int)(pos.GetHeight() / 20)), resC->GetSurf().windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+							break;
+						case 1:
+							gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), (int)(pos.GetWidth()), (int)(pos.GetHeight() / 20)), resC->GetSurf().windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+							gfx.DrawSurface((RectI)cPos, resC->GetSurf().windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.9f));
+							break;
+						}
 						break;
 					case 1:
-						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), (int)(pos.GetWidth()), (int)(pos.GetHeight() / 20)), resC->GetSurf().windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-						gfx.DrawSurface((RectI)cPos, resC->GetSurf().windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.9f));
+						gfx.DrawSurface(RectI(pos), *s, SpriteEffect::Chroma(Colors::Magenta));
 						break;
 					}
-					break;
-				case 1:
-					gfx.DrawSurface(RectI(pos), *s, SpriteEffect::Chroma(Colors::Magenta));
-					break;
+				}
+				else
+				{
+					switch (type)
+					{
+					case 0:
+						switch (curState)
+						{
+						case 0:
+							gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), (int)(pos.GetWidth()), (int)(pos.GetHeight() / 20)), resC->GetSurf().windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+							break;
+						case 1:
+							gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), (int)(pos.GetWidth()), (int)(pos.GetHeight() / 20)), resC->GetSurf().windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
+							gfx.DrawSurface((RectI)cPos, resC->GetSurf().windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.8f));
+							break;
+						}
+						break;
+					case 1:
+						gfx.DrawSurface(RectI(pos), *s, SpriteEffect::Chroma(Colors::Magenta));
+						break;
+					}
 				}
 			}
 			else
 			{
-				switch (type)
-				{
-				case 0:
-					switch (curState)
-					{
-					case 0:
-						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), (int)(pos.GetWidth()), (int)(pos.GetHeight() / 20)), resC->GetSurf().windowsFrame[1].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-						break;
-					case 1:
-						gfx.DrawSurface(RectI(cPos.GetTopLeft<int>(), (int)(pos.GetWidth()), (int)(pos.GetHeight() / 20)), resC->GetSurf().windowsFrame[2].GetCurSurface(), SpriteEffect::Chroma(Colors::Magenta));
-						gfx.DrawSurface((RectI)cPos, resC->GetSurf().windowsFrame[0].GetCurSurface(), SpriteEffect::Transparent(Colors::Magenta, 0.8f));
-						break;
-					}
-					break;
-				case 1:
-					gfx.DrawSurface(RectI(pos), *s, SpriteEffect::Chroma(Colors::Magenta));
-					break;
-				}
+				Image::Draw(gfx);
 			}
 			DrawComps(gfx);
+			DrawHintWhenVisible(gfx);
 		}
+	}
+	
+	virtual RectF GetPos()override {
+		if (parentC == nullptr)
+		{
+			return pos + delta;
+		}
+		return pos + delta + parentC->GetPos().GetTopLeft<float>();
 	}
 	virtual bool HandleMouseInput(Mouse::Event& e, bool interact)
 	{
 		IncreasePrio();
+		UpdateHintPos((Vei2)e.GetPos());
 		if (IsVisible())
 		{
 			if (HandleMouseInputComps(e, interact) || HandleMouseInputFrame(e, interact))
@@ -653,6 +679,38 @@ public:
 	}
 	virtual bool HandleMouseInputFrame(Mouse::Event& e, bool interact)
 	{
+		bool returnThis = false;
+		if (dragable)
+		{
+			mouseHovers = false;
+			IncreasePrio();
+			if (IsVisible())
+			{
+				Vec2 mP = (Vec2)e.GetPos();
+				if (e.GetType() == Mouse::Event::Type::LRelease && gH.IsLocked())
+				{
+					if (delta != Vec2(0, 0))
+						buffer->push(FrameEvent(FrameEvent::Type::ItemDragReleased, extraS1, extra1, this));
+					gH.Release();
+					delta = Vec2(0, 0);
+					return true;
+				}
+				if (GetPos().Contains(mP) || gH.IsLocked())
+				{
+					mouseHovers = true;
+					delta += gH.MoveCamera(e);
+					if (parentC != nullptr)
+					{
+						parentC->SetPrio(1);
+					}
+					else
+					{
+						SetPrio(1);
+					}
+					return true;
+				}
+			}
+		}
 			Vec2 mP = (Vec2)e.GetPos();
 			bool hit = Hit(mP);
 			if (e.GetType() == Mouse::Event::Type::LRelease)
@@ -696,7 +754,7 @@ public:
 			{
 				mouseHovers = false;
 			}
-		return false;
+			return false;
 	}
 	virtual bool HandleMouseInputComps(Mouse::Event& e, bool interact)
 	{
@@ -705,6 +763,10 @@ public:
 		{
 			if (std::any_of(comps.begin(), comps.end(), [&](auto& comp)
 				{
+					if (comp.second->GetPrio() == prio)
+					{
+						int k = 23;
+					}
 					if (comp.second->GetPrio() == prio && hitComp && comp.second->hitable && comp.second->activInStates[curState] == 1 && comp.second->IsVisible() && comp.second->HandleMouseInput(e, interact && hitComp))
 					{
 						comp.second->SetPrio(1);
@@ -752,6 +814,14 @@ public:
 	void Grab(Vec2 mP);
 	void Move(Vec2 mP);
 	void Release();
+
+	Text* AddText(std::string text, RectF pos, int size, const Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0);
+	TextBox* AddTextBox(std::string text, RectF pos, int size, const Font* f, Color c, std::string key, std::vector<int> activInStates = {}, int textLoc = 0);
+	Button* AddButton(RectF pos, const Animation* a, const Animation* aHover, std::string key, const Font* f, std::vector<int> activInStates = {});
+	CheckBox* AddCheckBox(RectF pos, std::queue<FrameEvent>* buffer, sharedResC resC, std::string key, std::vector<int> activInStates = {});
+	Image* AddImage(RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {});
+	Frame* AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates = {});
+
 };
 
 template <typename T>
@@ -783,14 +853,14 @@ public:
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
 		compActivOnPages[key] = activOnPages;
-		return Component::AddText(text, pos, size, f, c, key, activInStates, textLoc);
+		return Frame::AddText(text, pos, size, f, c, key, activInStates, textLoc);
 	}
 	Button* AddButtonPF(RectF pos,const Animation* a, const Animation* aHover, std::string key,const Font* f, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
 	{
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
 		compActivOnPages[key] = activOnPages;
-		return Component::AddButton(pos, a, aHover, key, f, activInStates);
+		return Frame::AddButton(pos, a, aHover, key, f, activInStates);
 	}
 	
 	Frame* AddFramePF(RectF pos, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
@@ -798,7 +868,7 @@ public:
 		activOnPages = FillWith1WhenSize0(activOnPages, nPages);
 		assert(activOnPages.size() == nPages);
 		compActivOnPages[key] = activOnPages;
-		return Component::AddFrame(pos,type,resC,this,buffer, key, activInStates);
+		return Frame::AddFrame(pos,type,resC,this,buffer, key, activInStates);
 	}
 	/*
 	Composition* AddComposition(RectF pos, sharedResC resC, std::string key, std::vector<int> activInStates = {}, std::vector<int> activOnPages = {})
@@ -1085,12 +1155,12 @@ private:
 	//Compositions of Components
 	Frame* CreateBuildOption(RectF pos, int obstacleType, PageFrame* parentC, std::vector<int> activOnPages, World* world);
 	Frame* CreateCraftOption(RectF pos, int itemType, Frame* parentC, std::vector<int> activOnPages, World* world);
-	GrabImage* CreateGIWithHpBar(Component* parentC, RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates);
-	void AddHeadline(Component* parentC, std::string text, const Font* f, Color c);
-	int AddInfo(Component* parentC, int top, const Font* f, Color c, std::string key, std::string infoText = "###");
-	int AddInfoTextBox(Component* parentC, std::string text, int top, const Font* f, Color c, std::string key);
-	int AddObstacleAttackButton(Component* parentC, int top, const Font* f, Color c);
-	int AddObstacleCheckBox(Component* parentC, int top, const Font* f, Color c, std::string text, std::string key);
+	Frame* CreateDragFrameWithHpBar(Frame* parentC, RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates);
+	void AddHeadline(Frame* parentC, std::string text, const Font* f, Color c);
+	int AddInfo(Frame* parentC, int top, const Font* f, Color c, std::string key, std::string infoText = "###");
+	int AddInfoTextBox(Frame* parentC, std::string text, int top, const Font* f, Color c, std::string key);
+	int AddObstacleAttackButton(Frame* parentC, int top, const Font* f, Color c);
+	int AddObstacleCheckBox(Frame* parentC, int top, const Font* f, Color c, std::string text, std::string key);
 
 	std::string GetInfoString(std::string key);
 	bool FrameIsEnabled(Obstacle* obstacle, std::string key);

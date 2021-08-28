@@ -79,6 +79,8 @@ TexturesCollection::TexturesCollection(Graphics& gfx)
 	windowsFrame.push_back(Animation(delay));					//	inventory wrought
 	windowsFrame[11].Push(spriteSHEEP.GetSupSurface(RectI(Vei2(649, 564), 190, 190)));
 
+	windowsFrame.push_back(Animation(delay));					//	frame hint
+	windowsFrame[12].Push(Surface("Textures/Frames/hint.bmp"));
 
 	//Obstacles
 	obstacles.push_back(0.2f);//#0

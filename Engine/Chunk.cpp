@@ -1,5 +1,5 @@
 #include "Chunk.h"
-Obstacle::Obstacle(Obstacle& obst)
+Obstacle::Obstacle(const Obstacle& obst)
 {
 	*this = obst;
 }

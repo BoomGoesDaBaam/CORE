@@ -8,7 +8,7 @@ class Font
 	int nRaws = 0, nColums = 0, charWidth = 0, charHeight = 0;
 	char first=0, last=0;
 	bool costumWidth = false;
-	float distBetwCharFactor;
+	float charDist;
 	std::vector<RectI> cRects;
 	Color chroma;
 	//Graphics& gfx;
@@ -22,7 +22,8 @@ public:
 	int GetFirst()const;
 	int GetLast()const;
 	const Color& GetChroma()const { return chroma; }
-	float GetCharDist()const { return distBetwCharFactor; }
+	float GetCharDist()const { return charDist; }
 	const std::vector<RectI>& GetCharRects()const;
 	const Surface& GetSurface()const;
+	int GetLineLength(std::string text, int fontSize)const;
 };

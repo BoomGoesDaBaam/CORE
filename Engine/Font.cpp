@@ -5,7 +5,7 @@ Font::Font(std::string filename,Color chroma, int nRaws, int nColums, int charWi
 	surface(filename),
 	nRaws(nRaws),nColums(nColums), charWidth(charWidth),charHeight(charHeight), first(first),last(last),
 	chroma(chroma),
-	distBetwCharFactor(distBetwCharFactor)
+	charDist(distBetwCharFactor)
 {
 	for (int y = 0; y < nRaws; y++)
 	{
@@ -23,7 +23,7 @@ Font::Font(std::string filename, Color chroma, int charHeight, char first, char 
 	surface(filename),
 	charHeight(charHeight), first(first), last(last),
 	chroma(chroma),
-	distBetwCharFactor(distBetwCharFactor)
+	charDist(distBetwCharFactor)
 {
 	Vei2 curPos = Vei2(0, 0);
 	int curWidth = 0;
@@ -154,4 +154,22 @@ const std::vector<RectI>& Font::GetCharRects()const
 const Surface& Font::GetSurface()const
 {
 	return surface;
+}
+int Font::GetLineLength(std::string text, int fontSize)const
+{
+	float width = 0;
+	for (int i = 0; i < (int)text.length(); i++)
+	{
+		if (text[i] >= first && text[i] <= last)
+		{
+			float ratio = (float)cRects[(__int64)text[i] - first].GetWidth() / cRects[(__int64)text[i] - first].GetHeight();
+			Vec2 charSize(ratio * fontSize, (float)fontSize);
+			width += ((float)fontSize * charDist * ratio);
+		}
+		if (text[i] == ' ')
+		{
+			width += ((float)(fontSize * 0.7f));
+		}
+	}
+	return (int)width;
 }

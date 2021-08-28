@@ -8,6 +8,10 @@ namespace Settings
 	/*
 	new Items:
 	shovel
+
+	Marks
+	remove me 
+	frame add
 	*/
 	/*		### Types ###
 			0 = water				5 = snow				10 = mountains (high)
@@ -121,7 +125,10 @@ namespace Settings
 	static constexpr int CellSplitUpIn = 25;										//every cell has n*n supcells (ACCTUALLY HARDCODED!!! DONT EVEN TRY TO CHANGE SOMETHING !!! REALLY)
 	static constexpr int chunkHasNCells = 5;
 	static constexpr int chunkHasNTiles = chunkHasNCells * CellSplitUpIn;
-	static constexpr float percentForGrab = 0.05;									
+	static constexpr float percentForGrab = 0.05;
+	static constexpr float hintCellSize = 25;		//in pixel
+	static constexpr float hintMaxWidth = 5;		//in cells
+
 	//Type Traits
 	static constexpr int obstacleTrait_education[] = { 3,-1 };
 	static constexpr int obstacleTrait_heal[] = { 2,3,-1 };

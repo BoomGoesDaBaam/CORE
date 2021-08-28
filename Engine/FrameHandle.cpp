@@ -1,35 +1,35 @@
 #pragma once
 #include "FrameHandle.h"
 //		### Componente ###
-Text* ComponentWithoutHint::AddText(std::string text, RectF pos, int size,const Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
+Text* Frame::AddText(std::string text, RectF pos, int size,const Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
 	comps[key] = std::make_unique<Text>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
 	return static_cast<Text*>(comps[key].get());
 }
-TextBox* ComponentWithoutHint::AddTextBox(std::string text, RectF pos, int size, const Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
+TextBox* Frame::AddTextBox(std::string text, RectF pos, int size, const Font* f, Color c, std::string key, std::vector<int> activInStates, int textLoc)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
 	comps[key] = std::make_unique<TextBox>(text, pos, size, f, c, activInStates, this, textLoc, buffer);
 	return static_cast<TextBox*>(comps[key].get());
 }
-Button* ComponentWithoutHint::AddButton(RectF pos,const Animation* a,const Animation* aHover, std::string key,const Font* f, std::vector<int> activInStates)
+Button* Frame::AddButton(RectF pos,const Animation* a,const Animation* aHover, std::string key,const Font* f, std::vector<int> activInStates)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
 	comps[key] = std::make_unique<Button>(pos, a, aHover, activInStates, f, this, buffer);
 	return static_cast<Button*>(comps[key].get());
 }
-CheckBox* ComponentWithoutHint::AddCheckBox(RectF pos, std::queue<FrameEvent>* buffer, sharedResC resC, std::string key, std::vector<int> activInStates)
+CheckBox* Frame::AddCheckBox(RectF pos, std::queue<FrameEvent>* buffer, sharedResC resC, std::string key, std::vector<int> activInStates)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
 	comps[key] = std::make_unique<CheckBox>(pos, this, buffer, resC, activInStates);
 	return static_cast<CheckBox*>(comps[key].get());
 }
-Image* ComponentWithoutHint::AddImage(RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
+Image* Frame::AddImage(RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
 {
 	//RectF pos, Animation* a, Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
@@ -37,15 +37,7 @@ Image* ComponentWithoutHint::AddImage(RectF pos, const Animation* a, const Anima
 	comps[key] = std::make_unique<Image>(pos, a, aHover, this, buffer, activInStates);
 	return static_cast<Image*>(comps[key].get());
 }
-GrabImage* ComponentWithoutHint::AddGrabImage(RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
-{
-	//(RectF pos, Animation * a, Animation * aHover, Component * parentC, std::queue<FrameEvent>*buffer, std::vector<int> activInStates);
-	activInStates = FillWith1WhenSize0(activInStates, nStates);
-	//assert(activInStates.size() == nStates);
-	comps[key] = std::make_unique<GrabImage>(pos, a, aHover, this, buffer, activInStates);
-	return static_cast<GrabImage*>(comps[key].get());
-}
-Frame* ComponentWithoutHint::AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
+Frame* Frame::AddFrame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
 {
 	activInStates = FillWith1WhenSize0(activInStates, nStates);
 	//assert(activInStates.size() == nStates);
@@ -153,12 +145,6 @@ Image::Image(RectF pos, const Animation* a, const Animation* aHover, Component* 
 	this->activInStates = activInStates;
 	this->hitable = true;
 }
-GrabImage::GrabImage(RectF pos, const Animation* a, const Animation* aHover, Component* parentC, std::queue<FrameEvent>* buffer, std::vector<int> activInStates)
-	:
-	Image(pos, a, aHover, parentC, buffer, activInStates)
-{
-
-}
 /*
 Composition::Composition(RectF pos, sharedResC resC, std::vector<int> activInStates, Component* parentC, std::queue<FrameEvent>* buffer, int type)
 	:
@@ -186,7 +172,7 @@ CheckBox::CheckBox(RectF pos, Component* parentC, std::queue<FrameEvent>* buffer
 
 Frame::Frame(RectF pos, int type, sharedResC resC, Component* parentC, std::queue<FrameEvent>* buffer)
 	:
-	Component(pos, parentC,buffer),
+	Image(pos,nullptr,nullptr, parentC, buffer, {}),
 	resC(std::move(resC))
 {
 	this->type = type;
@@ -200,30 +186,39 @@ Frame::Frame(RectF pos, int type, sharedResC resC, Component* parentC, std::queu
 
 }
 
-Hint::Hint(sharedResC resC)
-	:
-	resC(std::move(resC))
+Hint::Hint(Hint& hint)
 {
-
+	*this = hint;
 }
-/*
-void Hint::AddHintTextBox(int width, std::string text,const Font* font, Color c)
+Hint& Hint::operator=(const Hint& hint)
 {
-	//comps["comp" + comps.size()] = std::make_unique<TextBox>(text,RectF(Vec2(10,newCompAtX),width,);
+	newCompAtY = hint.newCompAtY;
+	resC = hint.resC;
+	lastMP = hint.lastMP;
+	visible = hint.visible;
+	size = hint.size;
+	xStart = hint.xStart;
 
-	RectF parentRect = parentC->GetPos();
-	int xStart = (int)((float)(parentRect.GetWidth()) / 40);
+	for (int i = 0; i < hint.comps.size(); i++)
+	{
+		comps.push_back(hint.comps[i]->Clone());
+	}
+	return *this;
+}
+void Hint::AddHintTextBox(std::string text,const Font* font, Color c)
+{
 	int textSize = (int)((float)(11) * resC->GetFrameSize().GetGuiScale());
-	//comps["comp" + comps.size()] = std::make_unique<TextBox>(text, RectF(Vec2(xStart, newCompAtX), parentRect.GetWidth() - xStart * 2, 40), textSize, font, c, {1,1}, this, 0, nullptr);
-	comps["comp" + comps.size()] = std::make_unique<TextBox>(text, RectF(Vec2(xStart, newCompAtX), parentRect.GetWidth() - xStart * 2, 40), textSize, font, c, activInStates, this, 0, buffer);
-	//TextBox* tB_townHall = parentC->AddTextBox(text, RectF(Vec2(xStart, newCompAtX), parentRect.GetWidth() - xStart * 2, 40), textSize, &resC->GetSurf().fonts[0], Colors::Black, key, { 0,1 });
-	newCompAtX += textSize * (static_cast<TextBox*>(comps["comp" + comps.size()-1].get())->GetLines().size() + 2);
+	int maxWidth = Settings::hintCellSize * Settings::hintMaxWidth;
+	comps.push_back(std::make_unique<TextBox>(text, RectF(Vec2(xStart, newCompAtY), size.x * 25, maxWidth), textSize, font, c, std::vector<int>(), nullptr, 0, nullptr));
+	TextBox* tB = static_cast<TextBox*>(comps[comps.size() - 1].get());
+	newCompAtY += textSize * (tB)->GetLines().size() + 2;
+	int lineLength = tB->GetLineLength(0);
+	if (size.x * Settings::hintCellSize < lineLength)
+	{
+		size.x = lineLength / Settings::hintCellSize;
+	}
 }
-*/
-sharedResC Hint::GetResC()const
-{
-	return resC;
-}
+
 PageFrame::PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, int nPages, std::queue<FrameEvent>* buffer)
 	:
 	Frame(pos, type, resC, parentC,buffer),
@@ -254,7 +249,7 @@ PageFrame::PageFrame(RectF pos, int type, sharedResC resC, Component* parentC, i
 
 void Frame::SetText(std::string text, std::string key)
 {
-	std::map<std::string, std::unique_ptr<Component>>::iterator it = comps.find(key);
+	std::map<std::string, std::unique_ptr<ComponentWithoutHint>>::iterator it = comps.find(key);
 	if (it != comps.end())
 	{
 		it->second->text = text;
@@ -283,10 +278,14 @@ bool Frame::Hit(Vec2 mP)
 			}
 			break;
 		case 1:
-			scale = Vec2(s->GetSize()) / Vec2(pos.GetSize());
-			mpRel *= scale;
+			if (s != nullptr)
+			{
+				scale = Vec2(s->GetSize()) / Vec2(pos.GetSize());
+				mpRel *= scale;
 
-			return s->TestIfHitOnScreen((Vec2)mpRel);
+				return s->TestIfHitOnScreen((Vec2)mpRel);
+			}
+			return GetPos().Contains(mP);
 			break;
 		case -1:
 			return false;//resC->GetSurf().windowsFrame[1].GetCurSurface().TestIfHitOnScreen((Vec2)mpRel);
@@ -385,8 +384,34 @@ void Frame::Release()
 {
 	grabbed = false;
 }
+ComponentWithoutHint::ComponentWithoutHint(const ComponentWithoutHint& compWH)
+{
+	*this = compWH;
+}
+ComponentWithoutHint& ComponentWithoutHint::operator=(const ComponentWithoutHint& compWH)
+{
+	pos = compWH.pos;
+	curState = compWH.curState;
+	extra1 = compWH.extra1;
+	extra2 = compWH.extra2;
+	nStates = compWH.nStates;
+	extraB1 = compWH.extraB1;
+	extraS1 = compWH.extraS1;
+	c = compWH.c;
+	activInStates = compWH.activInStates;
+	text = compWH.text;
+	mouseHovers = compWH.mouseHovers;
+	hitable = compWH.hitable;
+	visible = compWH.visible;
+	prio = compWH.prio;
+	buffer = compWH.buffer;
+	parentC = compWH.parentC;
+	//comps = compWH.comps;
+	return *this;
+}
 
-std::vector<int> Component::FillWith1WhenSize0(std::vector<int> activInStates, int nStages)
+
+std::vector<int> ComponentWithoutHint::FillWith1WhenSize0(std::vector<int> activInStates, int nStages)
 {
 	if (activInStates.size() == 0)
 	{
@@ -402,13 +427,31 @@ std::vector<int> Component::FillWith1WhenSize0(std::vector<int> activInStates, i
 	}
 	return activInStates;
 }
-std::queue<FrameEvent>* Component::GetBuffer()const
+std::queue<FrameEvent>* ComponentWithoutHint::GetBuffer()const
 {
 	return buffer;
 }
-void ComponentWithoutHint::AddHint(Hint& hint)
+std::unique_ptr<ComponentWithoutHint>&& ComponentWithoutHint::Clone()const
 {
-	this->hint = std::make_unique<Hint>(hint.GetResC());
+	return std::make_unique<ComponentWithoutHint>(ComponentWithoutHint(*this));
+}
+void Component::AddHint(Hint& hint)
+{
+	this->hint = std::make_unique<Hint>(hint);
+}
+void Component::DrawHintWhenVisible(Graphics& gfx)
+{
+	if (hint != nullptr && mouseHovers)
+	{
+		hint->Draw(gfx);
+	}
+}
+void Component::UpdateHintPos(Vei2 mP)
+{
+	if (hint != nullptr && mouseHovers)
+	{
+		hint->SetLastMP(mP);
+	}
 }
 //  ### Framehandle::PageFrame ###
 
@@ -481,12 +524,13 @@ void FrameHandle::UpdateInventoryComps(Inventory* inv, Component* parentC)
 		if (inv->GetItem(i)->get() != nullptr)
 		{
 			parentC->GetComp(key)->SetVisible(true);
-			GrabImage* gI = static_cast<GrabImage*>(parentC->GetComp(key));
-			gI->SetAnimationOfBouth(&resC->GetSurf().items[inv->GetItem(i)->get()->GetId()]);
+			Frame* f = static_cast<Frame*>(parentC->GetComp(key));	
+			f->SetAnimationOfBouth(&resC->GetSurf().items[inv->GetItem(i)->get()->GetId()]);
 			
-			Hint h = Hint(resC);	//edit me
-			//h.AddHintTextBox(100, "wfhuwfhwuhuwf wwji jijw fjiwifj jiwf ijfw ijfw jiwjiwf  fwfi jwjiwjifw ijff wijwifjijfw ijfwijwf wj wfijjifwijf ", &resC->GetSurf().fonts[0], Colors::Green);
-			//static_cast<GrabImage*>(parentC->GetComp(key))->AddHint(h);
+			Hint h = Hint(resC, Vei2(2,2));
+			h.AddHintTextBox("wfhuwfhwuhuwf wwji jijw fjiwifj jiwf ijfw ijfw jiwjiwf  fwfi jwjiwjifw ijff wijwifjijfw ijfwijwf wj wfijjifwijf ", &resC->GetSurf().fonts[0], Colors::Green);
+			f->AddHint(h);
+
 			//gI->AddHint(h);
 
 			if (inv->GetItem(i)->get()->GetDurability() != -1 && inv->GetItem(i)->get()->GetDurability() != Settings::itemStats[inv->GetItem(i)->get()->GetId()].durability)
@@ -543,7 +587,8 @@ int FrameHandle::GetHitInventorySlot(std::string frameString, Vec2 mP)
 		for (int i = 0; i < nSlots; i++)
 		{
 			std::string key = "gI_item" + std::to_string(i);
-			if (static_cast<GrabImage*>(frame->GetComp(key))->GetPos().Contains(mP))
+			
+			if (static_cast<Frame*>(frame->GetComp(key))->GetPos().Contains(mP))
 			{
 				return frame->GetComp(key)->extra1;
 			}
@@ -607,21 +652,24 @@ Frame* FrameHandle::CreateCraftOption(RectF pos, int itemType, Frame* parentC, s
 	//Frame* frame = AddFrame(key, pos, 0);
 	return nullptr;// static_cast<Frame*>(comps[key].get());
 }
-GrabImage* FrameHandle::CreateGIWithHpBar(Component* parentC, RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
+Frame* FrameHandle::CreateDragFrameWithHpBar(Frame* parentC, RectF pos, const Animation* a, const Animation* aHover, std::queue<FrameEvent>* buffer, std::string key, std::vector<int> activInStates)
 {
-	GrabImage* gi = parentC->AddGrabImage(pos, a, aHover, buffer, key, activInStates);
-	gi->SetVisible(false);
+	Frame* f = parentC->AddFrame(pos, 1, resC, parentC, buffer, key, activInStates);
+	f->SetVisible(true);
+	f->SetDragable(true);
+	//parentC->AddImage(RectF(Vec2(0,0),0,0), a, aHover, buffer, key+"Img", activInStates);
+	//GrabImage* gi = parentC->AddGrabImage(pos, a, aHover, buffer, key, activInStates);
+	//gi->SetVisible(false);
 
-	Image* image = gi->AddImage(RectF(Vec2(0, pos.GetHeight() / 5 * 4), pos.GetWidth(), pos.GetHeight() / 5), &resC->GetSurf().frames[1], &resC->GetSurf().frames[1], buffer, key + "Hp");
-	image = gi->AddImage(RectF(Vec2(0, pos.GetHeight() / 5 * 4), pos.GetWidth(), pos.GetHeight() / 5), &resC->GetSurf().frames[2], &resC->GetSurf().frames[2], buffer, key + "HpIs");
-	return gi;
+	Image* image = f->AddImage(RectF(Vec2(0, pos.GetHeight() / 5 * 4), pos.GetWidth(), pos.GetHeight() / 5), &resC->GetSurf().frames[1], &resC->GetSurf().frames[1], buffer, key + "Hp");
+	image = f->AddImage(RectF(Vec2(0, pos.GetHeight() / 5 * 4), pos.GetWidth(), pos.GetHeight() / 5), &resC->GetSurf().frames[2], &resC->GetSurf().frames[2], buffer, key + "HpIs");
+	return f;
 }
-void FrameHandle::AddHeadline(Component* parentC, std::string text, const Font* f, Color c)
+void FrameHandle::AddHeadline(Frame* parentC, std::string text, const Font* f, Color c)
 {
 	parentC->AddText(text, (RectF)resC->GetFrameSize().GetFramePos("frameHeadline"), 11*resC->GetFrameSize().GetGuiScale(),f, Colors::Black, "tHeadline");
-
 }
-int FrameHandle::AddInfo(Component* parentC, int top, const Font* f, Color c, std::string key, std::string infoText)
+int FrameHandle::AddInfo(Frame* parentC, int top, const Font* f, Color c, std::string key, std::string infoText)
 {
 	if (infoText == "###")
 	{
@@ -642,16 +690,15 @@ int FrameHandle::AddInfo(Component* parentC, int top, const Font* f, Color c, st
 	}
 	return top + textSize*nLines + 10;
 }
-int FrameHandle::AddInfoTextBox(Component* parentC,std::string text, int top, const Font* f, Color c, std::string key)
+int FrameHandle::AddInfoTextBox(Frame* parentC,std::string text, int top, const Font* f, Color c, std::string key)
 {
-
 	RectF parentRect = parentC->GetPos();
 	int xStart = (int)((float)(parentRect.GetWidth()) / 40);
 	int textSize = (int)((float)(11) * resC->GetFrameSize().GetGuiScale());
 	TextBox* tB_townHall = parentC->AddTextBox(text, RectF(Vec2(xStart, top), parentRect.GetWidth() - xStart*2, 40), textSize, &resC->GetSurf().fonts[0], Colors::Black, key, { 0,1 });
 	return top + textSize * (tB_townHall->GetLines().size() + 2);
 }
-int FrameHandle::AddObstacleAttackButton(Component* parentC, int top, const Font* f, Color c)
+int FrameHandle::AddObstacleAttackButton(Frame* parentC, int top, const Font* f, Color c)
 {
 	RectF parentRect = parentC->GetPos();
 	int xStart = (int)((float)(parentRect.GetWidth()) / 40);
@@ -666,7 +713,7 @@ int FrameHandle::AddObstacleAttackButton(Component* parentC, int top, const Font
 	b_setAttack->hitable = true;
 	return top + halfParentWidth / 2 + 10;
 }
-int FrameHandle::AddObstacleCheckBox(Component* parentC, int top, const Font* f, Color c,std::string text, std::string key)
+int FrameHandle::AddObstacleCheckBox(Frame* parentC, int top, const Font* f, Color c,std::string text, std::string key)
 {
 	RectF parentRect = parentC->GetPos();
 	int xStart = (int)((float)(parentRect.GetWidth()) / 40);
@@ -862,40 +909,40 @@ void FrameHandle::LoadFrame(std::string key)
 		Frame* fInventory = AddFrame("fInventory", RectF(Vec2(Graphics::ScreenWidth / 2 - 125, Graphics::ScreenHeight / 12), 250, 190), 1);
 		fInventory->s = &resC->GetSurf().windowsFrame[8].GetCurSurface();
 		
-		GrabImage* hand1 = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 10), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item0", { 1,1 });
+		Frame* hand1 = CreateDragFrameWithHpBar(fInventory, RectF(Vec2(70, 10), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item0", { 1,1 });
 		hand1->extra1 = 0;
 		hand1->extraS1 = "inventory swap fInventory";
 
-		GrabImage* bonus2 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 10), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item1", { 1,1 });
+		Frame* bonus2 = CreateDragFrameWithHpBar(fInventory, RectF(Vec2(130, 10), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item1", { 1,1 });
 		bonus2->extra1 = 1;
 		bonus2->extraS1 = "inventory swap fInventory";
 
-		GrabImage* armor = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 70), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item2", { 1,1 });
+		Frame* armor = CreateDragFrameWithHpBar(fInventory, RectF(Vec2(70, 70), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item2", { 1,1 });
 		armor->SetVisible(false);
 		armor->extra1 = 2;
 		armor->extraS1 = "inventory swap fInventory";
 
-		GrabImage* bonus1 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 70), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item3", { 1,1 });
+		Frame* bonus1 = CreateDragFrameWithHpBar(fInventory, RectF(Vec2(130, 70), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item3", { 1,1 });
 		bonus1->SetVisible(false);
 		bonus1->extra1 = 3;
 		bonus1->extraS1 = "inventory swap fInventory";
 
-		GrabImage* item1 = CreateGIWithHpBar(fInventory, RectF(Vec2(10, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item4", { 1,1 });
+		Frame* item1 = CreateDragFrameWithHpBar(fInventory, RectF(Vec2(10, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item4", { 1,1 });
 		item1->SetVisible(false);
 		item1->extra1 = 4;
 		item1->extraS1 = "inventory swap fInventory";
 
-		GrabImage* item2 = CreateGIWithHpBar(fInventory, RectF(Vec2(70, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item5", { 1,1 });
+		Frame* item2 = CreateDragFrameWithHpBar(fInventory, RectF(Vec2(70, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item5", { 1,1 });
 		item2->SetVisible(false);
 		item2->extra1 = 5;
 		item2->extraS1 = "inventory swap fInventory";
 
-		GrabImage* item3 = CreateGIWithHpBar(fInventory, RectF(Vec2(130, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item6", { 1,1 });
+		Frame* item3 = CreateDragFrameWithHpBar(fInventory, RectF(Vec2(130, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item6", { 1,1 });
 		item3->SetVisible(false);
 		item3->extra1 = 6;
 		item3->extraS1 = "inventory swap fInventory";
 
-		GrabImage* item4 = CreateGIWithHpBar(fInventory, RectF(Vec2(190, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item7", { 1,1 });
+		Frame* item4 = CreateDragFrameWithHpBar(fInventory, RectF(Vec2(190, 130), 50, 50), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item7", { 1,1 });
 		item4->SetVisible(false);
 		item4->extra1 = 7;
 		item4->extraS1 = "inventory swap fInventory";
@@ -907,7 +954,7 @@ void FrameHandle::LoadFrame(std::string key)
 
 		for (int i = 0; i < 9; i++)
 		{
-			GrabImage* image = CreateGIWithHpBar(fInventoryBox, RectF(Vec2(10.f + (int)(i % 3) * 60.f, 10.f + (int)(i / 3) * 60.f), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
+			Frame* image = CreateDragFrameWithHpBar(fInventoryBox, RectF(Vec2(10.f + (int)(i % 3) * 60.f, 10.f + (int)(i / 3) * 60.f), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
 			image->SetVisible(false);
 			image->extra1 = i;
 			image->extraS1 = "inventory swap fInventoryBox";
@@ -920,7 +967,7 @@ void FrameHandle::LoadFrame(std::string key)
 
 		for (int i = 0; i < 25; i++)
 		{
-			GrabImage* image = CreateGIWithHpBar(fInventoryStorage, RectF(Vec2(10.f + (int)(i % 5) * 60, 10.f + (int)(i / 5) * 60), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
+			Frame* image = CreateDragFrameWithHpBar(fInventoryStorage, RectF(Vec2(10.f + (int)(i % 5) * 60, 10.f + (int)(i / 5) * 60), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
 			image->SetVisible(false);
 			image->extra1 = i;
 			image->extraS1 = "inventory swap fInventoryStorage";
@@ -940,7 +987,7 @@ void FrameHandle::LoadFrame(std::string key)
 
 		for (int i = 0; i < 6; i++)
 		{
-			GrabImage* image = CreateGIWithHpBar(fInventoryWrought, RectF(Vec2(10.f + (int)(i % 3) * 60.f, 40.f + (int)(i / 3) * 90.f), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
+			Frame* image = CreateDragFrameWithHpBar(fInventoryWrought, RectF(Vec2(10.f + (int)(i % 3) * 60.f, 40.f + (int)(i / 3) * 90.f), 50.f, 50.f), &resC->GetSurf().items[0], &resC->GetSurf().items[0], &buffer, "gI_item" + std::to_string(i), { 1,1 });
 			image->SetVisible(false);
 			image->extra1 = i;
 			image->extraS1 = "inventory swap fInventoryWrought";
